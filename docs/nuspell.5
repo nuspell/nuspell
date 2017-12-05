@@ -1,10 +1,10 @@
-.TH hunspell 5 "2014-05-26"
+.TH nuspell 5 "2017-12-05"
 .LO 1
 .SH NAME
-hunspell \- format of Hunspell dictionaries and affix files
+nuspell \- format of Nuspell dictionaries and affix files
 .SH DESCRIPTION
-.IR Hunspell (1)
-Hunspell requires two files to define the way a language is being spell
+.IR Nuspell (1)
+Nuspell requires two files to define the way a language is being spell
 checked: a dictionary file containing words and applicable flags, and an
 affix file that specifies how these flags will control spell checking.
 An optional file is the personal dictionary file.
@@ -86,13 +86,14 @@ All accepted words with this dictionary and affix combination are:
 
 .SH "AFFIX FILE GENERAL OPTIONS"
 
-Hunspell source distribution contains more than 80 examples for
+Nuspell source distribution contains more than a hundred examples for
 option usage.
 
 .IP "SET encoding"
 Set character encoding of words and morphemes in affix and dictionary files.
-Possible values: UTF-8, ISO8859\-1 \- ISO8859\-10, 
-ISO8859\-13 \- ISO8859\-15, KOI8-R, KOI8-U, cp1251, ISCII-DEVANAGARI.
+Possible values: UTF-8, ISO8859-1 \- ISO8859-10,
+ISO8859-13 \- ISO8859-15, KOI8-R, KOI8-U, cp1251, ISCII-DEVANAGARI.
+The default value for thsi option is ISO8859-1.
 .PP
 .RS
 .nf
@@ -121,17 +122,17 @@ Set twofold prefix stripping (but single suffix stripping) eg. for morphological
 languages with right-to-left writing system.
 
 .IP "LANG langcode"
-Set language code for language specific functions of Hunspell. Use it to activate special casing
+Set language code for language specific functions of Nuspell. Use it to activate special casing
 of Azeri (LANG az) and Turkish (LANG tr).
 .IP "IGNORE characters"
 Sets characters to ignore dictionary words, affixes and
 input words.
 Useful for optional characters, as Arabic (harakat) or Hebrew (niqqud) diacritical marks (see
-tests/ignore.* test dictionary in Hunspell distribution).
+tests/cmdline/ignore.* test dictionary in Nuspell distribution).
 
 .IP "AF number_of_flag_vector_aliases"
 .IP "AF flag_vector"
-Hunspell can substitute affix flag sets with
+Nuspell can substitute affix flag sets with
 ordinal numbers in affix rules (alias compression, see makealias tool). First
 example with alias compression:
 .PP
@@ -168,29 +169,30 @@ work/AB
 .RE
 .PP
 
-See also tests/alias* examples of the source distribution.
+See also tests/cmdline/alias* examples of the source distribution.
 
 Note I: If affix file contains the FLAG parameter, define it before the AF
 definitions.
 
-Note II: Use makealias utility in Hunspell distribution to compress 
+Note II: Use makealias utility in Nuspell distribution to compress 
 aff and dic files.
 .IP "AM number_of_morphological_aliases"
 .IP "AM morphological_fields"
-Hunspell can substitute also morphological data with
+Nuspell can substitute also morphological data with
 ordinal numbers in affix rules (alias compression). 
-See tests/alias* examples.
+See tests/cmdline/alias* examples.
 .SH "AFFIX FILE OPTIONS FOR SUGGESTION"
 Suggestion parameters can optimize the default n-gram (similarity search in
 the dictionary words based on the common 1, 2, 3, 4-character length common
-character-sequences), character swap and deletion suggestions of Hunspell. 
+character-sequences), character swap and deletion suggestions of Nuspell. 
 REP is suggested to fix the typical and especially bad language specific bugs,
 because the REP suggestions have the highest priority in the suggestion list.
 PHONE is for languages with not pronunciation based orthography.
 .IP "KEY characters_separated_by_vertical_line_optionally"
-Hunspell searches and suggests words with one different
+Nuspell searches and suggests words with one different
 character replaced by a neighbor KEY character. Not neighbor
 characters in KEY string separated by vertical line characters.
+Here, qwertyuiop|asdfghjkl|zxcvbnm is the default.
 Suggested KEY parameters for QWERTY and Dvorak keyboard layouts:
 .PP
 .RS
@@ -200,7 +202,7 @@ KEY pyfgcrl|aeouidhtns|qjkxbmwvz
 .fi
 .RE
 .PP
-Using the first QWERTY layout, Hunspell suggests "nude" and
+Using the first QWERTY layout, Nuspell suggests "nude" and
 "node" for "*nide". A character may have more neighbors, too:
 .PP
 .RS
@@ -210,8 +212,8 @@ KEY qwertzuop|yxcvbnm|qaw|say|wse|dsx|sy|edr|fdc|dx|rft|gfv|fc|tgz|hgb|gv|zhu|jh
 .RE
 .PP
 .IP "TRY characters"
-Hunspell can suggest right word forms, when they differ from the
-bad input word by one TRY character. The parameter of TRY is case sensitive.
+Nuspell can suggest right word forms, when they differ from the
+bad input word by one TRY character. The parameter of TRY is case sensitive. Best is to have the characters ordered by descending usage frequency.
 .IP "NOSUGGEST flag"
 Words signed with NOSUGGEST flag are not suggested (but still accepted when
 typed correctly). Proposed flag
@@ -239,7 +241,7 @@ has an automatic dot expansion mechanism.)
 This table specifies modifications to try first.
 First REP is the header of this table and one or more REP data
 line are following it. 
-With this table, Hunspell can suggest the right forms for the typical 
+With this table, Nuspell can suggest the right forms for the typical 
 spelling mistakes when the incorrect form differs by more 
 than 1 letter from the right form.
 The search string supports the regex boundary signs (^ and $).
@@ -281,7 +283,7 @@ with the option CHECKCOMPOUNDREP.
 We can define language-dependent information on characters and
 character sequences that should be considered related (i.e. nearer than
 other chars not in the set) in the affix file (.aff)  by a map table.
-With this table, Hunspell can suggest the right forms for words, which
+With this table, Nuspell can suggest the right forms for words, which
 incorrectly choose the wrong letter or letter groups from a related
 set more than once in a word (see REP).
 
@@ -321,7 +323,7 @@ bracket expression yet. Dash expression has signed bytes and not
 UTF-8 characters yet.
 .IP "WARN flag"
 This flag is for rare words, which are also often spelling mistakes,
-see option -r of command line Hunspell and FORBIDWARN.
+see option -r of command line Nuspell and FORBIDWARN.
 .IP "FORBIDWARN"
 Words with flag WARN aren't accepted by the spell checker using this parameter.
 .SH "OPTIONS FOR COMPOUNDING"
@@ -331,7 +333,7 @@ Define new break points for breaking words and checking
 word parts separately. Use ^ and $ to delete characters at end and
 start of the word. Rationale: useful for compounding with joining character or strings (for example, hyphen in English and German or hyphen and n-dash in Hungarian). Dashes are often bad break points for tokenization, because compounds with
 dashes may contain not valid parts, too.) 
-With BREAK, Hunspell can check
+With BREAK, Nuspell can check
 both side of these compounds, breaking the words at dashes and n-dashes:
 .PP
 .RS
@@ -344,7 +346,7 @@ BREAK \fB--\fR    # n-dash
 .PP
 Breaking are recursive, so foo-bar, bar-foo and foo-foo\fB--\fRbar-bar 
 would be valid compounds.
-Note: The default word break of Hunspell is equivalent of the following BREAK
+Note: The default word break of Nuspell is equivalent of the following BREAK
 definition:
 .PP
 .RS
@@ -356,7 +358,7 @@ BREAK -$
 .fi
 .RE
 .PP
-Hunspell doesn't accept the "-word" and "word-" forms by this BREAK definition:
+Nuspell doesn't accept the "-word" and "word-" forms by this BREAK definition:
 .PP
 .RS
 .nf
@@ -383,7 +385,7 @@ or possibility to describe precise compound rules with COMPOUNDRULE
 compound word).
 
 Note III: For command line spell checking of words with extra characters,
-set WORDCHARS parameters: WORDCHARS -\fB--\fR (see tests/break.*) example
+set WORDCHARS parameters: WORDCHARS -\fB--\fR (see tests/cmdline/break.*) example
 .IP "COMPOUNDRULE number_of_compound_definitions"
 .IP "COMPOUNDRULE compound_pattern"
 Define custom compound patterns with a regex-like syntax.
@@ -393,7 +395,7 @@ parentheses, star and question mark meta characters. A flag followed by a `*' ma
 a word sequence of 0 or more matches of words signed with this compound flag.
 A flag followed by a `?' matches a word sequence of
 0 or 1 matches of a word signed with this compound flag.
-See tests/compound*.* examples.
+See tests/cmdline/compound*.* examples.
 
 Note: en_US dictionary of OpenOffice.org uses COMPOUNDRULE for ordinal number recognition
 (1st, 2nd, 11th, 12th, 22nd, 112th, 1000122nd etc.).
@@ -422,7 +424,7 @@ Words signed with COMPOUNDMIDDLE (or with a signed affix) may be middle elements
 .IP "ONLYINCOMPOUND flag"
 Suffixes signed with ONLYINCOMPOUND flag may be only inside of compounds
 (Fuge-elements in German, fogemorphemes in Swedish).
-ONLYINCOMPOUND flag works also with words (see tests/onlyincompound.*).
+ONLYINCOMPOUND flag works also with words (see tests/cmdline/onlyincompound.*).
 Note: also valuable to flag compounding parts which are not correct as a word
 by itself.
 .IP "COMPOUNDPERMITFLAG flag"
@@ -517,9 +519,10 @@ end (at suffix rules) of the word
 
 Zero stripping or affix are indicated by zero. Zero condition is indicated by dot.
 Condition is a simplified, regular expression-like pattern, which must be met
-before the affix can be applied. (Dot signs an arbitrary character. Characters in braces
-sign an arbitrary character from the character subset. Dash hasn't got special
-meaning, but circumflex (^) next the first brace sets the complementer character set.)
+before the affix can be applied. Here, dot (.) signs an arbitrary character,
+but only outside of braces. Characters in braces
+sign an arbitrary character from the character subset. Dash (-) hasn't got special
+meaning, but circumflex (^) next the first brace sets the complementer character set.
 
 (5) Optional morphological fields separated by spaces or tabulators.
 
@@ -546,7 +549,7 @@ Also valuable for words erroneously written in the wrong case.
 Note: With CHECKSHARPS declaration, words with sharp s and KEEPCASE
 flag may be capitalized and uppercased, but uppercased forms of these
 words may not contain sharp s, only SS. See germancompounding
-example in the tests directory of the Hunspell distribution.
+example in the tests directory of the Nuspell distribution.
 
 .IP "ICONV number_of_ICONV_definitions"
 .IP "ICONV pattern pattern2"
@@ -561,7 +564,7 @@ Deprecated. Use "st:" field instead of LEMMA_PRESENT.
 This flag signs virtual stems in the dictionary, words only valid when affixed.
 Except, if the dictionary word has a homonym or a zero affix.
 NEEDAFFIX works also with prefixes and prefix + suffix combinations
-(see tests/pseudoroot5.*).
+(see tests/cmdline/pseudoroot5.*).
 .IP "PSEUDOROOT flag"
 Deprecated. (Former name of the NEEDAFFIX option.)
 .IP "SUBSTANDARD flag"
@@ -569,18 +572,18 @@ SUBSTANDARD flag signs affix rules and dictionary words (allomorphs)
 not used in morphological generation (and in suggestion in the
 future versions). See also NOSUGGEST.
 .IP "WORDCHARS characters"
-WORDCHARS extends tokenizer of Hunspell command line interface with
+WORDCHARS extends tokenizer of Nuspell command line interface with
 additional word character. For example, dot, dash, n-dash, numbers, percent sign
 are word character in Hungarian.
 .IP "CHECKSHARPS"
 SS letter pair in uppercased (German) words may be upper case sharp s (ß).
-Hunspell can handle this special casing with the CHECKSHARPS
-declaration (see also KEEPCASE flag and tests/germancompounding example)
+Nuspell can handle this special casing with the CHECKSHARPS
+declaration (see also KEEPCASE flag and tests/cmdline/germancompounding example)
 in both spelling and suggestion.
 
 .SH "Morphological analysis"
 
-Hunspell's dictionary items and affix rules may have optional space or
+Nuspell's dictionary items and affix rules may have optional space or
 tabulator separated morphological description fields, started with
 3-character (two letters and a colon) field IDs:
 
@@ -777,7 +780,7 @@ of the nominative case.
 
 .IP "sp:"
 Surface prefix. Temporary solution for adding prefixes to the
-stems and generated word forms. See tests/morph.* example.
+stems and generated word forms. See tests/cmdline/morph.* example.
 
 .IP "pa:"
 Parts of the compound words. Output fields of morphological 
@@ -791,7 +794,7 @@ Planned: terminal prefix.
 
 .SH "Twofold suffix stripping"
 
-Ispell's original algorithm strips only one suffix. Hunspell can strip another
+Ispell's original algorithm strips only one suffix. Nuspell can strip another
 one yet (or a plus prefix in COMPLEXPREFIXES mode).
 
 The twofold suffix stripping is a significant improvement in
@@ -840,7 +843,7 @@ Test:
 .PP
 .RS
 .nf
- $ hunspell -m -d test <test.txt
+ $ nuspell -m -d test <test.txt
  drink st:drink
  drinkable st:drink fl:X
  drinkables st:drink fl:X fl:Y
@@ -850,13 +853,13 @@ Test:
 
 Theoretically with the twofold suffix stripping
 needs only the square root of the number of suffix rules,
-compared with a Hunspell implementation. In our practice, we could have
+compared with a Nuspell implementation. In our practice, we could have
 elaborated the Hungarian inflectional morphology with twofold
 suffix stripping.
 
 .SH "Extended affix classes"
 
-Hunspell can handle more than 65000 affix classes.
+Nuspell can handle more than 65000 affix classes.
 There are three new syntax for giving flags in affix and dictionary files.
 
 \fIFLAG long\fR command sets 2-character flags:
@@ -907,7 +910,7 @@ The third one is the Unicode character flags.
 
 .SH "Homonyms"
 
-Hunspell's dictionary can contain repeating elements that are homonyms:
+Nuspell's dictionary can contain repeating elements that are homonyms:
 
 .PP
 .RS
@@ -947,7 +950,7 @@ Test:
 .PP
 .RS
 .nf
- $ hunspell -d test -m <testwords
+ $ nuspell -d test -m <testwords
  work st:work po:verb is:sg3
  work st:work po:noun is:plur
 .fi
@@ -1132,21 +1135,21 @@ This, however, is still insufficient to handle the intricate patterns
 of compounding, not to mention idiosyncratic (and language specific)
 norms of hyphenation.
 
-The \fBHunspell\fR algorithm currently allows any affixed form of words,
-which are lexically marked as potential members of compounds. \fBHunspell\fR
+The \fBNuspell\fR algorithm currently allows any affixed form of words,
+which are lexically marked as potential members of compounds. \fBNuspell\fR
 improved this, and its recursive compound checking
 rules makes it possible to implement the intricate spelling
 conventions of Hungarian compounds. For example, using COMPOUNDWORDMAX,
 COMPOUNDSYLLABLE, COMPOUNDROOT, SYLLABLENUM
 options can be set the noteworthy Hungarian `6-3' rule.
 Further example in Hungarian, derivate suffixes often modify compounding
-properties. Hunspell allows the compounding flags on the
+properties. Nuspell allows the compounding flags on the
 affixes, and there are two special flags (COMPOUNDPERMITFLAG and
 (COMPOUNDFORBIDFLAG) to permit or prohibit compounding of the derivations.
 
 Suffixes with this flag forbid compounding of the affixed word.
 
-We also need several Hunspell features for handling German compounding:
+We also need several Nuspell features for handling German compounding:
 
 .PP
 .RS
@@ -1318,8 +1321,8 @@ The problems raised in relation to 8-bit ASCII encoding have long been
 recognized by proponents of Unicode. It is clear that trading efficiency
 for encoding-independence has its advantages when it comes a truly
 multi-lingual application. There is implemented a memory and time
-efficient Unicode handling in Hunspell. In non-UTF-8 character
-encodings Hunspell works with the original 8-bit strings. In UTF-8 encoding,
+efficient Unicode handling in Nuspell. In non-UTF-8 character
+encodings Nuspell works with the original 8-bit strings. In UTF-8 encoding,
 affixes and words are stored in UTF-8, during the analysis are handled
 in mostly UTF-8, under condition checking and suggestion are converted to
 UTF-16. Unicode text analysis and spell checking have a minimal (0-20%)
@@ -1327,7 +1330,7 @@ time overhead and minimal or reasonable memory overhead depends from
 the language (its UTF-8 encoding and affixation).
 
 .SH "Conversion of aspell dictionaries"
-Aspell dictionaries can be easily converted into hunspell. Conversion steps:
+Aspell dictionaries can be easily converted into nuspell. Conversion steps:
 
 \fBdictionary (xx.cwl -> xx.wl):\fR
 
@@ -1359,6 +1362,7 @@ echo "TRY qwertzuiopasdfghjklyxcvbnmQWERTZUIOPASDFGHJKLYXCVBNM" >>xx.aff
 .fi
 
 .SH "SEE ALSO"
+.B nuspell (1),
 .B hunspell (1),
 .B ispell (1),
 .B ispell (4)

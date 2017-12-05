@@ -1,19 +1,19 @@
-.TH hunspell 3 "2014-05-26"
+.TH nuspell 3 "2017-12-05"
 .LO 1
 .hy 0
 .SH NAME
-\fBhunspell\fR - spell checking, stemming, morphological generation and analysis
+\fBnuspell\fR - spell checking, stemming, morphological generation and analysis
 .SH SYNOPSIS
-\fB#include <hunspell.hxx> /* or */\fR
+\fB#include <nuspell.hxx> /* or */\fR
 .br
-\fB#include <hunspell.h>\fR
+\fB#include <nuspell.h>\fR
 .br
 .sp
-.BI "Hunspell(const char *" affpath ", const char *" dpath );
+.BI "Nuspell(const char *" affpath ", const char *" dpath );
 .sp
-.BI "Hunspell(const char *" affpath ", const char *" dpath ", const char * " key );
+.BI "Nuspell(const char *" affpath ", const char *" dpath ", const char * " key );
 .sp
-.BI "~Hunspell(" );
+.BI "~Nuspell(" );
 .sp
 .BI "int add_dic(const char *" dpath );
 .sp
@@ -53,29 +53,29 @@
 .sp
 .BI "const char * get_version(" );
 .SH DESCRIPTION
-The \fBHunspell\fR library routines give the user word-level
+The \fBNuspell\fR library routines give the user word-level
 linguistic functions: spell checking and correction, stemming,
 morphological generation and analysis in item-and-arrangement style.
 .PP
 The optional C header contains the C interface of the C++ library with
-Hunspell_create and Hunspell_destroy constructor and destructor, and
+Nuspell_create and Nuspell_destroy constructor and destructor, and
 an extra HunHandle parameter (the allocated object) in the
-wrapper functions (see in the C header file \fBhunspell.h\fR).
+wrapper functions (see in the C header file \fBnuspell.h\fR).
 .PP
 The basic spelling functions, \fBspell()\fR and \fBsuggest()\fR can
 be used for stemming, morphological generation and analysis by
 XML input texts (see XML API).
 .
 .SS Constructor and destructor
-Hunspell's constructor needs paths of the affix and dictionary files.
+Nuspell's constructor needs paths of the affix and dictionary files.
 (In WIN32 environment, use UTF-8 encoded paths started with the long path prefix \\\\?\\ to handle system-independent character encoding and very long path names, too.)
-See the \fBhunspell\fR(4) manual page for the dictionary format.
+See the \fBnuspell\fR(4) manual page for the dictionary format.
 Optional \fBkey\fR parameter is for dictionaries encrypted by
-the \fBhzip\fR tool of the Hunspell distribution.
+the \fBhzip\fR tool of the Nuspell distribution.
 .
 .SS Extra dictionaries
 The add_dic() function load an extra dictionary file. 
-The extra dictionaries use the affix file of the allocated Hunspell
+The extra dictionaries use the affix file of the allocated Nuspell
 object. Maximal number of the extra dictionaries is limited in the source code (20).
 .
 .SS Spelling and correction
@@ -114,9 +114,9 @@ int n2 = stem(&result2, result, n1);
 .fi
 .RE
 .PP
-The morphological annotation of the Hunspell library has fixed
+The morphological annotation of the Nuspell library has fixed
 (two letter and a colon) field identifiers, see the
-\fBhunspell\fR(4) manual page.
+\fBnuspell\fR(4) manual page.
 .PP
 .RS
 .nf
@@ -204,8 +204,10 @@ are the same. The output of the type="analyze" query is a string contained
 a <code><a>result1</a><a>result2</a>...</code> element. This 
 element can be used in the second syntax of the type="generate" query.
 .SH EXAMPLE
-See analyze.cxx in the Hunspell distribution.
+See analyze.cxx in the Nuspell distribution.
 .SH AUTHORS
+Nuspell is an in-place replacement or reimplementation of Hunspell.
+.PP
 Hunspell based on Ispell's spell checking algorithms and OpenOffice.org's Myspell source code.
 .PP
 Author of International Ispell is Geoff Kuenning.
@@ -218,4 +220,4 @@ Author of the original C API is Caolan McNamara.
 .PP
 Author of the Aspell table-driven phonetic transcription algorithm and code is Björn Jacke.
 .PP
-See also THANKS and Changelog files of Hunspell distribution.
+See also THANKS and Changelog files of Nuspell distribution.

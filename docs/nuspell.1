@@ -1,22 +1,24 @@
-.TH hunspell 1 "2014-05-27"
+.TH nuspell 1 "2017-12-05"
 .LO 1
 .SH NAME
-hunspell \- spell checker, stemmer and morphological analyzer
+nuspell \- spell checker, stemmer and morphological analyzer
 .SH SYNOPSIS
-hunspell [\-1aDGHhLlmnOrstvwX] [\-\-check\-url] [\-\-check\-apostrophe] [\-d dict[,dict2,...]] [\-\-help] [\-i enc] [\-p dict] [\-vv] [\-\-version] [text/OpenDocument/TeX/LaTeX/HTML/SGML/XML/nroff/troff file(s)]
+nuspell [\1aDGhLlmrsvw] [\-\-check\-url] [\-\-check\-apostrophe] [\-d dict[,dict2,...]] [\-\-help] [\-i enc] [\-p dict] [\-\-version] [text file(s)]
 .SH DESCRIPTION
+.I Nuspell
+is an in-place replacement or reimplementation of
 .I Hunspell
-is fashioned after the
+which was fashioned after the
 .I Ispell
-program.  The most common usage is "hunspell" or "hunspell filename". 
-Without filename parameter, hunspell checks the standard input.
+program.  The most common usage is "nuspell" or "nuspell filename".
+Without filename parameter, nuspell checks the standard input.
 Typing "cat" and "exsample" in two input lines, results an asterisk
 (it means "cat" is a correct word) and a line with corrections:
 .PP
 .RS
 .nf
-$ hunspell -d en_US
-Hunspell 1.2.3
+$ nuspell -d en_US
+Nuspell 2.0.0
 *
 & exsample 4 0: example, examples, ex sample, ex-sample
 .fi
@@ -28,7 +30,7 @@ words signed with '#' or '&' in output lines (see later).
 Ctrl-Z Enter or Ctrl-C on Windows.)
 .PP
 With filename parameters,
-.I hunspell
+.I nuspell
 will display each word of the files which does not appear in the dictionary at the
 top of the screen and allow you to change it.  If there are "near
 misses" in the dictionary, then they are
@@ -48,7 +50,7 @@ Replace the misspelled word completely.
 Accept the word this time only.
 .IP A
 Accept the word for the rest of this
-.I hunspell
+.I nuspell
 session.
 .IP I
 Accept the word, capitalized as it is in the
@@ -66,20 +68,18 @@ Write the rest of this file, ignoring misspellings, and start next file.
 .IP Q
 Exit immediately and leave the file unchanged.
 .IP ^Z
-Suspend hunspell.
+Suspend nuspell.
 .IP ?
 Give help screen.
 .RE
 .SH OPTIONS
-.IP \fB\-1\fR
-Check only first field in lines (delimiter = tabulator).
 .IP \fB\-a\fR
 The
 .B \-a
 option
 is intended to be used from other programs through a pipe.  In this
 mode,
-.I hunspell
+.I nuspell
 prints a one-line version identification message, and then begins
 reading lines of input.  For each input line,
 a single line is written to the standard output for each word
@@ -112,7 +112,7 @@ the misspelled word, a space,
 and the character offset from the beginning of the line.
 Each sentence of text input is terminated
 with an additional blank line, indicating that
-.I hunspell
+.I nuspell
 has completed processing the input line.
 .IP ""
 These output lines can be summarized as follows:
@@ -131,10 +131,10 @@ These output lines can be summarized as follows:
 .IP ""
 For example, a dummy dictionary containing the words "fray", "Frey",
 "fry", and "refried" might produce the following response to the
-command "echo 'frqy refries | hunspell \-a":
+command "echo 'frqy refries | nuspell \-a":
 .RS
 .nf
-(#) Hunspell 0.4.1 (beta), 2005-05-26
+(#) Nuspell 2.0.0, 2018-01-01
 & frqy 3 0: fray, Frey, fry
 & refries 1 5: refried
 .fi
@@ -142,72 +142,55 @@ command "echo 'frqy refries | hunspell \-a":
 .IP ""
 This mode
 is also suitable for interactive use when you want to figure out the
-spelling of a single word (but this is the default behavior of hunspell
+spelling of a single word (but this is the default behavior of nuspell
 without -a, too).
 .IP ""
 When in the
 .B \-a
 mode,
-.I hunspell
+.I nuspell
 will also accept lines of single words prefixed with any
-of '*', '&', '@', '+', '\-', '~', '#', '!', '%', '`', or '^'.
+of '*', '&', '@', '~', '#', '!', '%', '`', or '^'.
 A line starting with '*' tells
-.I hunspell
+.I nuspell
 to insert the word into the user's dictionary (similar to the I command).
 A line starting with '&' tells
-.I hunspell
+.I nuspell
 to insert an all-lowercase version of the word into the user's
 dictionary (similar to the U command).
 A line starting with '@' causes
-.I hunspell
+.I nuspell
 to accept this word in the future (similar to the A command).
-A line starting with '+', followed immediately by
-.B tex
-or
-.B nroff
-will cause
-.I hunspell
-to parse future input according the syntax of that formatter.
-A line consisting solely of a '+' will place
-.I hunspell
-in TeX/LaTeX mode (similar to the
-.B \-t
-option) and '\-' returns
-.I hunspell
-to nroff/troff mode (but these commands are obsolete).
 However, the string character type is
 .I not
 changed;
 the '~' command must be used to do this.
 A line starting with '~' causes
-.I hunspell
+.I nuspell
 to set internal parameters (in particular, the default string
 character type) based on the filename given in the rest of the line.
 (A file suffix is sufficient, but the period must be included.
 Instead of a file name or suffix, a unique name, as listed in the language
 affix file, may be specified.)
-However, the formatter parsing is
-.I not
-changed;  the '+' command must be used to change the formatter.
 A line prefixed with '#' will cause the
 personal dictionary to be saved.
 A line prefixed with '!' will turn on
 .I terse
 mode (see below), and a line prefixed with '%' will return
-.I hunspell
+.I nuspell
 to normal (non-terse) mode.
 A line prefixed with '`' will turn on verbose-correction mode (see below);
 this mode can only be disabled by turning on terse mode with '%'.
 .IP ""
 Any input following the prefix
-characters '+', '\-', '#', '!', '%', or '`' is ignored, as is any input
+characters '+' (legacy), '\-' (legacy), '#', '!', '%', or '`' is ignored, as is any input
 following the filename on a '~' line.
 To allow spell-checking of lines beginning with these characters, a
 line starting with '^' has that character removed before it is passed
 to the spell-checking code.
 It is recommended that programmatic interfaces prefix every data line
 with an uparrow to protect themselves against future changes in
-.IR hunspell .
+.IR nuspell .
 .IP ""
 To summarize these:
 .IP ""
@@ -220,10 +203,6 @@ Accept word, but leave out of dictionary
 Save current personal dictionary
 .IP ~
 Set parameters based on filename
-.IP +
-Enter TeX mode
-.IP \-
-Exit TeX mode
 .IP !
 Enter terse mode
 .IP %
@@ -238,7 +217,7 @@ Spell-check rest of line
 In
 .I terse
 mode,
-.I hunspell
+.I nuspell
 will not print lines beginning with '*', '+', or '\-', all of which
 indicate correct words.
 This significantly improves running speed when the driving program is
@@ -247,7 +226,7 @@ going to ignore correct words anyway.
 In
 .I verbose-correction
 mode,
-.I hunspell
+.I nuspell
 includes the original word immediately after the indicator character
 in output lines beginning with '*', '+', and '\-', which simplifies
 interaction for some programs.
@@ -255,7 +234,7 @@ interaction for some programs.
 .IP \fB\-\-check\-apostrophe\fR
 Check and force Unicode apostrophes (U+2019), if one of the ASCII or Unicode
 apostrophes is specified by the spelling dictionary, as a word character
-(see WORDCHARS, ICONV and OCONV in hunspell(5)).
+(see WORDCHARS, ICONV and OCONV in nuspell(5)).
 .IP \fB\-\-check\-url\fR
 Check URLs, e-mail addresses and directory paths.
 
@@ -281,16 +260,13 @@ order of the parameter list needs for good suggestions). First
 item of \-d parameter list must be a base dictionary.
 
 .IP \fB\-G\fR
-Print only correct words or lines.
-
-.IP \fB\-H\fR
-The input file is in SGML/HTML format.
+Print only correct, "good", words. Can be combined with \-L to print only correct sentences.
 
 .IP \fB\-h,\ \-\-help\fR
 Short help.
 
 .IP \fB\-i\ enc\fR
-Set input encoding.
+Set input encoding. The default is the encoding set by the active locale.
 
 .IP \fB\-L\fR
 Print lines with misspelled words.
@@ -298,46 +274,34 @@ Print lines with misspelled words.
 .IP \fB\-l\fR
 The "list" option
 is used to produce a list of misspelled words from the standard input.
+Can be combined with \-L lines mode to list sentences containing at least one misspelled word.
 
 .IP \fB\-m\fR
-Analyze the words of the input text (see also hunspell(5) about
+Analyze the words of the input text (see also nuspell(5) about
 morphological analysis). Without dictionary morphological data,
 signs the flags of the affixes of the word forms for dictionary
 developers.
-
-.IP \fB\-n\fR
-The input file is in nroff/troff format.
-
-.IP \fB\-O\fR
-The input file is in OpenDocument (ODF or Flat ODF) format.
-If unzip program is not installed, install it before using this option.
-
-.IP \fB\-P\ password\fR
-Set password for encrypted dictionaries.
 
 .IP \fB\-p\ dict\fR
 Set path of personal dictionary.
 The default dictionary depends on the locale settings. The
 following environment variables are searched: LC_ALL,
 LC_MESSAGES, and LANG. If none are set then the default personal
-dictionary is $HOME/.hunspell_default.
+dictionary is $HOME/.nuspell_default.
 
 Setting
 .I \-d
 or  the
 .I DICTIONARY
 environmental variable, personal dictionary will be
-.BR $HOME/.hunspell_dicname
+.BR $HOME/.nuspell_dicname
 
 .IP \fB\-r\fR
 Warn of the rare words, which are also potential spelling mistakes.
 
 .IP \fB\-s\fR
-Stem the words of the input text (see also hunspell(5) about
+Stem the words of the input text (see also nuspell(5) about
 stemming). It depends from the dictionary data.
-
-.IP \fB\-t\fR
-The input file is in TeX or LaTeX format.
 
 .IP \fB\-v,\ \-\-version\fR
 Print version number.
@@ -348,31 +312,28 @@ Print ispell(1) compatible version number.
 .IP \fB\-w\fR
 Print misspelled words (= lines) from one word/line input.
 
-.IP \fB\-X\fR
-The input file is in XML format.
-
 .SH EXAMPLES
 .TP
-.B hunspell example.html
-Interactive spell checking of an HTML file with the default dictionary.
+.B nuspell example.txt
+Interactive spell checking of an text file with the default dictionary.
 .TP
-.B hunspell \-d en_US example.html
-Interactive spell checking of an HTML file with the en_US dictionary.
+.B nuspell \-d en_US example.txt
+Interactive spell checking of an text file with the en_US dictionary.
 .TP
-.B hunspell \-d en_US,en_US_med medical.txt
+.B nuspell \-d en_US,en_US_med medical.txt
 Interactive spell checking with multiple dictionaries.
 .TP
-.B hunspell *.odt
-Interactive spell checking of ODF documents.
+.B nuspell *.txt
+Interactive spell checking of text files.
 .TP
-.B hunspell \-l *.odt
-List bad words of ODF documents
+.B nuspell \-l *.txt
+List bad words of text files
 .TP
-.B hunspell \-l *.odt | sort | uniq >unrecognized
-Saving unrecognized words of ODF documents (filtering duplications).
+.B nuspell \-l *.txt | sort | uniq >unrecognized
+Saving unrecognized words of text files (filtering duplications).
 .TP
-.B hunspell -p unrecognized_but_good *.odt
-Interactive spell checking of ODF documents, using the previously
+.B nuspell -p unrecognized_but_good *.txt
+Interactive spell checking of text files, using the previously
 saved and reduced word list, as a personal dictionary, to speed up
 spell checking.
 .TP
@@ -395,18 +356,18 @@ LC_MESSAGES, and LANG. If none are set then the following
 fallbacks are used:
 
 .BI /usr/share/myspell/default.aff
-Path of default affix file. See hunspell(5).
+Path of default affix file. See nuspell(5).
 .PP
 .BI /usr/share/myspell/default.dic
 Path of default dictionary file.
-See hunspell(5).
+See nuspell(5).
 .PP
-.BI $HOME/.hunspell_default.
+.BI $HOME/.nuspell_default.
 Default path to personal dictionary.
 .SH SEE ALSO
-.B hunspell (3), hunspell(5)
+.B nuspell (3), hunspell (3), nuspell(5), hunspell(5)
 .SH AUTHOR
 Author of Hunspell executable is László Németh. For Hunspell library,
-see hunspell(3).
+see nuspell(3).
 .PP
 This manual based on Ispell's manual. See ispell(1).
