@@ -42,12 +42,12 @@ namespace hunspell {
  * Consecutive separators are treated as separate and will emit empty strings.
  *
  * \param s a string to split.
- * \param sep char or string that acts as separator to split on.
+ * \param sep char that acts as separator to split on.
  * \param out start of the output range where separated strings are appended.
  * \return iterator that indicates the end of the output range.
  */
-template <class CharT, class CharOrStr, class OutIt>
-auto split(const std::basic_string<CharT>& s, CharOrStr sep, OutIt out)
+template <class CharT, class OutIt>
+auto split(const std::basic_string<CharT>& s, CharT sep, OutIt out)
 {
 	using size_type = typename std::basic_string<CharT>::size_type;
 	size_type i1 = 0;
@@ -55,7 +55,7 @@ auto split(const std::basic_string<CharT>& s, CharOrStr sep, OutIt out)
 	do {
 		i2 = s.find(sep, i1);
 		*out++ = s.substr(i1, i2 - i1);
-		i1 = i2 + 1;
+		i1 = i2 + 1; //we can only add +1 if sep is single char
 		// i2 gets s.npos after the last separator
 		// lenth of i2-i1 will always go past the end
 		// yet that is defined
@@ -72,8 +72,8 @@ auto split(const std::basic_string<CharT>& s, CharOrStr sep, OutIt out)
  * \param sep in separator
  * \param v out vector. The vector is first cleared.
  */
-template <class CharT, class CharOrStr>
-auto split_v(const std::basic_string<CharT>& s, CharOrStr sep,
+template <class CharT>
+auto split_v(const std::basic_string<CharT>& s, CharT sep,
              std::vector<std::basic_string<CharT>>& v)
 {
 	v.clear();
