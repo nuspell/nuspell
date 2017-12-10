@@ -36,6 +36,23 @@
 
 namespace hunspell {
 
+template <class ChT, class Tr, class Al, class SepT, class Func, class OutIt>
+auto split_on_single_char(const std::basic_string<ChT, Tr, Al>& s, SepT&& sep,
+                          Func find_sep, OutIt out)
+{
+	using size_type = typename std::basic_string<ChT, Tr, Al>::size_type;
+	size_type i1 = 0;
+	size_type i2;
+	do {
+		i2 = find_sep(s, sep, i1);
+		*out++ = s.substr(i1, i2 - i1);
+		i1 = i2 + 1; // we can only add +1 if sep is single char
+		// i2 gets s.npos after the last separator.
+		// Length of i2-i1 will always go past the end. That is defined.
+	} while (i2 != s.npos);
+	return out;
+}
+
 /*!
  * Splits string on seperator.
  *
@@ -46,21 +63,14 @@ namespace hunspell {
  * \param out start of the output range where separated strings are appended.
  * \return iterator that indicates the end of the output range.
  */
+
 template <class CharT, class OutIt>
 auto split(const std::basic_string<CharT>& s, CharT sep, OutIt out)
 {
-	using size_type = typename std::basic_string<CharT>::size_type;
-	size_type i1 = 0;
-	size_type i2;
-	do {
-		i2 = s.find(sep, i1);
-		*out++ = s.substr(i1, i2 - i1);
-		i1 = i2 + 1; //we can only add +1 if sep is single char
-		// i2 gets s.npos after the last separator
-		// lenth of i2-i1 will always go past the end
-		// yet that is defined
-	} while (i2 != s.npos);
-	return out;
+	auto find_sep = [](decltype(s) str, auto sep, auto start_index) {
+		return str.find(sep, start_index);
+	};
+	return split_on_single_char(s, sep, find_sep, out);
 }
 
 /*!
@@ -91,21 +101,13 @@ auto split_v(const std::basic_string<CharT>& s, CharT sep,
  * \return iterator that indicates the end of the output range.
  */
 template <class CharT, class CharOrStr, class OutIt>
-auto split_on_any_of(const std::basic_string<CharT>& s, CharOrStr sep,
+auto split_on_any_of(const std::basic_string<CharT>& s, CharOrStr&& sep,
                      OutIt out)
 {
-	using size_type = typename std::basic_string<CharT>::size_type;
-	size_type i1 = 0;
-	size_type i2;
-	do {
-		i2 = s.find_first_of(sep, i1);
-		*out++ = s.substr(i1, i2 - i1);
-		i1 = i2 + 1;
-		// i2 gets s.npos after the last separator
-		// lenth of i2-i1 will always go past the end
-		// yet that is defined
-	} while (i2 != s.npos);
-	return out;
+	auto find_sep = [](decltype(s) str, auto&& sep, auto start_index) {
+		return str.find_first_of(sep, start_index);
+	};
+	return split_on_single_char(s, sep, find_sep, out);
 }
 
 /*!
