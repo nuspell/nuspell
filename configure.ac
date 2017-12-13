@@ -107,7 +107,6 @@ AC_CONFIG_FILES([
 	Makefile
 	hunspell.pc
 	docs/Makefile
-	docs/hu/Makefile
 	po/Makefile.in
 	src/Makefile
 	src/hunspell/Makefile
