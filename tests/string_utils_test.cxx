@@ -34,7 +34,12 @@ TEST_CASE("method split", "[string_utils]")
 	auto in = string(";abc;;qwe;zxc;");
 	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
 	auto out = vector<string>();
-	split(in, ';', back_inserter(out));
+	split_v(in, ';', out);
+	CHECK(exp == out);
+
+	in = "<>1<>234<>qwe<==><><>";
+	exp = {"", "1", "234", "qwe<==>", "", ""};
+	split_v(in, "<>", out);
 	CHECK(exp == out);
 }
 

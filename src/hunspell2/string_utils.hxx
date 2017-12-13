@@ -36,17 +36,28 @@
 
 namespace hunspell {
 
-template <class ChT, class Tr, class Al, class SepT, class Func, class OutIt>
-auto split_on_single_char(const std::basic_string<ChT, Tr, Al>& s, SepT&& sep,
-                          Func find_sep, OutIt out)
+/*!
+ * Splits string on set of single char seperators.
+ *
+ * Consecutive separators are treated as separate and will emit empty strings.
+ *
+ * \param s a string to split.
+ * \param sep char or string holding all separators to split on.
+ * \param out start of the output range where separated strings are appended.
+ * \return iterator that indicates the end of the output range.
+ */
+template <class ChT, class Tr, class Al, class SepT, class OutIt>
+auto split_on_any_of(const std::basic_string<ChT, Tr, Al>& s, const SepT& sep,
+                     OutIt out)
 {
 	using size_type = typename std::basic_string<ChT, Tr, Al>::size_type;
 	size_type i1 = 0;
 	size_type i2;
 	do {
-		i2 = find_sep(s, sep, i1);
+		i2 = s.find_first_of(sep, i1);
 		*out++ = s.substr(i1, i2 - i1);
-		i1 = i2 + 1; // we can only add +1 if sep is single char
+		i1 = i2 + 1; // we can only add +1 if sep is single char.
+
 		// i2 gets s.npos after the last separator.
 		// Length of i2-i1 will always go past the end. That is defined.
 	} while (i2 != s.npos);
@@ -54,7 +65,7 @@ auto split_on_single_char(const std::basic_string<ChT, Tr, Al>& s, SepT&& sep,
 }
 
 /*!
- * Splits string on seperator.
+ * Splits string on single char seperator.
  *
  * Consecutive separators are treated as separate and will emit empty strings.
  *
@@ -63,14 +74,43 @@ auto split_on_single_char(const std::basic_string<ChT, Tr, Al>& s, SepT&& sep,
  * \param out start of the output range where separated strings are appended.
  * \return iterator that indicates the end of the output range.
  */
-
-template <class CharT, class OutIt>
-auto split(const std::basic_string<CharT>& s, CharT sep, OutIt out)
+template <class ChT, class Tr, class Al, class OutIt>
+auto split(const std::basic_string<ChT, Tr, Al>& s, ChT sep, OutIt out)
 {
-	auto find_sep = [](decltype(s) str, auto sep, auto start_index) {
-		return str.find(sep, start_index);
-	};
-	return split_on_single_char(s, sep, find_sep, out);
+	return split_on_any_of(s, sep, out);
+}
+
+/*!
+ * \brief Split string on string separator.
+ * \param s
+ * \param sep
+ * \param out
+ */
+template <class ChT, class Tr, class Al, class OutIt>
+auto split(const std::basic_string<ChT, Tr, Al>& s,
+           const std::basic_string<ChT, Tr, Al>& sep, OutIt out)
+{
+	using size_type = typename std::basic_string<ChT, Tr, Al>::size_type;
+	size_type i1 = 0;
+	size_type i2;
+	do {
+		i2 = s.find(sep, i1);
+		*out++ = s.substr(i1, i2 - i1);
+		i1 = i2 + sep.size();
+	} while (i2 != s.npos);
+	return out;
+}
+
+/*!
+ * \brief Split string on string separator.
+ * \param s
+ * \param sep
+ * \param out
+ */
+template <class ChT, class Tr, class Al, class OutIt>
+auto split(const std::basic_string<ChT, Tr, Al>& s, const ChT* sep, OutIt out)
+{
+	return split(s, std::basic_string<ChT, Tr, Al>(sep), out);
 }
 
 /*!
@@ -82,32 +122,12 @@ auto split(const std::basic_string<CharT>& s, CharT sep, OutIt out)
  * \param sep in separator
  * \param v out vector. The vector is first cleared.
  */
-template <class CharT>
-auto split_v(const std::basic_string<CharT>& s, CharT sep,
-             std::vector<std::basic_string<CharT>>& v)
+template <class ChT, class Tr, class Al, class CharOrStr>
+auto split_v(const std::basic_string<ChT, Tr, Al>& s, const CharOrStr& sep,
+             std::vector<std::basic_string<ChT, Tr, Al>>& v)
 {
 	v.clear();
 	split(s, sep, std::back_inserter(v));
-}
-
-/*!
- * Splits string on any seperator.
- *
- * Consecutive separators are treated as separate and will emit empty strings.
- *
- * \param s a string to split.
- * \param sep string holding all separators to split on.
- * \param out start of the output range where separated strings are appended.
- * \return iterator that indicates the end of the output range.
- */
-template <class CharT, class CharOrStr, class OutIt>
-auto split_on_any_of(const std::basic_string<CharT>& s, CharOrStr&& sep,
-                     OutIt out)
-{
-	auto find_sep = [](decltype(s) str, auto&& sep, auto start_index) {
-		return str.find_first_of(sep, start_index);
-	};
-	return split_on_single_char(s, sep, find_sep, out);
 }
 
 /*!
@@ -118,7 +138,7 @@ auto split_on_any_of(const std::basic_string<CharT>& s, CharOrStr&& sep,
  * \return The string that has been split off.
  */
 template <class CharT, class CharOrStr>
-auto split_first(const std::basic_string<CharT>& s, CharOrStr sep)
+auto split_first(const std::basic_string<CharT>& s, const CharOrStr& sep)
     -> std::basic_string<CharT>
 {
 	auto index = s.find(sep);
