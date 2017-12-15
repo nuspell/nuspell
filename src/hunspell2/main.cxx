@@ -64,7 +64,6 @@ struct Args_t {
 	Args_t() {}
 	Args_t(int argc, char* argv[]) { parse_args(argc, argv); }
 	auto parse_args(int argc, char* argv[]) -> void;
-	auto fail() -> bool { return mode == ERROR_MODE; }
 };
 
 /*!
@@ -396,7 +395,9 @@ int main(int argc, char* argv[])
 	ios_base::sync_with_stdio(false);
 
 	auto args = Args_t(argc, argv);
-	if (args.fail()) {
+	if (args.mode == ERROR_MODE) {
+		cerr << "Invalid arguments, try 'hun2 --help' for more "
+		        "information.\n";
 		return 1;
 	}
 	boost::locale::generator gen;
@@ -419,10 +420,6 @@ int main(int argc, char* argv[])
 	case VERSION_MODE:
 		print_version();
 		return 0;
-	case ERROR_MODE:
-		cerr << "Invalid arguments, try 'hun2 --help' for more "
-		        "information.\n";
-		return 1;
 	default:
 		break;
 	}
