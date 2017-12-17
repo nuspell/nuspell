@@ -1,11 +1,15 @@
-Authors of Hunspell:
+Authors of Nuspell:
+* 2016-2017, Dimitri Mijoski
+* 2017, Sander van Geloven
+
+Nuspell is based on Hunspell whose author is:
 * 2002-2017, Németh László
+
+And its contributors are:
 * 2014, Caolán McNamara
 * 2015-2016 Paweł Hajdan, Jr.
 * 2016-2017, Dimitri Mijoski
 * 2017, Sander van Geloven
-
-See also <https://github.com/hunspell/hunspell/graphs/contributors>
 
 Hunspell is based on OpenOffice.org's Myspell. MySpell's author:
 * 2001-2002, Kevin Hendricks
