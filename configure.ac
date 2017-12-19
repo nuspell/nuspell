@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([hunspell],[1.6.2],[https://github.com/hunspell/hunspell/issues],,[https://hunspell.github.io])
+AC_INIT([nuspell],[2.0.0],[https://github.com/hunspell/nuspell/issues],,[https://nuspell.org])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_HOST
@@ -107,7 +107,7 @@ AC_SUBST(READLINELIB)
 
 AC_CONFIG_FILES([
 	Makefile
-	hunspell.pc
+	nuspell.pc
 	docs/Makefile
 	po/Makefile.in
 	src/Makefile
@@ -115,10 +115,10 @@ AC_CONFIG_FILES([
 	src/hunspell/hunvisapi.h
 	src/parsers/Makefile
 	src/tools/Makefile
-	src/hunspell2/Makefile
+	src/nuspell/Makefile
 	tests/Makefile
 	tests/suggestiontest/Makefile
 	tests/v1cmdline/Makefile
-	tests/hun2/Makefile
+	tests/nuspell/Makefile
 ])
 AC_OUTPUT

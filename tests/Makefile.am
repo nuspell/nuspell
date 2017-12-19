@@ -1,11 +1,11 @@
-SUBDIRS = suggestiontest hun2 v1cmdline
+SUBDIRS = suggestiontest nuspell v1cmdline
 
 override PACKAGE_STRING = Hunspell 2.0.0 unit tests
 
-AM_CPPFLAGS = -I../src/hunspell2 $(BOOST_CPPFLAGS) $(CODE_COVERAGE_CPPFLAGS)
+AM_CPPFLAGS = -I../src/nuspell $(BOOST_CPPFLAGS) $(CODE_COVERAGE_CPPFLAGS)
 AM_CXXFLAGS = -std=c++14 $(CODE_COVERAGE_CXXFLAGS)
 AM_LDFLAGS  = $(BOOST_LOCALE_LDFLAGS)
-LDADD = ../src/hunspell2/libhunspell2.a $(BOOST_LOCALE_LIBS) $(CODE_COVERAGE_LIBS)
+LDADD = ../src/nuspell/libnuspell.a $(BOOST_LOCALE_LIBS) $(CODE_COVERAGE_LIBS)
 
 
 BUILT_SOURCES = catch.hpp catch_reporter_tap.hpp

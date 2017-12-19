@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-#include "../src/hunspell2/locale_utils.hxx"
+#include "../src/nuspell/locale_utils.hxx"
 
 using namespace std;
 using namespace hunspell;

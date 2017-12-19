@@ -8,11 +8,11 @@ cd ..
 # Header file config.h is omitted.
 
 vera++ \
--s -p vera++.profile -P max-line-length=80 src/hunspell2/*.[ch]xx tests/*.[ch]xx \
+-s -p vera++.profile -P max-line-length=80 src/nuspell/*.[ch]xx tests/*.[ch]xx \
 -o checks/vera++.txt
 
 #vera++ \
-#-s -p vera++.profile -P max-line-length=80 src/hunspell2/*.[ch]xx tests/*.[ch]xx \
+#-s -p vera++.profile -P max-line-length=80 src/nuspell/*.[ch]xx tests/*.[ch]xx \
 #-x checks/vera++.xml
 
 cd checks

@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-#include "../src/hunspell2/aff_data.hxx"
+#include "../src/nuspell/aff_data.hxx"
 
 using namespace std;
 using namespace hunspell;

@@ -1,30 +1,29 @@
-<!-- add following also to hunspell.github.io
-[![Code Coverage Codecov](https://codecov.io/gh/hunspell/hunspell/branch/master/graph/badge.svg)](https://codecov.io/gh/hunspell/hunspell)
-[![Build Status Travis](https://travis-ci.org/hunspell/hunspell.svg?branch=master)](https://travis-ci.org/hunspell/hunspell)
-[![Build Status AppVeyor]([https://ci.appveyor.com/api/projects/status/ecxsq3s4j2b9n965?svg=true](https://ci.appveyor.com/api/projects/status/ecxsq3s4j2b9n965?svg=true)](https://ci.appveyor.com/project/hunspell-bot/hunspell-n4uof)
+<!-- add following also to nuspell.org
+[![Code Coverage Codecov](https://codecov.io/gh/hunspell/nuspell/branch/master/graph/badge.svg)](https://codecov.io/gh/hunspell/nuspell)
+[![Build Status Travis](https://travis-ci.org/hunspell/nuspell.svg?branch=master)](https://travis-ci.org/hunspell/nuspell)
+[![Build Status AppVeyor]([https://ci.appveyor.com/api/projects/status/ecxsq3s4j2b9n965?svg=true](https://ci.appveyor.com/api/projects/status/ecxsq3s4j2b9n965?svg=true)](https://ci.appveyor.com/project/hunspell-bot/nuspell-n4uof)
 [![Translation Status](https://hosted.weblate.org/widgets/hunspell/-/translations/svg-badge.svg)](https://hosted.weblate.org/engage/hunspell/?utm_source=widget)
 
 see also https://shields.io/
 -->
 
-# About Hunspell
+# About Nuspell
 
-NOTICE: Version 2 is in the works. For contributing see [version 2
-specification](https://github.com/hunspell/hunspell/wiki/Version-2-Specification)
-and the folder `src/hunspell2`.
+NOTICE: Nuspell is currently under development. For contributing see [version 2
+specification](https://github.com/hunspell/hunspell/wiki/Version-2-Specification).
 
-Hunspell is a spell checker and morphological analyzer library and
+Nuspell is a spell checker and morphological analyzer library and
 program designed for languages with rich morphology and complex word
-compounding or character encoding. Hunspell interfaces: Ispell-like
+compounding or character encoding. Nuspell interfaces: Ispell-like
 terminal interface using Curses library, Ispell pipe interface, C++
-class and C functions.
+class and C functions. Nuspell is a pure C++ reimplementation of Hunspell.
 
 Hunspell's code base comes from the OpenOffice.org MySpell
 (http://lingucomponent.openoffice.org/MySpell-3.zip). See
 README.MYSPELL, AUTHORS.MYSPELL and license.myspell files. Hunspell is
 designed to eventually replace Myspell in OpenOffice.org.
 
-Main features of Hunspell spell checker and morphological analyzer:
+Main features of Nuspell spell checker and morphological analyzer:
 
   - Unicode support (affix rules work only with the first 65535 Unicode
     characters)
@@ -49,12 +48,12 @@ Build only dependencies:
 
 Runtime dependencies:
 
-|               | Mandatory        |Optional          |
-|---------------|------------------|------------------|
-|libhunspell 1  |                  |                  |
-|cmd line tool 1| libiconv gettext | ncurses readline |
-|libhunspell 2  | boost-locale     |                  |
-|cmd line tool 2|                  |                  |
+|                 | Mandatory        |Optional          |
+|-----------------|------------------|------------------|
+| libnuspell 1    |                  |                  |
+| cmd line tool 1 | libiconv gettext | ncurses readline |
+| libnuspell 2    | boost-locale     |                  |
+| cmd line tool 2 |                  |                  |
     
 Recommended tools for developers:
 
@@ -82,7 +81,7 @@ Then run the following commands:
 For dictionary development, use the `--with-warnings` option of
 configure.
 
-For interactive user interface of Hunspell executable, use the
+For interactive user interface of Nuspell executable, use the
 `--with-ui option`.
 
 Optional developer packages:
@@ -146,7 +145,7 @@ For debugging we need to create a debug build and then we need to start
 
     ./configure CXXFLAGS='-g -O0 -Wall -Wextra'
     make
-    ./libtool --mode=execute gdb src/tools/hunspell
+    ./libtool --mode=execute gdb src/tools/nuspell
 
 You can also pass the `CXXFLAGS` directly to `make` without calling
 `./configure`, but we don't recommend this way during long development
@@ -157,7 +156,7 @@ https://github.com/hunspell/hunspell/wiki/IDE-Setup
 
 # Testing
 
-Testing Hunspell (see tests in tests/ subdirectory):
+Testing Nuspell (see tests in tests/ subdirectory):
 
     make check
 
@@ -175,11 +174,11 @@ For example:
 
 features and dictionary format:
 
-    man 5 hunspell
-    man hunspell
-    hunspell -h
+    man 5 nuspell
+    man nuspell
+    nuspell -h
 
-http://hunspell.github.io/
+http://nuspell.org/
 
 Documentation for developers can be generated from the source files by running:
 
@@ -195,7 +194,7 @@ when installing Doxygen.
 The src/tools directory contains ten executables after compiling.
 
   - The main executable:
-      - hunspell: main program for spell checking and others (see
+      - nuspell: main program for spell checking and others (see
         manual)
   - Example tools:
       - analyze: example of spell checking, stemming and morphological
@@ -206,45 +205,45 @@ The src/tools directory contains ten executables after compiling.
   - Tools for dictionary development:
       - affixcompress: dictionary generation from large (millions of
         words) vocabularies
-      - makealias: alias compression (Hunspell only, not back compatible
+      - makealias: alias compression (Nuspell only, not back compatible
         with MySpell)
-      - wordforms: word generation (Hunspell version of unmunch)
-      - hunzip: decompressor of hzip format
-      - hzip: compressor of hzip format
+      - wordforms: word generation (Nuspell version of unmunch)
+      - ~~hunzip: decompressor of hzip format~~ (DEPRECATED)
+      - ~~hzip: compressor of hzip format~~ (DEPRECATED)
       - munch (DEPRECATED, use affixcompress): dictionary generation
         from vocabularies (it needs an affix file, too).
       - unmunch (DEPRECATED, use wordforms): list all recognized words
         of a MySpell dictionary
 
-After compiling and installing (see INSTALL) you can run the Hunspell
-spell checker (compiled with user interface) with a Hunspell or Myspell
+After compiling and installing (see INSTALL) you can run the Nuspell
+spell checker (compiled with user interface) with a Nuspell, Hunspell or Myspell
 dictionary:
 
-    hunspell -d en_US text.txt
+    nuspell -d en_US text.txt
 
 or without interface:
 
-    hunspell
-    hunspell -d en_UK -l <text.txt
+    nuspell
+    nuspell -d en_UK -l <text.txt
 
 Dictionaries consist of an affix and dictionary file, see tests/ or
 http://wiki.services.openoffice.org/wiki/Dictionaries.
 
-# Using Hunspell library with GCC
+# Using Nuspell library with GCC
 
 Including in your program:
 
-    #include <hunspell.hxx>
+    #include <nuspell.hxx>
 
-Linking with Hunspell static library:
+Linking with Nuspell static library:
 
-    g++ -lhunspell-1.6 example.cxx
+    g++ -lnuspell-1.6 example.cxx
     # or better, use pkg-config
-    g++ $(pkg-config --cflags --libs hunspell) example.cxx
+    g++ $(pkg-config --cflags --libs nuspell) example.cxx
 
 ## Dictionaries
 
-Myspell & Hunspell dictionaries:
+Myspell, Hunspell and Nuspell dictionaries:
 
   - https://github.com/hunspell/hunspell/wiki/Dictionaries-and-Contacts
   - https://github.com/hunspell/hunspell/wiki/Dictionary-Packages
@@ -258,7 +257,7 @@ Aspell dictionaries (need some conversion):
   - ftp://ftp.gnu.org/gnu/aspell/dict
 
 Conversion steps: see relevant feature request at
-http://hunspell.github.io/ .
+http://nuspell.org/ .
 
 László Németh, nemeth at numbertext org
 

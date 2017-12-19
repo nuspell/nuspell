@@ -5,7 +5,7 @@ This directory contains static code checks. Eventually, they need to move to Mak
 
 ## clang-format
 
-This is a tool to format C/C++/Obj-C code. In all source directories, `hunspell2` and `test`, is a script called `./clang-format.sh` which reformats the source code. Run that before creating a git commit, but also before running the tools mentioned below. This needs installation with `sudo apt-get install clang-format`. For easy of use, there is also a shell script in this directory to run it on all source files at once.
+This is a tool to format C/C++/Obj-C code. In all source directories, `nuspell` and `test`, is a script called `./clang-format.sh` which reformats the source code. Run that before creating a git commit, but also before running the tools mentioned below. This needs installation with `sudo apt-get install clang-format`. For easy of use, there is also a shell script in this directory to run it on all source files at once.
 
 
 ## cloc

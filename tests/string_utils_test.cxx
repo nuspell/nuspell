@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-#include "../src/hunspell2/string_utils.hxx"
+#include "../src/nuspell/string_utils.hxx"
 
 using namespace std;
 using namespace hunspell;

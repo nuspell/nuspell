@@ -1,1 +1,1 @@
-../src/hunspell2/clang-format.sh
+../src/nuspell/clang-format.sh
