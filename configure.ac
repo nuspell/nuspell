@@ -2,19 +2,12 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([nuspell],[2.0.0],[https://github.com/hunspell/nuspell/issues],,[https://nuspell.org])
+AC_INIT([nuspell],[2.0.0],[https://github.com/hunspell/nuspell/issues],,
+        [https://nuspell.org])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
-AC_CANONICAL_HOST
-AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_MACRO_DIRS([m4])
 AM_INIT_AUTOMAKE
-
-# the folowing 4 lines are used for pkg-check's .pc.in file
-HUNSPELL_VERSION_MAJOR=`echo $VERSION | cut -d"." -f1`
-HUNSPELL_VERSION_MINOR=`echo $VERSION | cut -d"." -f2`
-AC_SUBST(HUNSPELL_VERSION_MAJOR)
-AC_SUBST(HUNSPELL_VERSION_MINOR)
 
 AX_CODE_COVERAGE
 AS_IF([test x$enable_code_coverage = xyes],[
