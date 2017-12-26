@@ -1,6 +1,4 @@
-SUBDIRS = suggestiontest nuspell v1cmdline
-
-override PACKAGE_STRING = Hunspell 2.0.0 unit tests
+SUBDIRS = . nuspell suggestiontest v1cmdline
 
 AM_CPPFLAGS = -I../src/nuspell $(BOOST_CPPFLAGS) $(CODE_COVERAGE_CPPFLAGS)
 AM_CXXFLAGS = -std=c++14 $(CODE_COVERAGE_CXXFLAGS)

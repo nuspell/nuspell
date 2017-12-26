@@ -1,12 +1,15 @@
 ## Process this file with automake to create Makefile.in
 
+override PACKAGE_STRING = Hunspell v1 tests
+
 TEST_EXTENSIONS = .dic
 AM_TESTS_ENVIRONMENT = export HUNSPELL=$(top_builddir)/src/tools/hunspell; \
                        export ANALYZE=$(top_builddir)/src/tools/analyze; \
                        export LIBTOOL=$(top_builddir)/libtool;
 DIC_LOG_COMPILER = $(top_srcdir)/tests/test.sh
 
-TESTS =	\
+#remove the NO_ to enable theese tests
+NO_TESTS =	\
 affixes.dic \
 condition.dic \
 condition_utf.dic \

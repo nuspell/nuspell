@@ -5,7 +5,7 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS)   $(CODE_COVERAGE_CPPFLAGS)
 AM_CXXFLAGS = -std=c++14          $(CODE_COVERAGE_CXXFLAGS)
 AM_LDFLAGS  = $(BOOST_LOCALE_LDFLAGS)
 LDADD       = $(BOOST_LOCALE_LIBS) $(CODE_COVERAGE_LIBS)
-LIBADD      = $(BOOST_LOCALE_LIBS) $(CODE_COVERAGE_LIBS)
+LIBADD      = $(LDADD)
 
 libnuspell_a_SOURCES=\
 aff_data.cxx     \
@@ -23,4 +23,5 @@ stream_utils.hxx \
 string_utils.hxx
 
 nuspell_SOURCES = main.cxx
+nuspell_CPPFLAGS = -DHAVE_CONFIG_H $(AM_CPPFLAGS)
 nuspell_LDADD = libnuspell.a $(LDADD)
