@@ -28,6 +28,15 @@
 
 #include <boost/locale.hpp>
 
+#ifdef HAVE_CONFIG_H
+#include "../../config.h"
+#else
+//manually define
+#define PACKAGE_STRING "nuspell 2.0.0"
+#define PACKAGE "nuspell"
+#define VERSION "2.0.0"
+#endif
+
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
     (defined(__APPLE__) && defined(__MACH__))
 #include <getopt.h>
@@ -175,9 +184,9 @@ auto print_help() -> void
 {
 	cout << "Usage:\n"
 	        "\n"
-	        "hun2 [-d dict_NAME] [-i enc] [file_name]...\n"
-	        "hun2 -l|-G [-L] [-d dict_NAME] [-i enc] [file_name]...\n"
-	        "hun2 -D|-h|--help|-v|--version\n"
+	        PACKAGE" [-d dict_NAME] [-i enc] [file_name]...\n"
+	        PACKAGE" -l|-G [-L] [-d dict_NAME] [-i enc] [file_name]...\n"
+	        PACKAGE" -D|-h|--help|-v|--version\n"
 	        "\n"
 	        "Check spelling of each FILE. Without FILE, check standard "
 	        "input.\n"
@@ -192,9 +201,11 @@ auto print_help() -> void
 	        "  -h, --help    display this help and exit\n"
 	        "  -v, --version print version number and exit\n"
 	        "\n"
-	        "Example: hun2 -d en_US file.txt\n"
+	        "Example: " PACKAGE " -d en_US file.txt\n"
 	        "\n"
 	        "Bug reports: <https://github.com/hunspell/hunspell/issues>\n"
+	        "Full documentation: "
+	        "<https://github.com/hunspell/hunspell/wiki>\n"
 	        "Home page: <http://hunspell.github.io/>\n";
 }
 
@@ -203,18 +214,16 @@ auto print_help() -> void
  */
 auto print_version() -> void
 {
-	cout << "hunspell 2.0.0\n"
-	        "Copyright (C) 2017 Dimitri Mijoski and Sander van Geloven\n"
+	cout << PACKAGE_STRING"\n"
+	        "Copyright (C) 2017 Dimitrij Mijoski and Sander van Geloven\n"
 	        "License LGPLv3+: GNU LGPL version 3 or later "
-	        "<http://gnu.org/licenses/lgpl.html>."
+	        "<http://gnu.org/licenses/lgpl.html>.\n"
 	        "This is free software: you are free to change and "
-	        "redistribute it."
+	        "redistribute it.\n"
 	        "There is NO WARRANTY, to the extent permitted by law.\n"
 	        "\n"
-	        "Written by Dimitri Mijoski, Sander van Geloven, László Németh "
-	        "and others,"
-	        "see "
-	        "<https://github.com/hunspell/hunspell/blob/master/AUTHORS>.";
+	        "Written by Dimitrij Mijoski, Sander van Geloven and others,\n"
+	        "see https://github.com/hunspell/nuspell/blob/master/AUTHORS\n";
 }
 
 /*!
