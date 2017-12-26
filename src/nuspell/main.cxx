@@ -31,10 +31,9 @@
 #ifdef HAVE_CONFIG_H
 #include "../../config.h"
 #else
-//manually define
+// manually define
 #define PACKAGE_STRING "nuspell 2.0.0"
 #define PACKAGE "nuspell"
-#define VERSION "2.0.0"
 #endif
 
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
@@ -61,6 +60,7 @@ enum Mode {
 
 struct Args_t {
 	Mode mode = DEFAULT_MODE;
+	string program_name = PACKAGE;
 	string dictionary;
 	string encoding;
 	vector<string> other_dicts;
@@ -80,6 +80,8 @@ struct Args_t {
  */
 auto Args_t::parse_args(int argc, char* argv[]) -> void
 {
+	if (argc != 0 && argv[0] && argv[0][0] != '\0')
+		program_name = argv[0];
 // See POSIX Utility argument syntax
 // http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
 #if defined(_POSIX_VERSION) || defined(__MINGW32__)
@@ -177,36 +179,40 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 #endif
 }
 
-/*!
- * Prints help information to standard output.
+/**
+ * @brief Prints help information.
+ * @param program_name pass argv[0] here.
+ * @param out stream, standard output by default.
  */
-auto print_help() -> void
+auto print_help(const string& program_name) -> void
 {
-	cout << "Usage:\n"
-	        "\n"
-	        PACKAGE" [-d dict_NAME] [-i enc] [file_name]...\n"
-	        PACKAGE" -l|-G [-L] [-d dict_NAME] [-i enc] [file_name]...\n"
-	        PACKAGE" -D|-h|--help|-v|--version\n"
-	        "\n"
-	        "Check spelling of each FILE. Without FILE, check standard "
-	        "input.\n"
-	        "\n"
-	        "  -d di_CT      use di_CT dictionary. Only one dictionary is\n"
-	        "                currently supported.\n"
-	        "  -D            show available dictionaries and exit\n"
-	        "  -i enc        input encoding, default is active locale\n"
-	        "  -l            print only misspelled words or lines\n"
-	        "  -G            print only correct words or lines\n"
-	        "  -L            lines mode\n"
-	        "  -h, --help    display this help and exit\n"
-	        "  -v, --version print version number and exit\n"
-	        "\n"
-	        "Example: " PACKAGE " -d en_US file.txt\n"
-	        "\n"
-	        "Bug reports: <https://github.com/hunspell/hunspell/issues>\n"
-	        "Full documentation: "
-	        "<https://github.com/hunspell/hunspell/wiki>\n"
-	        "Home page: <http://hunspell.github.io/>\n";
+	auto& p = program_name;
+	auto& o = cout;
+	o << "Usage:\n"
+	     "\n";
+	o << p << " [-d dict_NAME] [-i enc] [file_name]...\n";
+	o << p << " -l|-G [-L] [-d dict_NAME] [-i enc] [file_name]...\n";
+	o << p << " -D|-h|--help|-v|--version\n";
+	o << "\n"
+	     "Check spelling of each FILE. Without FILE, check standard "
+	     "input.\n"
+	     "\n"
+	     "  -d di_CT      use di_CT dictionary. Only one dictionary is\n"
+	     "                currently supported.\n"
+	     "  -D            show available dictionaries and exit\n"
+	     "  -i enc        input encoding, default is active locale\n"
+	     "  -l            print only misspelled words or lines\n"
+	     "  -G            print only correct words or lines\n"
+	     "  -L            lines mode\n"
+	     "  -h, --help    display this help and exit\n"
+	     "  -v, --version print version number and exit\n"
+	     "\n";
+	o << "Example: " << p << " -d en_US file.txt\n";
+	o << "\n"
+	     "Bug reports: <https://github.com/hunspell/hunspell/issues>\n"
+	     "Full documentation: "
+	     "<https://github.com/hunspell/hunspell/wiki>\n"
+	     "Home page: <http://hunspell.github.io/>\n";
 }
 
 /*!
@@ -214,16 +220,17 @@ auto print_help() -> void
  */
 auto print_version() -> void
 {
-	cout << PACKAGE_STRING"\n"
-	        "Copyright (C) 2017 Dimitrij Mijoski and Sander van Geloven\n"
-	        "License LGPLv3+: GNU LGPL version 3 or later "
-	        "<http://gnu.org/licenses/lgpl.html>.\n"
-	        "This is free software: you are free to change and "
-	        "redistribute it.\n"
-	        "There is NO WARRANTY, to the extent permitted by law.\n"
-	        "\n"
-	        "Written by Dimitrij Mijoski, Sander van Geloven and others,\n"
-	        "see https://github.com/hunspell/nuspell/blob/master/AUTHORS\n";
+	cout << PACKAGE_STRING
+	    "\n"
+	    "Copyright (C) 2017 Dimitrij Mijoski and Sander van Geloven\n"
+	    "License LGPLv3+: GNU LGPL version 3 or later "
+	    "<http://gnu.org/licenses/lgpl.html>.\n"
+	    "This is free software: you are free to change and "
+	    "redistribute it.\n"
+	    "There is NO WARRANTY, to the extent permitted by law.\n"
+	    "\n"
+	    "Written by Dimitrij Mijoski, Sander van Geloven and others,\n"
+	    "see https://github.com/hunspell/nuspell/blob/master/AUTHORS\n";
 }
 
 /*!
@@ -401,8 +408,8 @@ int main(int argc, char* argv[])
 
 	auto args = Args_t(argc, argv);
 	if (args.mode == ERROR_MODE) {
-		cerr << "Invalid arguments, try 'hun2 --help' for more "
-		        "information.\n";
+		cerr << "Invalid arguments, try '" << args.program_name
+		     << " --help' for more information.\n";
 		return 1;
 	}
 	boost::locale::generator gen;
@@ -420,7 +427,7 @@ int main(int argc, char* argv[])
 
 	switch (args.mode) {
 	case HELP_MODE:
-		print_help();
+		print_help(args.program_name);
 		return 0;
 	case VERSION_MODE:
 		print_version();
