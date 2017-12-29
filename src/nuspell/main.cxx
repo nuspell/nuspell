@@ -32,8 +32,12 @@
 #include "../../config.h"
 #else
 // manually define
-#define PACKAGE_STRING "nuspell 2.0.0"
-#define PACKAGE "nuspell"
+#ifndef PACKAGE_STRING
+#	define PACKAGE_STRING "nuspell 2.0.0"
+#endif
+#ifndef PACKAGE
+#	define PACKAGE "nuspell"
+#endif
 #endif
 
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
