@@ -64,6 +64,37 @@ class SameAsDictInput {
 class WideInput {
 };
 
+inline auto to_wide_std(const std::string& in, const std::locale& inloc)
+{
+	using namespace std;
+	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(inloc);
+	auto wide = std::wstring();
+	wide.resize(in.size(), L'\0');
+	auto state = mbstate_t{};
+	auto char_ptr = in.c_str();
+	auto wchar_ptr = &wide[0];
+	cvt.in(state, in.c_str(), in.c_str() + in.size(), char_ptr, &wide[0],
+	       &wide[wide.size()], wchar_ptr);
+	wide.erase(wchar_ptr - &wide[0]);
+	return wide;
+}
+
+template <class CharT>
+auto to_narrow_boost(const std::basic_string<CharT>& w_in,
+                     const std::locale& outloc)
+{
+	using namespace std;
+	using namespace boost::locale::conv;
+	return from_utf(w_in, outloc);
+}
+
+template <>
+inline auto to_narrow_boost(const std::string& w_in,
+                            const std::locale& /*outloc*/)
+{
+	return w_in;
+}
+
 template <class Str, class Callback>
 auto convert_and_call(LocaleInput, Str&& in, const std::locale& inloc,
                       const std::locale& outloc, Callback func)
@@ -80,31 +111,22 @@ auto convert_and_call(LocaleInput, Str&& in, const std::locale& inloc,
 		auto& out_info = use_facet<info_t>(outloc);
 		if (out_info.utf8()) {
 			auto w_out = to_utf<wchar_t>(in, inloc);
-			auto out = utf_to_utf<char>(w_out);
-			return func(move(w_out), move(out));
+			return func(move(w_out));
 		}
 		else {
 			auto in_enc = in_info.encoding();
 			auto out_enc = out_info.encoding();
 			if (in_enc == out_enc) {
-				return func(in, in);
+				return func(forward<Str>(in));
 			}
 			else {
 				auto out = between(in, out_enc, in_enc);
-				return func(out, out);
+				return func(move(out));
 			}
 		}
 	}
 	// else
-	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(inloc);
-	auto wide = std::wstring();
-	wide.resize(in.size(), L'\0');
-	auto state = mbstate_t{};
-	auto char_ptr = in.c_str();
-	auto wchar_ptr = &wide[0];
-	cvt.in(state, in.c_str(), in.c_str() + in.size(), char_ptr, &wide[0],
-	       &wide[wide.size()], wchar_ptr);
-	wide.erase(wchar_ptr - &wide[0]);
+	auto wide = to_wide_std(in, inloc);
 	return convert_and_call(WideInput{}, move(wide), inloc, outloc, func);
 }
 
@@ -118,11 +140,11 @@ auto convert_and_call(Utf8Input, Str&& in, const std::locale& /*inloc*/,
 	auto& out_info = use_facet<info_t>(outloc);
 	if (out_info.utf8()) {
 		auto w_out = utf_to_utf<wchar_t>(in);
-		return func(move(w_out), forward<Str>(in));
+		return func(move(w_out));
 	}
 	else {
 		auto out = from_utf(in, outloc);
-		return func(out, out);
+		return func(move(out));
 	}
 }
 
@@ -137,10 +159,10 @@ auto convert_and_call(SameAsDictInput, Str&& in, const std::locale& /*inloc*/,
 	auto& out_info = use_facet<info_t>(outloc);
 	if (out_info.utf8()) {
 		auto w_out = utf_to_utf<wchar_t>(in);
-		return func(move(w_out), forward<Str>(in));
+		return func(move(w_out));
 	}
 	else {
-		return func(in, in);
+		return func(forward<Str>(in));
 	}
 }
 
@@ -151,14 +173,13 @@ auto convert_and_call(WideInput, WStr&& w_in, const std::locale& /*inloc*/,
 	using namespace std;
 	using info_t = boost::locale::info;
 	using namespace boost::locale::conv;
-
-	auto out = from_utf(w_in, outloc);
 	auto& out_info = use_facet<info_t>(outloc);
 	if (out_info.utf8()) {
-		return func(forward<WStr>(w_in), move(out));
+		return func(forward<WStr>(w_in));
 	}
 	else {
-		return func(out, out);
+		auto out = from_utf(w_in, outloc);
+		return func(move(out));
 	}
 }
 }

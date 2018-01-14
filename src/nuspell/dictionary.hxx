@@ -40,11 +40,10 @@ class Dictionary {
 
       private:
 	template <class CharT>
-	auto spell(const std::basic_string<CharT>& w, const std::string& s)
-	    -> Spell_result
+	auto spell_priv(const std::basic_string<CharT> s) -> Spell_result
 	{
-		(void)w;
-		if (dic_data.words.count(s))
+		if (dic_data.words.count(
+		        to_narrow_boost(s, aff_data.locale_aff)))
 			return good_word;
 		return bad_word;
 	}
@@ -72,9 +71,8 @@ class Dictionary {
 	auto spell(const std::string& word, std::locale loc = std::locale())
 	    -> Spell_result
 	{
-		auto f = [this](auto&& a, auto&& b) {
-			return this->spell(std::forward<decltype(a)>(a),
-			                   std::forward<decltype(b)>(b));
+		auto f = [this](auto&& a) {
+			return this->spell_priv(std::forward<decltype(a)>(a));
 		};
 		return convert_and_call(LocaleInput{}, word, loc,
 		                        aff_data.locale_aff, f);
