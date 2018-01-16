@@ -25,6 +25,15 @@
 using namespace std;
 using namespace hunspell;
 
+TEST_CASE("method split_on_any_of", "[string_utils]")
+{
+	auto in = string("^abc;.qwe/zxc/");
+	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
+	auto out = vector<string>();
+	split_on_any_of(in, string(".;^/"), back_inserter(out));
+	CHECK(exp == out);
+}
+
 TEST_CASE("method split", "[string_utils]")
 {
 	auto in = string(";abc;;qwe;zxc;");
@@ -39,13 +48,10 @@ TEST_CASE("method split", "[string_utils]")
 	CHECK(exp == out);
 }
 
-TEST_CASE("method split_on_any_of", "[string_utils]")
+TEST_CASE("method split_v", "[string_utils]")
 {
-	auto in = string("^abc;.qwe/zxc/");
-	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
-	auto out = vector<string>();
-	split_on_any_of(in, string(".;^/"), back_inserter(out));
-	CHECK(exp == out);
+	//TODO
+	CHECK(1 == 1);
 }
 
 TEST_CASE("method split_first", "[string_utils]")
@@ -72,6 +78,12 @@ TEST_CASE("method split_first", "[string_utils]")
 
 TEST_CASE("method split_on_whitespace", "[string_utils]")
 {
+	//TODO
+	CHECK(1 == 1);
+}
+
+TEST_CASE("method split_on_whitespace_v", "[string_utils]")
+{
 	auto in = string("   qwe ert  \tasd ");
 	auto exp = vector<string>{"qwe", "ert", "asd"};
 	auto out = vector<string>();
@@ -83,4 +95,75 @@ TEST_CASE("method split_on_whitespace", "[string_utils]")
 	// out = vector<string>();
 	split_on_whitespace_v(in, out);
 	CHECK(exp == out);
+}
+
+TEST_CASE("method capitalize", "[string_utils]")
+{
+	auto in = string("");
+	CHECK("" == capitalize(in));
+	in = string("a");
+	CHECK("A" == capitalize(in));
+	CHECK("a" == in); // Check that input has not been affected.
+	in = string("A");
+	CHECK("A" == capitalize(in));
+
+	in = string("car");
+	CHECK("Car" == capitalize(in));
+	in = string("Car");
+	CHECK("Car" == capitalize(in));
+	in = string("cAr");
+	CHECK("CAr" == capitalize(in));
+	in = string("CAr");
+	CHECK("CAr" == capitalize(in));
+	in = string("caR");
+	CHECK("CaR" == capitalize(in));
+	in = string("CaR");
+	CHECK("CaR" == capitalize(in));
+	in = string("cAR");
+	CHECK("CAR" == capitalize(in));
+	in = string("CAR");
+	CHECK("CAR" == capitalize(in));
+
+	in = string("ελλάδα");
+//FIXME	CHECK("Ελλάδα" == capitalize(in));
+	in = string("Ελλάδα");
+	CHECK("Ελλάδα" == capitalize(in));
+	in = string("ΕΛΛΆΔΑ");
+	CHECK("ΕΛΛΆΔΑ" == capitalize(in));
+	in = string("σίγμα");
+//FIXME	CHECK("Σίγμα" == capitalize(in));
+	in = string("ςίγμα");
+//FIXME	CHECK("Σίγμα" == capitalize(in));
+	in = string("Σίγμα");
+	CHECK("Σίγμα" == capitalize(in));
+
+	in = string("ij");
+	CHECK("IJ" == capitalize(in, true));
+	in = string("Ij");
+	CHECK("IJ" == capitalize(in, true));
+	in = string("iJ");
+	CHECK("IJ" == capitalize(in, true));
+	in = string("IJ");
+	CHECK("IJ" == capitalize(in, true));
+	in = string("ijsselmeer");
+	CHECK("IJsselmeer" == capitalize(in, true));
+	in = string("Ijsselmeer");
+	CHECK("IJsselmeer" == capitalize(in, true));
+	in = string("iJsselmeer");
+	CHECK("IJsselmeer" == capitalize(in, true));
+	in = string("IJsselmeer");
+	CHECK("IJsselmeer" == capitalize(in, true));
+
+	in = string("ĳ");
+//FIXME	CHECK("Ĳ" == capitalize(in));
+	in = string("Ĳ");
+	CHECK("Ĳ" == capitalize(in));
+	in = string("ĳsselmeer");
+//FIXME	CHECK("Ĳsselmeer" == capitalize(in));
+	in = string("Ĳsselmeer");
+	CHECK("Ĳsselmeer" == capitalize(in));
+	in = string("ĳsselmeer");
+//FIXME	CHECK("Ĳsselmeer" == capitalize(in, true));
+	in = string("Ĳsselmeer");
+	CHECK("Ĳsselmeer" == capitalize(in, true));
 }
