@@ -302,39 +302,6 @@ auto get_locale_name(string lang, string enc, const string& filename) -> string
 	return lang + "." + enc;
 }
 
-/*!
- * Returns a cleaned version of a word by removing any leading spaces and
- * trailing periods. It also returns the count the removed trailing periods and
- * the capitalization type of the cleaned word.
- *
- * \param dst destination holding the cleaned word.
- * \param src source holding the word to clean.
- * \param captype capitalisation type that has been detected.
- * \param abbrev number of removed trainling periods.
- * \return length of the cleaned word.
- */
-auto clean_word(string& dst, const string& src, size_t* captype, size_t* abbrev)
-    -> int
-{
-	// TODO implement
-	dst = "blah";
-	*captype = CAP_NO;
-	*abbrev = (size_t)3;
-	return 4;
-}
-
-/*!
- * Returns capitalization type for a word.
- *
- * \param word word for which capitalization is determined.
- * \return capitalization type.
- */
-auto get_cap_type(const std::string& word) -> int
-{
-	// TODO implement
-	return CAP_NO;
-}
-
 auto Aff_data::parse(istream& in) -> bool
 {
 	unordered_map<string, string*> command_strings = {

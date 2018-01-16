@@ -33,10 +33,10 @@
 #else
 // manually define
 #ifndef PACKAGE_STRING
-#	define PACKAGE_STRING "nuspell 2.0.0"
+#define PACKAGE_STRING "nuspell 2.0.0"
 #endif
 #ifndef PACKAGE
-#	define PACKAGE "nuspell"
+#define PACKAGE "nuspell"
 #endif
 #endif
 

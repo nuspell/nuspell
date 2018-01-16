@@ -23,6 +23,7 @@
 #include "../src/nuspell/string_utils.hxx"
 
 using namespace std;
+using namespace std::literals;
 using namespace hunspell;
 
 TEST_CASE("method split_on_any_of", "[string_utils]")
@@ -36,6 +37,8 @@ TEST_CASE("method split_on_any_of", "[string_utils]")
 
 TEST_CASE("method split", "[string_utils]")
 {
+	// tests split(), also tests split_v
+
 	auto in = string(";abc;;qwe;zxc;");
 	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
 	auto out = vector<string>();
@@ -46,12 +49,6 @@ TEST_CASE("method split", "[string_utils]")
 	exp = {"", "1", "234", "qwe<==>", "", ""};
 	split_v(in, "<>", out);
 	CHECK(exp == out);
-}
-
-TEST_CASE("method split_v", "[string_utils]")
-{
-	//TODO
-	CHECK(1 == 1);
 }
 
 TEST_CASE("method split_first", "[string_utils]")
@@ -78,12 +75,8 @@ TEST_CASE("method split_first", "[string_utils]")
 
 TEST_CASE("method split_on_whitespace", "[string_utils]")
 {
-	//TODO
-	CHECK(1 == 1);
-}
+	// also tests _v variant
 
-TEST_CASE("method split_on_whitespace_v", "[string_utils]")
-{
 	auto in = string("   qwe ert  \tasd ");
 	auto exp = vector<string>{"qwe", "ert", "asd"};
 	auto out = vector<string>();
@@ -125,15 +118,15 @@ TEST_CASE("method capitalize", "[string_utils]")
 	CHECK("CAR" == capitalize(in));
 
 	in = string("ελλάδα");
-//FIXME	CHECK("Ελλάδα" == capitalize(in));
+	// FIXME	CHECK("Ελλάδα" == capitalize(in));
 	in = string("Ελλάδα");
 	CHECK("Ελλάδα" == capitalize(in));
 	in = string("ΕΛΛΆΔΑ");
 	CHECK("ΕΛΛΆΔΑ" == capitalize(in));
 	in = string("σίγμα");
-//FIXME	CHECK("Σίγμα" == capitalize(in));
+	// FIXME	CHECK("Σίγμα" == capitalize(in));
 	in = string("ςίγμα");
-//FIXME	CHECK("Σίγμα" == capitalize(in));
+	// FIXME	CHECK("Σίγμα" == capitalize(in));
 	in = string("Σίγμα");
 	CHECK("Σίγμα" == capitalize(in));
 
@@ -155,15 +148,32 @@ TEST_CASE("method capitalize", "[string_utils]")
 	CHECK("IJsselmeer" == capitalize(in, true));
 
 	in = string("ĳ");
-//FIXME	CHECK("Ĳ" == capitalize(in));
+	// FIXME	CHECK("Ĳ" == capitalize(in));
 	in = string("Ĳ");
 	CHECK("Ĳ" == capitalize(in));
 	in = string("ĳsselmeer");
-//FIXME	CHECK("Ĳsselmeer" == capitalize(in));
+	// FIXME	CHECK("Ĳsselmeer" == capitalize(in));
 	in = string("Ĳsselmeer");
 	CHECK("Ĳsselmeer" == capitalize(in));
 	in = string("ĳsselmeer");
-//FIXME	CHECK("Ĳsselmeer" == capitalize(in, true));
+	// FIXME	CHECK("Ĳsselmeer" == capitalize(in, true));
 	in = string("Ĳsselmeer");
 	CHECK("Ĳsselmeer" == capitalize(in, true));
+}
+
+TEST_CASE("method classify_capitalization", "[aff_data]")
+{
+	// TODO this test
+	CHECK(Casing::SMALL == classify_capitalization("alllowercase"s));
+	CHECK(Casing::SMALL == classify_capitalization("alllowercase3"s));
+	CHECK(Casing::INIT_CAPITAL ==
+	      classify_capitalization("Initandlowercase"s));
+	CHECK(Casing::INIT_CAPITAL ==
+	      classify_capitalization("Initandlowercase_"s));
+	CHECK(Casing::ALL_CAPITAL == classify_capitalization("ALLUPPERCASE"s));
+	CHECK(Casing::ALL_CAPITAL == classify_capitalization("ALLUPPERCASE."s));
+	CHECK(Casing::CAMEL == classify_capitalization("iCamelCase"s));
+	CHECK(Casing::CAMEL == classify_capitalization("iCamelCase@"s));
+	CHECK(Casing::PASCAL == classify_capitalization("InitCamelCase"s));
+	CHECK(Casing::PASCAL == classify_capitalization("InitCamelCase "s));
 }

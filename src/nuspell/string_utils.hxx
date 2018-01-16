@@ -183,8 +183,8 @@ auto split_on_whitespace(const std::basic_string<CharT>& s, OutIt out,
  */
 template <class CharT>
 auto split_on_whitespace_v(const std::basic_string<CharT>& s,
-			   std::vector<std::basic_string<CharT>>& v,
-			   const std::locale& loc = std::locale()) -> void
+                           std::vector<std::basic_string<CharT>>& v,
+                           const std::locale& loc = std::locale()) -> void
 {
 	v.clear();
 	split_on_whitespace(s, back_inserter(v), loc);
@@ -193,7 +193,8 @@ auto split_on_whitespace_v(const std::basic_string<CharT>& s,
 /*!
  * Capitalize a string by casting the first character to upper case.
  *
- * A special case is made for Dutch when boolean d is set to true. When the first two characters are "ij", both will be casted to upper case.
+ * A special case is made for Dutch when boolean d is set to true. When the
+ * first two characters are "ij", both will be casted to upper case.
  *
  * \param s in string to capitalize.
  * \param d in boolean indicating capitalizating for Dutch ij digraph/ligature.
@@ -201,18 +202,57 @@ auto split_on_whitespace_v(const std::basic_string<CharT>& s,
  * \return capitalized string.
  */
 template <class CharT>
-auto capitalize(std::basic_string<CharT> s,
-		bool d = false,
-		const std::locale& loc = std::locale())
+auto capitalize(std::basic_string<CharT> s, bool d = false,
+                const std::locale& loc = std::locale())
 {
 	auto length = s.length();
 	if (length < 1)
 		return s;
 	auto& f = std::use_facet<std::ctype<CharT>>(loc);
-	s[0] = f.toupper(s[0]); //TODO Optimization candidate for Boost
+	s[0] = f.toupper(s[0]); // TODO Optimization candidate for Boost
 	if (d && length > 1 && 'i' == f.tolower(s[0]) && 'j' == f.tolower(s[1]))
-		s[1] = f.toupper(s[1]); //TODO Optimization candidate for Boost
+		s[1] = f.toupper(s[1]); // TODO Optimization candidate for Boost
 	return s;
+}
+
+/**
+ * @brief Capitalization type enum
+ */
+enum class Casing { SMALL, INIT_CAPITAL, ALL_CAPITAL, CAMEL, PASCAL };
+
+/**
+ * Returns capitalization type for a word.
+ *
+ * @param word word for which capitalization is determined.
+ * @return capitalization type.
+ */
+template <class CharT>
+auto classify_capitalization(const std::basic_string<CharT>& s,
+                             const std::locale& loc = std::locale()) -> Casing
+{
+	size_t upper = 0;
+	size_t lower = 0;
+	for (auto& c : s) {
+		if (isupper(c, loc))
+			upper++;
+		else if (islower(c, loc))
+			lower++;
+		// else neutral
+	}
+	if (upper == 0)               // all lowercase, maybe with some neutral
+		return Casing::SMALL; // most common case
+
+	auto first_capital = isupper(s[0], loc);
+	if (first_capital && upper == 1)
+		return Casing::INIT_CAPITAL; // second most common
+
+	if (lower == 0)
+		return Casing::ALL_CAPITAL;
+
+	if (first_capital)
+		return Casing::PASCAL;
+	else
+		return Casing::CAMEL;
 }
 }
 #endif

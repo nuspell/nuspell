@@ -30,14 +30,6 @@ namespace hunspell {
 auto get_locale_name(std::string lang, std::string enc,
                      const std::string& filename = "") -> std::string;
 
-// capitalization types
-enum Capitalization_type_t { CAP_NO, CAP_INIT, CAP_ALL, CAP_CAM, INITCAM };
-
-auto get_cap_type(const std::string& word) -> int;
-
-auto clean_word(std::string& dst, const std::string& src, size_t* captype,
-                size_t* abbrev) -> int;
-
 class Encoding {
 	std::string name;
 
