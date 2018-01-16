@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# See also https://github.com/hunspell/nuspell/issues/1
+# Note that upstream source code does not offer these files.
+
 if [ `dpkg -l gettext|grep ^un|wc -l` -eq 0 ]; then
 	echo 'This script will install and deinstall gettext.'
 	echo 'The package gettext is installed at the moment.'
