@@ -204,9 +204,10 @@ auto is_all_ascii(const std::string& s) -> bool
 
 auto ascii_to_ucs2_skip_invalid(const std::string& s) -> std::u16string
 {
+	// UNUSED FUNCTION, maybe remove
 	u16string ret(s.size(), 0);
 	auto i = ret.begin();
-	i = copy_if(s.begin(), s.end(), i, is_bmp);
+	i = copy_if(s.begin(), s.end(), i, is_ascii);
 	ret.erase(i, ret.end());
 	return ret;
 }

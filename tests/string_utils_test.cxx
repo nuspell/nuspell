@@ -161,7 +161,7 @@ TEST_CASE("method capitalize", "[string_utils]")
 	CHECK("Ĳsselmeer" == capitalize(in, true));
 }
 
-TEST_CASE("method classify_capitalization", "[aff_data]")
+TEST_CASE("method classify_casing", "[string_utils]")
 {
 	// TODO this test
 	CHECK(Casing::SMALL == classify_casing("alllowercase"s));

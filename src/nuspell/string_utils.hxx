@@ -232,6 +232,7 @@ template <class CharT>
 auto classify_casing(const std::basic_string<CharT>& s,
                      const std::locale& loc = std::locale()) -> Casing
 {
+	using namespace std;
 	size_t upper = 0;
 	size_t lower = 0;
 	for (auto& c : s) {
