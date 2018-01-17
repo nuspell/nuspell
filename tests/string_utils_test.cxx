@@ -164,16 +164,14 @@ TEST_CASE("method capitalize", "[string_utils]")
 TEST_CASE("method classify_capitalization", "[aff_data]")
 {
 	// TODO this test
-	CHECK(Casing::SMALL == classify_capitalization("alllowercase"s));
-	CHECK(Casing::SMALL == classify_capitalization("alllowercase3"s));
-	CHECK(Casing::INIT_CAPITAL ==
-	      classify_capitalization("Initandlowercase"s));
-	CHECK(Casing::INIT_CAPITAL ==
-	      classify_capitalization("Initandlowercase_"s));
-	CHECK(Casing::ALL_CAPITAL == classify_capitalization("ALLUPPERCASE"s));
-	CHECK(Casing::ALL_CAPITAL == classify_capitalization("ALLUPPERCASE."s));
-	CHECK(Casing::CAMEL == classify_capitalization("iCamelCase"s));
-	CHECK(Casing::CAMEL == classify_capitalization("iCamelCase@"s));
-	CHECK(Casing::PASCAL == classify_capitalization("InitCamelCase"s));
-	CHECK(Casing::PASCAL == classify_capitalization("InitCamelCase "s));
+	CHECK(Casing::SMALL == classify_casing("alllowercase"s));
+	CHECK(Casing::SMALL == classify_casing("alllowercase3"s));
+	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase"s));
+	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase_"s));
+	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE"s));
+	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE."s));
+	CHECK(Casing::CAMEL == classify_casing("iCamelCase"s));
+	CHECK(Casing::CAMEL == classify_casing("iCamelCase@"s));
+	CHECK(Casing::PASCAL == classify_casing("InitCamelCase"s));
+	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s));
 }

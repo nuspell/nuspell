@@ -216,19 +216,21 @@ auto capitalize(std::basic_string<CharT> s, bool d = false,
 }
 
 /**
- * @brief Capitalization type enum
+ * @brief Casing type enum
  */
 enum class Casing { SMALL, INIT_CAPITAL, ALL_CAPITAL, CAMEL, PASCAL };
 
 /**
- * Returns capitalization type for a word.
+ * Returns casing (capitalization) type for a word.
  *
- * @param word word for which capitalization is determined.
- * @return capitalization type.
+ * Casing is sometimes reffered to as capitalization.
+ *
+ * @param word word for which casing is determined.
+ * @return casing type.
  */
 template <class CharT>
-auto classify_capitalization(const std::basic_string<CharT>& s,
-                             const std::locale& loc = std::locale()) -> Casing
+auto classify_casing(const std::basic_string<CharT>& s,
+                     const std::locale& loc = std::locale()) -> Casing
 {
 	size_t upper = 0;
 	size_t lower = 0;
