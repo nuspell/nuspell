@@ -50,7 +50,7 @@ TEST_CASE("method split", "[string_utils]")
 
 TEST_CASE("method split_v", "[string_utils]")
 {
-	//TODO
+	// TODO
 	CHECK(1 == 1);
 }
 
@@ -78,7 +78,7 @@ TEST_CASE("method split_first", "[string_utils]")
 
 TEST_CASE("method split_on_whitespace", "[string_utils]")
 {
-	//TODO
+	// TODO
 	CHECK(1 == 1);
 }
 
@@ -97,73 +97,135 @@ TEST_CASE("method split_on_whitespace_v", "[string_utils]")
 	CHECK(exp == out);
 }
 
+TEST_CASE("method to_upper", "[string_utils]")
+{
+	auto in = string("");
+	auto out = string();
+	out = to_upper(in);
+	CHECK(in == out);
+
+	in = string("a");
+	out = to_upper(in);
+	CHECK(string("A") == out);
+	CHECK(string("a") == in); // Check that input has not been affected.
+	in = string("aA");
+	out = to_upper(in);
+	CHECK(string("AA") == out);
+	in = string("Aa");
+	out = to_upper(in);
+	CHECK(string("AA") == out);
+	in = string("AA");
+	out = to_upper(in);
+	CHECK(string("AA") == out);
+
+	in = string("ελλάδα");
+	out = to_upper(in);
+	// FIXME	CHECK(string("ΕΛΛΆΔΑ") == out);
+
+	in = string("grüßen");
+	out = to_upper(in);
+	// FIXME	CHECK(string("GRÜẞEN") == out);
+
+	in = string("ijsselmeer");
+	out = to_upper(in);
+	CHECK(string("IJSSELMEER") == out);
+	in = string("IJsselmeer");
+	out = to_upper(in);
+	CHECK(string("IJSSELMEER") == out);
+
+	in = string("ĳsselmeer");
+	out = to_upper(in);
+	// FIXME	CHECK(string("ĲSSELMEER") == out);
+	in = string("Ĳsselmeer");
+	out = to_upper(in);
+	CHECK(string("ĲSSELMEER") == out);
+
+	// TODO Add some Arabic and Hebrew examples.
+}
+
 TEST_CASE("method capitalize", "[string_utils]")
 {
 	auto in = string("");
-	CHECK("" == capitalize(in));
-	in = string("a");
-	CHECK("A" == capitalize(in));
-	CHECK("a" == in); // Check that input has not been affected.
-	in = string("A");
-	CHECK("A" == capitalize(in));
+	auto out = string();
+	out = capitalize(in);
+	CHECK(string("") == out);
 
-	in = string("car");
-	CHECK("Car" == capitalize(in));
-	in = string("Car");
-	CHECK("Car" == capitalize(in));
-	in = string("cAr");
-	CHECK("CAr" == capitalize(in));
-	in = string("CAr");
-	CHECK("CAr" == capitalize(in));
-	in = string("caR");
-	CHECK("CaR" == capitalize(in));
-	in = string("CaR");
-	CHECK("CaR" == capitalize(in));
-	in = string("cAR");
-	CHECK("CAR" == capitalize(in));
-	in = string("CAR");
-	CHECK("CAR" == capitalize(in));
+	in = string("a");
+	out = capitalize(in);
+	CHECK(string("A") == out);
+	CHECK(string("a") == in); // Check that input has not been affected.
+	in = string("A");
+	out = capitalize(in);
+	CHECK(string("A") == out);
+	in = string("Aa");
+	out = capitalize(in);
+	CHECK(string("Aa") == out);
+	in = string("aA");
+	out = capitalize(in);
+	CHECK(string("AA") == out);
+	in = string("AA");
+	out = capitalize(in);
+	CHECK(string("AA") == out);
 
 	in = string("ελλάδα");
-//FIXME	CHECK("Ελλάδα" == capitalize(in));
+	out = capitalize(in);
+	// FIXME	CHECK(string("Ελλάδα") == out);
 	in = string("Ελλάδα");
-	CHECK("Ελλάδα" == capitalize(in));
+	out = capitalize(in);
+	CHECK(string("Ελλάδα") == out);
 	in = string("ΕΛΛΆΔΑ");
-	CHECK("ΕΛΛΆΔΑ" == capitalize(in));
+	out = capitalize(in);
+	CHECK(string("ΕΛΛΆΔΑ") == out);
+
 	in = string("σίγμα");
-//FIXME	CHECK("Σίγμα" == capitalize(in));
-	in = string("ςίγμα");
-//FIXME	CHECK("Σίγμα" == capitalize(in));
+	out = capitalize(in);
+	// FIXME	CHECK(string("Σίγμα") == out);
+	in = string("ςίγμα"); // use of ς where σ should be used
+	out = capitalize(in);
+	// FIXME	CHECK(string("Σίγμα") == out);
 	in = string("Σίγμα");
-	CHECK("Σίγμα" == capitalize(in));
+	out = capitalize(in);
+	CHECK(string("Σίγμα") == out);
 
-	in = string("ij");
-	CHECK("IJ" == capitalize(in, true));
-	in = string("Ij");
-	CHECK("IJ" == capitalize(in, true));
-	in = string("iJ");
-	CHECK("IJ" == capitalize(in, true));
-	in = string("IJ");
-	CHECK("IJ" == capitalize(in, true));
 	in = string("ijsselmeer");
-	CHECK("IJsselmeer" == capitalize(in, true));
+	out = capitalize(in);
+	CHECK(string("Ijsselmeer") == out);
 	in = string("Ijsselmeer");
-	CHECK("IJsselmeer" == capitalize(in, true));
+	out = capitalize(in);
+	CHECK(string("Ijsselmeer") == out);
 	in = string("iJsselmeer");
-	CHECK("IJsselmeer" == capitalize(in, true));
+	out = capitalize(in);
+	CHECK(string("IJsselmeer") == out);
 	in = string("IJsselmeer");
-	CHECK("IJsselmeer" == capitalize(in, true));
+	out = capitalize(in);
+	CHECK(string("IJsselmeer") == out);
 
-	in = string("ĳ");
-//FIXME	CHECK("Ĳ" == capitalize(in));
-	in = string("Ĳ");
-	CHECK("Ĳ" == capitalize(in));
+	in = string("ijsselmeer");
+	out = capitalize(in, true);
+	CHECK(string("IJsselmeer") == out);
+	in = string("Ijsselmeer");
+	out = capitalize(in, true);
+	CHECK(string("IJsselmeer") == out);
+	in = string("iJsselmeer");
+	out = capitalize(in, true);
+	CHECK(string("IJsselmeer") == out);
+	in = string("IJsselmeer");
+	out = capitalize(in, true);
+	CHECK(string("IJsselmeer") == out);
+
 	in = string("ĳsselmeer");
-//FIXME	CHECK("Ĳsselmeer" == capitalize(in));
+	out = capitalize(in);
+	// FIXME	CHECK(string("Ĳsselmeer") == out);
 	in = string("Ĳsselmeer");
-	CHECK("Ĳsselmeer" == capitalize(in));
+	out = capitalize(in);
+	CHECK(string("Ĳsselmeer") == out);
+
 	in = string("ĳsselmeer");
-//FIXME	CHECK("Ĳsselmeer" == capitalize(in, true));
+	out = capitalize(in, true);
+	// FIXME	CHECK(string("Ĳsselmeer") == out);
 	in = string("Ĳsselmeer");
-	CHECK("Ĳsselmeer" == capitalize(in, true));
+	out = capitalize(in, true);
+	CHECK(string("Ĳsselmeer") == out);
+
+	// TODO Add some Arabic and Hebrew examples.
 }
