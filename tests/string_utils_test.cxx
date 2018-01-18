@@ -23,6 +23,7 @@
 #include "../src/nuspell/string_utils.hxx"
 
 using namespace std;
+using namespace std::literals;
 using namespace hunspell;
 
 TEST_CASE("method split_on_any_of", "[string_utils]")
@@ -36,6 +37,8 @@ TEST_CASE("method split_on_any_of", "[string_utils]")
 
 TEST_CASE("method split", "[string_utils]")
 {
+	// tests split(), also tests split_v
+
 	auto in = string(";abc;;qwe;zxc;");
 	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
 	auto out = vector<string>();
@@ -46,12 +49,6 @@ TEST_CASE("method split", "[string_utils]")
 	exp = {"", "1", "234", "qwe<==>", "", ""};
 	split_v(in, "<>", out);
 	CHECK(exp == out);
-}
-
-TEST_CASE("method split_v", "[string_utils]")
-{
-	// TODO
-	CHECK(1 == 1);
 }
 
 TEST_CASE("method split_first", "[string_utils]")
@@ -78,12 +75,8 @@ TEST_CASE("method split_first", "[string_utils]")
 
 TEST_CASE("method split_on_whitespace", "[string_utils]")
 {
-	// TODO
-	CHECK(1 == 1);
-}
+	// also tests _v variant
 
-TEST_CASE("method split_on_whitespace_v", "[string_utils]")
-{
 	auto in = string("   qwe ert  \tasd ");
 	auto exp = vector<string>{"qwe", "ert", "asd"};
 	auto out = vector<string>();
@@ -120,11 +113,11 @@ TEST_CASE("method to_upper", "[string_utils]")
 
 	in = string("ελλάδα");
 	out = to_upper(in);
-	// FIXME	CHECK(string("ΕΛΛΆΔΑ") == out);
+	// FIXME CHECK(string("ΕΛΛΆΔΑ") == out);
 
 	in = string("grüßen");
 	out = to_upper(in);
-	// FIXME	CHECK(string("GRÜẞEN") == out);
+	// FIXME CHECK(string("GRÜẞEN") == out);
 
 	in = string("ijsselmeer");
 	out = to_upper(in);
@@ -135,7 +128,7 @@ TEST_CASE("method to_upper", "[string_utils]")
 
 	in = string("ĳsselmeer");
 	out = to_upper(in);
-	// FIXME	CHECK(string("ĲSSELMEER") == out);
+	// FIXME CHECK(string("ĲSSELMEER") == out);
 	in = string("Ĳsselmeer");
 	out = to_upper(in);
 	CHECK(string("ĲSSELMEER") == out);
@@ -169,7 +162,7 @@ TEST_CASE("method capitalize", "[string_utils]")
 
 	in = string("ελλάδα");
 	out = capitalize(in);
-	// FIXME	CHECK(string("Ελλάδα") == out);
+	// FIXME CHECK(string("Ελλάδα") == out);
 	in = string("Ελλάδα");
 	out = capitalize(in);
 	CHECK(string("Ελλάδα") == out);
@@ -179,10 +172,10 @@ TEST_CASE("method capitalize", "[string_utils]")
 
 	in = string("σίγμα");
 	out = capitalize(in);
-	// FIXME	CHECK(string("Σίγμα") == out);
-	in = string("ςίγμα"); // use of ς where σ should be used
+	// FIXME CHECK(string("Σίγμα") == out);
+	in = string("ςίγμα"); // Use of ς where σ is expected.
 	out = capitalize(in);
-	// FIXME	CHECK(string("Σίγμα") == out);
+	// FIXME CHECK(string("Σίγμα") == out);
 	in = string("Σίγμα");
 	out = capitalize(in);
 	CHECK(string("Σίγμα") == out);
@@ -215,17 +208,31 @@ TEST_CASE("method capitalize", "[string_utils]")
 
 	in = string("ĳsselmeer");
 	out = capitalize(in);
-	// FIXME	CHECK(string("Ĳsselmeer") == out);
+	// FIXME CHECK(string("Ĳsselmeer") == out);
 	in = string("Ĳsselmeer");
 	out = capitalize(in);
 	CHECK(string("Ĳsselmeer") == out);
 
 	in = string("ĳsselmeer");
 	out = capitalize(in, true);
-	// FIXME	CHECK(string("Ĳsselmeer") == out);
+	// FIXME CHECK(string("Ĳsselmeer") == out);
 	in = string("Ĳsselmeer");
 	out = capitalize(in, true);
 	CHECK(string("Ĳsselmeer") == out);
 
 	// TODO Add some Arabic and Hebrew examples.
+}
+
+TEST_CASE("method classify_casing", "[string_utils]")
+{
+	CHECK(Casing::SMALL == classify_casing("alllowercase"s));
+	CHECK(Casing::SMALL == classify_casing("alllowercase3"s));
+	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase"s));
+	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase_"s));
+	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE"s));
+	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE."s));
+	CHECK(Casing::CAMEL == classify_casing("iCamelCase"s));
+	CHECK(Casing::CAMEL == classify_casing("iCamelCase@"s));
+	CHECK(Casing::PASCAL == classify_casing("InitCamelCase"s));
+	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s));
 }

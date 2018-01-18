@@ -194,6 +194,7 @@ auto split_on_whitespace_v(const std::basic_string<CharT>& s,
 /*!
  * Convert entire string to upper case.
  *
+<<<<<<< HEAD
  * \param s in string to convert to upper case.
  * \param loc in locale.
  * \return converted string.
@@ -210,8 +211,7 @@ auto to_upper1(std::basic_string<CharT> s,
                const std::locale& loc = std::locale())
 {
 	auto& f = std::use_facet<std::ctype<CharT>>(loc);
-	// FIXME	std::transform(s.begin(), s.end(), s.begin(),
-	// f.toupper);
+	// FIXME std::transform(s.begin(), s.end(), s.begin(), f.toupper);
 	return s;
 }
 
@@ -220,7 +220,7 @@ auto to_upper2(std::basic_string<CharT> s,
                const std::locale& loc = std::locale())
 {
 	auto& f = std::use_facet<std::ctype<CharT>>(loc);
-	// FIXME	return string(f.toupper(s.data(), s.data() + s.size()));
+	// FIXME return string(f.toupper(s.data(), s.data() + s.size()));
 	return s;
 }
 
@@ -237,6 +237,8 @@ auto to_upper3(std::basic_string<CharT> s,
  *
  * A special case is made for Dutch when boolean d is set to true. When the
  * first two characters are "ij", both will be converted to upper case.
+ * A special case is made for Dutch when boolean d is set to true. When the
+ * first two characters are "ij", both will be casted to upper case.
  *
  * \param s in string to capitalize.
  * \param d in boolean indicating capitalizating for Dutch ij digraph/ligature.
@@ -255,7 +257,7 @@ auto capitalize(std::basic_string<CharT> s, bool d = false,
 	                        // boost::locale::to_title
 	if (d && length > 1 && 'i' == f.tolower(s[0]) && 'j' == f.tolower(s[1]))
 		s[1] = f.toupper(s[1]); // TODO Optimization candidate for Boost
-		                        // boost::locale::to_title
+	                                // boost::locale::to_title
 	return s;
 }
 
@@ -266,11 +268,55 @@ auto capitalize1(std::basic_string<CharT> s, bool d = false,
 	auto length = s.length();
 	if (length < 1)
 		return s;
-	// FIXME	s[0] = boost::to_upper(s[0], loc);
-	if (d && length > 1 && 'i' == boost::to_lower(s[0]) &&
-	    'j' == boost::to_lower(s[1]))
-		// FIXME		s[1] = boost::to_upper(s[1], loc);
-		return s;
+	// FIXME
+	//	s[0] = boost::to_upper(s[0], loc);
+	//	if (d && length > 1 && 'i' == boost::to_lower(s[0]) && 'j' ==
+	//boost::to_lower(s[1]))
+	//		s[1] = boost::to_upper(s[1], loc);
+	return s;
+}
+
+/**
+ * @brief Casing type enum
+ */
+enum class Casing { SMALL, INIT_CAPITAL, ALL_CAPITAL, CAMEL, PASCAL };
+
+/**
+ * Returns casing (capitalization) type for a word.
+ *
+ * Casing is sometimes reffered to as capitalization.
+ *
+ * @param word word for which casing is determined.
+ * @return casing type.
+ */
+template <class CharT>
+auto classify_casing(const std::basic_string<CharT>& s,
+                     const std::locale& loc = std::locale()) -> Casing
+{
+	using namespace std;
+	size_t upper = 0;
+	size_t lower = 0;
+	for (auto& c : s) {
+		if (isupper(c, loc))
+			upper++;
+		else if (islower(c, loc))
+			lower++;
+		// else neutral
+	}
+	if (upper == 0)               // all lowercase, maybe with some neutral
+		return Casing::SMALL; // most common case
+
+	auto first_capital = isupper(s[0], loc);
+	if (first_capital && upper == 1)
+		return Casing::INIT_CAPITAL; // second most common
+
+	if (lower == 0)
+		return Casing::ALL_CAPITAL;
+
+	if (first_capital)
+		return Casing::PASCAL;
+	else
+		return Casing::CAMEL;
 }
 }
 #endif
