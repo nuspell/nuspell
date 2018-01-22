@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
+#include <boost/locale.hpp>
 #include <iterator>
 #include <locale>
 #include <string>
@@ -194,7 +195,6 @@ auto split_on_whitespace_v(const std::basic_string<CharT>& s,
 /*!
  * Convert entire string to upper case.
  *
-<<<<<<< HEAD
  * \param s in string to convert to upper case.
  * \param loc in locale.
  * \return converted string.
@@ -206,39 +206,12 @@ auto to_upper(std::basic_string<CharT> s,
 	return boost::to_upper_copy(s, loc);
 }
 
-template <class CharT>
-auto to_upper1(std::basic_string<CharT> s,
-               const std::locale& loc = std::locale())
-{
-	auto& f = std::use_facet<std::ctype<CharT>>(loc);
-	// FIXME std::transform(s.begin(), s.end(), s.begin(), f.toupper);
-	return s;
-}
-
-template <class CharT>
-auto to_upper2(std::basic_string<CharT> s,
-               const std::locale& loc = std::locale())
-{
-	auto& f = std::use_facet<std::ctype<CharT>>(loc);
-	// FIXME return string(f.toupper(s.data(), s.data() + s.size()));
-	return s;
-}
-
-template <class CharT>
-auto to_upper3(std::basic_string<CharT> s,
-               const std::locale& loc = std::locale())
-{
-	// TODO Implement using locale.
-	return boost::to_upper(s);
-}
-
 /*!
- * Capitalize a string by converting the first character to upper case.
+ * Capitalize a string by converting the first character to upper case and the
+ * rest to lower case.
  *
- * A special case is made for Dutch when boolean d is set to true. When the
+ * A special case is made for Dutch when the
  * first two characters are "ij", both will be converted to upper case.
- * A special case is made for Dutch when boolean d is set to true. When the
- * first two characters are "ij", both will be casted to upper case.
  *
  * \param s in string to capitalize.
  * \param d in boolean indicating capitalizating for Dutch ij digraph/ligature.
@@ -246,34 +219,10 @@ auto to_upper3(std::basic_string<CharT> s,
  * \return capitalized string.
  */
 template <class CharT>
-auto capitalize(std::basic_string<CharT> s, bool d = false,
+auto capitalize(std::basic_string<CharT> s,
                 const std::locale& loc = std::locale())
 {
-	auto length = s.length();
-	if (length < 1)
-		return s;
-	auto& f = std::use_facet<std::ctype<CharT>>(loc);
-	s[0] = f.toupper(s[0]); // TODO Optimization candidate for Boost
-	                        // boost::locale::to_title
-	if (d && length > 1 && 'i' == f.tolower(s[0]) && 'j' == f.tolower(s[1]))
-		s[1] = f.toupper(s[1]); // TODO Optimization candidate for Boost
-	                                // boost::locale::to_title
-	return s;
-}
-
-template <class CharT>
-auto capitalize1(std::basic_string<CharT> s, bool d = false,
-                 const std::locale& loc = std::locale())
-{
-	auto length = s.length();
-	if (length < 1)
-		return s;
-	// FIXME
-	//	s[0] = boost::to_upper(s[0], loc);
-	//	if (d && length > 1 && 'i' == boost::to_lower(s[0]) && 'j' ==
-	//boost::to_lower(s[1]))
-	//		s[1] = boost::to_upper(s[1], loc);
-	return s;
+	return boost::locale::to_title(s, loc);
 }
 
 /**
