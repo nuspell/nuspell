@@ -20,6 +20,7 @@
 #define HUNSPELL_AFF_MANAGER_HXX
 
 #include "locale_utils.hxx"
+#include <boost/algorithm/string.hpp>
 #include <istream>
 #include <string>
 #include <utility>
@@ -39,7 +40,7 @@ class Encoding {
 	         const std::locale& ascii_loc = std::locale::classic())
 	    : name(e)
 	{
-		toupper(name, ascii_loc);
+		boost::algorithm::to_upper(name, ascii_loc);
 		if (name == "UTF8")
 			name = "UTF-8";
 	}

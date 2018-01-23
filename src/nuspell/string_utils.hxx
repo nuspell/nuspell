@@ -225,18 +225,18 @@ auto capitalize(std::basic_string<CharT> s,
 	return boost::locale::to_title(s, loc);
 }
 
-/**
- * @brief Casing type enum
+/*!
+ * \brief Casing type enum
  */
 enum class Casing { SMALL, INIT_CAPITAL, ALL_CAPITAL, CAMEL, PASCAL };
 
-/**
+/*!
  * Returns casing (capitalization) type for a word.
  *
  * Casing is sometimes reffered to as capitalization.
  *
- * @param word word for which casing is determined.
- * @return casing type.
+ * \param word word for which casing is determined.
+ * \return casing type.
  */
 template <class CharT>
 auto classify_casing(const std::basic_string<CharT>& s,

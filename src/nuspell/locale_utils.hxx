@@ -48,13 +48,6 @@ auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string;
 // put template function definitions bellow the declarations above
 // otherwise doxygen has bugs when generating call graphs
 
-template <class CharT>
-auto toupper(std::basic_string<CharT>& s, const std::locale& loc) -> void
-{
-	auto& f = std::use_facet<std::ctype<char>>(loc);
-	f.toupper(&s[0], &s[s.size()]);
-}
-
 class LocaleInput {
 };
 class Utf8Input {
@@ -83,7 +76,6 @@ template <class CharT>
 auto to_narrow_boost(const std::basic_string<CharT>& w_in,
                      const std::locale& outloc)
 {
-	using namespace std;
 	using namespace boost::locale::conv;
 	return from_utf(w_in, outloc);
 }
