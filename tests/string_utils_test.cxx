@@ -18,8 +18,8 @@
 
 #include "catch.hpp"
 
-#include <iostream>
 #include <boost/locale.hpp>
+#include <iostream>
 
 #include "../src/nuspell/string_utils.hxx"
 
@@ -112,7 +112,6 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK("AA"s == to_upper("Aa"s, l));
 	CHECK("AA"s == to_upper("AA"s, l));
 
-
 	CHECK("TABLE"s == to_upper("table"s, l));
 	CHECK("TABLE"s == to_upper("Table"s, l));
 	CHECK("TABLE"s == to_upper("tABLE"s, l));
@@ -157,7 +156,6 @@ TEST_CASE("method to_title", "[string_utils]")
 	CHECK("Aa"s == to_title("Aa"s, l));
 	CHECK("Aa"s == to_title("aA"s, l));
 	CHECK("Aa"s == to_title("AA"s, l));
-
 
 	CHECK("Table"s == to_title("table"s, l));
 	CHECK("Table"s == to_title("Table"s, l));

@@ -61,12 +61,6 @@ TEST_CASE("header locale_utils", "[locale_utils]")
 		CHECK_FALSE(is_all_ascii("brown foxĳӤ"s));
 	}
 
-	SECTION("method ascii_to_ucs2_skip_invalid")
-	{
-		CHECK(u"ABC" == ascii_to_ucs2_skip_invalid("ABC"));
-		CHECK(u"ABC" == ascii_to_ucs2_skip_invalid("ABCĳӤ日"));
-	}
-
 	SECTION("method latin1_to_ucs2")
 	{
 		CHECK(u"" == latin1_to_ucs2(""s));

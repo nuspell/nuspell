@@ -202,16 +202,6 @@ auto is_all_ascii(const std::string& s) -> bool
 	return all_of(s.begin(), s.end(), is_ascii);
 }
 
-auto ascii_to_ucs2_skip_invalid(const std::string& s) -> std::u16string
-{
-	// UNUSED FUNCTION, maybe remove
-	u16string ret(s.size(), 0);
-	auto i = ret.begin();
-	i = copy_if(s.begin(), s.end(), i, is_ascii);
-	ret.erase(i, ret.end());
-	return ret;
-}
-
 template <class CharT>
 auto widen_latin1(char c) -> CharT
 {
@@ -227,6 +217,7 @@ auto latin1_to_ucs2(const std::string& s) -> std::u16string
 
 auto latin1_to_u32(const std::string& s) -> std::u32string
 {
+	// UNUSED FUNCTION, maybe remove
 	u32string ret(s.size(), 0);
 	transform(s.begin(), s.end(), ret.begin(), widen_latin1<char32_t>);
 	return ret;

@@ -73,18 +73,31 @@ inline auto to_wide_std(const std::string& in, const std::locale& inloc)
 }
 
 template <class CharT>
-auto to_narrow_boost(const std::basic_string<CharT>& w_in,
-                     const std::locale& outloc)
+auto to_dict_encoding(const std::basic_string<CharT>& w_in,
+                      const std::locale& dicloc)
 {
 	using namespace boost::locale::conv;
-	return from_utf(w_in, outloc);
+	return from_utf(w_in, dicloc);
 }
 
 template <>
-inline auto to_narrow_boost(const std::string& w_in,
-                            const std::locale& /*outloc*/)
+auto inline to_dict_encoding(const std::string& w_in,
+                             const std::locale& /*dicloc*/)
 {
 	return w_in;
+}
+
+template <class CharT>
+auto from_dict_encoding(const std::string& in, const std::locale& dicloc)
+{
+	using namespace boost::locale::conv;
+	return to_utf<CharT>(in, dicloc);
+}
+template <>
+auto inline from_dict_encoding<char>(const std::string& in,
+                                     const std::locale& /*dicloc*/)
+{
+	return in;
 }
 
 template <class Str, class Callback>
