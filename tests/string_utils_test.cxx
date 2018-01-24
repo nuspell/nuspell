@@ -29,10 +29,10 @@ using namespace hunspell;
 
 TEST_CASE("method split_on_any_of", "[string_utils]")
 {
-	auto in = string("^abc;.qwe/zxc/");
+	auto in = "^abc;.qwe/zxc/"s;
 	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
 	auto out = vector<string>();
-	split_on_any_of(in, string(".;^/"), back_inserter(out));
+	split_on_any_of(in, ".;^/"s, back_inserter(out));
 	CHECK(exp == out);
 }
 
@@ -40,7 +40,7 @@ TEST_CASE("method split", "[string_utils]")
 {
 	// tests split(), also tests split_v
 
-	auto in = string(";abc;;qwe;zxc;");
+	auto in = ";abc;;qwe;zxc;"s;
 	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
 	auto out = vector<string>();
 	split_v(in, ';', out);
@@ -54,22 +54,22 @@ TEST_CASE("method split", "[string_utils]")
 
 TEST_CASE("method split_first", "[string_utils]")
 {
-	auto in = string("first\tsecond");
-	auto first = string("first");
+	auto in = "first\tsecond"s;
+	auto first = "first"s;
 	auto out = split_first(in, '\t');
 	CHECK(first == out);
 
-	in = string("first");
+	in = "first"s;
 	out = split_first(in, '\t');
 	CHECK(first == out);
 
-	in = string("\tsecond");
-	first = string("");
+	in = "\tsecond"s;
+	first = ""s;
 	out = split_first(in, '\t');
 	CHECK(first == out);
 
-	in = string("");
-	first = string("");
+	in = ""s;
+	first = ""s;
 	out = split_first(in, '\t');
 	CHECK(first == out);
 }
@@ -78,13 +78,13 @@ TEST_CASE("method split_on_whitespace", "[string_utils]")
 {
 	// also tests _v variant
 
-	auto in = string("   qwe ert  \tasd ");
+	auto in = "   qwe ert  \tasd "s;
 	auto exp = vector<string>{"qwe", "ert", "asd"};
 	auto out = vector<string>();
 	split_on_whitespace_v(in, out);
 	CHECK(exp == out);
 
-	in = string("   \t\r\n  ");
+	in = "   \t\r\n  "s;
 	exp = vector<string>{};
 	// out = vector<string>();
 	split_on_whitespace_v(in, out);
@@ -106,42 +106,42 @@ TEST_CASE("method to_upper", "[string_utils]")
 	using boost::locale::to_upper;
 	auto l = g("en_US.UTF-8");
 
-	CHECK(string("") == to_upper(string(""), l));
-	CHECK(string("A") == to_upper(string("a"), l));
-	CHECK(string("AA") == to_upper(string("aA"), l));
-	CHECK(string("AA") == to_upper(string("Aa"), l));
-	CHECK(string("AA") == to_upper(string("AA"), l));
+	CHECK(""s == to_upper(""s, l));
+	CHECK("A"s == to_upper("a"s, l));
+	CHECK("AA"s == to_upper("aA"s, l));
+	CHECK("AA"s == to_upper("Aa"s, l));
+	CHECK("AA"s == to_upper("AA"s, l));
 
 
-	CHECK(string("TABLE") == to_upper(string("table"), l));
-	CHECK(string("TABLE") == to_upper(string("Table"), l));
-	CHECK(string("TABLE") == to_upper(string("tABLE"), l));
-	CHECK(string("TABLE") == to_upper(string("TABLE"), l));
+	CHECK("TABLE"s == to_upper("table"s, l));
+	CHECK("TABLE"s == to_upper("Table"s, l));
+	CHECK("TABLE"s == to_upper("tABLE"s, l));
+	CHECK("TABLE"s == to_upper("TABLE"s, l));
 
 	l = g("el_GR.UTF-8");
-	CHECK(string("ΕΛΛΆΔΑ") == to_upper(string("ελλάδα"), l));
-	CHECK(string("ΕΛΛΆΔΑ") == to_upper(string("Ελλάδα"), l));
-	CHECK(string("ΕΛΛΆΔΑ") == to_upper(string("ΕΛΛΆΔΑ"), l));
-	CHECK(string("ΣΊΓΜΑ") == to_upper(string("Σίγμα"), l));
-	CHECK(string("ΣΊΓΜΑ") == to_upper(string("σίγμα"), l));
+	CHECK("ΕΛΛΆΔΑ"s == to_upper("ελλάδα"s, l));
+	CHECK("ΕΛΛΆΔΑ"s == to_upper("Ελλάδα"s, l));
+	CHECK("ΕΛΛΆΔΑ"s == to_upper("ΕΛΛΆΔΑ"s, l));
+	CHECK("ΣΊΓΜΑ"s == to_upper("Σίγμα"s, l));
+	CHECK("ΣΊΓΜΑ"s == to_upper("σίγμα"s, l));
 	// Use of ς where σ is expected, should convert to upper case Σ.
-	CHECK(string("ΣΊΓΜΑ") == to_upper(string("ςίγμα"), l));
+	CHECK("ΣΊΓΜΑ"s == to_upper("ςίγμα"s, l));
 
 	l = g("de_DE.UTF-8");
 	// Note that lower case ü is not converted to upper case Ü.
 	// Note that lower case ß is converted to double SS.
-	// CHECK(string("GRüSSEN") == to_upper(string("grüßen"), l));
-	CHECK(string("GRÜSSEN") == to_upper(string("GRÜßEN"), l));
+	// CHECK("GRüSSEN"s == to_upper("grüßen"s, l));
+	CHECK("GRÜSSEN"s == to_upper("GRÜßEN"s, l));
 	// Note that upper case ẞ is kept in upper case.
-	CHECK(string("GRÜẞEN") == to_upper(string("GRÜẞEN"), l));
+	CHECK("GRÜẞEN"s == to_upper("GRÜẞEN"s, l));
 
 	l = g("nl_NL.UTF-8");
-	CHECK(string("IJSSELMEER") == to_upper(string("ijsselmeer"), l));
-	CHECK(string("IJSSELMEER") == to_upper(string("IJsselmeer"), l));
-	CHECK(string("IJSSELMEER") == to_upper(string("IJSSELMEER"), l));
-	CHECK(string("ĲSSELMEER") == to_upper(string("ĳsselmeer"), l));
-	CHECK(string("ĲSSELMEER") == to_upper(string("Ĳsselmeer"), l));
-	CHECK(string("ĲSSELMEER") == to_upper(string("ĲSSELMEER"), l));
+	CHECK("IJSSELMEER"s == to_upper("ijsselmeer"s, l));
+	CHECK("IJSSELMEER"s == to_upper("IJsselmeer"s, l));
+	CHECK("IJSSELMEER"s == to_upper("IJSSELMEER"s, l));
+	CHECK("ĲSSELMEER"s == to_upper("ĳsselmeer"s, l));
+	CHECK("ĲSSELMEER"s == to_upper("Ĳsselmeer"s, l));
+	CHECK("ĲSSELMEER"s == to_upper("ĲSSELMEER"s, l));
 
 	// TODO Add some Arabic and Hebrew examples.
 }
@@ -151,43 +151,43 @@ TEST_CASE("method to_title", "[string_utils]")
 	boost::locale::generator g;
 	using boost::locale::to_title;
 	auto l = g("en_US.UTF-8");
-	CHECK(string("") == to_title(string(""), l));
-	CHECK(string("A") == to_title(string("a"), l));
-	CHECK(string("A") == to_title(string("A"), l));
-	CHECK(string("Aa") == to_title(string("Aa"), l));
-	CHECK(string("Aa") == to_title(string("aA"), l));
-	CHECK(string("Aa") == to_title(string("AA"), l));
+	CHECK(""s == to_title(""s, l));
+	CHECK("A"s == to_title("a"s, l));
+	CHECK("A"s == to_title("A"s, l));
+	CHECK("Aa"s == to_title("Aa"s, l));
+	CHECK("Aa"s == to_title("aA"s, l));
+	CHECK("Aa"s == to_title("AA"s, l));
 
 
-	CHECK(string("Table") == to_title(string("table"), l));
-	CHECK(string("Table") == to_title(string("Table"), l));
-	CHECK(string("Table") == to_title(string("tABLE"), l));
-	CHECK(string("Table") == to_title(string("TABLE"), l));
+	CHECK("Table"s == to_title("table"s, l));
+	CHECK("Table"s == to_title("Table"s, l));
+	CHECK("Table"s == to_title("tABLE"s, l));
+	CHECK("Table"s == to_title("TABLE"s, l));
 
 	l = g("el_GR.UTF-8");
-	CHECK(string("Ελλάδα") == to_title(string("ελλάδα"), l));
-	CHECK(string("Ελλάδα") == to_title(string("Ελλάδα"), l));
-	CHECK(string("Ελλάδα") == to_title(string("ΕΛΛΆΔΑ"), l));
-	CHECK(string("Σίγμα") == to_title(string("Σίγμα"), l));
-	CHECK(string("Σίγμα") == to_title(string("σίγμα"), l));
+	CHECK("Ελλάδα"s == to_title("ελλάδα"s, l));
+	CHECK("Ελλάδα"s == to_title("Ελλάδα"s, l));
+	CHECK("Ελλάδα"s == to_title("ΕΛΛΆΔΑ"s, l));
+	CHECK("Σίγμα"s == to_title("Σίγμα"s, l));
+	CHECK("Σίγμα"s == to_title("σίγμα"s, l));
 	// Use of ς where σ is expected, should convert to upper case Σ.
-	CHECK(string("Σίγμα") == to_title(string("ςίγμα"), l));
+	CHECK("Σίγμα"s == to_title("ςίγμα"s, l));
 
 	l = g("de_DE.UTF-8");
-	CHECK(string("Grüßen") == to_title(string("grüßen"), l));
-	CHECK(string("Grüßen") == to_title(string("GRÜßEN"), l));
+	CHECK("Grüßen"s == to_title("grüßen"s, l));
+	CHECK("Grüßen"s == to_title("GRÜßEN"s, l));
 	// Use of upper case ẞ where lower case ß is expected.
-	CHECK(string("Grüßen") == to_title(string("GRÜẞEN"), l));
+	CHECK("Grüßen"s == to_title("GRÜẞEN"s, l));
 
 	l = g("nl_NL.UTF-8");
-	CHECK(string("IJsselmeer") == to_title(string("ijsselmeer"), l));
-	CHECK(string("IJsselmeer") == to_title(string("Ijsselmeer"), l));
-	CHECK(string("IJsselmeer") == to_title(string("iJsselmeer"), l));
-	CHECK(string("IJsselmeer") == to_title(string("IJsselmeer"), l));
-	CHECK(string("IJsselmeer") == to_title(string("IJSSELMEER"), l));
-	CHECK(string("Ĳsselmeer") == to_title(string("ĳsselmeer"), l));
-	CHECK(string("Ĳsselmeer") == to_title(string("Ĳsselmeer"), l));
-	CHECK(string("Ĳsselmeer") == to_title(string("ĲSSELMEER"), l));
+	CHECK("IJsselmeer"s == to_title("ijsselmeer"s, l));
+	CHECK("IJsselmeer"s == to_title("Ijsselmeer"s, l));
+	CHECK("IJsselmeer"s == to_title("iJsselmeer"s, l));
+	CHECK("IJsselmeer"s == to_title("IJsselmeer"s, l));
+	CHECK("IJsselmeer"s == to_title("IJSSELMEER"s, l));
+	CHECK("Ĳsselmeer"s == to_title("ĳsselmeer"s, l));
+	CHECK("Ĳsselmeer"s == to_title("Ĳsselmeer"s, l));
+	CHECK("Ĳsselmeer"s == to_title("ĲSSELMEER"s, l));
 
 	// TODO Add some Arabic and Hebrew examples.
 }

@@ -29,18 +29,18 @@ TEST_CASE("header locale_utils", "[locale_utils]")
 {
 	SECTION("method decode_utf8")
 	{
-		CHECK(U"" == decode_utf8(string("")));
-		// Omit constructor string("...") without risk for UTF-8?
-		CHECK(U"azĳß«" == decode_utf8(string("azĳß«")));
-		CHECK(U"日  Ӥ" != decode_utf8(string("Ӥ日本に")));
+		CHECK(U"" == decode_utf8(""s));
+		// Omit constructor "..."s without risk for UTF-8?
+		CHECK(U"azĳß«" == decode_utf8("azĳß«"s));
+		CHECK(U"日  Ӥ" != decode_utf8("Ӥ日本に"s));
 		// need counter example too
 	}
 
 	SECTION("method validate_utf8")
 	{
-		CHECK(validate_utf8(string("")));
-		CHECK(validate_utf8(string("the brown fox~")));
-		CHECK(validate_utf8(string("Ӥ日本に")));
+		CHECK(validate_utf8(""s));
+		CHECK(validate_utf8("the brown fox~"s));
+		CHECK(validate_utf8("Ӥ日本に"s));
 		// need counter example too
 	}
 
@@ -56,9 +56,9 @@ TEST_CASE("header locale_utils", "[locale_utils]")
 
 	SECTION("method is_all_ascii")
 	{
-		CHECK(is_all_ascii(string("")));
-		CHECK(is_all_ascii(string("the brown fox~")));
-		CHECK_FALSE(is_all_ascii(string("brown foxĳӤ")));
+		CHECK(is_all_ascii(""s));
+		CHECK(is_all_ascii("the brown fox~"s));
+		CHECK_FALSE(is_all_ascii("brown foxĳӤ"s));
 	}
 
 	SECTION("method ascii_to_ucs2_skip_invalid")
@@ -69,20 +69,20 @@ TEST_CASE("header locale_utils", "[locale_utils]")
 
 	SECTION("method latin1_to_ucs2")
 	{
-		CHECK(u"" == latin1_to_ucs2(string("")));
-		CHECK(u"abc" == latin1_to_ucs2(string("abc")));
+		CHECK(u"" == latin1_to_ucs2(""s));
+		CHECK(u"abc" == latin1_to_ucs2("abc"s));
 		// QUESTION Is next line OK?
-		CHECK(u"²¿ýþÿ" != latin1_to_ucs2(string("²¿ýþÿ")));
-		CHECK(u"Ӥ日本に" != latin1_to_ucs2(string("Ӥ日本に")));
+		CHECK(u"²¿ýþÿ" != latin1_to_ucs2("²¿ýþÿ"s));
+		CHECK(u"Ӥ日本に" != latin1_to_ucs2("Ӥ日本に"s));
 	}
 
 	SECTION("method latin1_to_u32")
 	{
-		CHECK(U"" == latin1_to_u32(string("")));
-		CHECK(U"abc~" == latin1_to_u32(string("abc~")));
+		CHECK(U"" == latin1_to_u32(""s));
+		CHECK(U"abc~" == latin1_to_u32("abc~"s));
 		// QUESTION Is next line OK?
-		CHECK(U"²¿ýþÿ" != latin1_to_u32(string("²¿ýþÿ")));
-		CHECK(U"Ӥ日本に" != latin1_to_u32(string("Ӥ日本に")));
+		CHECK(U"²¿ýþÿ" != latin1_to_u32("²¿ýþÿ"s));
+		CHECK(U"Ӥ日本に" != latin1_to_u32("Ӥ日本に"s));
 	}
 
 	SECTION("method is_all_bmp") { CHECK(true == is_all_bmp(U"abcýþÿӤ")); }
