@@ -26,8 +26,6 @@
 #define HUNSPELL_STRING_UTILS_HXX
 
 #include <algorithm>
-#include <boost/algorithm/string.hpp>
-#include <boost/locale.hpp>
 #include <iterator>
 #include <locale>
 #include <string>
@@ -190,39 +188,6 @@ auto split_on_whitespace_v(const std::basic_string<CharT>& s,
 {
 	v.clear();
 	split_on_whitespace(s, back_inserter(v), loc);
-}
-
-/*!
- * Convert entire string to upper case.
- *
- * \param s in string to convert to upper case.
- * \param loc in locale.
- * \return converted string.
- */
-template <class CharT>
-auto to_upper(std::basic_string<CharT> s,
-              const std::locale& loc = std::locale())
-{
-	return boost::to_upper_copy(s, loc);
-}
-
-/*!
- * Capitalize a string by converting the first character to upper case and the
- * rest to lower case.
- *
- * A special case is made for Dutch when the
- * first two characters are "ij", both will be converted to upper case.
- *
- * \param s in string to capitalize.
- * \param d in boolean indicating capitalizating for Dutch ij digraph/ligature.
- * \param loc in locale.
- * \return capitalized string.
- */
-template <class CharT>
-auto capitalize(std::basic_string<CharT> s,
-                const std::locale& loc = std::locale())
-{
-	return boost::locale::to_title(s, loc);
 }
 
 /*!

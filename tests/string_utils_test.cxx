@@ -8,7 +8,7 @@
  * (at your option) any later version.
  *
  * Nuspell is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; withto_upper( even the implied warranty of
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
@@ -19,6 +19,7 @@
 #include "catch.hpp"
 
 #include <iostream>
+#include <boost/locale.hpp>
 
 #include "../src/nuspell/string_utils.hxx"
 
@@ -92,14 +93,26 @@ TEST_CASE("method split_on_whitespace", "[string_utils]")
 
 TEST_CASE("method to_upper", "[string_utils]")
 {
-	CHECK(string("") == to_upper(string("")));
-	CHECK(string("A") == to_upper(string("a")));
-	CHECK(string("AA") == to_upper(string("aA")));
-	CHECK(string("AA") == to_upper(string("Aa")));
-	CHECK(string("AA") == to_upper(string("AA")));
+	// Major note here. boost::locale::to_upper is different
+	// from boost::algorithm::to_upper.
+	//
+	// The second works on char by char basis, so it can not be used with
+	// multibyte encodings, utf-8 (but is OK with wide strings) and can not
+	// handle sharp s to double S. Strictly char by char.
+	//
+	// Here we test the first locale::to_upper.
 
 	boost::locale::generator g;
+	using boost::locale::to_upper;
 	auto l = g("en_US.UTF-8");
+
+	CHECK(string("") == to_upper(string(""), l));
+	CHECK(string("A") == to_upper(string("a"), l));
+	CHECK(string("AA") == to_upper(string("aA"), l));
+	CHECK(string("AA") == to_upper(string("Aa"), l));
+	CHECK(string("AA") == to_upper(string("AA"), l));
+
+
 	CHECK(string("TABLE") == to_upper(string("table"), l));
 	CHECK(string("TABLE") == to_upper(string("Table"), l));
 	CHECK(string("TABLE") == to_upper(string("tABLE"), l));
@@ -116,10 +129,9 @@ TEST_CASE("method to_upper", "[string_utils]")
 
 	l = g("de_DE.UTF-8");
 	// Note that lower case ü is not converted to upper case Ü.
-	// Note that lower case ß is not converted to upper case ẞ.
-	CHECK(string("GRüßEN") == to_upper(string("grüßen"), l));
-	// Note that upper case Ü trigger a result in all upper case.
-	CHECK(string("GRÜßEN") == to_upper(string("GRÜßEN"), l));
+	// Note that lower case ß is converted to double SS.
+	// CHECK(string("GRüSSEN") == to_upper(string("grüßen"), l));
+	CHECK(string("GRÜSSEN") == to_upper(string("GRÜßEN"), l));
 	// Note that upper case ẞ is kept in upper case.
 	CHECK(string("GRÜẞEN") == to_upper(string("GRÜẞEN"), l));
 
@@ -134,58 +146,48 @@ TEST_CASE("method to_upper", "[string_utils]")
 	// TODO Add some Arabic and Hebrew examples.
 }
 
-TEST_CASE("method capitalize", "[string_utils]")
+TEST_CASE("method to_title", "[string_utils]")
 {
-	// FIXME The block below should work without locale.
-	// It throws an unexpected exception with message:
-	// std::bad_cast
-	// If the to_upper is changed from:
-	// return boost::to_upper_copy(s, loc);
-	// to
-	// return boost::locale::to_upper(s, loc);
-	// the errors appear.
-	// However, a there is no way to use
-	// return boost::to_title(s, loc)
-	// as it does not exist. If it was existing, it would fix the default
-	// locale problem.
-	CHECK(string("") == capitalize(string("")));
-	CHECK(string("A") == capitalize(string("a")));
-	CHECK(string("A") == capitalize(string("A")));
-	CHECK(string("Aa") == capitalize(string("Aa")));
-	CHECK(string("Aa") == capitalize(string("aA")));
-	CHECK(string("Aa") == capitalize(string("AA")));
-
 	boost::locale::generator g;
+	using boost::locale::to_title;
 	auto l = g("en_US.UTF-8");
-	CHECK(string("Table") == capitalize(string("table"), l));
-	CHECK(string("Table") == capitalize(string("Table"), l));
-	CHECK(string("Table") == capitalize(string("tABLE"), l));
-	CHECK(string("Table") == capitalize(string("TABLE"), l));
+	CHECK(string("") == to_title(string(""), l));
+	CHECK(string("A") == to_title(string("a"), l));
+	CHECK(string("A") == to_title(string("A"), l));
+	CHECK(string("Aa") == to_title(string("Aa"), l));
+	CHECK(string("Aa") == to_title(string("aA"), l));
+	CHECK(string("Aa") == to_title(string("AA"), l));
+
+
+	CHECK(string("Table") == to_title(string("table"), l));
+	CHECK(string("Table") == to_title(string("Table"), l));
+	CHECK(string("Table") == to_title(string("tABLE"), l));
+	CHECK(string("Table") == to_title(string("TABLE"), l));
 
 	l = g("el_GR.UTF-8");
-	CHECK(string("Ελλάδα") == capitalize(string("ελλάδα"), l));
-	CHECK(string("Ελλάδα") == capitalize(string("Ελλάδα"), l));
-	CHECK(string("Ελλάδα") == capitalize(string("ΕΛΛΆΔΑ"), l));
-	CHECK(string("Σίγμα") == capitalize(string("Σίγμα"), l));
-	CHECK(string("Σίγμα") == capitalize(string("σίγμα"), l));
+	CHECK(string("Ελλάδα") == to_title(string("ελλάδα"), l));
+	CHECK(string("Ελλάδα") == to_title(string("Ελλάδα"), l));
+	CHECK(string("Ελλάδα") == to_title(string("ΕΛΛΆΔΑ"), l));
+	CHECK(string("Σίγμα") == to_title(string("Σίγμα"), l));
+	CHECK(string("Σίγμα") == to_title(string("σίγμα"), l));
 	// Use of ς where σ is expected, should convert to upper case Σ.
-	CHECK(string("Σίγμα") == capitalize(string("ςίγμα"), l));
+	CHECK(string("Σίγμα") == to_title(string("ςίγμα"), l));
 
 	l = g("de_DE.UTF-8");
-	CHECK(string("Grüßen") == capitalize(string("grüßen"), l));
-	CHECK(string("Grüßen") == capitalize(string("GRÜßEN"), l));
+	CHECK(string("Grüßen") == to_title(string("grüßen"), l));
+	CHECK(string("Grüßen") == to_title(string("GRÜßEN"), l));
 	// Use of upper case ẞ where lower case ß is expected.
-	CHECK(string("Grüßen") == capitalize(string("GRÜẞEN"), l));
+	CHECK(string("Grüßen") == to_title(string("GRÜẞEN"), l));
 
 	l = g("nl_NL.UTF-8");
-	CHECK(string("IJsselmeer") == capitalize(string("ijsselmeer"), l));
-	CHECK(string("IJsselmeer") == capitalize(string("Ijsselmeer"), l));
-	CHECK(string("IJsselmeer") == capitalize(string("iJsselmeer"), l));
-	CHECK(string("IJsselmeer") == capitalize(string("IJsselmeer"), l));
-	CHECK(string("IJsselmeer") == capitalize(string("IJSSELMEER"), l));
-	CHECK(string("Ĳsselmeer") == capitalize(string("ĳsselmeer"), l));
-	CHECK(string("Ĳsselmeer") == capitalize(string("Ĳsselmeer"), l));
-	CHECK(string("Ĳsselmeer") == capitalize(string("ĲSSELMEER"), l));
+	CHECK(string("IJsselmeer") == to_title(string("ijsselmeer"), l));
+	CHECK(string("IJsselmeer") == to_title(string("Ijsselmeer"), l));
+	CHECK(string("IJsselmeer") == to_title(string("iJsselmeer"), l));
+	CHECK(string("IJsselmeer") == to_title(string("IJsselmeer"), l));
+	CHECK(string("IJsselmeer") == to_title(string("IJSSELMEER"), l));
+	CHECK(string("Ĳsselmeer") == to_title(string("ĳsselmeer"), l));
+	CHECK(string("Ĳsselmeer") == to_title(string("Ĳsselmeer"), l));
+	CHECK(string("Ĳsselmeer") == to_title(string("ĲSSELMEER"), l));
 
 	// TODO Add some Arabic and Hebrew examples.
 }

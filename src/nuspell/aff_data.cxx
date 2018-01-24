@@ -254,7 +254,7 @@ auto parse_flag_type(/* in */ istream& in, /* in */ size_t line_num,
 	(void)line_num;
 	string p;
 	in >> p;
-	toupper(p, in.getloc());
+	boost::algorithm::to_upper(p, in.getloc());
 	if (p == "LONG")
 		flag_type = FLAG_DOUBLE_CHAR;
 	else if (p == "NUM")
@@ -406,7 +406,7 @@ auto Aff_data::parse(istream& in) -> bool
 			continue; // skip comment or empty lines
 		}
 		ss >> command;
-		toupper(command, ss.getloc());
+		boost::algorithm::to_upper(command, ss.getloc());
 		ss >> ws;
 		if (command == "PFX" || command == "SFX") {
 			auto& vec = command[0] == 'P' ? prefixes : suffixes;
