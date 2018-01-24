@@ -27,6 +27,44 @@
 
 #include <boost/locale.hpp>
 
+/*
+ * Aff_Data class and the method parse() should be structured in the following
+ * way. The data members of the class should be data structures that are
+ * useful for reading and searching operations, but are not necessarely
+ * good for dynamic updates. They should be designed toward their later use
+ * while spellchecking.
+ *
+ * On the other hand, the method parse() should fill the data in intermediate
+ * data structures that are good for dynamic updates.
+ *
+ * E.g. In the class: we can store the affixes in sorted vector by the key
+ * that we are goind to search them, the adding affix. (aka flat_map)
+ *
+ * In method parse(): we will fill the affixes in simple unsorted vector.
+ *
+ * For simple stiff like simple int, flag, or for data structures that are
+ * equally good for updating and reading, just parse directly into the class
+ * data members.
+ *
+ * class Aff_data {
+ *	Affix_Table affix_table;     // wraps a vector and keeps invariant
+ *	                                that the vector is always sorted
+ *	Substring_Replace_Table rep_table;
+ * };
+ *
+ * parse(istream in) {
+ *	vector<aff_entry> affix_table_intermediate;
+ *	vector<rep_entry> rep_table_intermediate;
+ *	while (getline) {
+ *	...
+ *		affix_table_intermediate.push_back(entry)
+ *	...
+ *	}
+ *	At the end
+ *	affix_table = std::move(affix_table_intermediate);
+ * }
+ */
+
 namespace hunspell {
 
 using namespace std;
