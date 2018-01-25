@@ -15,4 +15,4 @@ libhunspell_1_6_include_HEADERS=hunspell.hxx hunspell.h hunvisapi.h \
 
 libhunspell_1_6_la_LDFLAGS=-no-undefined -version-info 0:1:0
 
-AM_CXXFLAGS=$(CFLAG_VISIBILITY) -DBUILDING_LIBHUNSPELL
+AM_CXXFLAGS= -std=c++14 $(CFLAG_VISIBILITY) -DBUILDING_LIBHUNSPELL
