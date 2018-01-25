@@ -192,5 +192,5 @@ bool RepList::conv(const std::string& in_word, std::string& dest) {
   }
 
   return change;
-}
+} int RepList::log_size() { return this->size; }
 

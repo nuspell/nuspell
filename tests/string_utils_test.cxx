@@ -100,11 +100,20 @@ TEST_CASE("method to_upper", "[string_utils]")
 	// multibyte encodings, utf-8 (but is OK with wide strings) and can not
 	// handle sharp s to double S. Strictly char by char.
 	//
-	// Here we test the first locale::to_upper.
+	// Here locale::to_upper is tested.
+	//
+	// As the active locale may vary from machine to machine, each test must
+	// explicitely be provided withw a locale.
 
 	boost::locale::generator g;
 	using boost::locale::to_upper;
-	auto l = g("en_US.UTF-8");
+	// Also std::locale can be the starting point in the code.
+	// Note that any std::locale used, should first be made available on the
+	// machine the test is run with
+	//     $ sudo dpkg-reconfigure locales
+	// This is not needed for any of the boost::locale used in the
+	// non-English tests below.
+	auto l = g(std::locale("en_US.UTF-8").name());
 
 	CHECK(""s == to_upper(""s, l));
 	CHECK("A"s == to_upper("a"s, l));
@@ -147,9 +156,20 @@ TEST_CASE("method to_upper", "[string_utils]")
 
 TEST_CASE("method to_title", "[string_utils]")
 {
+	// Here locale::to_upper is tested.
+	//
+	// As the active locale may vary from machine to machine, each test must
+	// explicitely be provided withw a locale.
+
 	boost::locale::generator g;
 	using boost::locale::to_title;
-	auto l = g("en_US.UTF-8");
+	// Also std::locale can be the starting point in the code.
+	// Note that any std::locale used, should first be made available on the
+	// machine the test is run with
+	//     $ sudo dpkg-reconfigure locales
+	// This is not needed for any of the boost::locale used in the
+	// non-English tests below.
+	auto l = g(std::locale("en_US.UTF-8").name());
 	CHECK(""s == to_title(""s, l));
 	CHECK("A"s == to_title("a"s, l));
 	CHECK("A"s == to_title("A"s, l));

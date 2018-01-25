@@ -363,7 +363,7 @@ class AffixMgr {
   int process_pfx_tree_to_list();
   int process_sfx_tree_to_list();
   int redundant_condition(char, const char* strip, int stripl, const char* cond, int);
-  void finishFileMgr(FileMgr* afflst);
+  void finishFileMgr(FileMgr* afflst); void log(const char* affpath, const char* key);
 };
 
 #endif
