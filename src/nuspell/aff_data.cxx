@@ -18,6 +18,7 @@
 
 #include "aff_data.hxx"
 
+#include "locale_utils.hxx"
 #include "stream_utils.hxx"
 #include "string_utils.hxx"
 #include <algorithm>
@@ -25,6 +26,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
 
 /*
@@ -69,6 +71,13 @@ namespace hunspell {
 
 using namespace std;
 
+Encoding::Encoding(const std::string& e, const std::locale& ascii_loc) : name(e)
+{
+	boost::algorithm::to_upper(name, ascii_loc);
+	if (name == "UTF8")
+		name = "UTF-8";
+}
+
 template <class T, class Func>
 auto parse_vector_of_T(/* in */ istream& in, /* in */ size_t line_num,
                        /* in */ const string& command,
@@ -111,7 +120,7 @@ auto parse_vector_of_T(/* in */ istream& in, /* in */ size_t line_num,
 // If there are no flags in the stream (eg, stream is at eof)
 // or if the format of the flags is incorrect the stream failbit will be set.
 auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
-                  /* in */ Flag_type_t t, /* in */ const Encoding& enc)
+                  /* in */ Flag_Type t, /* in */ const Encoding& enc)
     -> u16string
 {
 	string s;
@@ -218,7 +227,7 @@ auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
 }
 
 auto decode_single_flag(/* in */ istream& in, /* in */ size_t line_num,
-                        /* in */ Flag_type_t t, /* in */ Encoding enc)
+                        /* in */ Flag_Type t, /* in */ Encoding enc)
     -> char16_t
 {
 	auto flags = decode_flags(in, line_num, t, enc);
@@ -230,8 +239,8 @@ auto decode_single_flag(/* in */ istream& in, /* in */ size_t line_num,
 
 auto parse_affix(/* in */ istream& in, /* in */ size_t line_num,
                  /* in out */ string& command,
-                 /* in */ Flag_type_t t, /* in */ Encoding enc,
-                 /* in out */ vector<Aff_data::affix>& vec,
+                 /* in */ Flag_Type t, /* in */ Encoding enc,
+                 /* in out */ vector<Affix>& vec,
                  /* in out */ unordered_map<string, pair<bool, int>>& cmd_affix)
     -> void
 {
@@ -287,7 +296,7 @@ auto parse_affix(/* in */ istream& in, /* in */ size_t line_num,
 }
 
 auto parse_flag_type(/* in */ istream& in, /* in */ size_t line_num,
-                     /* in out */ Flag_type_t& flag_type) -> void
+                     /* in out */ Flag_Type& flag_type) -> void
 {
 	(void)line_num;
 	string p;
@@ -317,12 +326,12 @@ auto parse_morhological_fields(/* in */ istream& in,
 	reset_failbit_istream(in);
 }
 
-auto Aff_data::decode_flags(istream& in, size_t line_num) const -> u16string
+auto Aff_Data::decode_flags(istream& in, size_t line_num) const -> u16string
 {
 	return hunspell::decode_flags(in, line_num, flag_type, encoding);
 }
 
-auto Aff_data::decode_single_flag(istream& in, size_t line_num) const
+auto Aff_Data::decode_single_flag(istream& in, size_t line_num) const
     -> char16_t
 {
 	return hunspell::decode_single_flag(in, line_num, flag_type, encoding);
@@ -340,7 +349,7 @@ auto get_locale_name(string lang, string enc, const string& filename) -> string
 	return lang + "." + enc;
 }
 
-auto Aff_data::parse(istream& in) -> bool
+auto Aff_Data::parse(istream& in) -> bool
 {
 	unordered_map<string, string*> command_strings = {
 	    {"LANG", &language_code},
@@ -522,7 +531,7 @@ auto Aff_data::parse(istream& in) -> bool
 		else if (command == "CHECKCOMPOUNDPATTERN") {
 			auto& vec = compound_check_patterns;
 			auto func = [&](istream& in,
-			                compound_check_pattern& p) {
+			                Compound_Check_Pattern& p) {
 				if (read_to_slash_or_space(in, p.end_chars)) {
 					p.end_flag =
 					    decode_single_flag(in, line_num);

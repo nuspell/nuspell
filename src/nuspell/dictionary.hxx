@@ -18,34 +18,35 @@
 
 #include "aff_data.hxx"
 #include "dic_data.hxx"
+#include "locale_utils.hxx"
 
 #include <fstream>
 #include <locale>
 
 namespace hunspell {
 
-enum Spell_result {
-	bad_word,
-	good_word,
-	affixed_good_word,
-	compound_good_word
+enum Spell_Result {
+	BAD_WORD,
+	GOOD_WORD,
+	AFFIXED_GOOD_WORD,
+	COMPOUND_GOOD_WORD
 };
 
 class Dictionary {
 	using string = std::string;
 	using u16string = std::u16string;
 
-	Aff_data aff_data;
-	Dic_data dic_data;
+	Aff_Data aff_data;
+	Dic_Data dic_data;
 
       private:
 	template <class CharT>
-	auto spell_priv(const std::basic_string<CharT> s) -> Spell_result
+	auto spell_priv(const std::basic_string<CharT> s) -> Spell_Result
 	{
 		if (dic_data.words.count(
 		        to_dict_encoding(s, aff_data.locale_aff)))
-			return good_word;
-		return bad_word;
+			return GOOD_WORD;
+		return BAD_WORD;
 	}
 
       public:
@@ -64,12 +65,12 @@ class Dictionary {
 		dic_data.parse(dic_file, aff_data);
 	}
 
-	auto spell_dict_encoding(const std::string& word) -> Spell_result;
+	auto spell_dict_encoding(const std::string& word) -> Spell_Result;
 
-	auto spell_c_locale(const std::string& word) -> Spell_result;
+	auto spell_c_locale(const std::string& word) -> Spell_Result;
 
 	auto spell(const std::string& word, std::locale loc = std::locale())
-	    -> Spell_result
+	    -> Spell_Result
 	{
 		auto f = [this](auto&& a) {
 			return this->spell_priv(std::forward<decltype(a)>(a));
@@ -77,9 +78,9 @@ class Dictionary {
 		return convert_and_call(LocaleInput{}, word, loc,
 		                        aff_data.locale_aff, f);
 	}
-	auto spell_u8(const std::string& word) -> Spell_result;
-	auto spell(const std::wstring& word) -> Spell_result;
-	auto spell(const std::u16string& word) -> Spell_result;
-	auto spell(const std::u32string& word) -> Spell_result;
+	auto spell_u8(const std::string& word) -> Spell_Result;
+	auto spell(const std::wstring& word) -> Spell_Result;
+	auto spell(const std::u16string& word) -> Spell_Result;
+	auto spell(const std::u32string& word) -> Spell_Result;
 };
 }

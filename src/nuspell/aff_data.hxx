@@ -19,8 +19,6 @@
 #ifndef HUNSPELL_AFF_MANAGER_HXX
 #define HUNSPELL_AFF_MANAGER_HXX
 
-#include "locale_utils.hxx"
-#include <boost/algorithm/string.hpp>
 #include <istream>
 #include <string>
 #include <utility>
@@ -37,22 +35,42 @@ class Encoding {
       public:
 	Encoding() = default;
 	Encoding(const std::string& e,
-	         const std::locale& ascii_loc = std::locale::classic())
-	    : name(e)
-	{
-		boost::algorithm::to_upper(name, ascii_loc);
-		if (name == "UTF8")
-			name = "UTF-8";
-	}
+	         const std::locale& ascii_loc = std::locale::classic());
 	auto empty() const -> bool { return name.empty(); }
 	operator const std::string&() const { return name; }
 	auto value() const -> const std::string& { return name; }
 	auto is_utf8() const -> bool { return name == "UTF-8"; }
 };
 
-enum Flag_type_t { FLAG_SINGLE_CHAR, FLAG_DOUBLE_CHAR, FLAG_NUMBER, FLAG_UTF8 };
+enum Flag_Type { FLAG_SINGLE_CHAR, FLAG_DOUBLE_CHAR, FLAG_NUMBER, FLAG_UTF8 };
 
-struct Aff_data {
+// affix creation
+struct Affix {
+	using string = std::string;
+	using u16string = std::u16string;
+	template <class T>
+	using vector = std::vector<T>;
+
+	char16_t flag;
+	bool cross_product;
+	string stripping;
+	string affix;
+	u16string new_flags;
+	string condition;
+	vector<string> morphological_fields;
+};
+
+struct Compound_Check_Pattern {
+	using string = std::string;
+
+	string end_chars;
+	char16_t end_flag;
+	string begin_chars;
+	char16_t begin_flag;
+	string replacement;
+};
+
+struct Aff_Data {
 	using string = std::string;
 	using u16string = std::u16string;
 	using istream = std::istream;
@@ -62,7 +80,7 @@ struct Aff_data {
 	using pair = std::pair<T, U>;
 
 	Encoding encoding;
-	Flag_type_t flag_type;
+	Flag_Type flag_type;
 	bool complex_prefixes;
 	string language_code;
 	string ignore_chars;
@@ -107,31 +125,15 @@ struct Aff_data {
 	bool compound_check_triple;
 	bool compound_simplified_triple;
 
-	struct compound_check_pattern {
-		string end_chars;
-		char16_t end_flag;
-		string begin_chars;
-		char16_t begin_flag;
-		string replacement;
-	};
-	vector<compound_check_pattern> compound_check_patterns;
+	vector<Compound_Check_Pattern> compound_check_patterns;
 	char16_t compound_force_uppercase;
 	short compound_syllable_max;
 	string compound_syllable_vowels;
 	u16string compound_syllable_num;
 
-	// affix creation
-	struct affix {
-		char16_t flag;
-		bool cross_product;
-		string stripping;
-		string affix;
-		u16string new_flags;
-		string condition;
-		vector<string> morphological_fields;
-	};
-	vector<affix> prefixes;
-	vector<affix> suffixes;
+
+	vector<Affix> prefixes;
+	vector<Affix> suffixes;
 
 	// others
 	char16_t circumfix_flag;

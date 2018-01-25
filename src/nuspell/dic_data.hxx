@@ -27,7 +27,7 @@
 
 namespace hunspell {
 
-struct Dic_data {
+struct Dic_Data {
 	// word and flag vector
 	// efficient for short flag vectors
 	// for long flag vectors like in Korean dict
@@ -41,7 +41,7 @@ struct Dic_data {
 
 	// methods
 	// parses the dic data to hashtable
-	auto parse(std::istream& in, const Aff_data& aff) -> bool;
+	auto parse(std::istream& in, const Aff_Data& aff) -> bool;
 };
 }
 

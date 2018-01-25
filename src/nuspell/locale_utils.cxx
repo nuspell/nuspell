@@ -92,7 +92,7 @@ auto inline count_leading_ones(unsigned char c)
 }
 }
 
-struct Utf8Decoder {
+struct Utf8_Decoder {
 	unsigned char state = 0;
 	char32_t cp = 0;
 
@@ -129,7 +129,7 @@ struct Utf8Decoder {
  * \param in Input byte.
  * \return true if too short sequence error happend. False otherwise.
  */
-auto inline Utf8Decoder::next(unsigned char in) -> bool
+auto inline Utf8_Decoder::next(unsigned char in) -> bool
 {
 	char32_t cc = in;
 	auto clz = count_leading_ones(in);
@@ -147,7 +147,7 @@ auto inline Utf8Decoder::next(unsigned char in) -> bool
 template <class InpIter, class OutIter>
 auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
 {
-	Utf8Decoder u8;
+	Utf8_Decoder u8;
 	bool err;
 	constexpr auto REP_CH = U'\uFFFD';
 	for (auto i = first; i != last; ++i) {

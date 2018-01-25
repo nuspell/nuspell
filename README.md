@@ -50,7 +50,7 @@ Runtime dependencies:
 Recommended tools for developers:
 
 ``` 
-vim qtcreator clang-format cppcheck gdb libtool-bin doxygen 
+vim qtcreator clang-format cppcheck gdb libtool-bin doxygen plantuml 
 ```
 
 # Compiling on GNU/Linux and Unixes

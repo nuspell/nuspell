@@ -18,6 +18,7 @@
 
 #include "dic_data.hxx"
 
+#include "locale_utils.hxx"
 #include "stream_utils.hxx"
 #include "string_utils.hxx"
 #include <algorithm>
@@ -31,7 +32,7 @@ namespace hunspell {
 
 using namespace std;
 
-auto Dic_data::parse(istream& in, const Aff_data& aff) -> bool
+auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 {
 	size_t line_number = 1;
 	size_t approximate_size;

@@ -284,16 +284,16 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 	while (in >> word) {
 		auto res = dic.spell(word, in.getloc());
 		switch (res) {
-		case bad_word:
+		case BAD_WORD:
 			out << '&' << '\n';
 			break;
-		case good_word:
+		case GOOD_WORD:
 			out << '*' << '\n';
 			break;
-		case affixed_good_word:
+		case AFFIXED_GOOD_WORD:
 			out << '+' << '\n';
 			break;
-		case compound_good_word:
+		case COMPOUND_GOOD_WORD:
 			out << '-' << '\n';
 			break;
 		}
@@ -312,7 +312,7 @@ auto misspelled_word_loop(istream& in, ostream& out, Dictionary& dic)
 	auto word = string();
 	while (in >> word) {
 		auto res = dic.spell(word, in.getloc());
-		if (res == bad_word)
+		if (res == BAD_WORD)
 			out << word << '\n';
 	}
 }
@@ -322,7 +322,7 @@ auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
 	auto word = string();
 	while (in >> word) {
 		auto res = dic.spell(word, in.getloc());
-		if (res != bad_word)
+		if (res != BAD_WORD)
 			out << word << '\n';
 	}
 }
@@ -336,7 +336,7 @@ auto misspelled_line_loop(istream& in, ostream& out, Dictionary& dic)
 		split_on_whitespace_v(line, words, in.getloc());
 		for (auto& word : words) {
 			auto res = dic.spell(word, in.getloc());
-			if (res == bad_word) {
+			if (res == BAD_WORD) {
 				print = true;
 				break;
 			}
@@ -355,7 +355,7 @@ auto correct_line_loop(istream& in, ostream& out, Dictionary& dic)
 		split_on_whitespace_v(line, words, in.getloc());
 		for (auto& word : words) {
 			auto res = dic.spell(word, in.getloc());
-			if (res == bad_word) {
+			if (res == BAD_WORD) {
 				print = false;
 				break;
 			}
@@ -365,7 +365,7 @@ auto correct_line_loop(istream& in, ostream& out, Dictionary& dic)
 	}
 }
 
-auto diagnose_dic_and_aff(Aff_data& aff, Dic_data& dic)
+auto diagnose_dic_and_aff(Aff_Data& aff, Dic_Data& dic)
 {
 	cout << aff.encoding.value() << '\n';
 	cout << aff.try_chars << '\n';
