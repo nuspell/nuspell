@@ -72,6 +72,7 @@ Then run the following commands:
     sudo make install
     sudo ldconfig
 
+<!-- hunspell v1 stuff
 For dictionary development, use the `--with-warnings` option of
 configure.
 
@@ -87,6 +88,7 @@ Optional developer packages:
 In Ubuntu, the packages are:
 
     libncurses5-dev libreadline-dev
+-->
 
 # Compiling on OSX and macOS
 
@@ -113,18 +115,7 @@ above.
 
 ## 2\. Compiling in Cygwin environment
 
-Download and install Cygwin environment for Windows with the following
-extra packages:
-
-  - make
-  - automake
-  - autoconf
-  - libtool
-  - gcc-g++ development package
-  - boost
-  - ncurses, readline (for user interface)
-  - iconv (character conversion)
-
+Download the mentioned depndencies with Cygwin package manager.
 Then compile the same way as on Linux. Cygwin builds depend on
 Cygwin1.dll.
 
