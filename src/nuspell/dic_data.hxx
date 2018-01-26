@@ -33,7 +33,7 @@ struct Dic_Data {
 	// for long flag vectors like in Korean dict
 	// we should keep pointers to the string in the affix aliases vector
 	// for now we will leave it like this
-	std::unordered_map<std::string, std::u16string> words;
+	std::unordered_map<std::string, Flag_Set> words;
 
 	// word and morphological data
 	// we keep them separate because morph data is generally absent

@@ -42,12 +42,44 @@ class Encoding {
 	auto is_utf8() const -> bool { return name == "UTF-8"; }
 };
 
+class Substring_Replacer {
+	using string = std::string;
+	template <class T, class U>
+	using pair = std::pair<T, U>;
+	template <class T>
+	using vector = std::vector<T>;
+
+      public:
+	Substring_Replacer() = default;
+	Substring_Replacer(vector<pair<string, string>>&& v);
+	auto replace(string& s) const -> void;
+	auto replace_copy(const string& s) const -> string;
+};
+
 enum Flag_Type { FLAG_SINGLE_CHAR, FLAG_DOUBLE_CHAR, FLAG_NUMBER, FLAG_UTF8 };
 
-// affix creation
+class Flag_Set {
+	using u16string = std::u16string;
+
+	u16string flags;
+	auto sort_uniq() -> void;
+
+      public:
+	Flag_Set() = default;
+	Flag_Set(const u16string& s);
+	auto operator=(const u16string& s) -> Flag_Set&;
+	auto operator+=(const u16string& s) -> Flag_Set&;
+	auto erase(char16_t flag) -> bool;
+	auto data() const noexcept -> const u16string& { return flags; }
+	auto empty() const noexcept -> bool { return flags.empty(); }
+	// auto clear() { return flags.clear(); }
+	operator const std::u16string&() const { return flags; }
+	auto exists(char16_t flag) const -> bool;
+	auto count(char16_t flag) const -> size_t { return exists(flag); }
+};
+
 struct Affix {
 	using string = std::string;
-	using u16string = std::u16string;
 	template <class T>
 	using vector = std::vector<T>;
 
@@ -55,7 +87,7 @@ struct Affix {
 	bool cross_product;
 	string stripping;
 	string affix;
-	u16string new_flags;
+	Flag_Set new_flags;
 	string condition;
 	vector<string> morphological_fields;
 };
@@ -84,7 +116,7 @@ struct Aff_Data {
 	bool complex_prefixes;
 	string language_code;
 	string ignore_chars;
-	vector<u16string> flag_aliases;
+	vector<Flag_Set> flag_aliases;
 	vector<vector<string>> morphological_aliases;
 
 	std::locale locale_aff;
@@ -129,8 +161,7 @@ struct Aff_Data {
 	char16_t compound_force_uppercase;
 	short compound_syllable_max;
 	string compound_syllable_vowels;
-	u16string compound_syllable_num;
-
+	Flag_Set compound_syllable_num;
 
 	vector<Affix> prefixes;
 	vector<Affix> suffixes;

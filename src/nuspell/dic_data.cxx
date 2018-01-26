@@ -103,17 +103,11 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 			}
 		}
 		parse_morhological_fields(ss, morphs);
-		words[word].append(flags);
+		words[word] += flags;
 		if (morphs.size()) {
 			auto& vec = morph_data[word];
 			vec.insert(vec.end(), morphs.begin(), morphs.end());
 		}
-	}
-	for (auto& wd : words) {
-		// sort unique flag vectors
-		auto& vec = wd.second;
-		sort(vec.begin(), vec.end());
-		vec.erase(unique(vec.begin(), vec.end()), vec.end());
 	}
 	return in.eof(); // success if we reached eof
 }

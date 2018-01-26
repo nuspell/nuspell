@@ -375,14 +375,14 @@ auto diagnose_dic_and_aff(Aff_Data& aff, Dic_Data& dic)
 	for (auto& a : aff.suffixes) {
 		cout << (char)a.flag << ' ' << (a.cross_product ? 'Y' : 'N')
 		     << ' ' << a.stripping << ' ' << a.affix
-		     << (a.new_flags.size() ? "/ " : " ") << a.condition;
+		     << (a.new_flags.data().size() ? "/ " : " ") << a.condition;
 		cout << '\n';
 	}
 	for (auto& wd : dic.words) {
 		cout << wd.first;
-		if (wd.second.size()) {
+		if (wd.second.data().size()) {
 			cout << '/';
-			for (auto& flag : wd.second) {
+			for (auto& flag : wd.second.data()) {
 				cout << flag << ',';
 			}
 		}

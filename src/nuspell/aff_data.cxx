@@ -227,8 +227,7 @@ auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
 }
 
 auto decode_single_flag(/* in */ istream& in, /* in */ size_t line_num,
-                        /* in */ Flag_Type t, /* in */ Encoding enc)
-    -> char16_t
+                        /* in */ Flag_Type t, /* in */ Encoding enc) -> char16_t
 {
 	auto flags = decode_flags(in, line_num, t, enc);
 	if (flags.size()) {
@@ -516,7 +515,7 @@ auto Aff_Data::parse(istream& in) -> bool
 		}
 		else if (command == "AF") {
 			auto& vec = flag_aliases;
-			auto func = [&](istream& inn, u16string& p) {
+			auto func = [&](istream& inn, Flag_Set& p) {
 				p = decode_flags(inn, line_num);
 			};
 			parse_vector_of_T(ss, line_num, command,
@@ -563,5 +562,43 @@ auto Aff_Data::parse(istream& in) -> bool
 	locale_aff = locale_generator(get_locale_name(language_code, encoding));
 	cerr.flush();
 	return in.eof(); // success if we reached eof
+}
+
+void Flag_Set::sort_uniq()
+{
+	sort(begin(flags), end(flags));
+	flags.erase(unique(begin(flags), end(flags)));
+}
+
+Flag_Set::Flag_Set(const std::u16string& s) : flags(s) { sort_uniq(); }
+
+auto Flag_Set::operator=(const std::u16string& s) -> Flag_Set&
+{
+	flags = s;
+	sort_uniq();
+	return *this;
+}
+
+auto Flag_Set::operator+=(const std::u16string& s) -> Flag_Set&
+{
+	flags += s;
+	sort_uniq();
+	return *this;
+}
+
+auto Flag_Set::exists(char16_t flag) const -> bool
+{
+	// flags are short strings. optimized linear search should be better
+	return flags.find(flag) != flags.npos;
+}
+
+bool Flag_Set::erase(char16_t flag)
+{
+	auto i = flags.find(flag);
+	if (i != flags.npos) {
+		flags.erase(i, 1);
+		return true;
+	}
+	return false;
 }
 }
