@@ -20,9 +20,14 @@
 #define NUSPELL_STRUCTURES_HXX
 
 #include <string>
+#include <vector>
+#include <utility>
 
 namespace hunspell {
 
+/**
+ * @brief A Set class backed by a string. Very useful for small sets.
+ */
 class Flag_Set {
 	std::u16string flags;
 	auto sort_uniq() -> void;
@@ -72,5 +77,23 @@ class Flag_Set {
 	auto end() const noexcept { return flags.end(); }
 	auto friend swap(Flag_Set& a, Flag_Set& b) { a.flags.swap(b.flags); }
 };
+
+class Substring_Replacer {
+	using Table_Pairs = std::vector<std::pair<std::string, std::string>>;
+
+	Table_Pairs table;
+
+      public:
+
+	Substring_Replacer() = default;
+	Substring_Replacer(const Table_Pairs& v);
+	Substring_Replacer(Table_Pairs&& v);
+	auto operator=(const Table_Pairs& v) -> Substring_Replacer&;
+	auto operator=(Table_Pairs&& v) -> Substring_Replacer&;
+
+	auto replace(std::string& s) const -> void;
+	//auto replace_copy(const std::string& s) const -> std::string;
+};
+
 }
 #endif

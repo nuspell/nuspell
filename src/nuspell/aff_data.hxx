@@ -44,20 +44,6 @@ class Encoding {
 	auto is_utf8() const -> bool { return name == "UTF-8"; }
 };
 
-class Substring_Replacer {
-	using string = std::string;
-	template <class T, class U>
-	using pair = std::pair<T, U>;
-	template <class T>
-	using vector = std::vector<T>;
-
-      public:
-	Substring_Replacer() = default;
-	Substring_Replacer(vector<pair<string, string>>&& v);
-	auto replace(string& s) const -> void;
-	auto replace_copy(const string& s) const -> string;
-};
-
 enum Flag_Type { FLAG_SINGLE_CHAR, FLAG_DOUBLE_CHAR, FLAG_NUMBER, FLAG_UTF8 };
 
 
