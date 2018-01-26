@@ -566,8 +566,10 @@ auto Aff_Data::parse(istream& in) -> bool
 
 void Flag_Set::sort_uniq()
 {
-	sort(begin(flags), end(flags));
-	flags.erase(unique(begin(flags), end(flags)));
+	auto first = begin(flags);
+	auto last = begin(flags);
+	sort(first, last);
+	flags.erase(unique(first, last), last);
 }
 
 Flag_Set::Flag_Set(const std::u16string& s) : flags(s) { sort_uniq(); }
