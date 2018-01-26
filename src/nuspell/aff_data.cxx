@@ -563,44 +563,4 @@ auto Aff_Data::parse(istream& in) -> bool
 	cerr.flush();
 	return in.eof(); // success if we reached eof
 }
-
-void Flag_Set::sort_uniq()
-{
-	auto first = begin(flags);
-	auto last = begin(flags);
-	sort(first, last);
-	flags.erase(unique(first, last), last);
-}
-
-Flag_Set::Flag_Set(const std::u16string& s) : flags(s) { sort_uniq(); }
-
-auto Flag_Set::operator=(const std::u16string& s) -> Flag_Set&
-{
-	flags = s;
-	sort_uniq();
-	return *this;
-}
-
-auto Flag_Set::operator+=(const std::u16string& s) -> Flag_Set&
-{
-	flags += s;
-	sort_uniq();
-	return *this;
-}
-
-auto Flag_Set::exists(char16_t flag) const -> bool
-{
-	// flags are short strings. optimized linear search should be better
-	return flags.find(flag) != flags.npos;
-}
-
-bool Flag_Set::erase(char16_t flag)
-{
-	auto i = flags.find(flag);
-	if (i != flags.npos) {
-		flags.erase(i, 1);
-		return true;
-	}
-	return false;
-}
 }

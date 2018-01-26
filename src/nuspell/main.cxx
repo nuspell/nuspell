@@ -380,9 +380,9 @@ auto diagnose_dic_and_aff(Aff_Data& aff, Dic_Data& dic)
 	}
 	for (auto& wd : dic.words) {
 		cout << wd.first;
-		if (wd.second.data().size()) {
+		if (wd.second.size()) {
 			cout << '/';
-			for (auto& flag : wd.second.data()) {
+			for (auto& flag : wd.second) {
 				cout << flag << ',';
 			}
 		}

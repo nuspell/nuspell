@@ -12,7 +12,8 @@ dic_data.cxx     dic_data.hxx     \
 finder.cxx       finder.hxx       \
 locale_utils.cxx locale_utils.hxx \
                  stream_utils.hxx \
-                 string_utils.hxx
+                 string_utils.hxx \
+structures.cxx   structures.hxx
 
 pkginclude_HEADERS=\
 aff_data.hxx     \
@@ -21,7 +22,8 @@ dictionary.hxx   \
 finder.hxx       \
 locale_utils.hxx \
 stream_utils.hxx \
-string_utils.hxx
+string_utils.hxx \
+structures.hxx
 
 bin_PROGRAMS = nuspell
 nuspell_SOURCES = main.cxx

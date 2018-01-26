@@ -24,6 +24,8 @@
 #include <utility>
 #include <vector>
 
+#include "structures.hxx"
+
 namespace hunspell {
 
 auto get_locale_name(std::string lang, std::string enc,
@@ -58,25 +60,7 @@ class Substring_Replacer {
 
 enum Flag_Type { FLAG_SINGLE_CHAR, FLAG_DOUBLE_CHAR, FLAG_NUMBER, FLAG_UTF8 };
 
-class Flag_Set {
-	using u16string = std::u16string;
 
-	u16string flags;
-	auto sort_uniq() -> void;
-
-      public:
-	Flag_Set() = default;
-	Flag_Set(const u16string& s);
-	auto operator=(const u16string& s) -> Flag_Set&;
-	auto operator+=(const u16string& s) -> Flag_Set&;
-	auto erase(char16_t flag) -> bool;
-	auto data() const noexcept -> const u16string& { return flags; }
-	auto empty() const noexcept -> bool { return flags.empty(); }
-	// auto clear() { return flags.clear(); }
-	operator const std::u16string&() const { return flags; }
-	auto exists(char16_t flag) const -> bool;
-	auto count(char16_t flag) const -> size_t { return exists(flag); }
-};
 
 struct Affix {
 	using string = std::string;
