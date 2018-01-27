@@ -46,8 +46,6 @@ class Encoding {
 
 enum Flag_Type { FLAG_SINGLE_CHAR, FLAG_DOUBLE_CHAR, FLAG_NUMBER, FLAG_UTF8 };
 
-
-
 struct Affix {
 	using string = std::string;
 	template <class T>

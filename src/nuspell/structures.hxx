@@ -20,8 +20,8 @@
 #define NUSPELL_STRUCTURES_HXX
 
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace hunspell {
 
@@ -84,7 +84,6 @@ class Substring_Replacer {
 	Table_Pairs table;
 
       public:
-
 	Substring_Replacer() = default;
 	Substring_Replacer(const Table_Pairs& v);
 	Substring_Replacer(Table_Pairs&& v);
@@ -92,8 +91,7 @@ class Substring_Replacer {
 	auto operator=(Table_Pairs&& v) -> Substring_Replacer&;
 
 	auto replace(std::string& s) const -> void;
-	//auto replace_copy(const std::string& s) const -> std::string;
+	// auto replace_copy(const std::string& s) const -> std::string;
 };
-
 }
 #endif

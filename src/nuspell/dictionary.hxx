@@ -43,8 +43,7 @@ class Dictionary {
 	template <class CharT>
 	auto spell_priv(const std::basic_string<CharT> s) -> Spell_Result
 	{
-		if (dic_data.words.count(
-		        to_dict_encoding(s, aff_data.locale_aff)))
+		if (dic_data.words.count(to_dict_encoding(s)))
 			return GOOD_WORD;
 		return BAD_WORD;
 	}

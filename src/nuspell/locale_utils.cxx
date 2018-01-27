@@ -225,8 +225,6 @@ auto latin1_to_u32(const std::string& s) -> std::u32string
 
 auto is_bmp(char32_t c) -> bool { return c <= 0xFFFF; }
 
-// auto is_non_bmp(char32_t c) -> bool { return c > 0xFFFF; }
-
 auto is_all_bmp(const std::u32string& s) -> bool
 {
 	return all_of(s.begin(), s.end(), is_bmp);
