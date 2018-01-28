@@ -115,7 +115,7 @@ above.
 
 ## 2\. Compiling in Cygwin environment
 
-Download the mentioned depndencies with Cygwin package manager.
+Download the mentioned dependencies with Cygwin package manager.
 Then compile the same way as on Linux. Cygwin builds depend on
 Cygwin1.dll.
 
