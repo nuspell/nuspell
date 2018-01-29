@@ -79,9 +79,12 @@ class Flag_Set {
 };
 
 class Substring_Replacer {
+      public:
 	using Table_Pairs = std::vector<std::pair<std::string, std::string>>;
 
+      private:
 	Table_Pairs table;
+	void sort_uniq();
 
       public:
 	Substring_Replacer() = default;
@@ -90,8 +93,8 @@ class Substring_Replacer {
 	auto operator=(const Table_Pairs& v) -> Substring_Replacer&;
 	auto operator=(Table_Pairs&& v) -> Substring_Replacer&;
 
-	auto replace(std::string& s) const -> void;
-	// auto replace_copy(const std::string& s) const -> std::string;
+	auto replace(std::string& s) const -> std::string&;
+	auto replace_copy(const std::string& s) const -> std::string;
 };
 }
 #endif
