@@ -11,7 +11,6 @@ dic_data.cxx     dic_data.hxx     \
                  dictionary.hxx   \
 finder.cxx       finder.hxx       \
 locale_utils.cxx locale_utils.hxx \
-                 stream_utils.hxx \
                  string_utils.hxx \
 structures.cxx   structures.hxx
 
@@ -21,7 +20,6 @@ dic_data.hxx     \
 dictionary.hxx   \
 finder.hxx       \
 locale_utils.hxx \
-stream_utils.hxx \
 string_utils.hxx \
 structures.hxx
 

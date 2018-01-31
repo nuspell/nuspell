@@ -78,6 +78,28 @@ Encoding::Encoding(const std::string& e, const std::locale& ascii_loc) : name(e)
 		name = "UTF-8";
 }
 
+void reset_failbit_istream(std::istream& in)
+{
+	in.clear(in.rdstate() & ~in.failbit);
+}
+
+bool read_to_slash_or_space(std::istream& in, std::string& out)
+{
+	in >> std::ws;
+	int c;
+	bool readSomething = false;
+	while ((c = in.get()) != std::istream::traits_type::eof() &&
+	       !isspace((char)c, in.getloc()) && c != '/') {
+		out.push_back(c);
+		readSomething = true;
+	}
+	bool slash = c == '/';
+	if (readSomething || slash) {
+		reset_failbit_istream(in);
+	}
+	return slash;
+}
+
 template <class T, class Func>
 auto parse_vector_of_T(/* in */ istream& in, /* in */ size_t line_num,
                        /* in */ const string& command,

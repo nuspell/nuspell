@@ -19,7 +19,6 @@
 #include "dic_data.hxx"
 
 #include "locale_utils.hxx"
-#include "stream_utils.hxx"
 #include "string_utils.hxx"
 #include <algorithm>
 #include <iostream>
@@ -85,7 +84,7 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 			}
 		}
 		else { // slash found, word untill slash
-			read_to_slash(ss, word);
+			getline(ss, word, '/');
 			if (ss.fail() || word.empty()) {
 				continue;
 			}
