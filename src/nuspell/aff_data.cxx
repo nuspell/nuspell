@@ -19,7 +19,6 @@
 #include "aff_data.hxx"
 
 #include "locale_utils.hxx"
-#include "stream_utils.hxx"
 #include "string_utils.hxx"
 #include <algorithm>
 #include <iostream>

@@ -75,19 +75,9 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 		if (aff.encoding.is_utf8() && !validate_utf8(line)) {
 			cerr << "Invalid utf in dic file" << endl;
 		}
-		if (line.find('/') == line.npos) {
-			// no slash, treat word until first space
-			ss >> word;
-			if (ss.fail()) {
-				// probably all whitespace
-				continue;
-			}
-		}
-		else { // slash found, word untill slash
+		if (line.find('/') != line.npos) {
+			// slash found, word untill slash
 			getline(ss, word, '/');
-			if (ss.fail() || word.empty()) {
-				continue;
-			}
 			if (aff.flag_aliases.empty()) {
 				flags = aff.decode_flags(ss);
 			}
@@ -100,6 +90,22 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 				}
 				flags = aff.flag_aliases[flag_alias_idx - 1];
 			}
+		}
+		else if (line.find('\t') != line.npos) {
+			// Tab found, word until tab. No flags.
+			// After tab follow morphological fields
+			getline(ss, word, '\t');
+		}
+		else {
+			// No slash or tab, treat word until first space.
+			ss >> word;
+			if (ss.fail()) {
+				// probably all whitespace
+				continue;
+			}
+		}
+		if (word.empty()) {
+			continue;
 		}
 		parse_morhological_fields(ss, morphs);
 		words[word] += flags;
