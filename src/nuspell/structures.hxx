@@ -94,7 +94,7 @@ class Substring_Replacer {
 	auto operator=(Table_Pairs&& v) -> Substring_Replacer&;
 
 	auto replace(std::string& s) const -> std::string&;
-	auto replace_copy(const std::string& s) const -> std::string;
+	auto replace_copy(std::string s) const -> std::string;
 };
 }
 #endif

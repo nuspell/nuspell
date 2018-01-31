@@ -181,11 +181,10 @@ auto Substring_Replacer::replace(string& s) const -> string&
 	return s;
 }
 
-auto Substring_Replacer::replace_copy(const string& s) const -> string
+auto Substring_Replacer::replace_copy(string s) const -> string
 {
-	auto ret = s;
-	replace(ret);
-	return ret;
+	replace(s);
+	return s;
 }
 
 static_assert(is_move_constructible<Substring_Replacer>::value,
