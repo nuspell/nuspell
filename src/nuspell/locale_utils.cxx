@@ -26,7 +26,7 @@
 #endif
 
 namespace hunspell {
-
+namespace encoding {
 using namespace std;
 
 #ifdef __GNUC__
@@ -237,5 +237,6 @@ auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string
 	i = copy_if(s.begin(), s.end(), i, is_bmp);
 	ret.erase(i, ret.end());
 	return ret;
+}
 }
 }

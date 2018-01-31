@@ -18,7 +18,21 @@
 
 /**
  * @file locale_utils.hxx
- * Encoding transformations.
+ * Encoding transformations. see namespace hunspell::encoding
+ */
+
+#ifndef LOCALE_UTILS_HXX
+#define LOCALE_UTILS_HXX
+
+#include <boost/locale.hpp>
+#include <locale>
+#include <string>
+#include <type_traits>
+
+namespace hunspell {
+
+/**
+ * @brief Encoding transformations namespace.
  *
  * The library differentiates three encodings:
  *
@@ -38,18 +52,8 @@
  *
  * For conversion between intermediate and dictionary encoding we have
  * the functions to_dict_encoding() and from_dict_to_wide_encoding().
- *
  */
-
-#ifndef LOCALE_UTILS_HXX
-#define LOCALE_UTILS_HXX
-
-#include <boost/locale.hpp>
-#include <locale>
-#include <string>
-#include <type_traits>
-
-namespace hunspell {
+namespace encoding {
 
 auto decode_utf8(const std::string& s) -> std::u32string;
 auto validate_utf8(const std::string& s) -> bool;
@@ -250,5 +254,7 @@ auto convert_and_call(WideInput, WStr&& w_in, const std::locale& /*inloc*/,
 		return func(move(out));
 	}
 }
+}
+using namespace encoding;
 }
 #endif // LOCALE_UTILS_HXX

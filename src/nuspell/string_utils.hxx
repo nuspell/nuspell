@@ -16,10 +16,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 /**
  * @file string_utils.hxx
- * String algorithms not dependent on locale.
+ * @brief String algorithms.
  */
 
 #ifndef HUNSPELL_STRING_UTILS_HXX
@@ -78,7 +77,8 @@ auto split(const std::basic_string<ChT, Tr, Al>& s, ChT sep, OutIt out)
 }
 
 /**
- * \brief Split string on string separator.
+ * Split string on string separator.
+ *
  * @param s
  * @param sep
  * @param out
@@ -99,7 +99,8 @@ auto split(const std::basic_string<ChT, Tr, Al>& s,
 }
 
 /**
- * \brief Split string on string separator.
+ * Split string on string separator.
+ *
  * @param s
  * @param sep
  * @param out
@@ -191,7 +192,7 @@ auto split_on_whitespace_v(const std::basic_string<CharT>& s,
 }
 
 /**
- * \brief Casing type enum
+ * Casing type enum
  */
 enum class Casing { SMALL, INIT_CAPITAL, ALL_CAPITAL, CAMEL, PASCAL };
 

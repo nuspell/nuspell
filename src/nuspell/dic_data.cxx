@@ -23,8 +23,8 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
-#include <sstream>
 #include <regex>
+#include <sstream>
 
 //#include <boost/locale.hpp>
 

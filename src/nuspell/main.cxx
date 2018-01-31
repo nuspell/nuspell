@@ -184,7 +184,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 }
 
 /**
- * \brief Prints help information.
+ * Prints help information.
  * @param program_name pass argv[0] here.
  * @param out stream, standard output by default.
  */
@@ -269,9 +269,10 @@ auto list_dictionaries(Finder& f) -> void
 }
 
 /**
- * Checks spelling for input stream with on each line a single word to check
- * and report on respective line in output correctness of that word with a
- * single character.
+ * Normal loop, tokenize and check spelling.
+ *
+ * Tokenizes words from @p in by whitespace, checks spelling and outputs
+ * result to @p out.
  *
  * @param in the input stream to check spelling for with a word on each line.
  * @param out the output stream to report spelling correctness on the respective
