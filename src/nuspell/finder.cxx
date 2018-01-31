@@ -65,11 +65,11 @@ const char DIRSEP = '/';
 const auto SEPARATORS = "/";
 #endif
 
-/*!
+/**
  * Gets the default search paths.
  *
- * \param out a vector to which append default search paths.
- * \return The vector with appended default search paths.
+ * @param out a vector to which append default search paths.
+ * @return The vector with appended default search paths.
  */
 template <class OutIt>
 auto get_default_search_paths(OutIt out) -> OutIt
@@ -111,7 +111,7 @@ auto get_default_search_paths(OutIt out) -> OutIt
 	return out;
 }
 
-/*!
+/**
  * Adds the default search paths which have been found to the paths.
  */
 auto Finder::add_default_paths() -> void
@@ -357,11 +357,11 @@ struct Globber {
 };
 #endif
 
-/*!
+/**
  * Gets the Mozilla search paths.
  *
- * \param out a vector to which append Mozilla paths.
- * \return The vector with appended Mozilla paths.
+ * @param out a vector to which append Mozilla paths.
+ * @return The vector with appended Mozilla paths.
  */
 template <class OutIt>
 auto get_mozilla_paths(OutIt out) -> OutIt
@@ -430,7 +430,7 @@ auto get_mozilla_paths(OutIt out) -> OutIt
 	return out;
 }
 
-/*!
+/**
  * Adds the Mozilla search paths which have been found to the paths.
  */
 auto Finder::add_mozilla_paths() -> void
@@ -438,11 +438,11 @@ auto Finder::add_mozilla_paths() -> void
 	get_mozilla_paths(back_inserter(paths));
 }
 
-/*!
+/**
  * Gets the LibreOffice search paths.
  *
- * \param out a vector to which append LibreOffice paths.
- * \return The vector with appended LibreOffice paths.
+ * @param out a vector to which append LibreOffice paths.
+ * @return The vector with appended LibreOffice paths.
  */
 template <class OutIt>
 auto get_libreoffice_paths(OutIt out) -> OutIt
@@ -505,7 +505,7 @@ auto get_libreoffice_paths(OutIt out) -> OutIt
 	return out;
 }
 
-/*!
+/**
  * Adds the LibreOffice search paths which have been found to the paths.
  */
 auto Finder::add_libreoffice_paths() -> void
@@ -513,11 +513,11 @@ auto Finder::add_libreoffice_paths() -> void
 	get_libreoffice_paths(back_inserter(paths));
 }
 
-/*!
+/**
  * Gets the Apache OpenOffice search paths.
  *
- * \param out a vector to which append Apache OpenOffice paths.
- * \return The vector with appended Apache OpenOffice paths.
+ * @param out a vector to which append Apache OpenOffice paths.
+ * @return The vector with appended Apache OpenOffice paths.
  */
 template <class OutIt>
 auto get_apacheopenoffice_paths(OutIt out) -> OutIt
@@ -582,7 +582,7 @@ auto get_apacheopenoffice_paths(OutIt out) -> OutIt
 	return out;
 }
 
-/*!
+/**
  * Adds the Apache OpenOffice search paths which have been found to the paths.
  */
 auto Finder::add_apacheopenoffice_paths() -> void
@@ -636,7 +636,7 @@ auto search_path_for_dicts(const string& dir, OutIt out) -> OutIt
 	return out;
 }
 
-/*!
+/**
  * Searches for dictionaries in paths which have been found and added.
  */
 auto Finder::search_dictionaries() -> void

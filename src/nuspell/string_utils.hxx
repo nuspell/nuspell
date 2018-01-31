@@ -17,8 +17,8 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*!
- * \file string_utils.hxx
+/**
+ * @file string_utils.hxx
  * String algorithms not dependent on locale.
  */
 
@@ -33,15 +33,15 @@
 
 namespace hunspell {
 
-/*!
+/**
  * Splits string on set of single char seperators.
  *
  * Consecutive separators are treated as separate and will emit empty strings.
  *
- * \param s a string to split.
- * \param sep char or string holding all separators to split on.
- * \param out start of the output range where separated strings are appended.
- * \return iterator that indicates the end of the output range.
+ * @param s a string to split.
+ * @param sep char or string holding all separators to split on.
+ * @param out start of the output range where separated strings are appended.
+ * @return iterator that indicates the end of the output range.
  */
 template <class ChT, class Tr, class Al, class SepT, class OutIt>
 auto split_on_any_of(const std::basic_string<ChT, Tr, Al>& s, const SepT& sep,
@@ -61,15 +61,15 @@ auto split_on_any_of(const std::basic_string<ChT, Tr, Al>& s, const SepT& sep,
 	return out;
 }
 
-/*!
+/**
  * Splits string on single char seperator.
  *
  * Consecutive separators are treated as separate and will emit empty strings.
  *
- * \param s a string to split.
- * \param sep char that acts as separator to split on.
- * \param out start of the output range where separated strings are appended.
- * \return iterator that indicates the end of the output range.
+ * @param s a string to split.
+ * @param sep char that acts as separator to split on.
+ * @param out start of the output range where separated strings are appended.
+ * @return iterator that indicates the end of the output range.
  */
 template <class ChT, class Tr, class Al, class OutIt>
 auto split(const std::basic_string<ChT, Tr, Al>& s, ChT sep, OutIt out)
@@ -77,11 +77,11 @@ auto split(const std::basic_string<ChT, Tr, Al>& s, ChT sep, OutIt out)
 	return split_on_any_of(s, sep, out);
 }
 
-/*!
+/**
  * \brief Split string on string separator.
- * \param s
- * \param sep
- * \param out
+ * @param s
+ * @param sep
+ * @param out
  */
 template <class ChT, class Tr, class Al, class OutIt>
 auto split(const std::basic_string<ChT, Tr, Al>& s,
@@ -98,11 +98,11 @@ auto split(const std::basic_string<ChT, Tr, Al>& s,
 	return out;
 }
 
-/*!
+/**
  * \brief Split string on string separator.
- * \param s
- * \param sep
- * \param out
+ * @param s
+ * @param sep
+ * @param out
  */
 template <class ChT, class Tr, class Al, class OutIt>
 auto split(const std::basic_string<ChT, Tr, Al>& s, const ChT* sep, OutIt out)
@@ -110,14 +110,14 @@ auto split(const std::basic_string<ChT, Tr, Al>& s, const ChT* sep, OutIt out)
 	return split(s, std::basic_string<ChT, Tr, Al>(sep), out);
 }
 
-/*!
+/**
  * Splits string on seperator, output to vector of strings.
  *
  * See split().
  *
- * \param s in string
- * \param sep in separator
- * \param v out vector. The vector is first cleared.
+ * @param s in string
+ * @param sep in separator
+ * @param v out vector. The vector is first cleared.
  */
 template <class ChT, class Tr, class Al, class CharOrStr>
 auto split_v(const std::basic_string<ChT, Tr, Al>& s, const CharOrStr& sep,
@@ -127,12 +127,12 @@ auto split_v(const std::basic_string<ChT, Tr, Al>& s, const CharOrStr& sep,
 	split(s, sep, std::back_inserter(v));
 }
 
-/*!
+/**
  * Gets the first token of a splitted string.
  *
- * \param s a string to split.
- * \param sep char or string that acts as separator to split on.
- * \return The string that has been split off.
+ * @param s a string to split.
+ * @param sep char or string that acts as separator to split on.
+ * @return The string that has been split off.
  */
 template <class CharT, class CharOrStr>
 auto split_first(const std::basic_string<CharT>& s, const CharOrStr& sep)
@@ -142,16 +142,16 @@ auto split_first(const std::basic_string<CharT>& s, const CharOrStr& sep)
 	return s.substr(0, index);
 }
 
-/*!
+/**
  * Splits on whitespace.
  *
  * Consecutive whitespace is treated as single separator. Behaves same as
  * Python's split called without separator argument.
  *
- * \param s a string to split.
- * \param out start of the output range where separated strings are appended.
- * \param loc locale object that takes care of what is whitespace
- * \return iterator that indicates the end of the output range.
+ * @param s a string to split.
+ * @param out start of the output range where separated strings are appended.
+ * @param loc locale object that takes care of what is whitespace
+ * @return iterator that indicates the end of the output range.
  */
 template <class CharT, class OutIt>
 auto split_on_whitespace(const std::basic_string<CharT>& s, OutIt out,
@@ -172,14 +172,14 @@ auto split_on_whitespace(const std::basic_string<CharT>& s, OutIt out,
 	return out;
 }
 
-/*!
+/**
  * Splits on whitespace, outputs to vector of strings.
  *
  * See split_on_whitespace().
  *
- * \param s in string
- * \param v out vector. The vector is first cleared.
- * \param loc in locale
+ * @param s in string
+ * @param v out vector. The vector is first cleared.
+ * @param loc in locale
  */
 template <class CharT>
 auto split_on_whitespace_v(const std::basic_string<CharT>& s,
@@ -190,18 +190,18 @@ auto split_on_whitespace_v(const std::basic_string<CharT>& s,
 	split_on_whitespace(s, back_inserter(v), loc);
 }
 
-/*!
+/**
  * \brief Casing type enum
  */
 enum class Casing { SMALL, INIT_CAPITAL, ALL_CAPITAL, CAMEL, PASCAL };
 
-/*!
+/**
  * Returns casing (capitalization) type for a word.
  *
  * Casing is sometimes reffered to as capitalization.
  *
- * \param word word for which casing is determined.
- * \return casing type.
+ * @param word word for which casing is determined.
+ * @return casing type.
  */
 template <class CharT>
 auto classify_casing(const std::basic_string<CharT>& s,

@@ -102,7 +102,7 @@ struct Utf8_Decoder {
 	auto decode(InpIter first, InpIter last, OutIter out) -> OutIter;
 };
 
-/*!
+/**
  * Finite state transducer used for decoding UTF-8 stream.
  *
  * Formally, the state is a pair (state, cp) and
@@ -126,8 +126,8 @@ struct Utf8_Decoder {
  * At the end of the input stream, we should check if the state is 1, 2 or 3
  * which indicates that too_short_err happend. FFFD should be emitted.
  *
- * \param in Input byte.
- * \return true if too short sequence error happend. False otherwise.
+ * @param in Input byte.
+ * @return true if too short sequence error happend. False otherwise.
  */
 auto inline Utf8_Decoder::next(unsigned char in) -> bool
 {

@@ -16,8 +16,8 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*!
- * \file stream_utils.hxx
+/**
+ * @file stream_utils.hxx
  * C++ stream functions.
  */
 

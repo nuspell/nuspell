@@ -75,12 +75,12 @@ struct Args_t {
 	auto parse_args(int argc, char* argv[]) -> void;
 };
 
-/*!
+/**
  * Parses command line arguments and result is stored in mode, dictionary,
  * other_dicts and files.
  *
- * \param argc the total number of command line arguments.
- * \param argv all the individual command linen arguments.
+ * @param argc the total number of command line arguments.
+ * @param argv all the individual command linen arguments.
  */
 auto Args_t::parse_args(int argc, char* argv[]) -> void
 {
@@ -183,10 +183,10 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 #endif
 }
 
-/*!
+/**
  * \brief Prints help information.
- * \param program_name pass argv[0] here.
- * \param out stream, standard output by default.
+ * @param program_name pass argv[0] here.
+ * @param out stream, standard output by default.
  */
 auto print_help(const string& program_name) -> void
 {
@@ -219,7 +219,7 @@ auto print_help(const string& program_name) -> void
 	     "Home page: <http://hunspell.github.io/>\n";
 }
 
-/*!
+/**
  * Prints the version number to standard output.
  */
 auto print_version() -> void
@@ -237,11 +237,11 @@ auto print_version() -> void
 	    "see https://github.com/hunspell/nuspell/blob/master/AUTHORS\n";
 }
 
-/*!
+/**
  * Lists dictionary paths and available dictionaries on the system to standard
  * output.
  *
- * \param f a finder for search paths and located dictionary.
+ * @param f a finder for search paths and located dictionary.
  */
 auto list_dictionaries(Finder& f) -> void
 {
@@ -268,15 +268,15 @@ auto list_dictionaries(Finder& f) -> void
 	}
 }
 
-/*!
+/**
  * Checks spelling for input stream with on each line a single word to check
  * and report on respective line in output correctness of that word with a
  * single character.
  *
- * \param in the input stream to check spelling for with a word on each line.
- * \param out the output stream to report spelling correctness on the respective
+ * @param in the input stream to check spelling for with a word on each line.
+ * @param out the output stream to report spelling correctness on the respective
  * lines.
- * \param dic the dictionary to use.
+ * @param dic the dictionary to use.
  */
 auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 {
@@ -300,12 +300,12 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 	}
 }
 
-/*!
+/**
  * Prints misspelled words from an input stream to an output stream.
  *
- * \param in the input stream with a word on each line.
- * \param out the output stream with on each line only misspelled words.
- * \param dic the dictionary to use.
+ * @param in the input stream with a word on each line.
+ * @param out the output stream with on each line only misspelled words.
+ * @param dic the dictionary to use.
  */
 auto misspelled_word_loop(istream& in, ostream& out, Dictionary& dic)
 {

@@ -16,8 +16,8 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*!
- * \file locale_utils.hxx
+/**
+ * @file locale_utils.hxx
  * Encoding transformations.
  *
  * The library differentiates three encodings:
