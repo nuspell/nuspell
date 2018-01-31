@@ -24,6 +24,7 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <regex>
 
 //#include <boost/locale.hpp>
 
@@ -63,6 +64,9 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 	vector<string> morphs;
 	u16string flags;
 
+	regex morph_field(R"(\s+[a-z][a-z]:)");
+	smatch mf_match;
+
 	while (getline(in, line)) {
 		line_number++;
 		ss.str(line);
@@ -96,13 +100,14 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 			// After tab follow morphological fields
 			getline(ss, word, '\t');
 		}
+		else if (regex_search(line, mf_match, morph_field)) {
+			word = mf_match.prefix();
+			ss.ignore(mf_match.position());
+		}
 		else {
-			// No slash or tab, treat word until first space.
-			ss >> word;
-			if (ss.fail()) {
-				// probably all whitespace
-				continue;
-			}
+			// No slash or tab or morph field "aa:".
+			// Treat word until end.
+			getline(ss, word);
 		}
 		if (word.empty()) {
 			continue;
