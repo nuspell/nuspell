@@ -30,8 +30,8 @@ namespace encoding {
 using namespace std;
 
 #ifdef __GNUC__
-#define likely(expr) __builtin_expect(!!(expr), 1)
-#define unlikely(expr) __builtin_expect(!!(expr), 0)
+#define likely(expr) (__builtin_expect(!!(expr), 1))
+#define unlikely(expr) (__builtin_expect(!!(expr), 0))
 #else
 #define likely(expr) (expr)
 #define unlikely(expr) (expr)
@@ -41,7 +41,8 @@ namespace {
 // const unsigned char shift[] = {0, 6, 0, 0, 0, /**/ 0, 0, 0, 0};
 const unsigned char mask[] = {0xff, 0x3f, 0x1f, 0x0f, 0x07, /**/
                               0x03, 0x01, 0x00, 0x00};
-
+const unsigned char min_rep_mask[] = {
+    0xff, 0xff, 0b00011110, 0b00001111, 0b00000111, 0, 0, 0, 0};
 // for decoding
 const unsigned char next_state[][9] = {{0, 4, 1, 2, 3, 4, 4, 4, 4},
                                        {0, 0, 1, 2, 3, 4, 4, 4, 4},
@@ -94,12 +95,16 @@ auto inline count_leading_ones(unsigned char c)
 
 struct Utf8_Decoder {
 	unsigned char state = 0;
+	bool short_sequence_error = false;
+	//bool long_sequence_error = false;
 	char32_t cp = 0;
 
-	auto next(unsigned char in) -> bool;
+	auto next(unsigned char in) -> void;
 
 	template <class InpIter, class OutIter>
 	auto decode(InpIter first, InpIter last, OutIter out) -> OutIter;
+# define minimal_representation_error(in, clz) \
+	(((in | 0x80) & min_rep_mask[clz]) == 0)
 };
 
 /**
@@ -129,38 +134,39 @@ struct Utf8_Decoder {
  * @param in Input byte.
  * @return true if too short sequence error happend. False otherwise.
  */
-auto inline Utf8_Decoder::next(unsigned char in) -> bool
+auto inline Utf8_Decoder::next(unsigned char in) -> void
 {
 	char32_t cc = in;
 	auto clz = count_leading_ones(in);
-	//*cp = (*cp << shift[clz]) | (cc & mask[clz]);
+	// cp = (cp << shift[clz]) | (cc & mask[clz]);
 	if (clz == 1)
 		cp <<= 6;
 	cp |= cc & mask[clz];
 
-	//(state & 3)!=0 <=> state >=1 && state <= 3
-	auto too_short_err = (state & 3) && clz != 1;
+	//(state & 3)!=0 == state >=1 && state <= 3
+	short_sequence_error = (state & 3) && clz != 1;
 	state = next_state[state][clz];
-	return too_short_err;
+
+	if unlikely(minimal_representation_error(in, clz))
+	        state = 4;
 }
 
 template <class InpIter, class OutIter>
 auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
 {
 	Utf8_Decoder u8;
-	bool err;
 	constexpr auto REP_CH = U'\uFFFD';
 	for (auto i = first; i != last; ++i) {
 		auto&& c = *i;
-		err = u8.next(c);
-		if (unlikely(err)) {
+		u8.next(c);
+		if unlikely(u8.short_sequence_error) {
 			*out++ = REP_CH;
 		}
 		if (u8.state == 0) {
 			*out++ = u8.cp;
 			u8.cp = 0;
 		}
-		else if (unlikely(u8.state == 4)) {
+		else if unlikely(u8.state == 4) {
 			*out++ = REP_CH;
 			u8.cp = 0;
 		}
@@ -181,7 +187,11 @@ auto decode_utf8(const std::string& s) -> std::u32string
 auto inline utf8_validate_dfa(unsigned char state, char in) -> unsigned char
 {
 	auto clz = count_leading_ones(in);
-	return next_state2[state][clz];
+	state = next_state2[state][clz];
+	if unlikely(minimal_representation_error(in, clz)) {
+		state = 4;
+	}
+	return state;
 }
 
 auto validate_utf8(const std::string& s) -> bool
