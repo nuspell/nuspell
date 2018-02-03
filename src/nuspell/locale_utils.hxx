@@ -152,7 +152,7 @@ class SameAsDictInput {
 class WideInput {
 };
 
-inline auto to_wide_std(const std::string& in, const std::locale& inloc)
+inline auto to_wide_cvt(const std::string& in, const std::locale& inloc)
 {
 	using namespace std;
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(inloc);
@@ -160,11 +160,43 @@ inline auto to_wide_std(const std::string& in, const std::locale& inloc)
 	wide.resize(in.size(), L'\0');
 	auto state = mbstate_t{};
 	auto char_ptr = in.c_str();
+	auto last = in.c_str() + in.size();
 	auto wchar_ptr = &wide[0];
-	cvt.in(state, in.c_str(), in.c_str() + in.size(), char_ptr, &wide[0],
-	       &wide[wide.size()], wchar_ptr);
+	auto wlast = &wide[wide.size()];
+	for (;;) {
+		auto err = cvt.in(state, char_ptr, last, char_ptr, wchar_ptr,
+		                  wlast, wchar_ptr);
+		if (err == cvt.ok || err == cvt.noconv) {
+			break;
+		}
+		if (wchar_ptr == wlast) {
+			auto idx = wchar_ptr - &wide[0];
+			wide.resize(wide.size() * 2);
+			wchar_ptr = &wide[idx];
+			wlast = &wide[wide.size()];
+		}
+		if (err == cvt.partial) {
+			if (char_ptr == last) {
+				*wchar_ptr++ = L'\uFFFD';
+				break;
+			}
+		}
+		else if (err == cvt.error) {
+			char_ptr++;
+			*wchar_ptr++ = L'\uFFFD';
+		}
+	}
 	wide.erase(wchar_ptr - &wide[0]);
 	return wide;
+}
+
+inline auto to_singlebyte_cvt(const std::wstring& in, const std::locale& outloc)
+{
+	using namespace std;
+	auto& cvt = use_facet<ctype<wchar_t>>(outloc);
+	string out(in.size(), 0);
+	cvt.narrow(&in[0], &in[in.size()], '?', &out[0]);
+	return out;
 }
 
 template <class Str, class Callback>
@@ -179,26 +211,15 @@ auto convert_and_call(LocaleInput, Str&& in, const std::locale& inloc,
 		if (in_info.utf8())
 			return convert_and_call(Utf8Input{}, forward<Str>(in),
 			                        inloc, outloc, func);
-
 		auto& out_info = use_facet<info_t>(outloc);
-		if (out_info.utf8()) {
-			auto w_out = to_utf<wchar_t>(in, inloc);
-			return func(move(w_out));
-		}
-		else {
-			auto in_enc = in_info.encoding();
-			auto out_enc = out_info.encoding();
-			if (in_enc == out_enc) {
-				return func(forward<Str>(in));
-			}
-			else {
-				auto out = between(in, out_enc, in_enc);
-				return func(move(out));
-			}
+		auto in_enc = in_info.encoding();
+		auto out_enc = out_info.encoding();
+		if (in_enc == out_enc) {
+			return func(forward<Str>(in));
 		}
 	}
 	// else
-	auto wide = to_wide_std(in, inloc);
+	auto wide = to_wide_cvt(in, inloc);
 	return convert_and_call(WideInput{}, move(wide), inloc, outloc, func);
 }
 
@@ -210,12 +231,12 @@ auto convert_and_call(Utf8Input, Str&& in, const std::locale& /*inloc*/,
 	using info_t = boost::locale::info;
 	using namespace boost::locale::conv;
 	auto& out_info = use_facet<info_t>(outloc);
+	auto w_out = utf_to_utf<wchar_t>(in);
 	if (out_info.utf8()) {
-		auto w_out = utf_to_utf<wchar_t>(in);
 		return func(move(w_out));
 	}
 	else {
-		auto out = from_utf(in, outloc);
+		auto out = to_singlebyte_cvt(w_out, outloc);
 		return func(move(out));
 	}
 }
@@ -250,7 +271,7 @@ auto convert_and_call(WideInput, WStr&& w_in, const std::locale& /*inloc*/,
 		return func(forward<WStr>(w_in));
 	}
 	else {
-		auto out = from_utf(w_in, outloc);
+		auto out = to_singlebyte_cvt(w_in, outloc);
 		return func(move(out));
 	}
 }
