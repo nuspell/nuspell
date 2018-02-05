@@ -71,11 +71,18 @@ class Dictionary {
 	auto spell(const std::string& word, std::locale loc = std::locale())
 	    -> Spell_Result
 	{
-		auto f = [this](auto&& a) {
-			return this->spell_priv(std::forward<decltype(a)>(a));
-		};
-		return convert_and_call(LocaleInput{}, word, loc,
-		                        aff_data.locale_aff, f);
+		using namespace std;
+		using info_t = boost::locale::info;
+		auto& dic_info = use_facet<info_t>(aff_data.locale_aff);
+		Locale_Input l;
+		if (dic_info.utf8()) {
+			return spell_priv<wchar_t>(
+			    l.cvt_for_u8_dict(word, loc));
+		}
+		else {
+			return spell_priv<char>(l.cvt_for_byte_dict(
+			    word, loc, aff_data.locale_aff));
+		}
 	}
 	auto spell_u8(const std::string& word) -> Spell_Result;
 	auto spell(const std::wstring& word) -> Spell_Result;

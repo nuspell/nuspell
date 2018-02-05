@@ -44,8 +44,9 @@ namespace hunspell {
  * agorithms will be used. If the dictionary is singlebyte then everything is
  * char.
  *
- * The functions convert_and_call() convert from input into intermediate and
- * call the right template instantiation (char or wide char).
+ * The functions cvt_for_byte_dict() and cvt_for_u8_dict() convert from input
+ * into intermediate and call the right template instantiation (char or wide
+ * char).
  *
  * If the dictionary is UTF-8, we should still store large data in it because
  * storing the wordlist in UTF-32 will take more memory.
@@ -53,7 +54,7 @@ namespace hunspell {
  * For conversion between intermediate and dictionary encoding we have
  * the functions to_dict_encoding() and from_dict_to_wide_encoding().
  */
-namespace encoding {
+inline namespace encoding {
 
 auto decode_utf8(const std::string& s) -> std::u32string;
 auto validate_utf8(const std::string& s) -> bool;
@@ -67,6 +68,10 @@ auto latin1_to_u32(const std::string& s) -> std::u32string;
 auto is_bmp(char32_t c) -> bool;
 auto is_all_bmp(const std::u32string& s) -> bool;
 auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string;
+
+auto to_wide(const std::string& in, const std::locale& inloc) -> std::wstring;
+auto to_singlebyte(const std::wstring& in, const std::locale& outloc)
+    -> std::string;
 
 // put template function definitions bellow the declarations above
 // otherwise doxygen has bugs when generating call graphs
@@ -143,65 +148,33 @@ auto convert_encoding(const std::basic_string<FromCharT>& from)
 }
 #endif
 
-class LocaleInput {
-};
-class Utf8Input {
-};
-class SameAsDictInput {
-};
-class WideInput {
+struct Locale_Input {
+	auto cvt_for_byte_dict(const std::string& in, const std::locale& inloc,
+	                       const std::locale& dicloc);
+	auto cvt_for_u8_dict(const std::string& in, const std::locale& inloc);
 };
 
-inline auto to_wide_cvt(const std::string& in, const std::locale& inloc)
+auto inline Locale_Input::cvt_for_byte_dict(const std::string& in,
+                                            const std::locale& inloc,
+                                            const std::locale& dicloc)
 {
 	using namespace std;
-	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(inloc);
-	auto wide = std::wstring();
-	wide.resize(in.size(), L'\0');
-	auto state = mbstate_t{};
-	auto char_ptr = in.c_str();
-	auto last = in.c_str() + in.size();
-	auto wchar_ptr = &wide[0];
-	auto wlast = &wide[wide.size()];
-	for (;;) {
-		auto err = cvt.in(state, char_ptr, last, char_ptr, wchar_ptr,
-		                  wlast, wchar_ptr);
-		if (err == cvt.ok || err == cvt.noconv) {
-			break;
-		}
-		if (wchar_ptr == wlast) {
-			auto idx = wchar_ptr - &wide[0];
-			wide.resize(wide.size() * 2);
-			wchar_ptr = &wide[idx];
-			wlast = &wide[wide.size()];
-		}
-		if (err == cvt.partial) {
-			if (char_ptr == last) {
-				*wchar_ptr++ = L'\uFFFD';
-				break;
-			}
-		}
-		else if (err == cvt.error) {
-			char_ptr++;
-			*wchar_ptr++ = L'\uFFFD';
+	using info_t = boost::locale::info;
+	using namespace boost::locale::conv;
+	if (has_facet<boost::locale::info>(inloc)) {
+		auto& in_info = use_facet<info_t>(inloc);
+		auto& dic_info = use_facet<info_t>(dicloc);
+		auto in_enc = in_info.encoding();
+		auto dic_enc = dic_info.encoding();
+		if (in_enc == dic_enc) {
+			return in;
 		}
 	}
-	wide.erase(wchar_ptr - &wide[0]);
-	return wide;
+	return to_singlebyte(to_wide(in, inloc), dicloc);
 }
 
-inline auto to_singlebyte_cvt(const std::wstring& in, const std::locale& outloc)
-{
-	using namespace std;
-	auto& cvt = use_facet<ctype<wchar_t>>(outloc);
-	string out(in.size(), 0);
-	cvt.narrow(&in[0], &in[in.size()], '?', &out[0]);
-	return out;
-}
-
-template <class Str, class Callback>
-auto convert_and_call(LocaleInput, Str&& in, const std::locale& inloc,
-                      const std::locale& outloc, Callback func)
+auto inline Locale_Input::cvt_for_u8_dict(const std::string& in,
+                                          const std::locale& inloc)
 {
 	using namespace std;
 	using info_t = boost::locale::info;
@@ -209,73 +182,56 @@ auto convert_and_call(LocaleInput, Str&& in, const std::locale& inloc,
 	if (has_facet<boost::locale::info>(inloc)) {
 		auto& in_info = use_facet<info_t>(inloc);
 		if (in_info.utf8())
-			return convert_and_call(Utf8Input{}, forward<Str>(in),
-			                        inloc, outloc, func);
-		auto& out_info = use_facet<info_t>(outloc);
-		auto in_enc = in_info.encoding();
-		auto out_enc = out_info.encoding();
-		if (in_enc == out_enc) {
-			return func(forward<Str>(in));
-		}
+			return utf_to_utf<wchar_t>(in);
 	}
-	// else
-	auto wide = to_wide_cvt(in, inloc);
-	return convert_and_call(WideInput{}, move(wide), inloc, outloc, func);
+	return to_wide(in, inloc);
 }
 
-template <class Str, class Callback>
-auto convert_and_call(Utf8Input, Str&& in, const std::locale& /*inloc*/,
-                      const std::locale& outloc, Callback func)
-{
-	using namespace std;
-	using info_t = boost::locale::info;
-	using namespace boost::locale::conv;
-	auto& out_info = use_facet<info_t>(outloc);
-	auto w_out = utf_to_utf<wchar_t>(in);
-	if (out_info.utf8()) {
-		return func(move(w_out));
+struct Utf_8_Input {
+	auto cvt_for_byte_dict(const std::string& in, const std::locale& dicloc)
+	{
+		using namespace boost::locale::conv;
+		return to_singlebyte(utf_to_utf<wchar_t>(in), dicloc);
 	}
-	else {
-		auto out = to_singlebyte_cvt(w_out, outloc);
-		return func(move(out));
-	}
-}
 
-template <class Str, class Callback>
-auto convert_and_call(SameAsDictInput, Str&& in, const std::locale& /*inloc*/,
-                      const std::locale& outloc, Callback func)
-{
-	using namespace std;
-	using info_t = boost::locale::info;
-	using namespace boost::locale::conv;
+	auto cvt_for_u8_dict(const std::string& in)
+	{
+		using namespace boost::locale::conv;
+		return utf_to_utf<wchar_t>(in);
+	}
+};
 
-	auto& out_info = use_facet<info_t>(outloc);
-	if (out_info.utf8()) {
-		auto w_out = utf_to_utf<wchar_t>(in);
-		return func(move(w_out));
+struct Same_As_Dict_Input {
+	template <class Str,
+	          class = std::enable_if_t<std::is_same<
+	              typename std::remove_reference<Str>, std::string>::value>>
+	auto cvt_for_byte_dict(Str&& in) -> Str&&
+	{
+		return std::forward<Str>(in);
 	}
-	else {
-		return func(forward<Str>(in));
+	auto cvt_for_u8_dict(const std::string& in)
+	{
+		using namespace boost::locale::conv;
+		return utf_to_utf<wchar_t>(in);
 	}
-}
+};
 
-template <class WStr, class Callback>
-auto convert_and_call(WideInput, WStr&& w_in, const std::locale& /*inloc*/,
-                      const std::locale& outloc, Callback func)
-{
-	using namespace std;
-	using info_t = boost::locale::info;
-	using namespace boost::locale::conv;
-	auto& out_info = use_facet<info_t>(outloc);
-	if (out_info.utf8()) {
-		return func(forward<WStr>(w_in));
+struct Wide_Input {
+	auto cvt_for_byte_dict(const std::wstring& in,
+	                       const std::locale& dicloc)
+	{
+		return to_singlebyte(in, dicloc);
 	}
-	else {
-		auto out = to_singlebyte_cvt(w_in, outloc);
-		return func(move(out));
+
+	template <
+	    class Str,
+	    class = std::enable_if_t<std::is_same<
+	        typename std::remove_reference<Str>, std::wstring>::value>>
+	auto cvt_for_u8_dict(Str&& in) -> Str&&
+	{
+		return std::forward<Str>(in);
 	}
+};
 }
-}
-using namespace encoding;
 }
 #endif // LOCALE_UTILS_HXX

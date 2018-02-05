@@ -26,12 +26,12 @@
 #endif
 
 namespace hunspell {
-namespace encoding {
+inline namespace encoding {
 using namespace std;
 
 #ifdef __GNUC__
-#define likely(expr) (__builtin_expect(!!(expr), 1))
-#define unlikely(expr) (__builtin_expect(!!(expr), 0))
+#define likely(expr) __builtin_expect(!!(expr), 1)
+#define unlikely(expr) __builtin_expect(!!(expr), 0)
 #else
 #define likely(expr) (expr)
 #define unlikely(expr) (expr)
@@ -96,14 +96,14 @@ auto inline count_leading_ones(unsigned char c)
 struct Utf8_Decoder {
 	unsigned char state = 0;
 	bool short_sequence_error = false;
-	//bool long_sequence_error = false;
+	// bool long_sequence_error = false;
 	char32_t cp = 0;
 
 	auto next(unsigned char in) -> void;
 
 	template <class InpIter, class OutIter>
 	auto decode(InpIter first, InpIter last, OutIter out) -> OutIter;
-# define minimal_representation_error(in, clz) \
+#define minimal_representation_error(in, clz)                                  \
 	(((in | 0x80) & min_rep_mask[clz]) == 0)
 };
 
@@ -147,8 +147,8 @@ auto inline Utf8_Decoder::next(unsigned char in) -> void
 	short_sequence_error = (state & 3) && clz != 1;
 	state = next_state[state][clz];
 
-	if unlikely(minimal_representation_error(in, clz))
-	        state = 4;
+	if (unlikely(minimal_representation_error(in, clz)))
+		state = 4;
 }
 
 template <class InpIter, class OutIter>
@@ -159,14 +159,14 @@ auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
 	for (auto i = first; i != last; ++i) {
 		auto&& c = *i;
 		u8.next(c);
-		if unlikely(u8.short_sequence_error) {
+		if (unlikely(u8.short_sequence_error)) {
 			*out++ = REP_CH;
 		}
 		if (u8.state == 0) {
 			*out++ = u8.cp;
 			u8.cp = 0;
 		}
-		else if unlikely(u8.state == 4) {
+		else if (unlikely(u8.state == 4)) {
 			*out++ = REP_CH;
 			u8.cp = 0;
 		}
@@ -188,7 +188,7 @@ auto inline utf8_validate_dfa(unsigned char state, char in) -> unsigned char
 {
 	auto clz = count_leading_ones(in);
 	state = next_state2[state][clz];
-	if unlikely(minimal_representation_error(in, clz)) {
+	if (unlikely(minimal_representation_error(in, clz))) {
 		state = 4;
 	}
 	return state;
@@ -247,6 +247,57 @@ auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string
 	i = copy_if(s.begin(), s.end(), i, is_bmp);
 	ret.erase(i, ret.end());
 	return ret;
+}
+
+auto to_wide(const std::string& in, const std::locale& inloc) -> std::wstring
+{
+	using namespace std;
+	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(inloc);
+	auto wide = std::wstring();
+	wide.resize(in.size(), L'\0');
+	auto state = mbstate_t{};
+	auto char_ptr = in.c_str();
+	auto last = in.c_str() + in.size();
+	auto wchar_ptr = &wide[0];
+	auto wlast = &wide[wide.size()];
+	for (;;) {
+		auto err = cvt.in(state, char_ptr, last, char_ptr, wchar_ptr,
+		                  wlast, wchar_ptr);
+		if (err == cvt.ok || err == cvt.noconv) {
+			break;
+		}
+		if (wchar_ptr == wlast) {
+			auto idx = wchar_ptr - &wide[0];
+			wide.resize(wide.size() * 2);
+			wchar_ptr = &wide[idx];
+			wlast = &wide[wide.size()];
+		}
+		if (err == cvt.partial) {
+			if (char_ptr == last) {
+				*wchar_ptr++ = L'\uFFFD';
+				break;
+			}
+		}
+		else if (err == cvt.error) {
+			char_ptr++;
+			*wchar_ptr++ = L'\uFFFD';
+		}
+		else {
+			break; // should never happend
+		}
+	}
+	wide.erase(wchar_ptr - &wide[0]);
+	return wide;
+}
+
+auto to_singlebyte(const std::wstring& in, const std::locale& outloc)
+    -> std::string
+{
+	using namespace std;
+	auto& cvt = use_facet<ctype<wchar_t>>(outloc);
+	string out(in.size(), 0);
+	cvt.narrow(&in[0], &in[in.size()], '?', &out[0]);
+	return out;
 }
 }
 }
