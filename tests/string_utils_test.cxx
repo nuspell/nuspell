@@ -118,6 +118,8 @@ TEST_CASE("method to_upper", "[string_utils]")
 
 	CHECK(""s == to_upper(""s, l));
 	CHECK("A"s == to_upper("a"s, l));
+	CHECK("A"s == to_upper("A"s, l));
+	CHECK("AA"s == to_upper("aa"s, l));
 	CHECK("AA"s == to_upper("aA"s, l));
 	CHECK("AA"s == to_upper("Aa"s, l));
 	CHECK("AA"s == to_upper("AA"s, l));
@@ -155,6 +157,66 @@ TEST_CASE("method to_upper", "[string_utils]")
 	// TODO Add some Arabic and Hebrew examples.
 }
 
+TEST_CASE("method to_lower", "[string_utils]")
+{
+	// Major note here. boost::locale::to_lower is different
+	// from boost::algorithm::to_lower.
+	//
+	// The second works on char by char basis, so it can not be used with
+	// multibyte encodings, utf-8 (but is OK with wide strings) and can not
+	// handle sharp s to double S. Strictly char by char.
+	//
+	// Here locale::to_lower is tested.
+	//
+	// As the active locale may vary from machine to machine, each test must
+	// explicitely be provided withw a locale.
+
+	boost::locale::generator g;
+	using boost::locale::to_lower;
+	// Also std::locale can be the starting point in the code.
+	// Note that any std::locale used, should first be made available on the
+	// machine the test is run with
+	//     $ sudo dpkg-reconfigure locales
+	// This is not needed for any of the boost::locale used in the
+	// non-English tests below.
+	auto l = g(std::locale("en_US.UTF-8").name());
+
+	CHECK(""s == to_lower(""s, l));
+	CHECK("a"s == to_lower("A"s, l));
+	CHECK("a"s == to_lower("a"s, l));
+	CHECK("aa"s == to_lower("aa"s, l));
+	CHECK("aa"s == to_lower("aA"s, l));
+	CHECK("aa"s == to_lower("Aa"s, l));
+	CHECK("aa"s == to_lower("AA"s, l));
+
+	CHECK("table"s == to_lower("table"s, l));
+	CHECK("table"s == to_lower("Table"s, l));
+	CHECK("table"s == to_lower("TABLE"s, l));
+
+	l = g("el_GR.UTF-8");
+	CHECK("ελλάδα"s == to_lower("ελλάδα"s, l));
+	CHECK("ελλάδα"s == to_lower("Ελλάδα"s, l));
+	CHECK("ελλάδα"s == to_lower("ΕΛΛΆΔΑ"s, l));
+
+	l = g("de_DE.UTF-8");
+	CHECK("grüßen"s == to_lower("grüßen"s, l));
+	CHECK("grüssen"s == to_lower("grüssen"s, l));
+	// Note that double SS is not converted to lower case ß.
+	CHECK("grüssen"s == to_lower("GRÜSSEN"s, l));
+	// Note that upper case ẞ is converted to lower case ß.
+	CHECK("grüßen"s == to_lower("GRÜẞEN"s, l));
+
+	l = g("nl_NL.UTF-8");
+	CHECK("ijsselmeer"s == to_lower("ijsselmeer"s, l));
+	CHECK("ijsselmeer"s == to_lower("IJsselmeer"s, l));
+	CHECK("ijsselmeer"s == to_lower("IJSSELMEER"s, l));
+	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
+	CHECK("ĳsselmeer"s == to_lower("ĲSSELMEER"s, l));
+	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
+
+	// TODO Add some Arabic and Hebrew examples.
+}
+
 TEST_CASE("method to_title", "[string_utils]")
 {
 	// Here locale::to_upper is tested.
@@ -174,6 +236,7 @@ TEST_CASE("method to_title", "[string_utils]")
 	CHECK(""s == to_title(""s, l));
 	CHECK("A"s == to_title("a"s, l));
 	CHECK("A"s == to_title("A"s, l));
+	CHECK("Aa"s == to_title("aa"s, l));
 	CHECK("Aa"s == to_title("Aa"s, l));
 	CHECK("Aa"s == to_title("aA"s, l));
 	CHECK("Aa"s == to_title("AA"s, l));

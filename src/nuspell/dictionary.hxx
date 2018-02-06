@@ -61,6 +61,9 @@ class Dictionary {
 		std::ifstream aff_file(dict_file_path + ".aff");
 		std::ifstream dic_file(dict_file_path + ".dic");
 		aff_data.parse(aff_file);
+		// Set to false to disable logging.
+		if (true)
+			aff_data.log(dict_file_path + ".aff");
 		dic_data.parse(dic_file, aff_data);
 	}
 

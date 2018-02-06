@@ -148,6 +148,7 @@ struct Aff_Data {
 
 	// methods
 	auto parse(istream& in) -> bool;
+	void log(const string& affpath);
 
 	auto decode_flags(istream& in, size_t line_num = 0) const -> u16string;
 	auto decode_single_flag(istream& in, size_t line_num = 0) const
