@@ -57,7 +57,7 @@ vim qtcreator clang-format cppcheck gdb libtool-bin doxygen plantuml
 
 We first need to download the dependencies. On Linux `libiconv` is part
 of the standard library. On other Unixes we need to manually install
-them.
+them, e.g. via `sudo apt install libicu57`.
 
 For Ubuntu:
 
@@ -121,9 +121,13 @@ Cygwin1.dll.
 
 # Debugging
 
+First, always install the debugger:
+
+    sudo apt install gdb
+
 It is recomended to install a debug build of the standard library:
 
-    libstdc++6-6-dbg
+    sudo apt install libstdc++6-6-dbg
 
 For debugging we need to create a debug build and then we need to start
 `gdb`.

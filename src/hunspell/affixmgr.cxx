@@ -169,10 +169,10 @@ AffixMgr::AffixMgr(const char* affpath,
 
   if (parse_file(affpath, key)) {
     HUNSPELL_WARNING(stderr, "Failure loading aff file %s\n", affpath);
-  } else if (true) this->log(affpath, key); // Set to false to disable logging.
+  }
 
-  if (cpdmin == -1)
-    cpdmin = MINCPDLEN;
+  if (cpdmin == -1) {
+    cpdmin = MINCPDLEN; } if (true) log(affpath, key); // Set to false to disable logging.
 }
 
 AffixMgr::~AffixMgr() {
@@ -741,7 +741,7 @@ int AffixMgr::parse_file(const char* affpath, const char* key) {
     csconv = get_current_cs(get_encoding());
     for (int i = 0; i <= 255; i++) {
       if ((csconv[i].cupper != csconv[i].clower) &&
-          (wordchars.find((char)i) == std::string::npos)) {
+	  (wordchars.find((char)i) == std::string::npos)) {
         wordchars.push_back((char)i);
       }
     }
@@ -4900,85 +4900,45 @@ void AffixMgr::log(const char* affpath, const char* key) {
 	std::ofstream log_file;
 	auto log_name = std::string(".am1.log"); // 1: Hunspell, 2: Nuspell
 	log_name.insert(0, affpath);
+	if (log_name.substr(0, 2) == "./")
+		log_name.erase(0, 2);
 	log_file.open(log_name, std::ios_base::out);
 	if (!log_file.is_open()) {
 		fprintf(stderr, "ERROR: Can't open log file %s\n", log_name.c_str());
 		exit(1);
 	}
-	log_file << "affpath\t" << affpath << std::endl;
-	log_file << "key\t";
-	if (key == 0x0)
-		log_file << "0x0" << std::endl;
-	else
-		log_file << key << std::endl;
+	log_file << "affpath/affpath\t" << log_name.erase(log_name.size() - 8, 8) << std::endl;
+//	log_file << "key\t";
+//	if (key == 0x0)
+//		log_file << "0x0" << std::endl;
+//	else
+//		log_file << key << std::endl;
 	log_file << "AFTER parse" << std::endl;
 	// The contents of alldic and pHMgr are logged by a seprate log method in the hash manager.
-	log_file << "breaktable/break_patterns\t";
-	for (std::vector<std::string>::const_iterator i = this->breaktable.begin(); i != this->breaktable.end(); ++i) {
-		if (i != this->breaktable.begin() && i != this->breaktable.end())
-			log_file << "\t";
-		log_file << "\"" << *i << "\"";
-	}
-	log_file << std::endl;
-	log_file << "checkcompoundcase/compound_check_case\t" << this->checkcompoundcase << std::endl;
-	log_file << "checkcompounddup/\t" << this->checkcompounddup << std::endl;
-	log_file << "checkcompoundrep/compound_check_rep\t" << this->checkcompoundrep << std::endl;
-	log_file << "checkcompoundtriple/compound_check_triple\t" << this->checkcompoundtriple << std::endl;
-	if (this->checkcpdtable.size() == 0)
-		log_file << "checkcpdtable/compound_check_patterns\t" << std::endl;
-	else
-		for (std::vector<patentry>::const_iterator i = this->checkcpdtable.begin(); i != this->checkcpdtable.end(); ++i) {
-			log_file << "checkcpdtable_" << std::setw(3) << std::setfill('0') << i - this->checkcpdtable.begin() << "\t\"" << i->pattern << "\"" << std::endl;
-			log_file << "checkcpdtable_" << std::setw(3) << std::setfill('0') << i - this->checkcpdtable.begin() << "\t\"" << i->pattern2 << "\"" << std::endl;
-			log_file << "checkcpdtable_" << std::setw(3) << std::setfill('0') << i - this->checkcpdtable.begin() << "\t\"" << i->pattern3 << "\"" << std::endl;
-			//TODO cond and cond2
-		}
-//	log_file << "checknum/\t" << this->checknum << std::endl;
-	log_file << "checksharps/checksharps\t" << this->checksharps << std::endl;
-	log_file << "circumfix/circumfix_flag\t" << this->circumfix << std::endl;
-	log_file << "complexprefixes/complex_prefixes\t" << this->complexprefixes << std::endl;
-	log_file << "compoundroot/compound_root_flag\t" << this->compoundroot << std::endl;
-	log_file << "compoundbegin/compound_begin_flag\t" << this->compoundbegin << std::endl;
-	log_file << "compoundmiddle/compound_middle_flag\t" << this->compoundmiddle << std::endl;
-	log_file << "compoundend/compound_last_flag\t" << this->compoundend << std::endl;
-	log_file << "compoundflag/compound_flag\t" << this->compoundflag << std::endl;
-	log_file << "compoundforbidflag/compound_forbid_flag\t" << this->compoundforbidflag << std::endl;
-	log_file << "compoundmoresuffixes/compound_more_suffixes\t" << this->compoundmoresuffixes << std::endl;
-	log_file << "compoundpermitflag/compound_forbid_flag\t" << this->compoundpermitflag << std::endl;
-	//TODO contclasses
-	log_file << "cpdmaxsyllable/compound_syllable_max\t" << this->cpdmaxsyllable << std::endl;
-	log_file << "cpdmin\t" << this->cpdmin << std::endl;
-	log_file << "cpdsyllablenum\t\"" << this->cpdsyllablenum << "\"" << std::endl;
-	log_file << "cpdvowels/compound_syllable_vowels\t\"" << this->cpdvowels << "\"" << std::endl;
-	//TODO cpdvowels_utf16
-	log_file << "cpdwordmax/compound_word_max\t" << this->cpdwordmax << std::endl;
-	//TODO csconv
-	//TODO defcpdtable
-	log_file << "encoding/encoding.value\t\"" << this->encoding << "\"" << std::endl;
-	log_file << "forbiddenword/forbiddenword\t" << this->forbiddenword << std::endl;
-	log_file << "forbidwarn/forbid_warn\t" << this->forbidwarn << std::endl;
-	log_file << "forceucase/compound_force_uppercase\t" << this->forceucase << std::endl;
-	log_file << "fullstrip\t" << this->fullstrip << std::endl;
-	log_file << "havecontclass\t" << this->havecontclass << std::endl;
-	if (this->iconvtable == 0x0)
-		log_file << "iconvtable/input_conversion\t" << std::endl;
-	else
-		for(int i=0; i < this->iconvtable->log_size(); ++i) {
-			auto r = this->iconvtable->item(i);
-			log_file << "iconvtable_" << std::setw(3) << std::setfill('0') << i << "\t\"" << r->pattern << "\"\t\"" << r->outstrings[0] << "\"" << std::endl;
-		}
-	log_file << "ignorechars\t\"" << this->ignorechars << "\"" << std::endl;
+
+	//log_file << "encoding/encoding.value\t\"" << encoding << "\"" << std::endl;
+	//TODO flag_type
+	log_file << "complexprefixes/complex_prefixes\t" << complexprefixes << std::endl;
+	log_file << "lang/language_code\t\"" << lang << "\"" << std::endl;
+	log_file << "ignorechars/ignore_chars\t\"" << ignorechars << "\"" << std::endl;
 	//TODO ignorechars_utf16
-	log_file << "keepcase\t" << this->keepcase << std::endl;
-	log_file << "keystring/keyboard_layout\t\"" << this->keystring << "\"" << std::endl;
-	log_file << "lang/language_code\t\"" << this->lang << "\"" << std::endl;
-	log_file << "langnum\t" << this->langnum << std::endl;
-	log_file << "lemma_present\t" << this->lemma_present << std::endl;
-	if (this->maptable.size() == 0)
-		log_file << "maptable\t" << std::endl;
-	else
-		for (std::vector<mapentry>::const_iterator i = this->maptable.begin(); i != this->maptable.end(); ++i) {
-			log_file << "maptable_" << std::setw(3) << std::setfill('0') << i - this->maptable.begin() << "\t";
+
+	log_file << "SUGGESTION OPTIONS" << std::endl;
+	log_file << "keystring/keyboard_layout\t\"" << keystring << "\"" << std::endl;
+	log_file << "trystring/try_chars\t\"" << trystring << "\"" << std::endl;
+	log_file << "nosuggest/nosuggest_flag\t" << nosuggest << std::endl;
+	log_file << "maxcpdsugs/max_compound_suggestions\t" << maxcpdsugs << std::endl;
+	log_file << "maxngramsugs/max_ngram_suggestions\t" << maxngramsugs << std::endl;
+	log_file << "maxdiff/max_diff_factor\t" << maxdiff << std::endl;
+	log_file << "onlymaxdiff/only_max_diff;\t" << onlymaxdiff << std::endl;
+	log_file << "nosplitsugs/no_split_suggestions\t" << nosplitsugs << std::endl;
+	log_file << "sugswithdots/suggest_with_dots\t" << sugswithdots << std::endl;
+	for (std::vector<replentry>::const_iterator i = reptable.begin(); i != reptable.end(); ++i) {
+		log_file << "reptable/replacements_" << std::setw(3) << std::setfill('0') << i - reptable.begin() + 1 << "\t\"" << i->pattern << "\"\t\"" << i->outstrings[0] << "\"" << std::endl;
+	}
+	if (maptable.size())
+		for (std::vector<mapentry>::const_iterator i = maptable.begin(); i != maptable.end(); ++i) {
+			log_file << "maptable_" << std::setw(3) << std::setfill('0') << i - maptable.begin() + 1 << "\t";
 			for (std::vector<std::string>::const_iterator j = i->begin(); j != i->end(); ++j) {
 				if (j != i->begin() && j != i->end())
 					log_file << "\t";
@@ -4986,97 +4946,122 @@ void AffixMgr::log(const char* affpath, const char* key) {
 			}
 			log_file << std::endl;
 		}
-	log_file << "maxcpdsugs/max_compound_suggestions\t" << this->maxcpdsugs << std::endl;
-	log_file << "maxdiff/max_diff_factor\t" << this->maxdiff << std::endl;
-	log_file << "maxngramsugs/max_ngram_suggestions\t" << this->maxngramsugs << std::endl;
-	log_file << "needaffix/need_affix_flag\t" << this->needaffix << std::endl;
-	log_file << "nongramsuggest/max_ngram_suggestions\t" << this->nongramsuggest << std::endl;
-	log_file << "nosplitsugs/no_split_suggestions\t" << this->nosplitsugs << std::endl;
-	log_file << "nosuggest/nosuggest_flag\t" << this->nosuggest << std::endl;
-	if (this->oconvtable == 0x0)
-		log_file << "oconvtable/output_conversion\t" << std::endl;
-	else
-		for(int i=0; i < this->oconvtable->log_size(); ++i) {
-			auto r = this->oconvtable->item(i);
-			log_file << "oconvtable_" << std::setw(3) << std::setfill('0') << i << "\t\"" << r->pattern << "\"\t\"" << r->outstrings[0] << "\"" << std::endl;
+	if (phone)
+		for (std::vector<std::string>::const_iterator i = phone->rules.begin(); i != phone->rules.end(); ++i) {
+			log_file << "phone.rules/phonetic_replacements_" << std::setw(3) << std::setfill('0') << i - phone->rules.begin() << "\t\"" << *i << "\"" << std::endl;
+			//TODO phone->hash
+			//TODO phone->utf8
 		}
-	log_file << "onlyincompound\t" << this->onlyincompound << std::endl;
-	log_file << "onlymaxdiff\t" << this->onlymaxdiff << std::endl;
-	log_file << "parsedbreaktable\t" << this->parsedbreaktable << std::endl;
-	log_file << "parsedcheckcpd\t" << this->parsedcheckcpd << std::endl;
-	log_file << "parseddefcpd\t" << this->parseddefcpd << std::endl;
-	log_file << "parsedmaptable\t" << this->parsedmaptable << std::endl;
-	log_file << "parsedrep\t" << this->parsedrep << std::endl;
-	if (this->phone == 0x0)
-		log_file << "phone\t" << std::endl;
-	else {
-		for (std::vector<std::string>::const_iterator i = this->phone->rules.begin(); i != this->phone->rules.end(); ++i)
-			log_file << "phone.rules_" << std::setw(3) << std::setfill('0') << i - this->phone->rules.begin() << "\t\"" << *i << "\"" << std::endl;
-		//TODO phone->hash
-		//TODO phone->utf8
-	}
-	if (this->reptable.size() == 0)
-		log_file << "reptable/replacements\t" << std::endl;
-	else
-		for (std::vector<replentry>::const_iterator i = this->reptable.begin(); i != this->reptable.end(); ++i)
-			log_file << "reptable_" << std::setw(3) << std::setfill('0') << i - this->reptable.begin() << "\t\"" << i->pattern << "\"\t\"" << i->outstrings[0] << "\"" << std::endl;
-	log_file << "simplifiedcpd\t" << this->simplifiedcpd << std::endl;
-	log_file << "simplifiedtriple\t" << this->simplifiedtriple << std::endl;
-	log_file << "substandard\t" << this->substandard << std::endl;
-	log_file << "sugswithdots\t" << this->sugswithdots << std::endl;
-	log_file << "trystring\t\"" << this->trystring << "\"" << std::endl;
-	log_file << "utf8\t" << this->utf8 << std::endl;
-	log_file << "version\t\"" << this->version << "\"" << std::endl;
-	log_file << "warn\t" << this->warn << std::endl;
-	log_file << "wordchars\t\"" << this->wordchars << "\"" << std::endl;
-	//TODO wordchars_utf16
+	log_file << "warn/warn_flag\t" << warn << std::endl;
+	log_file << "forbidwarn/forbid_warn\t" << forbidwarn << std::endl;
 
-	//TODO or not log_file << "pfx\t" << this->pfx << std::endl;
-	if (this->pfxappnd == 0x0)
-		log_file << "pfxappnd\t0x0" << std::endl;
-	else
-		log_file << "pfxappnd\tTODO" << std::endl;
-//FIXME		log_file << "pfxappnd\t" << this->pfxappnd << std::endl;
+	log_file << "COMPOUNDING OPTIONS" << std::endl;
+	for (std::vector<std::string>::const_iterator i = breaktable.begin(); i != breaktable.end(); ++i) {
+		log_file << "breaktable/break_patterns_" << std::setw(3) <<
+			    std::setfill('0') << i - breaktable.begin() + 1 << "\t\"" << *i << "\"" << std::endl;
+	}
+	//TODO compound_rules
+	log_file << "cpdmin/compoud_minimum\t" << cpdmin << std::endl;
+	log_file << "compoundflag/compound_flag\t" << compoundflag << std::endl;
+	log_file << "compoundbegin/compound_begin_flag\t" << compoundbegin << std::endl;
+	log_file << "compoundend/compound_last_flag\t" << compoundend << std::endl;
+	log_file << "compoundmiddle/compound_middle_flag\t" << compoundmiddle << std::endl;
+	log_file << "onlyincompound/compound_onlyin_flag\t" << onlyincompound << std::endl;
+	log_file << "compoundpermitflag/compound_permit_flag\t" << compoundpermitflag << std::endl;
+	log_file << "compoundforbidflag/compound_forbid_flag\t" << compoundforbidflag << std::endl;
+	log_file << "compoundmoresuffixes/compound_more_suffixes\t" << compoundmoresuffixes << std::endl;
+	log_file << "compoundroot/compound_root_flag\t" << compoundroot << std::endl;
+	log_file << "cpdwordmax/compound_word_max\t" << cpdwordmax << std::endl;
+	log_file << "checkcompounddup/compound_check_up\t" << checkcompounddup << std::endl;
+	log_file << "checkcompoundrep/compound_check_rep\t" << checkcompoundrep << std::endl;
+	log_file << "checkcompoundcase/compound_check_case\t" << checkcompoundcase << std::endl;
+	log_file << "checkcompoundtriple/compound_check_triple\t" << checkcompoundtriple << std::endl;
+	log_file << "simplifiedtriple/compound_simplified_triple\t" << simplifiedtriple << std::endl;
+	for (std::vector<patentry>::const_iterator i = checkcpdtable.begin(); i != checkcpdtable.end(); ++i) {
+		log_file << "checkcpdtable/compound_check_patterns_" << std::setw(3) << std::setfill('0') << i - checkcpdtable.begin() << "\t\"" << i->pattern << "\"" << std::endl;
+		log_file << "checkcpdtable/compound_check_patterns_" << std::setw(3) << std::setfill('0') << i - checkcpdtable.begin() << "\t\"" << i->pattern2 << "\"" << std::endl;
+		log_file << "checkcpdtable/compound_check_patterns_" << std::setw(3) << std::setfill('0') << i - checkcpdtable.begin() << "\t\"" << i->pattern3 << "\"" << std::endl;
+		//TODO cond and cond2
+	}
+	log_file << "forceucase/compound_force_uppercase\t" << forceucase << std::endl;
+	log_file << "cpdmaxsyllable/compound_syllable_max\t" << cpdmaxsyllable << std::endl;
+	log_file << "cpdvowels/compound_syllable_vowels\t\"" << cpdvowels << "\"" << std::endl;
+	//TODO cpdvowels_utf16
+	log_file << "cpdsyllablenum.length/compound_syllable_num.size\t" << cpdsyllablenum.length() << std::endl;
 	int i = 0;
 	for (int j = 0; j < SETSIZE; j++) {
 	  PfxEntry* ptr = pStart[j];
 	  while (ptr) {
 		i++;
-		log_file << "pfx_" << std::setw(3) << std::setfill('0') << i << ".appnd\t\"" << ptr->getKey() << "\"" << std::endl;
-		log_file << "pfx_" << std::setw(3) << std::setfill('0') << i << ".aflag\t" << ptr->getFlag() << std::endl;
-		log_file << "pfx_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
+		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".appnd\t\"" << ptr->getKey() << "\"" << std::endl;
+		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".aflag\t" << ptr->getFlag() << std::endl;
+		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
 //FIXME	    log_file << "pfx_" << std::setw(3) << std::setfill('0') << i << ".contclass\t" << ptr->getCont() << std::endl;
 //		if (ptr->getMorph())
-//			log_file << "pfx_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
+//			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
 //		else
-//			log_file << "pfx_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t0x0" << std::endl;
+//			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t0x0" << std::endl;
 	    ptr = ptr->getNext();
 	  }
 	}
-
-	log_file << "sfxextra\t" << this->sfxextra << std::endl;
-	log_file << "sfxflag\t" << this->sfxflag << std::endl;
-	//TODO or not log_file << "sfx\t" << this->sfx << std::endl;
-	if (this->sfxappnd == 0x0)
-		log_file << "sfxappnd\t0x0" << std::endl;
-	else
-		log_file << "sfxappnd\tTODO" << std::endl;
-//FIXME		log_file << "sfxappnd\t" << this->sfxappnd << std::endl;
 	i = 0;
 	for (int j = 0; j < SETSIZE; j++) {
 	  SfxEntry* ptr = sStart[j];
 	  while (ptr) {
 		i++;
-		log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".appnd\t\"" << ptr->getKey() << "\"" << std::endl;
-		log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".aflag\t" << ptr->getFlag() << std::endl;
-		log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".cross()\t" << ptr->allowCross() << std::endl;
-		log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".appnd\t\"" << ptr->getKey() << "\"" << std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag\t" << ptr->getFlag() << std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".cross()\t" << ptr->allowCross() << std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
 				//FIXME	    log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".contclass\t" << ptr->getCont() << std::endl;
-//FIXME	    log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
-//	    log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".aflag\t" << ptr->AffEntry.strip << std::endl;
-//	    log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".rappnd\t" << ptr->rappnd << std::endl;
+//FIXME	    log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
+//	    log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag\t" << ptr->AffEntry.strip << std::endl;
+//	    log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".rappnd\t" << ptr->rappnd << std::endl;
 	    ptr = ptr->getNext();
 	  }
 	}
+
+	log_file << "OTHERS" << std::endl;
+	log_file << "circumfix/circumfix_flag\t" << circumfix << std::endl;
+	log_file << "forbiddenword/forbiddenword_flag\t" << forbiddenword << std::endl;
+	log_file << "fullstrip/fullstrip\t" << fullstrip << std::endl;
+	log_file << "keepcase/keepcase_flag\t" << keepcase << std::endl;
+	if (iconvtable)
+		for(int i=0; i < iconvtable->log_size(); ++i) {
+			auto r = iconvtable->item(i);
+			log_file << "iconvtable/input_conversion_" << std::setw(3) << std::setfill('0') << i + 1<< "\t\"" << r->pattern << "\"\t\"" << r->outstrings[0] << "\"" << std::endl;
+		}
+	if (oconvtable)
+		for(int i=0; i < oconvtable->log_size(); ++i) {
+			auto r = oconvtable->item(i);
+			log_file << "oconvtable/output_conversion_" << std::setw(3) << std::setfill('0') << i + 1<< "\t\"" << r->pattern << "\"\t\"" << r->outstrings[0] << "\"" << std::endl;
+		}
+	log_file << "needaffix/need_affix_flag\t" << needaffix << std::endl;
+	log_file << "substandard/substandard_flag\t" << substandard << std::endl;
+	log_file << "wordchars/wordchars\t\"" << wordchars << "\"" << std::endl;
+	//TODO wordchars_utf16
+	log_file << "checksharps/checksharps\t" << checksharps << std::endl;
+
+
+
+	//	log_file << "checknum/\t" << checknum << std::endl;
+	//	//TODO contclasses
+	//	//TODO csconv
+	//	//TODO defcpdtable
+	//	log_file << "havecontclass\t" << havecontclass << std::endl;
+	//	log_file << "langnum\t" << langnum << std::endl;
+	//	log_file << "lemma_present\t" << lemma_present << std::endl;
+	//	log_file << "nongramsuggest/max_ngram_suggestions\t" << nongramsuggest << std::endl;
+	//	log_file << "parsedbreaktable\t" << parsedbreaktable << std::endl;
+	//	log_file << "parsedcheckcpd\t" << parsedcheckcpd << std::endl;
+	//	log_file << "parseddefcpd\t" << parseddefcpd << std::endl;
+	//	log_file << "parsedmaptable\t" << parsedmaptable << std::endl;
+	//	log_file << "parsedrep\t" << parsedrep << std::endl;
+	//	log_file << "simplifiedcpd\t" << simplifiedcpd << std::endl;
+	//	log_file << "utf8\t" << utf8 << std::endl;
+	//	log_file << "version\t\"" << version << "\"" << std::endl;
+
+
+
 	log_file << "END" << std::endl;
 }

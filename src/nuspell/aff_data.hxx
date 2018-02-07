@@ -79,7 +79,10 @@ struct Aff_Data {
 	template <class T, class U>
 	using pair = std::pair<T, U>;
 
-	Encoding encoding;
+	Encoding encoding; // TODO This is only used during parsing. To prevent
+	                   // accidental usage of empty value, move this out of
+	                   // this class and let it only live locally in the
+	                   // parse method.
 	Flag_Type flag_type;
 	bool complex_prefixes;
 	string language_code;
@@ -93,9 +96,9 @@ struct Aff_Data {
 	string keyboard_layout;
 	string try_chars;
 	char16_t nosuggest_flag;
-	short max_compound_suggestions;
-	short max_ngram_suggestions;
-	short max_diff_factor;
+	short max_compound_suggestions = -1;
+	short max_ngram_suggestions = -1;
+	short max_diff_factor = -1;
 	bool only_max_diff;
 	bool no_split_suggestions;
 	bool suggest_with_dots;
@@ -108,7 +111,7 @@ struct Aff_Data {
 	// compouding options
 	vector<string> break_patterns;
 	vector<string> compound_rules;
-	short compoud_minimum;
+	short compoud_minimum = -1;
 	char16_t compound_flag;
 	char16_t compound_begin_flag;
 	char16_t compound_last_flag;
@@ -118,7 +121,7 @@ struct Aff_Data {
 	char16_t compound_forbid_flag;
 	bool compound_more_suffixes;
 	char16_t compound_root_flag;
-	short compound_word_max;
+	short compound_word_max = -1;
 	bool compound_check_up;
 	bool compound_check_rep;
 	bool compound_check_case;
