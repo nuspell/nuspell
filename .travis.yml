@@ -16,12 +16,13 @@ before_install:
       export CXX="g++-5" CC="gcc-5";
     fi
   - cd ~ &&
-    wget https://dl.bintray.com/boostorg/release/1.62.0/source/boost_1_62_0.tar.bz2 -O - |
+    wget https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.bz2/download -O - |
     tar -xj
 
 install:
   - export BOOST_ROOT=~/.local
-  - "cd ~/boost_1_62_0 && echo 'using gcc : : g++-5 ;' > user-config.jam &&
+  - "cd ~/boost_1_62_0 &&
+    echo 'using gcc : : g++-5 ;' > user-config.jam &&
     ./bootstrap.sh --prefix=$BOOST_ROOT --with-libraries=locale &&
     ./b2 install"
 
@@ -48,7 +49,6 @@ addons:
     packages:
     - autoconf
     - automake
-    - autopoint
     - gcc-5
     - g++-5
     - libicu-dev
