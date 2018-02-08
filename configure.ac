@@ -24,7 +24,7 @@ AM_CONDITIONAL([HAVE_RONN], [test x$ronn = xyes])
 
 # Checks for libraries.
 AM_ICONV
-BOOST_REQUIRE([1.48.0])
+BOOST_REQUIRE([1.53.0])
 BOOST_LOCALE
 AC_REQUIRE_AUX_FILE([tap-driver.sh])
 

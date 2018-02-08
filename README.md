@@ -44,7 +44,7 @@ Runtime dependencies:
 |-----------------|--------------------|------------------|
 | libnuspell 1    |                    |                  |
 | cmd line tool 1 | libiconv           | ncurses readline |
-| libnuspell 2    | boost-locale, icu4c|                  |
+| libnuspell 2    | boost-locale with icu4c|              |
 | cmd line tool 2 |                    |                  |
 
 Recommended tools for developers:
@@ -55,9 +55,7 @@ vim qtcreator clang-format cppcheck gdb libtool-bin doxygen plantuml
 
 # Compiling on GNU/Linux and Unixes
 
-We first need to download the dependencies. On Linux `libiconv` is part
-of the standard library. On other Unixes we need to manually install
-them, e.g. via `sudo apt install libicu57`.
+We first need to download the dependencies. Some may already be preinstalled.
 
 For Ubuntu:
 
@@ -115,7 +113,7 @@ above.
 
 ## 2\. Compiling in Cygwin environment
 
-Download the mentioned dependencies with Cygwin package manager.
+Download the above mentioned dependencies with Cygwin package manager.
 Then compile the same way as on Linux. Cygwin builds depend on
 Cygwin1.dll.
 
@@ -127,7 +125,7 @@ First, always install the debugger:
 
 It is recomended to install a debug build of the standard library:
 
-    sudo apt install libstdc++6-6-dbg
+    sudo apt install libstdc++6-7-dbg
 
 For debugging we need to create a debug build and then we need to start
 `gdb`.

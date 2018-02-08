@@ -70,11 +70,6 @@ struct Compound_Check_Pattern {
 	string replacement;
 };
 
-#define UNDEFINED_SHORT -1                // proposal
-#define MINIMUM_MINIMUM_COMPOUND_LENGTH 1 // proposal
-#define DEFAULT_MINIMUM_COMPOUND_LENGTH 3 // proposal
-#define DEFAULT_COMPOUND_WORD_MAXIMUM -1  // proposal
-
 struct Aff_Data {
 	using string = std::string;
 	using u16string = std::u16string;
@@ -116,7 +111,7 @@ struct Aff_Data {
 	// compounding options
 	vector<string> break_patterns;
 	vector<string> compound_rules;
-	short compound_minimum = UNDEFINED_SHORT;
+	short compound_minimum;
 	char16_t compound_flag;
 	char16_t compound_begin_flag;
 	char16_t compound_last_flag;
@@ -126,7 +121,7 @@ struct Aff_Data {
 	char16_t compound_forbid_flag;
 	bool compound_more_suffixes;
 	char16_t compound_root_flag;
-	short compound_word_max = DEFAULT_COMPOUND_WORD_MAXIMUM; // proposal
+	short compound_word_max;
 	bool compound_check_up;
 	bool compound_check_rep;
 	bool compound_check_case;

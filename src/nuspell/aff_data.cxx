@@ -586,32 +586,12 @@ auto Aff_Data::parse(istream& in) -> bool
 	locale_aff = locale_generator(get_locale_name(language_code, encoding));
 	cerr.flush();
 
-	// get encoding for CHECKCOMPOUNDCASE
-	if (encoding.value() != "UTF-8") { // TODO Is this good? Not too strong
-		                           // or too weak? Is the comment in the
-		                           // line above approprite?
-		for (int i = 0; i <= 255; i++) {
-			auto s = std::string(1, static_cast<char>(i));
-			if ((boost::locale::to_upper(s, locale_aff) !=
-			     boost::locale::to_lower(
-			         s,
-			         locale_aff)) && // TODO missing soem characters
-			    (wordchars.find((char)i) == std::string::npos)) {
-				wordchars.push_back((char)i);
-			}
-		}
-	}
-
 	// default BREAK definition
 	if (!break_patterns.size()) {
 		break_patterns.push_back("-");
 		break_patterns.push_back("^-");
 		break_patterns.push_back("-$");
 	}
-	if (compound_minimum == -1)
-		compound_minimum = DEFAULT_MINIMUM_COMPOUND_LENGTH;
-	else if (compound_minimum < MINIMUM_MINIMUM_COMPOUND_LENGTH)
-		compound_minimum = MINIMUM_MINIMUM_COMPOUND_LENGTH;
 
 	return in.eof(); // success when eof is reached
 }
