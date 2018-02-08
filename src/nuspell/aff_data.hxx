@@ -70,6 +70,11 @@ struct Compound_Check_Pattern {
 	string replacement;
 };
 
+#define UNDEFINED_SHORT -1                // proposal
+#define MINIMUM_MINIMUM_COMPOUND_LENGTH 1 // proposal
+#define DEFAULT_MINIMUM_COMPOUND_LENGTH 3 // proposal
+#define DEFAULT_COMPOUND_WORD_MAXIMUM -1  // proposal
+
 struct Aff_Data {
 	using string = std::string;
 	using u16string = std::u16string;
@@ -96,9 +101,9 @@ struct Aff_Data {
 	string keyboard_layout;
 	string try_chars;
 	char16_t nosuggest_flag;
-	short max_compound_suggestions = -1;
-	short max_ngram_suggestions = -1;
-	short max_diff_factor = -1;
+	short max_compound_suggestions;
+	short max_ngram_suggestions;
+	short max_diff_factor;
 	bool only_max_diff;
 	bool no_split_suggestions;
 	bool suggest_with_dots;
@@ -108,10 +113,10 @@ struct Aff_Data {
 	char16_t warn_flag;
 	bool forbid_warn;
 
-	// compouding options
+	// compounding options
 	vector<string> break_patterns;
 	vector<string> compound_rules;
-	short compoud_minimum = -1;
+	short compound_minimum = UNDEFINED_SHORT;
 	char16_t compound_flag;
 	char16_t compound_begin_flag;
 	char16_t compound_last_flag;
@@ -121,7 +126,7 @@ struct Aff_Data {
 	char16_t compound_forbid_flag;
 	bool compound_more_suffixes;
 	char16_t compound_root_flag;
-	short compound_word_max = -1;
+	short compound_word_max = DEFAULT_COMPOUND_WORD_MAXIMUM; // proposal
 	bool compound_check_up;
 	bool compound_check_rep;
 	bool compound_check_case;

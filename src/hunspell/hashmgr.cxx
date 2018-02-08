@@ -1196,10 +1196,13 @@ void HashMgr::log(const char* tpath, const char* apath, const char* key) {
 	std::ofstream log_file;
 	auto log_name = std::string(".hm1.log"); // 1: Hunspell, 2: Nuspell
 	log_name.insert(0, tpath);
+	if (log_name.substr(0, 2) == "./")
+		log_name.erase(0, 2);
+	log_name.insert(0, "../v1cmdlines/"); // prevent logging somewhere else
 	log_file.open(log_name, std::ios_base::out);
 	if (!log_file.is_open()) {
-		fprintf(stderr, "ERROR: Can't open log file %s\n", log_name.c_str());
-		exit(1);
+		fprintf(stderr, "WARNING: Can't open log file %s\n", log_name.c_str());
+		return;
 	}
 	log_file << "tpath\t" << tpath << std::endl;
 	log_file << "apath\t" << apath << std::endl;

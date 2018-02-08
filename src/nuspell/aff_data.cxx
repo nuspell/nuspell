@@ -41,10 +41,10 @@
  * On the other hand, the method parse() should fill the data in intermediate
  * data structures that are good for dynamic updates.
  *
- * E.g. In the class: we can store the affixes in sorted vector by the key
- * that we are goind to search them, the adding affix. (aka flat_map)
+ * E.g. In the class: it can store the affixes in a sorted vector by the key
+ * on which will be searched, the adding affix. (aka flat_map)
  *
- * In method parse(): we will fill the affixes in simple unsorted vector.
+ * In method parse(): it will fill the affixes in simple unsorted vector.
  *
  * For simple stiff like simple int, flag, or for data structures that are
  * equally good for updating and reading, just parse directly into the class
@@ -171,7 +171,7 @@ auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
 			// Hungarian dictionary explited this
 			// bug/feature, resulting it's file to be
 			// mixed utf-8 and latin2.
-			// In v2 we will make this to work, with
+			// In v2 this will eventually work, with
 			// a warning.
 		}
 		ret = latin1_to_ucs2(s);
@@ -411,7 +411,7 @@ auto Aff_Data::parse(istream& in) -> bool
 	    {"MAXNGRAMSUGS", &max_ngram_suggestions},
 	    {"MAXDIFF", &max_diff_factor},
 
-	    {"COMPOUNDMIN", &compoud_minimum},
+	    {"COMPOUNDMIN", &compound_minimum},
 	    {"COMPOUNDWORDMAX", &compound_word_max}};
 
 	unordered_map<string, vector<pair<string, string>>*> command_vec_pair =
@@ -588,8 +588,8 @@ auto Aff_Data::parse(istream& in) -> bool
 
 	// get encoding for CHECKCOMPOUNDCASE
 	if (encoding.value() != "UTF-8") { // TODO Is this good? Not too strong
-	                                   // or too weak? Is the comment in the
-	                                   // line above approprite?
+		                           // or too weak? Is the comment in the
+		                           // line above approprite?
 		for (int i = 0; i <= 255; i++) {
 			auto s = std::string(1, static_cast<char>(i));
 			if ((boost::locale::to_upper(s, locale_aff) !=
@@ -608,8 +608,12 @@ auto Aff_Data::parse(istream& in) -> bool
 		break_patterns.push_back("^-");
 		break_patterns.push_back("-$");
 	}
+	if (compound_minimum == -1)
+		compound_minimum = DEFAULT_MINIMUM_COMPOUND_LENGTH;
+	else if (compound_minimum < MINIMUM_MINIMUM_COMPOUND_LENGTH)
+		compound_minimum = MINIMUM_MINIMUM_COMPOUND_LENGTH;
 
-	return in.eof(); // success if we reached eof
+	return in.eof(); // success when eof is reached
 }
 
 void Aff_Data::log(const string& affpath)
@@ -619,20 +623,25 @@ void Aff_Data::log(const string& affpath)
 	log_name.insert(0, affpath);
 	if (log_name.substr(0, 2) == "./")
 		log_name.erase(0, 2);
+	log_name.insert(0, "../v1cmdlines/"); // prevent logging somewhere else
 	log_file.open(log_name, std::ios_base::out);
 	if (!log_file.is_open()) {
-		fprintf(stderr, "ERROR: Can't open log file %s\n",
+		fprintf(stderr, "WARNING: Can't open log file %s\n",
 		        log_name.c_str());
-		exit(1);
+		return;
 	}
 	log_file << "affpath/affpath\t"
 	         << log_name.erase(log_name.size() - 8, 8) << std::endl;
 	//	log_file << "key\tTODO" << std::endl;
 	log_file << "AFTER parse" << std::endl;
-	// The contents of alldic and pHMgr are logged by a seprate log
+
+	log_file << std::endl << "BASIC" << std::endl;
+	// The contents of alldic and pHMgr are logged by a
+	// seprate log
 	// method in the hash manager.
 
-	// log_file << "encoding/encoding.value\t\"" << encoding.value()
+	// log_file << "encoding/encoding.value\t\"" <<
+	// encoding.value()
 	//	 << "\"" << std::endl;
 	// TODO flag_type
 	log_file << "complexprefixes/complex_prefixes\t" << complex_prefixes
@@ -646,7 +655,7 @@ void Aff_Data::log(const string& affpath)
 
 	// TODO locale_aff
 
-	log_file << "SUGGESTION OPTIONS" << std::endl;
+	log_file << std::endl << "SUGGESTION OPTIONS" << std::endl;
 	log_file << "keystring/keyboard_layout\t\"" << keyboard_layout << "\""
 	         << std::endl;
 	log_file << "trystring/try_chars\t\"" << try_chars << "\"" << std::endl;
@@ -691,7 +700,7 @@ void Aff_Data::log(const string& affpath)
 	log_file << "warn/warn_flag\t" << warn_flag << std::endl;
 	log_file << "forbidwarn/forbid_warn\t" << forbid_warn << std::endl;
 
-	log_file << "COMPOUNDING OPTIONS" << std::endl;
+	log_file << std::endl << "COMPOUNDING OPTIONS" << std::endl;
 	for (std::vector<std::string>::const_iterator i =
 	         break_patterns.begin();
 	     i != break_patterns.end(); ++i) {
@@ -700,7 +709,8 @@ void Aff_Data::log(const string& affpath)
 		         << "\t\"" << *i << "\"" << std::endl;
 	}
 	// TODO compound_rules
-	log_file << "cpdmin/compoud_minimum\t" << compoud_minimum << std::endl;
+	log_file << "cpdmin/compound_minimum\t" << compound_minimum
+	         << std::endl;
 	log_file << "compoundflag/compound_flag\t" << compound_flag
 	         << std::endl;
 	log_file << "compoundbegin/compound_begin_flag\t" << compound_begin_flag
@@ -754,34 +764,51 @@ void Aff_Data::log(const string& affpath)
 	         << compound_syllable_max << std::endl;
 	log_file << "cpdvowels/compound_syllable_vowels\t\""
 	         << compound_syllable_vowels << "\"" << std::endl;
-	log_file << "cpdsyllablenum.length/compound_syllable_num.size\t"
+	log_file << "cpdsyllablenum.length/"
+	            "compound_syllable_num.size\t"
 	         << compound_syllable_num.size() << std::endl;
 	for (std::vector<Affix>::const_iterator i = prefixes.begin();
 	     i != prefixes.end(); ++i) {
 		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0')
-		         << i - prefixes.begin() + 1 << ".appnd\t\"" << i->affix
-		         << "\"" << std::endl;
+		         << i - prefixes.begin() + 1 << ".appnd/affix\t\""
+		         << i->affix << "\"" << std::endl;
 		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0')
-		         << i - prefixes.begin() + 1 << ".aflag\t" << i->affix
-		         << std::endl;
-		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0')
-		         << i - prefixes.begin() + 1 << ".contclasslen\t"
-		         << i->affix << std::endl;
+		         << i - prefixes.begin() + 1 << ".aflag/flag\t"
+		         << i->flag << std::endl;
+		//		log_file << "pfx/prefixes_" <<
+		// std::setw(3) <<
+		// std::setfill('0')
+		//		         << i - prefixes.begin() +
+		// 1 <<
+		//".contclasslen\t"
+		//		         << i->affix <<
+		// std::endl;
 	}
 	for (std::vector<Affix>::const_iterator i = suffixes.begin();
 	     i != suffixes.end(); ++i) {
 		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
-		         << i - suffixes.begin() + 1 << ".appnd\t\"" << i->affix
-		         << "\"" << std::endl;
+		         << i - suffixes.begin() + 1 << ".appnd/affix\t\""
+		         << i->affix << "\"" << std::endl;
 		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
-		         << i - suffixes.begin() + 1 << ".aflag\t" << i->affix
-		         << std::endl;
+		         << i - suffixes.begin() + 1 << ".aflag/flag\t"
+		         << i->flag << std::endl;
 		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
-		         << i - suffixes.begin() + 1 << ".contclasslen\t"
-		         << i->affix << std::endl;
+		         << i - suffixes.begin() << ".cross()/cross_product\t"
+		         << i->cross_product << std::endl;
+		//		log_gile << "sfx/suffixes_" <<
+		// std::setw(3) <<
+		// std::setfill('0')
+		//			 << i - suffixes.begin() + 1
+		//<<
+		//".contclasslen\t"
+		//			 << i->affix <<
+		// std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
+		         << i - suffixes.begin() + 1 << ".strip/stripping\t\""
+		         << i->stripping << "\"" << std::endl;
 	}
 
-	log_file << "OTHERS" << std::endl;
+	log_file << std::endl << "OTHERS" << std::endl;
 	log_file << "circumfix/circumfix_flag\t" << circumfix_flag << std::endl;
 	log_file << "forbiddenword/forbiddenword_flag\t" << forbiddenword_flag
 	         << std::endl;

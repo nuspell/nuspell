@@ -85,10 +85,6 @@ nuspell-*.tar.gz
 # https://vim.sourceforge.io/
 .?*.swp
 
-# TODO need a section to be mvoed to
-/personal-build-and-test.sh
-/personal-reconfigure.sh
-
 # found during configuring
 /confdefs.h
 /confinc

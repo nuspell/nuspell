@@ -4902,10 +4902,11 @@ void AffixMgr::log(const char* affpath, const char* key) {
 	log_name.insert(0, affpath);
 	if (log_name.substr(0, 2) == "./")
 		log_name.erase(0, 2);
-	log_file.open(log_name, std::ios_base::out);
+        log_name.insert(0, "../v1cmdlines/"); // prevent logging somewhere else
+        log_file.open(log_name, std::ios_base::out);
 	if (!log_file.is_open()) {
-		fprintf(stderr, "ERROR: Can't open log file %s\n", log_name.c_str());
-		exit(1);
+                fprintf(stderr, "WARNING: Can't open log file %s\n", log_name.c_str());
+                return;
 	}
 	log_file << "affpath/affpath\t" << log_name.erase(log_name.size() - 8, 8) << std::endl;
 //	log_file << "key\t";
@@ -4916,14 +4917,15 @@ void AffixMgr::log(const char* affpath, const char* key) {
 	log_file << "AFTER parse" << std::endl;
 	// The contents of alldic and pHMgr are logged by a seprate log method in the hash manager.
 
-	//log_file << "encoding/encoding.value\t\"" << encoding << "\"" << std::endl;
+        log_file << std::endl << "BASIC" << std::endl;
+        //log_file << "encoding/encoding.value\t\"" << encoding << "\"" << std::endl;
 	//TODO flag_type
 	log_file << "complexprefixes/complex_prefixes\t" << complexprefixes << std::endl;
 	log_file << "lang/language_code\t\"" << lang << "\"" << std::endl;
 	log_file << "ignorechars/ignore_chars\t\"" << ignorechars << "\"" << std::endl;
 	//TODO ignorechars_utf16
 
-	log_file << "SUGGESTION OPTIONS" << std::endl;
+        log_file << std::endl << "SUGGESTION OPTIONS" << std::endl;
 	log_file << "keystring/keyboard_layout\t\"" << keystring << "\"" << std::endl;
 	log_file << "trystring/try_chars\t\"" << trystring << "\"" << std::endl;
 	log_file << "nosuggest/nosuggest_flag\t" << nosuggest << std::endl;
@@ -4955,13 +4957,13 @@ void AffixMgr::log(const char* affpath, const char* key) {
 	log_file << "warn/warn_flag\t" << warn << std::endl;
 	log_file << "forbidwarn/forbid_warn\t" << forbidwarn << std::endl;
 
-	log_file << "COMPOUNDING OPTIONS" << std::endl;
+        log_file << std::endl << "COMPOUNDING OPTIONS" << std::endl;
 	for (std::vector<std::string>::const_iterator i = breaktable.begin(); i != breaktable.end(); ++i) {
 		log_file << "breaktable/break_patterns_" << std::setw(3) <<
 			    std::setfill('0') << i - breaktable.begin() + 1 << "\t\"" << *i << "\"" << std::endl;
 	}
 	//TODO compound_rules
-	log_file << "cpdmin/compoud_minimum\t" << cpdmin << std::endl;
+        log_file << "cpdmin/compound_minimum\t" << cpdmin << std::endl;
 	log_file << "compoundflag/compound_flag\t" << compoundflag << std::endl;
 	log_file << "compoundbegin/compound_begin_flag\t" << compoundbegin << std::endl;
 	log_file << "compoundend/compound_last_flag\t" << compoundend << std::endl;
@@ -4993,9 +4995,9 @@ void AffixMgr::log(const char* affpath, const char* key) {
 	  PfxEntry* ptr = pStart[j];
 	  while (ptr) {
 		i++;
-		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".appnd\t\"" << ptr->getKey() << "\"" << std::endl;
-		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".aflag\t" << ptr->getFlag() << std::endl;
-		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
+                log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".appnd/affix\t\"" << ptr->getKey() << "\"" << std::endl;
+                log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << ptr->getFlag() << std::endl;
+//		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
 //FIXME	    log_file << "pfx_" << std::setw(3) << std::setfill('0') << i << ".contclass\t" << ptr->getCont() << std::endl;
 //		if (ptr->getMorph())
 //			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
@@ -5009,19 +5011,19 @@ void AffixMgr::log(const char* affpath, const char* key) {
 	  SfxEntry* ptr = sStart[j];
 	  while (ptr) {
 		i++;
-		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".appnd\t\"" << ptr->getKey() << "\"" << std::endl;
-		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag\t" << ptr->getFlag() << std::endl;
-		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".cross()\t" << ptr->allowCross() << std::endl;
-		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
-				//FIXME	    log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".contclass\t" << ptr->getCont() << std::endl;
+                log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".appnd/affix\t\"" << ptr->getKey() << "\"" << std::endl;
+                log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << ptr->getFlag() << std::endl;
+                log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".cross()/cross_product\t" << ptr->allowCross() << std::endl;
+//		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
+                log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".strip/stripping\t\"" << ptr->strip << "\"" << std::endl;
+                                //FIXME	    log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".contclass\t" << ptr->getCont() << std::endl;
 //FIXME	    log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
-//	    log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag\t" << ptr->AffEntry.strip << std::endl;
 //	    log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".rappnd\t" << ptr->rappnd << std::endl;
 	    ptr = ptr->getNext();
 	  }
 	}
 
-	log_file << "OTHERS" << std::endl;
+        log_file << std::endl << "OTHERS" << std::endl;
 	log_file << "circumfix/circumfix_flag\t" << circumfix << std::endl;
 	log_file << "forbiddenword/forbiddenword_flag\t" << forbiddenword << std::endl;
 	log_file << "fullstrip/fullstrip\t" << fullstrip << std::endl;
