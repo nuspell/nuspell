@@ -149,9 +149,11 @@ auto convert_encoding(const std::basic_string<FromCharT>& from)
 #endif
 
 struct Locale_Input {
-	auto cvt_for_byte_dict(const std::string& in, const std::locale& inloc,
-	                       const std::locale& dicloc);
-	auto cvt_for_u8_dict(const std::string& in, const std::locale& inloc);
+	auto static cvt_for_byte_dict(const std::string& in,
+	                              const std::locale& inloc,
+	                              const std::locale& dicloc);
+	auto static cvt_for_u8_dict(const std::string& in,
+	                            const std::locale& inloc);
 };
 
 auto inline Locale_Input::cvt_for_byte_dict(const std::string& in,
