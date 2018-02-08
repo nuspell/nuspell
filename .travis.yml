@@ -11,10 +11,7 @@ os:
 #  - osx
 
 before_install:
-# Don't use real gcc on OS X, use only clang
-  - if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then
-      export CXX="g++-5" CC="gcc-5";
-    fi
+
   - cd ~ &&
     wget https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.bz2/download -O - |
     tar -xj &&
@@ -25,7 +22,7 @@ install:
   - "cd ~/boost_1_62_0 &&
     echo 'using gcc : : g++-5 : <cxxflags>-std=c++14 ;' > tools/build/src/user-config.jam &&
     ./bootstrap.sh --prefix=$BOOST_ROOT --with-libraries=locale &&
-    ./b2 install -d0 &&
+    ./b2 install -d0 -j 4 &&
     cd -"
 
 before_script:
@@ -35,9 +32,17 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       export DYLD_LIBRARY_PATH=$BOOST_ROOT/lib ;
     fi
+# Don't use real gcc on OS X, use only clang
+  - if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      export CXX="g++-5" CC="gcc-5";
+    fi
+  - export CXXFLAGS='-g -O2 -Wno-deprecated-declarations'
+
+# -no-deprecated for auto_ptr in boost locale. In 1.67 it is solved better with
+# defining a preprocessor variable. Once 1.67 goes public will switch.
 
 script:
-  - autoreconf -i && ./configure && make && make check
+  - autoreconf -i && ./configure && make -j 4 && make check -j 4
 
 after_failure:
   - cat tests/hun2/test-suite.log
