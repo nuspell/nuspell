@@ -605,7 +605,6 @@ void Aff_Data::log(const string& affpath)
 		log_name.erase(0, 2);
 	log_name.insert(0, "../v1cmdline/"); // prevent logging somewhere else
 	log_file.open(log_name, std::ios_base::out);
-	fprintf(stderr, "log file %s\n", log_name.c_str());
 	if (!log_file.is_open()) {
 		return;
 	}
