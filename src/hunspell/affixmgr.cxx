@@ -4902,10 +4902,9 @@ void AffixMgr::log(const char* affpath, const char* key) {
 	log_name.insert(0, affpath);
 	if (log_name.substr(0, 2) == "./")
 		log_name.erase(0, 2);
-        log_name.insert(0, "../v1cmdlines/"); // prevent logging somewhere else
+	log_name.insert(0, "../v1cmdline/"); // prevent logging somewhere else
         log_file.open(log_name, std::ios_base::out);
 	if (!log_file.is_open()) {
-                fprintf(stderr, "WARNING: Can't open log file %s\n", log_name.c_str());
                 return;
 	}
 	log_file << "affpath/affpath\t" << log_name.erase(log_name.size() - 8, 8) << std::endl;

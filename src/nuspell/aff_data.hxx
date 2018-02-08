@@ -108,7 +108,7 @@ struct Aff_Data {
 	bool no_split_suggestions;
 	bool suggest_with_dots;
 	vector<pair<string, string>> replacements;
-	vector<string> map_related_chars;
+	vector<string> map_related_chars; // vector<vector<string>>?
 	vector<pair<string, string>> phonetic_replacements;
 	char16_t warn_flag;
 	bool forbid_warn;
@@ -151,7 +151,7 @@ struct Aff_Data {
 	vector<pair<string, string>> output_conversion;
 	char16_t need_affix_flag;
 	char16_t substandard_flag;
-	string wordchars;
+	string wordchars; // deprecated?
 	bool checksharps;
 
 	// methods
