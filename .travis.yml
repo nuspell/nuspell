@@ -11,25 +11,30 @@ os:
 #  - osx
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
-
-install:
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      brew install gettext;
-      brew link gettext --force;
-    fi
-# Don't use real gcc on OS X, problems arise when
-# Hunspell built with gcc is linked with cppunit built with clang.
-# Homebrew builds are build with clang
-before_script:
+# Don't use real gcc on OS X, use only clang
   - if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then
       export CXX="g++-5" CC="gcc-5";
+    fi
+  - cd ~ &&
+    wget https://dl.bintray.com/boostorg/release/1.62.0/source/boost_1_62_0.tar.bz2 -O - |
+    tar -xj
+
+install:
+  - export BOOST_ROOT=~/.local
+  - "cd ~/boost_1_62_0 && echo 'using gcc : : g++-5 ;' > user-config.jam &&
+    ./bootstrap.sh --prefix=$BOOST_ROOT --with-libraries=locale &&
+    ./b2 install"
+
+before_script:
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      export LD_LIBRARY_PATH=$BOOST_ROOT/lib ;
+    fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+      export DYLD_LIBRARY_PATH=$BOOST_ROOT/lib ;
     fi
 
 script:
   - autoreconf -i && ./configure && make && make check
-#  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then autoreconf -i -I /usr/local/share/aclocal && ./configure && make && make check; fi
-# might be needed for future
 
 after_failure:
   - cat tests/hun2/test-suite.log
@@ -46,5 +51,4 @@ addons:
     - autopoint
     - gcc-5
     - g++-5
-    - libboost-locale-dev
-    - libboost-system-dev
+    - libicu-dev
