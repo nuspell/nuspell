@@ -21,11 +21,12 @@
 #include <algorithm>
 #include <type_traits>
 
-#include <boost/utility/string_ref.hpp>
+#include <boost/utility/string_view.hpp>
 
 namespace hunspell {
 
 using namespace std;
+using boost::string_view;
 
 template <class Container>
 void sort_uniq(Container& c)
@@ -113,28 +114,28 @@ auto Substring_Replacer::operator=(Table_Pairs&& v) -> Substring_Replacer&
 	return *this;
 }
 
-auto cmp_prefix_of(const string& p, boost::string_ref of)
+auto cmp_prefix_of(const string& p, string_view of)
 {
 	return p.compare(0, p.npos, of.data(), 0, min(p.size(), of.size()));
 }
 
 struct Comparer_Str_Rep {
 
-	auto operator()(const pair<string, string>& a, boost::string_ref b)
+	auto operator()(const pair<string, string>& a, string_view b)
 	{
 		return cmp_prefix_of(a.first, b) < 0;
 	}
-	auto operator()(boost::string_ref a, const pair<string, string>& b)
+	auto operator()(boost::string_view a, const pair<string, string>& b)
 	{
 		return cmp_prefix_of(b.first, a) > 0;
 	}
-	auto eq(const pair<string, string>& a, boost::string_ref b)
+	auto eq(const pair<string, string>& a, string_view b)
 	{
 		return cmp_prefix_of(a.first, b) == 0;
 	}
 };
 
-auto find_match(const Substring_Replacer::Table_Pairs& t, boost::string_ref s)
+auto find_match(const Substring_Replacer::Table_Pairs& t, string_view s)
 {
 	Comparer_Str_Rep csr;
 	auto it = begin(t);
@@ -166,7 +167,7 @@ auto Substring_Replacer::replace(string& s) const -> string&
 	if (table.empty())
 		return s;
 	for (size_t i = 0; i < s.size(); /*no increment here*/) {
-		auto substr = boost::string_ref(s).substr(i);
+		auto substr = string_view(&s[i], s.size() - i);
 		auto it = find_match(table, substr);
 		if (it != end(table)) {
 			auto& match = *it;
