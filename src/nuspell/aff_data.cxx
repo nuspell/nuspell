@@ -298,6 +298,8 @@ auto parse_affix(/* in */ istream& in, /* in */ size_t line_num,
 		elem.flag = f;
 		elem.cross_product = dat->second.first;
 		in >> elem.stripping;
+		if (elem.stripping == "0") // QUESTION good bugfix?
+			elem.stripping = "";
 		if (read_to_slash_or_space(in, elem.affix)) {
 			elem.new_flags = decode_flags(in, line_num, t, enc);
 		}
@@ -603,7 +605,7 @@ void Aff_Data::log(const string& affpath)
 	log_name.insert(0, affpath);
 	if (log_name.substr(0, 2) == "./")
 		log_name.erase(0, 2);
-	log_name.insert(0, "../v1cmdline/"); // prevent logging somewhere else
+	log_name.insert(0, "../nuspell/"); // prevent logging somewhere else
 	log_file.open(log_name, std::ios_base::out);
 	if (!log_file.is_open()) {
 		return;
@@ -621,7 +623,16 @@ void Aff_Data::log(const string& affpath)
 	// log_file << "encoding/encoding.value\t\"" <<
 	// encoding.value()
 	//	 << "\"" << std::endl;
-	// TODO flag_type
+	log_file << "pHMgr->flag_mode/flag_type\t";
+	if (flag_type == FLAG_DOUBLE_CHAR)
+		log_file << "double char";
+	else if (flag_type == FLAG_SINGLE_CHAR)
+		log_file << "single char";
+	else if (flag_type == FLAG_NUMBER)
+		log_file << "number";
+	else if (flag_type == FLAG_UTF8)
+		log_file << "utf8";
+	log_file << std::endl;
 	log_file << "complexprefixes/complex_prefixes\t" << complex_prefixes
 	         << std::endl;
 	log_file << "lang/language_code\t\"" << language_code << "\""
@@ -632,6 +643,69 @@ void Aff_Data::log(const string& affpath)
 	// TODO morphological_aliases
 
 	// TODO locale_aff
+
+	for (std::vector<Affix>::const_iterator i = prefixes.begin();
+	     i != prefixes.end(); ++i) {
+		if (flag_type == FLAG_SINGLE_CHAR)
+			log_file << "pfx/prefixes_" << std::setw(3)
+			         << std::setfill('0')
+			         << i - prefixes.begin() + 1 << ".aflag/flag\t"
+			         << (char)i->flag << std::endl;
+		else
+			log_file << "pfx/prefixes_" << std::setw(3)
+			         << std::setfill('0')
+			         << i - prefixes.begin() + 1 << ".aflag/flag\t"
+			         << i->flag << std::endl;
+		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0')
+		         << i - prefixes.begin() + 1
+		         << ".appnd@getKey/affix\t\"" << i->affix << "\""
+		         << std::endl;
+		//		log_file << "pfx/prefixes_" <<
+		// std::setw(3) <<
+		// std::setfill('0')
+		//		         << i - prefixes.begin() +
+		// 1 <<
+		//".contclasslen\t"
+		//		         << i->affix <<
+		// std::endl;
+	}
+	for (std::vector<Affix>::const_iterator i = suffixes.begin();
+	     i != suffixes.end(); ++i) {
+		if (flag_type == FLAG_SINGLE_CHAR)
+			log_file << "sfx/suffixes_" << std::setw(3)
+			         << std::setfill('0')
+			         << i - suffixes.begin() + 1 << ".aflag/flag\t"
+			         << (char)i->flag << std::endl;
+		else
+			log_file << "sfx/suffixes_" << std::setw(3)
+			         << std::setfill('0')
+			         << i - suffixes.begin() + 1 << ".aflag/flag\t"
+			         << i->flag << std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
+		         << i - suffixes.begin() + 1
+		         << ".appnd@getKey/affix\t\"" << i->affix << "\""
+		         << std::endl;
+		// later		log_file << "sfx/suffixes_" << std::setw(3) <<
+		// std::setfill('0')
+		// later			 << i - suffixes.begin() <<
+		// ".cross()/cross_product\t"
+		// later			 << i->cross_product <<
+		// std::endl;
+		//		log_gile << "sfx/suffixes_" <<
+		// std::setw(3) <<
+		// std::setfill('0')
+		//			 << i - suffixes.begin() + 1
+		//<<
+		//".contclasslen\t"
+		//			 << i->affix <<
+		// std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
+		         << i - suffixes.begin() + 1 << ".rappnd@getKey/\t"
+		         << std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
+		         << i - suffixes.begin() + 1 << ".strip/stripping\t\""
+		         << i->stripping << "\"" << std::endl;
+	}
 
 	log_file << std::endl << "SUGGESTION OPTIONS" << std::endl;
 	log_file << "keystring/keyboard_layout\t\"" << keyboard_layout << "\""
@@ -745,46 +819,6 @@ void Aff_Data::log(const string& affpath)
 	log_file << "cpdsyllablenum.length/"
 	            "compound_syllable_num.size\t"
 	         << compound_syllable_num.size() << std::endl;
-	for (std::vector<Affix>::const_iterator i = prefixes.begin();
-	     i != prefixes.end(); ++i) {
-		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0')
-		         << i - prefixes.begin() + 1 << ".appnd/affix\t\""
-		         << i->affix << "\"" << std::endl;
-		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0')
-		         << i - prefixes.begin() + 1 << ".aflag/flag\t"
-		         << i->flag << std::endl;
-		//		log_file << "pfx/prefixes_" <<
-		// std::setw(3) <<
-		// std::setfill('0')
-		//		         << i - prefixes.begin() +
-		// 1 <<
-		//".contclasslen\t"
-		//		         << i->affix <<
-		// std::endl;
-	}
-	for (std::vector<Affix>::const_iterator i = suffixes.begin();
-	     i != suffixes.end(); ++i) {
-		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
-		         << i - suffixes.begin() + 1 << ".appnd/affix\t\""
-		         << i->affix << "\"" << std::endl;
-		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
-		         << i - suffixes.begin() + 1 << ".aflag/flag\t"
-		         << i->flag << std::endl;
-		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
-		         << i - suffixes.begin() << ".cross()/cross_product\t"
-		         << i->cross_product << std::endl;
-		//		log_gile << "sfx/suffixes_" <<
-		// std::setw(3) <<
-		// std::setfill('0')
-		//			 << i - suffixes.begin() + 1
-		//<<
-		//".contclasslen\t"
-		//			 << i->affix <<
-		// std::endl;
-		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
-		         << i - suffixes.begin() + 1 << ".strip/stripping\t\""
-		         << i->stripping << "\"" << std::endl;
-	}
 
 	log_file << std::endl << "OTHERS" << std::endl;
 	log_file << "circumfix/circumfix_flag\t" << circumfix_flag << std::endl;
@@ -814,7 +848,8 @@ void Aff_Data::log(const string& affpath)
 	         << std::endl;
 	log_file << "substandard/substandard_flag\t" << substandard_flag
 	         << std::endl;
-	log_file << "wordchars/wordchars\t\"" << wordchars << "\"" << std::endl;
+	// deprecated? log_file << "wordchars/wordchars\t\"" << wordchars <<
+	// "\"" << std::endl;
 	log_file << "checksharps/checksharps\t" << checksharps << std::endl;
 
 	log_file << "END" << std::endl;

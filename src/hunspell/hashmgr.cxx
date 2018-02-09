@@ -1192,13 +1192,17 @@ char* HashMgr::get_aliasm(int index) const {
   return NULL;
 }
 
-void HashMgr::log(const char* tpath, const char* apath, const char* key) {
+flag HashMgr::getFlagMode() const { // only for development logging
+	return flag_mode;
+}
+
+void HashMgr::log(const char* tpath, const char* apath, const char* key) { // only for development logging
 	std::ofstream log_file;
 	auto log_name = std::string(".hm1.log"); // 1: Hunspell, 2: Nuspell
 	log_name.insert(0, tpath);
 	if (log_name.substr(0, 2) == "./")
 		log_name.erase(0, 2);
-	log_name.insert(0, "../v1cmdline/"); // prevent logging somewhere else
+	log_name.insert(0, "../nuspell/"); // prevent logging somewhere else
 	log_file.open(log_name, std::ios_base::out);
 	if (!log_file.is_open()) {
 		return;
@@ -1212,15 +1216,15 @@ void HashMgr::log(const char* tpath, const char* apath, const char* key) {
 		log_file << key << std::endl;
 	log_file << "AFTER load_config() and load_tables()" << std::endl;
 	log_file << "enc\t\"" << this->enc << "\"" << std::endl;
-	log_file << "flag_mode\t";
-	if (this->flag_mode == FLAG_CHAR)
-		log_file << "FLAG_CHAR " << this->flag_mode << std::endl;
-	else if (this->flag_mode == FLAG_LONG)
-		log_file << "FLAG_LONG " << this->flag_mode << std::endl;
-	else if (this->flag_mode == FLAG_NUM)
-		log_file << "FLAG_NUM " << this->flag_mode << std::endl;
-	else if (this->flag_mode == FLAG_UNI)
-		log_file << "FLAG_UNI " << this->flag_mode << std::endl;
+//	log_file << "flag_mode\t";
+//	if (this->flag_mode == FLAG_CHAR)
+//		log_file << "FLAG_CHAR " << this->flag_mode << std::endl;
+//	else if (this->flag_mode == FLAG_LONG)
+//		log_file << "FLAG_LONG " << this->flag_mode << std::endl;
+//	else if (this->flag_mode == FLAG_NUM)
+//		log_file << "FLAG_NUM " << this->flag_mode << std::endl;
+//	else if (this->flag_mode == FLAG_UNI)
+//		log_file << "FLAG_UNI " << this->flag_mode << std::endl;
 	log_file << "complexprefixes\t" << this->complexprefixes << std::endl;
 	log_file << "lang\t\"" << this->lang << "\"" << std::endl;
 	log_file << "langnum\t" << this->langnum << std::endl;

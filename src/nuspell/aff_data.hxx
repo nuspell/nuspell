@@ -92,6 +92,9 @@ struct Aff_Data {
 
 	std::locale locale_aff;
 
+	vector<Affix> prefixes;
+	vector<Affix> suffixes;
+
 	// suggestion options
 	string keyboard_layout;
 	string try_chars;
@@ -133,9 +136,6 @@ struct Aff_Data {
 	short compound_syllable_max;
 	string compound_syllable_vowels;
 	Flag_Set compound_syllable_num;
-
-	vector<Affix> prefixes;
-	vector<Affix> suffixes;
 
 	// others
 	char16_t circumfix_flag;

@@ -4902,7 +4902,7 @@ void AffixMgr::log(const char* affpath, const char* key) {
 	log_name.insert(0, affpath);
 	if (log_name.substr(0, 2) == "./")
 		log_name.erase(0, 2);
-	log_name.insert(0, "../v1cmdline/"); // prevent logging somewhere else
+	log_name.insert(0, "../nuspell/"); // prevent logging somewhere else
         log_file.open(log_name, std::ios_base::out);
 	if (!log_file.is_open()) {
                 return;
@@ -4918,11 +4918,97 @@ void AffixMgr::log(const char* affpath, const char* key) {
 
         log_file << std::endl << "BASIC" << std::endl;
         //log_file << "encoding/encoding.value\t\"" << encoding << "\"" << std::endl;
-	//TODO flag_type
+	log_file << "pHMgr->flag_mode/flag_type\t";
+	if (pHMgr->getFlagMode() == FLAG_LONG)
+		log_file << "double char";
+	else if (pHMgr->getFlagMode() == FLAG_CHAR)
+	    log_file << "single char";
+	else if (pHMgr->getFlagMode() == FLAG_NUM)
+	    log_file << "number";
+	else if (pHMgr->getFlagMode() == FLAG_UNI)
+	    log_file << "utf8";
+	log_file << std::endl;
 	log_file << "complexprefixes/complex_prefixes\t" << complexprefixes << std::endl;
 	log_file << "lang/language_code\t\"" << lang << "\"" << std::endl;
 	log_file << "ignorechars/ignore_chars\t\"" << ignorechars << "\"" << std::endl;
 	//TODO ignorechars_utf16
+
+	int i = 0;
+	for (int j = 0; j < SETSIZE; j++) {
+	  PfxEntry* ptr = pStart[j];
+	  while (ptr) {
+		i++;
+		if (pHMgr->getFlagMode() == FLAG_CHAR)
+			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << (char)ptr->getFlag() << std::endl;
+		else
+			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << ptr->getFlag() << std::endl;
+		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".appnd@getKey/affix\t\"" << ptr->getKey() << "\"" << std::endl;
+//		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
+//FIXME	    log_file << "pfx_" << std::setw(3) << std::setfill('0') << i << ".contclass\t" << ptr->getCont() << std::endl;
+//		if (ptr->getMorph())
+//			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
+//		else
+//			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t0x0" << std::endl;
+		PfxEntry* tmp = ptr->getNextEQ();
+		if (tmp) {
+			if (pHMgr->getFlagMode() == FLAG_CHAR)
+				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.aflag/flag\t" << (char)tmp->getFlag() << std::endl;
+			else
+				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.aflag/flag\t" << tmp->getFlag() << std::endl;
+			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.appnd@getKey/affix\t\"" << tmp->getKey() << "\"" << std::endl;
+		}
+		tmp = ptr->getNextNE();
+		if (tmp) {
+			if (pHMgr->getFlagMode() == FLAG_CHAR)
+				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.aflag/flag\t" << (char)tmp->getFlag() << std::endl;
+			else
+				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.aflag/flag\t" << tmp->getFlag() << std::endl;
+			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.appnd@getKey/affix\t\"" << tmp->getKey() << "\"" << std::endl;
+		}
+	    ptr = ptr->getNext();
+	  }
+	}
+	i = 0;
+	for (int j = 0; j < SETSIZE; j++) {
+	  SfxEntry* ptr = sStart[j];
+	  while (ptr) {
+		i++;
+		if (pHMgr->getFlagMode() == FLAG_CHAR)
+			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << (char)ptr->getFlag() << std::endl;
+		else
+			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << ptr->getFlag() << std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".appnd@getAffix/affix\t\"" << ptr->getAffix() << "\"" << std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".rappnd@getKey/\t" << ptr->getKey() << std::endl;
+		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".strip/stripping\t\"" << ptr->strip << "\"" << std::endl;
+//later		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".cross()/cross_product\t" << ptr->allowCross() << std::endl;
+//		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
+				//FIXME	    log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".contclass\t" << ptr->getCont() << std::endl;
+//FIXME	    log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
+		SfxEntry* tmp = ptr->getNextEQ();
+		if (tmp) {
+			if (pHMgr->getFlagMode() == FLAG_CHAR)
+				log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.aflag/flag\t" << (char)tmp->getFlag() << std::endl;
+			else
+				log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.aflag/flag\t" << tmp->getFlag() << std::endl;
+			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.appnd@getAffix/affix\t\"" << tmp->getAffix() << "\"" << std::endl;
+			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.rappnd@getKey/\t" << tmp->getKey() << std::endl;
+			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.strip/stripping\t\"" << tmp->strip << "\"" << std::endl;
+//later			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.cross()/cross_product\t" << tmp->allowCross() << std::endl;
+		}
+		tmp = ptr->getNextNE();
+		if (tmp) {
+			if (pHMgr->getFlagMode() == FLAG_CHAR)
+				log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.aflag/flag\t" << (char)tmp->getFlag() << std::endl;
+			else
+				log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.aflag/flag\t" << tmp->getFlag() << std::endl;
+			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.appnd@getAffix/affix\t\"" << tmp->getAffix() << "\"" << std::endl;
+			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.rappnd@getKey/\t" << tmp->getKey() << std::endl;
+			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.strip/stripping\t\"" << tmp->strip << "\"" << std::endl;
+//later			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.cross()/cross_product\t" << tmp->allowCross() << std::endl;
+		}
+		ptr = ptr->getNext();
+	  }
+	}
 
         log_file << std::endl << "SUGGESTION OPTIONS" << std::endl;
 	log_file << "keystring/keyboard_layout\t\"" << keystring << "\"" << std::endl;
@@ -4989,38 +5075,6 @@ void AffixMgr::log(const char* affpath, const char* key) {
 	log_file << "cpdvowels/compound_syllable_vowels\t\"" << cpdvowels << "\"" << std::endl;
 	//TODO cpdvowels_utf16
 	log_file << "cpdsyllablenum.length/compound_syllable_num.size\t" << cpdsyllablenum.length() << std::endl;
-	int i = 0;
-	for (int j = 0; j < SETSIZE; j++) {
-	  PfxEntry* ptr = pStart[j];
-	  while (ptr) {
-		i++;
-                log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".appnd/affix\t\"" << ptr->getKey() << "\"" << std::endl;
-                log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << ptr->getFlag() << std::endl;
-//		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
-//FIXME	    log_file << "pfx_" << std::setw(3) << std::setfill('0') << i << ".contclass\t" << ptr->getCont() << std::endl;
-//		if (ptr->getMorph())
-//			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
-//		else
-//			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t0x0" << std::endl;
-	    ptr = ptr->getNext();
-	  }
-	}
-	i = 0;
-	for (int j = 0; j < SETSIZE; j++) {
-	  SfxEntry* ptr = sStart[j];
-	  while (ptr) {
-		i++;
-                log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".appnd/affix\t\"" << ptr->getKey() << "\"" << std::endl;
-                log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << ptr->getFlag() << std::endl;
-                log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".cross()/cross_product\t" << ptr->allowCross() << std::endl;
-//		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
-                log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".strip/stripping\t\"" << ptr->strip << "\"" << std::endl;
-                                //FIXME	    log_file << "sfx_" << std::setw(3) << std::setfill('0') << i << ".contclass\t" << ptr->getCont() << std::endl;
-//FIXME	    log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
-//	    log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".rappnd\t" << ptr->rappnd << std::endl;
-	    ptr = ptr->getNext();
-	  }
-	}
 
         log_file << std::endl << "OTHERS" << std::endl;
 	log_file << "circumfix/circumfix_flag\t" << circumfix << std::endl;
@@ -5039,7 +5093,7 @@ void AffixMgr::log(const char* affpath, const char* key) {
 		}
 	log_file << "needaffix/need_affix_flag\t" << needaffix << std::endl;
 	log_file << "substandard/substandard_flag\t" << substandard << std::endl;
-	log_file << "wordchars/wordchars\t\"" << wordchars << "\"" << std::endl;
+	//deprecated? log_file << "wordchars/wordchars\t\"" << wordchars << "\"" << std::endl;
 	//TODO wordchars_utf16
 	log_file << "checksharps/checksharps\t" << checksharps << std::endl;
 
