@@ -91,6 +91,7 @@ nuspell-*.tar.gz
 /confmf
 /configure.tmp
 /conftest
+/conftest.i
 /conftest.sh
 /conftest.c
 /conftest.cpp
@@ -98,6 +99,7 @@ nuspell-*.tar.gz
 /conftest.er1
 # following might be /conf??????/
 /confqd6eAO/
+/confrHVOlv/
 
 # https://github.com/linux-test-project/lcov
 /hunspell-*-*coverage*

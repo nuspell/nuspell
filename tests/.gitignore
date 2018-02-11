@@ -1,6 +1,8 @@
 testSubDir
 *.log
 *.trs
+*.gv
+*.svg
 /*_test
 /*.catch
 

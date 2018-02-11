@@ -685,7 +685,8 @@ void Aff_Data::log(const string& affpath)
 		         << i - suffixes.begin() + 1
 		         << ".appnd@getKey/affix\t\"" << i->affix << "\""
 		         << std::endl;
-		// later		log_file << "sfx/suffixes_" << std::setw(3) <<
+		// later		log_file << "sfx/suffixes_" << std::setw(3)
+		// <<
 		// std::setfill('0')
 		// later			 << i - suffixes.begin() <<
 		// ".cross()/cross_product\t"

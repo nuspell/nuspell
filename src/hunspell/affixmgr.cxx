@@ -4940,6 +4940,8 @@ void AffixMgr::log(const char* affpath, const char* key) {
 		i++;
 		if (pHMgr->getFlagMode() == FLAG_CHAR)
 			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << (char)ptr->getFlag() << std::endl;
+		else if (pHMgr->getFlagMode() == FLAG_LONG)
+			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << (long)ptr->getFlag() << std::endl;
 		else
 			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << ptr->getFlag() << std::endl;
 		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".appnd@getKey/affix\t\"" << ptr->getKey() << "\"" << std::endl;
@@ -4952,7 +4954,9 @@ void AffixMgr::log(const char* affpath, const char* key) {
 		PfxEntry* tmp = ptr->getNextEQ();
 		if (tmp) {
 			if (pHMgr->getFlagMode() == FLAG_CHAR)
-				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.aflag/flag\t" << (char)tmp->getFlag() << std::endl;
+				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.aflag/flag\t" << (char)tmp->getFlag() << std::endl;
+			else if (pHMgr->getFlagMode() == FLAG_LONG)
+				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.aflag/flag\t" << (long)tmp->getFlag() << std::endl;
 			else
 				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.aflag/flag\t" << tmp->getFlag() << std::endl;
 			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.appnd@getKey/affix\t\"" << tmp->getKey() << "\"" << std::endl;
@@ -4961,6 +4965,8 @@ void AffixMgr::log(const char* affpath, const char* key) {
 		if (tmp) {
 			if (pHMgr->getFlagMode() == FLAG_CHAR)
 				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.aflag/flag\t" << (char)tmp->getFlag() << std::endl;
+			else if (pHMgr->getFlagMode() == FLAG_LONG)
+				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.aflag/flag\t" << (long)tmp->getFlag() << std::endl;
 			else
 				log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.aflag/flag\t" << tmp->getFlag() << std::endl;
 			log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.appnd@getKey/affix\t\"" << tmp->getKey() << "\"" << std::endl;
@@ -4968,17 +4974,39 @@ void AffixMgr::log(const char* affpath, const char* key) {
 	    ptr = ptr->getNext();
 	  }
 	}
+	std::ofstream gv_file;
+	auto gv_name = std::string(".am1.gv"); // 1: Hunspell, 2: Nuspell
+	gv_name.insert(0, affpath);
+	if (gv_name.substr(0, 2) == "./")
+		gv_name.erase(0, 2);
+	gv_name.insert(0, "../nuspell/"); // prevent logging somewhere else
+	gv_file.open(gv_name, std::ios_base::out);
+	if (!gv_file.is_open()) {
+		return;
+	}
+	gv_file << "digraph {" << std::endl;
+	gv_file << "node[shape=\"box\"]" << std::endl;
 	i = 0;
 	for (int j = 0; j < SETSIZE; j++) {
 	  SfxEntry* ptr = sStart[j];
 	  while (ptr) {
 		i++;
-		if (pHMgr->getFlagMode() == FLAG_CHAR)
+		gv_file << "_" << ptr << " [label=\"flag=";
+		if (pHMgr->getFlagMode() == FLAG_CHAR) {
+			gv_file << (char)ptr->getFlag() << "\\l";
 			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << (char)ptr->getFlag() << std::endl;
-		else
+		} else if (pHMgr->getFlagMode() == FLAG_LONG) {
+			gv_file << (long)ptr->getFlag() << "\\l";
+			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << (long)ptr->getFlag() << std::endl;
+		} else {
+			gv_file << ptr->getFlag() << "\\l";
 			log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".aflag/flag\t" << ptr->getFlag() << std::endl;
+		}
+		gv_file << "suffix=" << ptr->getAffix() << "\\l";
 		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".appnd@getAffix/affix\t\"" << ptr->getAffix() << "\"" << std::endl;
+		gv_file << "key=" << ptr->getKey() << "\\l";
 		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".rappnd@getKey/\t" << ptr->getKey() << std::endl;
+		gv_file << "strip=" << ptr->strip << "\\l\"]" << std::endl;
 		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".strip/stripping\t\"" << ptr->strip << "\"" << std::endl;
 //later		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".cross()/cross_product\t" << ptr->allowCross() << std::endl;
 //		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".contclasslen\t" << ptr->getContLen() << std::endl;
@@ -4986,6 +5014,7 @@ void AffixMgr::log(const char* affpath, const char* key) {
 //FIXME	    log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".morphcode\t" << ptr->getMorph() << std::endl;
 		SfxEntry* tmp = ptr->getNextEQ();
 		if (tmp) {
+			gv_file << "_" << ptr << " -> _" << tmp << " [label=\"NextEQ\"]" << std::endl;
 			if (pHMgr->getFlagMode() == FLAG_CHAR)
 				log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nexteq\t.aflag/flag\t" << (char)tmp->getFlag() << std::endl;
 			else
@@ -4997,6 +5026,7 @@ void AffixMgr::log(const char* affpath, const char* key) {
 		}
 		tmp = ptr->getNextNE();
 		if (tmp) {
+			gv_file << "_" << ptr << " -> _" << tmp << " [label=\"NextNE\"]" << std::endl;
 			if (pHMgr->getFlagMode() == FLAG_CHAR)
 				log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0') << i << ".nextne\t.aflag/flag\t" << (char)tmp->getFlag() << std::endl;
 			else
@@ -5009,6 +5039,7 @@ void AffixMgr::log(const char* affpath, const char* key) {
 		ptr = ptr->getNext();
 	  }
 	}
+	gv_file << "}" << std::endl;
 
         log_file << std::endl << "SUGGESTION OPTIONS" << std::endl;
 	log_file << "keystring/keyboard_layout\t\"" << keystring << "\"" << std::endl;
