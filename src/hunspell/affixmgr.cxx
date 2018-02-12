@@ -741,7 +741,7 @@ int AffixMgr::parse_file(const char* affpath, const char* key) {
     csconv = get_current_cs(get_encoding());
     for (int i = 0; i <= 255; i++) {
       if ((csconv[i].cupper != csconv[i].clower) &&
-	  (wordchars.find((char)i) == std::string::npos)) {
+          (wordchars.find((char)i) == std::string::npos)) {
         wordchars.push_back((char)i);
       }
     }
