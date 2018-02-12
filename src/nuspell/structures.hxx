@@ -78,23 +78,27 @@ class Flag_Set {
 	auto friend swap(Flag_Set& a, Flag_Set& b) { a.flags.swap(b.flags); }
 };
 
-class Substring_Replacer {
+template <class CharT>
+class Substr_Replacer {
       public:
-	using Table_Pairs = std::vector<std::pair<std::string, std::string>>;
+	using StrT = std::basic_string<CharT>;
+	using Table_Pairs = std::vector<std::pair<StrT, StrT>>;
 
       private:
 	Table_Pairs table;
 	void sort_uniq();
 
       public:
-	Substring_Replacer() = default;
-	Substring_Replacer(const Table_Pairs& v);
-	Substring_Replacer(Table_Pairs&& v);
-	auto operator=(const Table_Pairs& v) -> Substring_Replacer&;
-	auto operator=(Table_Pairs&& v) -> Substring_Replacer&;
+	Substr_Replacer() = default;
+	Substr_Replacer(const Table_Pairs& v);
+	Substr_Replacer(Table_Pairs&& v);
+	auto operator=(const Table_Pairs& v) -> Substr_Replacer&;
+	auto operator=(Table_Pairs&& v) -> Substr_Replacer&;
 
-	auto replace(std::string& s) const -> std::string&;
-	auto replace_copy(std::string s) const -> std::string;
+	auto replace(StrT& s) const -> StrT&;
+	auto replace_copy(StrT s) const -> StrT;
 };
+using Substring_Replacer = Substr_Replacer<char>;
+using WSubstring_Replacer = Substr_Replacer<wchar_t>;
 }
 #endif

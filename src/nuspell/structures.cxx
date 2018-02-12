@@ -26,7 +26,7 @@
 namespace hunspell {
 
 using namespace std;
-using boost::string_view;
+using boost::basic_string_view;
 
 template <class Container>
 void sort_uniq(Container& c)
@@ -78,7 +78,8 @@ static_assert(is_move_constructible<Flag_Set>::value,
 static_assert(is_move_assignable<Flag_Set>::value,
               "Flag Set Not move assingable");
 
-void Substring_Replacer::sort_uniq()
+template <class CharT>
+void Substr_Replacer<CharT>::sort_uniq()
 {
 	auto first = table.begin();
 	auto last = table.end();
@@ -92,52 +93,62 @@ void Substring_Replacer::sort_uniq()
 		table.erase(table.begin());
 }
 
-Substring_Replacer::Substring_Replacer(const Table_Pairs& v) : table(v)
+template <class CharT>
+Substr_Replacer<CharT>::Substr_Replacer(const Table_Pairs& v) : table(v)
 {
 	sort_uniq();
 }
 
-Substring_Replacer::Substring_Replacer(Table_Pairs&& v) : table(move(v))
+template <class CharT>
+Substr_Replacer<CharT>::Substr_Replacer(Table_Pairs&& v) : table(move(v))
 {
 	sort_uniq();
 }
-auto Substring_Replacer::operator=(const Table_Pairs& v) -> Substring_Replacer&
+template <class CharT>
+auto Substr_Replacer<CharT>::operator=(const Table_Pairs& v) -> Substr_Replacer&
 {
 	table = v;
 	sort_uniq();
 	return *this;
 }
-auto Substring_Replacer::operator=(Table_Pairs&& v) -> Substring_Replacer&
+template <class CharT>
+auto Substr_Replacer<CharT>::operator=(Table_Pairs&& v) -> Substr_Replacer&
 {
 	table = move(v);
 	sort_uniq();
 	return *this;
 }
 
-auto cmp_prefix_of(const string& p, string_view of)
-{
-	return p.compare(0, p.npos, of.data(), 0, min(p.size(), of.size()));
-}
-
+template <class CharT>
 struct Comparer_Str_Rep {
 
-	auto operator()(const pair<string, string>& a, string_view b)
+	using StrT = basic_string<CharT>;
+	using StrViewT = basic_string_view<CharT>;
+
+	auto static cmp_prefix_of(const StrT& p, StrViewT of)
+	{
+		return p.compare(0, p.npos, of.data(), 0,
+		                 min(p.size(), of.size()));
+	}
+	auto operator()(const pair<StrT, StrT>& a, StrViewT b)
 	{
 		return cmp_prefix_of(a.first, b) < 0;
 	}
-	auto operator()(boost::string_view a, const pair<string, string>& b)
+	auto operator()(StrViewT a, const pair<StrT, StrT>& b)
 	{
 		return cmp_prefix_of(b.first, a) > 0;
 	}
-	auto eq(const pair<string, string>& a, string_view b)
+	auto eq(const pair<StrT, StrT>& a, StrViewT b)
 	{
 		return cmp_prefix_of(a.first, b) == 0;
 	}
 };
 
-auto find_match(const Substring_Replacer::Table_Pairs& t, string_view s)
+template <class CharT>
+auto find_match(const typename Substr_Replacer<CharT>::Table_Pairs& t,
+                basic_string_view<CharT> s)
 {
-	Comparer_Str_Rep csr;
+	Comparer_Str_Rep<CharT> csr;
 	auto it = begin(t);
 	auto last_match = end(t);
 	for (;;) {
@@ -161,13 +172,14 @@ auto find_match(const Substring_Replacer::Table_Pairs& t, string_view s)
 	return last_match;
 }
 
-auto Substring_Replacer::replace(string& s) const -> string&
+template <class CharT>
+auto Substr_Replacer<CharT>::replace(StrT& s) const -> StrT&
 {
 
 	if (table.empty())
 		return s;
 	for (size_t i = 0; i < s.size(); /*no increment here*/) {
-		auto substr = string_view(&s[i], s.size() - i);
+		auto substr = basic_string_view<CharT>(&s[i], s.size() - i);
 		auto it = find_match(table, substr);
 		if (it != end(table)) {
 			auto& match = *it;
@@ -182,14 +194,18 @@ auto Substring_Replacer::replace(string& s) const -> string&
 	return s;
 }
 
-auto Substring_Replacer::replace_copy(string s) const -> string
+template <class CharT>
+auto Substr_Replacer<CharT>::replace_copy(StrT s) const -> StrT
 {
 	replace(s);
 	return s;
 }
 
-static_assert(is_move_constructible<Substring_Replacer>::value,
+template class Substr_Replacer<char>;
+template class Substr_Replacer<wchar_t>;
+
+static_assert(is_move_constructible<Substr_Replacer<char>>::value,
               "Substring_Replacer Not move constructable");
-static_assert(is_move_assignable<Substring_Replacer>::value,
+static_assert(is_move_assignable<Substr_Replacer<char>>::value,
               "Substring_Replacer Not move assingable");
 }
