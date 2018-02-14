@@ -26,7 +26,7 @@
 #include <regex>
 #include <sstream>
 
-//#include <boost/locale.hpp>
+#include <boost/locale.hpp>
 
 namespace hunspell {
 
@@ -120,5 +120,31 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 		}
 	}
 	return in.eof(); // success if we reached eof
+}
+
+auto Dic_Data::lookup(const string& word) -> Flag_Set*
+{
+	auto&& kv = words.find(word);
+	if (kv != end(words))
+		return &kv->second;
+	return nullptr;
+}
+
+auto Dic_Data::lookup(const string& word) const -> const Flag_Set*
+{
+	auto&& kv = words.find(word);
+	if (kv != end(words))
+		return &kv->second;
+	return nullptr;
+}
+
+auto Dic_Data::lookup(const wstring& word) -> Flag_Set*
+{
+	return lookup(boost::locale::conv::utf_to_utf<char>(word));
+}
+
+auto Dic_Data::lookup(const wstring& word) const -> const Flag_Set*
+{
+	return lookup(boost::locale::conv::utf_to_utf<char>(word));
 }
 }

@@ -19,9 +19,13 @@
 #ifndef NUSPELL_STRUCTURES_HXX
 #define NUSPELL_STRUCTURES_HXX
 
+#include <regex>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <boost/range/iterator_range_core.hpp>
 
 namespace hunspell {
 
@@ -100,5 +104,68 @@ class Substr_Replacer {
 };
 using Substring_Replacer = Substr_Replacer<char>;
 using WSubstring_Replacer = Substr_Replacer<wchar_t>;
+
+struct Affix_Entry {
+	const char16_t flag;
+	const bool cross_product;
+	const std::string stripping;
+	const std::string appending;
+	const std::regex condition;
+};
+
+class Prefix_Entry : public Affix_Entry {
+
+      public:
+	Prefix_Entry() = default;
+	Prefix_Entry(char16_t flag, bool cross_product,
+	             const std::string& strip, const std::string& append,
+	             std::string condition);
+
+	auto to_root(std::string& word) const -> std::string&;
+	auto to_root_copy(std::string word) const -> std::string;
+
+	auto to_derived(std::string& word) const -> std::string&;
+	auto to_derived_copy(std::string word) const -> std::string;
+
+	auto check_condition(const std::string& word) const -> bool;
+};
+
+class Suffix_Entry : public Affix_Entry {
+      public:
+	Suffix_Entry() = default;
+	Suffix_Entry(char16_t flag, bool cross_product,
+	             const std::string& strip, const std::string& append,
+	             std::string condition);
+
+	auto to_root(std::string& word) const -> std::string&;
+	auto to_root_copy(std::string word) const -> std::string;
+
+	auto to_derived(std::string& word) const -> std::string&;
+	auto to_derived_copy(std::string word) const -> std::string;
+
+	auto check_condition(const std::string& word) const -> bool;
+};
+
+class Prefix_Table {
+	std::unordered_multimap<std::string, Prefix_Entry> table;
+
+      public:
+	Prefix_Table() = default;
+
+	auto insert(const Prefix_Entry& e) { table.emplace(e.appending, e); }
+
+	Prefix_Table(const std::vector<Prefix_Entry>& v)
+	{
+		for (auto& e : v) {
+			insert(e);
+		}
+	}
+
+	// auto data() const { return table; }
+	auto equal_range(const std::string& affix) const
+	{
+		return boost::make_iterator_range(table.equal_range(affix));
+	}
+};
 }
 #endif

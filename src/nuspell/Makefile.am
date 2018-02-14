@@ -8,7 +8,7 @@ LIBADD      = $(BOOST_LOCALE_LIBS) $(CODE_COVERAGE_LIBS)
 libnuspell_a_SOURCES=\
 aff_data.cxx     aff_data.hxx     \
 dic_data.cxx     dic_data.hxx     \
-                 dictionary.hxx   \
+dictionary.cxx   dictionary.hxx   \
 finder.cxx       finder.hxx       \
 locale_utils.cxx locale_utils.hxx \
                  string_utils.hxx \

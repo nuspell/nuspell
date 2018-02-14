@@ -208,4 +208,76 @@ static_assert(is_move_constructible<Substr_Replacer<char>>::value,
               "Substring_Replacer Not move constructable");
 static_assert(is_move_assignable<Substr_Replacer<char>>::value,
               "Substring_Replacer Not move assingable");
+
+Prefix_Entry::Prefix_Entry(char16_t flag, bool cross_product,
+                           const std::string& strip, const std::string& append,
+                           std::string condition)
+    : Affix_Entry{flag, cross_product, strip, append,
+                  regex(condition.insert(0, 1, '^'))}
+{
+}
+
+auto Prefix_Entry::to_root(string& word) const -> string&
+{
+	return word.replace(0, appending.size(), stripping);
+}
+
+auto Prefix_Entry::to_root_copy(string word) const -> string
+{
+	to_root(word);
+	return word;
+}
+
+auto Prefix_Entry::to_derived(string& word) const -> string&
+{
+	return word.replace(0, stripping.size(), appending);
+}
+
+auto Prefix_Entry::to_derived_copy(string word) const -> string
+{
+	to_derived(word);
+	return word;
+}
+
+auto Prefix_Entry::check_condition(const string& word) const -> bool
+{
+	auto m = smatch();
+	return regex_search(word, m, condition);
+}
+
+Suffix_Entry::Suffix_Entry(char16_t flag, bool cross_product,
+                           const std::string& strip, const std::string& append,
+                           std::string condition)
+    : Affix_Entry{flag, cross_product, strip, append, regex(condition += '$')}
+{
+}
+
+auto Suffix_Entry::to_root(string& word) const -> string&
+{
+	return word.replace(word.size() - appending.size(), appending.size(),
+	                    stripping);
+}
+
+auto Suffix_Entry::to_root_copy(string word) const -> string
+{
+	return to_root(word);
+}
+
+auto Suffix_Entry::to_derived(string& word) const -> string&
+{
+	return word.replace(word.size() - stripping.size(), stripping.size(),
+	                    appending);
+}
+
+auto Suffix_Entry::to_derived_copy(string word) const -> string
+{
+	to_derived(word);
+	return word;
+}
+
+auto Suffix_Entry::check_condition(const string& word) const -> bool
+{
+	auto m = smatch();
+	return regex_search(word, m, condition);
+}
 }

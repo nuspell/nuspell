@@ -27,7 +27,7 @@
 
 namespace hunspell {
 
-struct Dic_Data {
+class Dic_Data {
 	// word and flag vector
 	// efficient for short flag vectors
 	// for long flag vectors like in Korean dict
@@ -39,9 +39,17 @@ struct Dic_Data {
 	// we keep them separate because morph data is generally absent
 	std::unordered_map<std::string, std::vector<std::string>> morph_data;
 
+      public:
 	// methods
 	// parses the dic data to hashtable
 	auto parse(std::istream& in, const Aff_Data& aff) -> bool;
+
+	auto data() const { return words; }
+
+	auto lookup(const std::string& word) -> Flag_Set*;
+	auto lookup(const std::string& word) const -> const Flag_Set*;
+	auto lookup(const std::wstring& word) -> Flag_Set*;
+	auto lookup(const std::wstring& word) const -> const Flag_Set*;
 };
 }
 

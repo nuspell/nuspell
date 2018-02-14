@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Dimitrij Mijoski
+/* Copyright 2016-2018 Dimitrij Mijoski
  *
  * This file is part of Nuspell.
  *
@@ -43,7 +43,7 @@ class Dictionary {
 	template <class CharT>
 	auto spell_priv(const std::basic_string<CharT> s) -> Spell_Result
 	{
-		if (dic_data.words.count(to_dict_encoding(s)))
+		if (dic_data.lookup(s))
 			return GOOD_WORD;
 		return BAD_WORD;
 	}
