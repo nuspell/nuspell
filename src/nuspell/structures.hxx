@@ -25,6 +25,9 @@
 #include <utility>
 #include <vector>
 
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index_container.hpp>
 #include <boost/range/iterator_range_core.hpp>
 
 namespace hunspell {
@@ -146,26 +149,14 @@ class Suffix_Entry : public Affix_Entry {
 	auto check_condition(const std::string& word) const -> bool;
 };
 
-class Prefix_Table {
-	std::unordered_multimap<std::string, Prefix_Entry> table;
+using boost::multi_index_container;
+using boost::multi_index::indexed_by;
+using boost::multi_index::member;
+using boost::multi_index::hashed_non_unique;
 
-      public:
-	Prefix_Table() = default;
-
-	auto insert(const Prefix_Entry& e) { table.emplace(e.appending, e); }
-
-	Prefix_Table(const std::vector<Prefix_Entry>& v)
-	{
-		for (auto& e : v) {
-			insert(e);
-		}
-	}
-
-	// auto data() const { return table; }
-	auto equal_range(const std::string& affix) const
-	{
-		return boost::make_iterator_range(table.equal_range(affix));
-	}
-};
+using Prefix_Table = multi_index_container<
+    Prefix_Entry,
+    indexed_by<hashed_non_unique<
+        member<Affix_Entry, const std::string, &Affix_Entry::appending>>>>;
 }
 #endif

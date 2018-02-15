@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Dimitrij Mijoski
+/* Copyright 2016-2018 Dimitrij Mijoski
  *
  * This file is part of Nuspell.
  *
@@ -35,13 +35,15 @@ class Encoding {
 	std::string name;
 
       public:
+	enum Type { SINGLEBYTE = false, UTF8 = true };
+
 	Encoding() = default;
-	Encoding(const std::string& e,
-	         const std::locale& ascii_loc = std::locale::classic());
+	Encoding(const std::string& e);
 	auto empty() const -> bool { return name.empty(); }
 	operator const std::string&() const { return name; }
 	auto value() const -> const std::string& { return name; }
 	auto is_utf8() const -> bool { return name == "UTF-8"; }
+	operator Type() const { return is_utf8() ? UTF8 : SINGLEBYTE; }
 };
 
 enum Flag_Type { FLAG_SINGLE_CHAR, FLAG_DOUBLE_CHAR, FLAG_NUMBER, FLAG_UTF8 };

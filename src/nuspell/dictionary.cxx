@@ -32,18 +32,18 @@ auto prefix_check(const Dic_Data& dic, const Prefix_Table& affix_table,
 
 		auto affix = word.substr(0, aff_len);
 		auto entries = affix_table.equal_range(affix);
-		for (auto& e : entries) {
+		for (auto& e : boost::make_iterator_range(entries)) {
 
-			e.second.to_root(word);
-			auto matched = e.second.check_condition(word);
+			e.to_root(word);
+			auto matched = e.check_condition(word);
 			if (matched) {
 				auto flags = dic.lookup(word);
-				if (flags && flags->exists(e.second.flag)) {
+				if (flags && flags->exists(e.flag)) {
 					// success
 					return true;
 				}
 			}
-			e.second.to_derived(word);
+			e.to_derived(word);
 		}
 	}
 	return false;

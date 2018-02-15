@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Dimitrij Mijoski
+/* Copyright 2016-2018 Dimitrij Mijoski
  *
  * This file is part of Nuspell.
  *
@@ -73,9 +73,9 @@ namespace hunspell {
 
 using namespace std;
 
-Encoding::Encoding(const std::string& e, const std::locale& ascii_loc) : name(e)
+Encoding::Encoding(const std::string& e) : name(e)
 {
-	boost::algorithm::to_upper(name, ascii_loc);
+	boost::algorithm::to_upper(name, locale::classic());
 	if (name == "UTF8")
 		name = "UTF-8";
 }
@@ -404,7 +404,7 @@ auto Aff_Data::parse(istream& in) -> bool
 	    {"CHECKSHARPS", &checksharps}};
 
 	unordered_map<string, vector<string>*> command_vec_str = {
-	    {"BREAK", &break_patterns}, // maybe add error handling as v1 has
+	    {"BREAK", &break_patterns},  // maybe add error handling as v1 has
 	    {"MAP", &map_related_chars}, // maybe add special parsing code
 	    {"COMPOUNDRULE", &compound_rules}};
 
@@ -685,7 +685,8 @@ void Aff_Data::log(const string& affpath)
 		         << i - suffixes.begin() + 1
 		         << ".appnd@getKey/affix\t\"" << i->affix << "\""
 		         << std::endl;
-		// later		log_file << "sfx/suffixes_" << std::setw(3)
+		// later		log_file << "sfx/suffixes_" <<
+		// std::setw(3)
 		// <<
 		// std::setfill('0')
 		// later			 << i - suffixes.begin() <<
