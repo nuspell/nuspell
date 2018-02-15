@@ -404,7 +404,7 @@ auto Aff_Data::parse(istream& in) -> bool
 	    {"CHECKSHARPS", &checksharps}};
 
 	unordered_map<string, vector<string>*> command_vec_str = {
-	    {"BREAK", &break_patterns},
+	    {"BREAK", &break_patterns}, // maybe add error handling as v1 has
 	    {"MAP", &map_related_chars}, // maybe add special parsing code
 	    {"COMPOUNDRULE", &compound_rules}};
 
