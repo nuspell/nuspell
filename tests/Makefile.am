@@ -31,6 +31,7 @@ TESTS =	$(check_PROGRAMS)
 ch_catch_SOURCES = \
 locale_utils_test.cxx \
 string_utils_test.cxx \
+structures_test.cxx \
 aff_data_test.cxx \
 finder_test.cxx \
 catch_main.cxx

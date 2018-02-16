@@ -108,7 +108,7 @@ HashMgr::HashMgr(const char* tpath, const char* apath, const char* key)
     if (!tableptr) {
       tablesize = 0;
     }
-  } else if (true) this->log(apath, tpath, key); // Set to false to disable logging.
+  } else if (true) this->log(apath, tpath);//, key); // Set to false to disable logging.
 }
 
 HashMgr::~HashMgr() {
@@ -1196,7 +1196,7 @@ flag HashMgr::getFlagMode() const { // only for development logging
 	return flag_mode;
 }
 
-void HashMgr::log(const char* tpath, const char* apath, const char* key) { // only for development logging
+void HashMgr::log(const char* tpath, const char* apath) {//}, const char* key) { // only for development logging
 	std::ofstream log_file;
 	auto log_name = std::string(".hm1.log"); // 1: Hunspell, 2: Nuspell
 	log_name.insert(0, tpath);
@@ -1210,10 +1210,10 @@ void HashMgr::log(const char* tpath, const char* apath, const char* key) { // on
 	log_file << "tpath\t" << tpath << std::endl;
 	log_file << "apath\t" << apath << std::endl;
 	log_file << "key\t";
-	if (key == 0x0)
-		log_file << "0x0" << std::endl;
-	else
-		log_file << key << std::endl;
+//	if (key == 0x0)
+//		log_file << "0x0" << std::endl;
+//	else
+//		log_file << key << std::endl;
 	log_file << "AFTER load_config() and load_tables()" << std::endl;
 	log_file << "enc\t\"" << this->enc << "\"" << std::endl;
 //	log_file << "flag_mode\t";

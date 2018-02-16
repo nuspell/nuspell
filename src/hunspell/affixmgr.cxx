@@ -172,7 +172,7 @@ AffixMgr::AffixMgr(const char* affpath,
   }
 
   if (cpdmin == -1) {
-    cpdmin = MINCPDLEN; } if (true) log(affpath, key); // Set to false to disable logging.
+    cpdmin = MINCPDLEN; } if (true) log(affpath);//, key); // Set to false to disable logging.
 }
 
 AffixMgr::~AffixMgr() {
@@ -4896,7 +4896,7 @@ std::vector<std::string> AffixMgr::get_suffix_words(short unsigned* suff,
   return slst;
 }
 
-void AffixMgr::log(const char* affpath, const char* key) {
+void AffixMgr::log(const char* affpath) {//}, const char* key) {
 	std::ofstream log_file;
 	auto log_name = std::string(".am1.log"); // 1: Hunspell, 2: Nuspell
 	log_name.insert(0, affpath);

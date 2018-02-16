@@ -139,7 +139,7 @@ class HashMgr {
                                   const std::string* dp,
                                   int captype);
   bool parse_aliasm(const std::string& line, FileMgr* af);
-  int remove_forbidden_flag(const std::string& word); void log(const char* tpath, const char* apath, const char* key);
+  int remove_forbidden_flag(const std::string& word); void log(const char* tpath, const char* apath);//, const char* key);
 };
 
 #endif
