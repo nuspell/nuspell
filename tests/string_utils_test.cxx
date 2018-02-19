@@ -287,17 +287,3 @@ TEST_CASE("method classify_casing", "[string_utils]")
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase"s));
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s));
 }
-
-TEST_CASE("substring replacer", "[structures]")
-{
-	auto rep = Substring_Replacer({{"asd", "zxc"},
-	                               {"as", "rtt"},
-	                               {"a", "A"},
-	                               {"abbb", "ABBB"},
-	                               {"asd  ", ""},
-	                               {"asd ZXC", "YES"},
-	                               {"sd ZXC as", "NO"},
-	                               {"", "123"},
-	                               {" TT", ""}});
-	CHECK(rep.replace_copy("QWE asd ZXC as TT"s) == "QWE YES rtt");
-}
