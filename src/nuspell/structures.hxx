@@ -28,7 +28,6 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index_container.hpp>
-#include <boost/range/iterator_range_core.hpp>
 
 namespace hunspell {
 
@@ -107,6 +106,27 @@ class Substr_Replacer {
 };
 using Substring_Replacer = Substr_Replacer<char>;
 using WSubstring_Replacer = Substr_Replacer<wchar_t>;
+
+template <class CharT>
+class Break_Table {
+	std::vector<std::basic_string<CharT>> table;
+
+	using It = decltype(table.begin());
+	It start_word_breaks_last_it;
+	It end_word_breaks_last_it;
+
+      private:
+	auto order_entries() -> void;
+
+      public:
+	Break_Table() = default;
+	Break_Table(const std::vector<std::basic_string<CharT>>& v);
+	Break_Table(std::vector<std::basic_string<CharT>>&& v);
+
+	template <class Func>
+	auto break_and_spell(const std::basic_string<CharT>& s, Func spell_func)
+	    -> bool;
+};
 
 struct Affix_Entry {
 	const char16_t flag;
