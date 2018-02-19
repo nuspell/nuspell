@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <type_traits>
 
+#include <boost/range/iterator_range_core.hpp>
 #include <boost/utility/string_view.hpp>
 
 namespace hunspell {
@@ -208,6 +209,101 @@ static_assert(is_move_constructible<Substr_Replacer<char>>::value,
               "Substring_Replacer Not move constructable");
 static_assert(is_move_assignable<Substr_Replacer<char>>::value,
               "Substring_Replacer Not move assingable");
+
+template <class CharT>
+auto Break_Table<CharT>::order_entries() -> void
+{
+	using boost::make_iterator_range;
+	auto& f = use_facet<ctype<CharT>>(locale::classic());
+	auto dolar = f.widen('$');
+	auto caret = f.widen('^');
+	auto is_start_word_break = [=](auto& x) {
+		return !x.empty() && x[0] == caret;
+	};
+	auto is_end_word_break = [=](auto& x) {
+		return !x.empty() && x.back() == dolar;
+	};
+	start_word_breaks_last_it =
+	    partition(begin(table), end(table), is_start_word_break);
+
+	for (auto& e :
+	     make_iterator_range(begin(table), start_word_breaks_last_it)) {
+		e.erase(0, 1);
+	}
+
+	end_word_breaks_last_it =
+	    partition(start_word_breaks_last_it, end(table), is_end_word_break);
+	for (auto& e : make_iterator_range(start_word_breaks_last_it,
+	                                   end_word_breaks_last_it)) {
+		e.pop_back();
+	}
+
+	auto it = remove_if(end_word_breaks_last_it, end(table),
+	                    [](auto& s) { return s.empty(); });
+	table.erase(it, end(table));
+}
+
+template <class CharT>
+Break_Table<CharT>::Break_Table(const std::vector<basic_string<CharT>>& v)
+    : table(v)
+{
+	order_entries();
+}
+
+template <class CharT>
+Break_Table<CharT>::Break_Table(vector<basic_string<CharT>>&& v)
+    : table(std::move(v))
+{
+	order_entries();
+}
+
+template <class CharT>
+template <class Func>
+auto Break_Table<CharT>::break_and_spell(const basic_string<CharT>& s,
+                                         Func spell_func) -> bool
+{
+	auto start_word_breaks =
+	    boost::make_iterator_range(begin(table), start_word_breaks_last_it);
+	auto end_word_breaks = boost::make_iterator_range(
+	    start_word_breaks_last_it, end_word_breaks_last_it);
+	auto middle_word_breaks =
+	    boost::make_iterator_range(end_word_breaks_last_it, end(table));
+
+	for (auto& pat : start_word_breaks) {
+		if (s.compare(0, pat.size(), pat) == 0) {
+			auto res = spell_func(s.substr(pat.size()));
+			if (res)
+				return true;
+		}
+	}
+	for (auto& pat : end_word_breaks) {
+		if (pat.size() > s.size())
+			continue;
+		if (s.compare(s.size() - pat.size(), pat.size(), pat) == 0) {
+			auto res = spell_func(s.substr(pat.size()));
+			if (res)
+				return true;
+		}
+	}
+
+	for (auto& pat : middle_word_breaks) {
+		auto i = s.find(pat);
+		if (i > 0 && i < s.size() - pat.size()) {
+			auto part1 = s.substr(0, i);
+			auto part2 = s.substr(i + pat.size());
+			auto res1 = spell_func(part1);
+			if (!res1)
+				continue;
+			auto res2 = spell_func(part2);
+			if (res2)
+				return true;
+		}
+	}
+	return false;
+}
+
+template class Break_Table<char>;
+template class Break_Table<wchar_t>;
 
 Prefix_Entry::Prefix_Entry(char16_t flag, bool cross_product,
                            const std::string& strip, const std::string& append,

@@ -23,7 +23,22 @@
 #include "../src/nuspell/structures.hxx"
 
 using namespace std;
+using namespace std::literals::string_literals;
 using namespace hunspell;
+
+TEST_CASE("substring replacer", "[structures]")
+{
+	auto rep = Substring_Replacer({{"asd", "zxc"},
+	                               {"as", "rtt"},
+	                               {"a", "A"},
+	                               {"abbb", "ABBB"},
+	                               {"asd  ", ""},
+	                               {"asd ZXC", "YES"},
+	                               {"sd ZXC as", "NO"},
+	                               {"", "123"},
+	                               {" TT", ""}});
+	CHECK(rep.replace_copy("QWE asd ZXC as TT"s) == "QWE YES rtt");
+}
 
 // See also tests/v1cmdline/condition.* and individual language support.
 
@@ -36,8 +51,7 @@ TEST_CASE("class Prefix_Entry", "[structures]")
 	// auto pfx_tests = hunspell::Prefix_Entry(*u"U", true, "0"s, "un"s,
 	// "wr."s);
 
-	auto pfx_tests =
-	    hunspell::Prefix_Entry(*u"U", true, ""s, "un"s, "wr."s);
+	auto pfx_tests = Prefix_Entry(*u"U", true, ""s, "un"s, "wr."s);
 
 	SECTION("method to_root")
 	{
