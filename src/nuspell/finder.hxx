@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace hunspell {
+namespace nuspell {
 
 class Finder {
 	using string = std::string;

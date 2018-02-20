@@ -23,7 +23,7 @@
 #include "../src/nuspell/finder.hxx"
 
 using namespace std;
-using namespace hunspell;
+using namespace nuspell;
 
 TEST_CASE("class Finder", "[finder]")
 {

@@ -25,7 +25,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace hunspell {
+namespace nuspell {
 
 class Dic_Data {
 	// word and flag vector

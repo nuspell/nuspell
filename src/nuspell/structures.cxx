@@ -23,7 +23,7 @@
 
 #include <boost/utility/string_view.hpp>
 
-namespace hunspell {
+namespace nuspell {
 
 using namespace std;
 using boost::basic_string_view;
@@ -37,7 +37,7 @@ void sort_uniq(Container& c)
 	c.erase(unique(first, last), last);
 }
 
-void Flag_Set::sort_uniq() { hunspell::sort_uniq(flags); }
+void Flag_Set::sort_uniq() { nuspell::sort_uniq(flags); }
 
 Flag_Set::Flag_Set(const std::u16string& s) : flags(s) { sort_uniq(); }
 
@@ -316,7 +316,7 @@ template class Break_Table<wchar_t>;
  *
  * @note Do not provide a string "0" for the parameter stripping.
  * In such case, only an emptry string "" should be used. This is handled by the
- * function <hunspell>::<parse_affix> and should not be double checked here for
+ * function nuspell::parse_affix and should not be double checked here for
  * reasons of optimization.
  *
  * @param flag TODO.
@@ -420,7 +420,7 @@ auto Prefix_Entry::check_condition(const string& word) const -> bool
  *
  * @note Do not provide a string "0" for the parameter stripping.
  * In such case, only an emptry string "" should be used. This is handled by the
- * function <hunspell>::<parse_affix> and should not be double checked here for
+ * function nuspell::parse_affix and should not be double checked here for
  * reasons of optimization.
  *
  * @param flag TODO.

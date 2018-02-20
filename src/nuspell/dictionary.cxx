@@ -20,7 +20,7 @@
 
 #include <boost/range/iterator_range_core.hpp>
 
-namespace hunspell {
+namespace nuspell {
 
 using namespace std;
 

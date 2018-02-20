@@ -23,7 +23,7 @@
 #include "../src/nuspell/aff_data.hxx"
 
 using namespace std;
-using namespace hunspell;
+using namespace nuspell;
 
 TEST_CASE("method get_locale_name", "[aff_data]")
 {

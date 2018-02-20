@@ -23,7 +23,7 @@
 #include <fstream>
 #include <locale>
 
-namespace hunspell {
+namespace nuspell {
 
 enum Spell_Result {
 	BAD_WORD /*!< word is spelled incorrectly */,

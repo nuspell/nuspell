@@ -24,7 +24,7 @@
 
 using namespace std;
 using namespace std::literals::string_literals;
-using namespace hunspell;
+using namespace nuspell;
 
 TEST_CASE("header locale_utils", "[locale_utils]")
 {

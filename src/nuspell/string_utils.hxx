@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace hunspell {
+namespace nuspell {
 
 /**
  * Splits string on set of single char seperators.

@@ -28,7 +28,7 @@
 
 #include <boost/locale.hpp>
 
-namespace hunspell {
+namespace nuspell {
 
 using namespace std;
 

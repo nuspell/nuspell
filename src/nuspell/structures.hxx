@@ -31,7 +31,7 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index_container.hpp>
 
-namespace hunspell {
+namespace nuspell {
 
 /**
  * @brief A Set class backed by a string. Very useful for small sets.

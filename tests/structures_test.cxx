@@ -24,7 +24,7 @@
 
 using namespace std;
 using namespace std::literals::string_literals;
-using namespace hunspell;
+using namespace nuspell;
 
 TEST_CASE("substring replacer", "[structures]")
 {
@@ -48,7 +48,7 @@ TEST_CASE("class Prefix_Entry", "[structures]")
 {
 	// TODO ignore "0" to make method more failsafe? See aff_data.cxx with
 	// elem.stripping == "0"
-	// auto pfx_tests = hunspell::Prefix_Entry(*u"U", true, "0"s, "un"s,
+	// auto pfx_tests = nuspell::Prefix_Entry(*u"U", true, "0"s, "un"s,
 	// "wr."s);
 
 	auto pfx_tests = Prefix_Entry(*u"U", true, ""s, "un"s, "wr."s);
@@ -91,17 +91,17 @@ TEST_CASE("class Prefix_Entry", "[structures]")
 TEST_CASE("class Suffix_Entry", "[structures]")
 {
 	auto sfx_tests =
-	    hunspell::Suffix_Entry(*u"T", true, "y"s, "ies"s, ".[^aeiou]y"s);
-	auto sfx_sk_SK = hunspell::Suffix_Entry(*u"Z", true, "ata"s, "át"s,
+	    nuspell::Suffix_Entry(*u"T", true, "y"s, "ies"s, ".[^aeiou]y"s);
+	auto sfx_sk_SK = nuspell::Suffix_Entry(*u"Z", true, "ata"s, "át"s,
 	                                        "[^áéíóúý].[^iš]ata"s);
 	auto sfx_pt_PT =
-	    hunspell::Suffix_Entry(*u"X", true, "er"s, "a"s, "[^cug^-]er"s);
+	    nuspell::Suffix_Entry(*u"X", true, "er"s, "a"s, "[^cug^-]er"s);
 	// TODO See above regarding "0"
 	auto sfx_gd_GB =
-	    hunspell::Suffix_Entry(*u"K", true, "0"s, "-san"s, "[^-]"s);
+	    nuspell::Suffix_Entry(*u"K", true, "0"s, "-san"s, "[^-]"s);
 	auto sfx_ar =
-	    hunspell::Suffix_Entry(*u"aa", true, "ه"s, "ي"s, "[^ءؤأ]ه"s);
-	auto sfx_ko = hunspell::Suffix_Entry(
+	    nuspell::Suffix_Entry(*u"aa", true, "ه"s, "ي"s, "[^ءؤأ]ه"s);
+	auto sfx_ko = nuspell::Suffix_Entry(
 	    24, true, "ᅬ다"s, " ᅫᆻ어"s,
 	    "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다"s);
 

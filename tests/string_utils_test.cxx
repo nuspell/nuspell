@@ -26,7 +26,7 @@
 
 using namespace std;
 using namespace std::literals::string_literals;
-using namespace hunspell;
+using namespace nuspell;
 
 TEST_CASE("method split_on_any_of", "[string_utils]")
 {

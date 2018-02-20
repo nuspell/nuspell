@@ -70,7 +70,7 @@
  * }
  */
 
-namespace hunspell {
+namespace nuspell {
 
 using namespace std;
 
@@ -396,13 +396,13 @@ auto parse_morhological_fields(istream& in, vector<string>& vecOut) -> void
 
 auto Aff_Data::decode_flags(istream& in, size_t line_num) const -> u16string
 {
-	return hunspell::decode_flags(in, line_num, flag_type, encoding);
+	return nuspell::decode_flags(in, line_num, flag_type, encoding);
 }
 
 auto Aff_Data::decode_single_flag(istream& in, size_t line_num) const
     -> char16_t
 {
-	return hunspell::decode_single_flag(in, line_num, flag_type, encoding);
+	return nuspell::decode_single_flag(in, line_num, flag_type, encoding);
 }
 
 auto get_locale_name(string lang, string enc, const string& filename) -> string

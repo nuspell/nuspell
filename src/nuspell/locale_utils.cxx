@@ -25,7 +25,7 @@
 #include <intrin.h>
 #endif
 
-namespace hunspell {
+namespace nuspell {
 inline namespace encoding {
 using namespace std;
 

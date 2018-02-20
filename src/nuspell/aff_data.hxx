@@ -26,7 +26,7 @@
 
 #include "structures.hxx"
 
-namespace hunspell {
+namespace nuspell {
 
 auto get_locale_name(std::string lang, std::string enc,
                      const std::string& filename = "") -> std::string;
