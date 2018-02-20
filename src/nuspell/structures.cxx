@@ -216,12 +216,15 @@ auto Break_Table<CharT>::order_entries() -> void
 	auto& f = use_facet<ctype<CharT>>(locale::classic());
 	auto dolar = f.widen('$');
 	auto caret = f.widen('^');
-	auto is_start_word_break = [=](auto& x) {
-		return !x.empty() && x[0] == caret;
-	};
-	auto is_end_word_break = [=](auto& x) {
-		return !x.empty() && x.back() == dolar;
-	};
+
+	auto it = remove_if(begin(table), end(table), [=](auto& s) {
+		return s.empty() ||
+		       (s.size() == 1 && (s[0] == caret || s[0] == dolar));
+	});
+	table.erase(it, end(table));
+
+	auto is_start_word_break = [=](auto& x) { return x[0] == caret; };
+	auto is_end_word_break = [=](auto& x) { return x.back() == dolar; };
 	start_word_breaks_last_it =
 	    partition(begin(table), end(table), is_start_word_break);
 
@@ -236,10 +239,6 @@ auto Break_Table<CharT>::order_entries() -> void
 	                                   end_word_breaks_last_it)) {
 		e.pop_back();
 	}
-
-	auto it = remove_if(end_word_breaks_last_it, end(table),
-	                    [](auto& s) { return s.empty(); });
-	table.erase(it, end(table));
 }
 
 template <class CharT>
@@ -249,7 +248,7 @@ Break_Table<CharT>::Break_Table(const Table_Str& v) : table(v)
 }
 
 template <class CharT>
-Break_Table<CharT>::Break_Table(Table_Str&& v) : table(std::move(v))
+Break_Table<CharT>::Break_Table(Table_Str&& v) : table(move(v))
 {
 	order_entries();
 }
