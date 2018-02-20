@@ -56,4 +56,41 @@ auto prefix_check(const Dic_Data& dic, const Prefix_Table& affix_table,
 	}
 	return false;
 }
+
+template <class CharT>
+auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
+{
+
+	if (dic_data.lookup(s))
+		return GOOD_WORD;
+	return BAD_WORD;
+}
+template auto Dictionary::spell_priv(const string s) -> Spell_Result;
+template auto Dictionary::spell_priv(const wstring s) -> Spell_Result;
+
+template <class CharT>
+auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
+{
+	(void)s;
+	return BAD_WORD;
+}
+template auto Dictionary::spell_break(string& s) -> Spell_Result;
+template auto Dictionary::spell_break(wstring& s) -> Spell_Result;
+
+template <class CharT>
+auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
+{
+	(void)s;
+	return BAD_WORD;
+}
+template auto Dictionary::spell_casing(string& s) -> Spell_Result;
+template auto Dictionary::spell_casing(wstring& s) -> Spell_Result;
+
+template <class CharT>
+auto Dictionary::checkword(std::basic_string<CharT>& s) -> const Flag_Set*
+{
+	return dic_data.lookup(s);
+}
+template auto Dictionary::checkword(string& s) -> const Flag_Set*;
+template auto Dictionary::checkword(wstring& s) -> const Flag_Set*;
 }

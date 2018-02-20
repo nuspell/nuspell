@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <type_traits>
 
-#include <boost/range/iterator_range_core.hpp>
 #include <boost/utility/string_view.hpp>
 
 namespace hunspell {
@@ -244,39 +243,46 @@ auto Break_Table<CharT>::order_entries() -> void
 }
 
 template <class CharT>
-Break_Table<CharT>::Break_Table(const std::vector<basic_string<CharT>>& v)
-    : table(v)
+Break_Table<CharT>::Break_Table(const Table_Str& v) : table(v)
 {
 	order_entries();
 }
 
 template <class CharT>
-Break_Table<CharT>::Break_Table(vector<basic_string<CharT>>&& v)
-    : table(std::move(v))
+Break_Table<CharT>::Break_Table(Table_Str&& v) : table(std::move(v))
 {
 	order_entries();
+}
+
+template <class CharT>
+auto Break_Table<CharT>::operator=(const Table_Str& v) -> Break_Table&
+{
+	table = v;
+	order_entries();
+	return *this;
+}
+
+template <class CharT>
+auto Break_Table<CharT>::operator=(Table_Str&& v) -> Break_Table&
+{
+	table = move(v);
+	order_entries();
+	return *this;
 }
 
 template <class CharT>
 template <class Func>
-auto Break_Table<CharT>::break_and_spell(const basic_string<CharT>& s,
-                                         Func spell_func) -> bool
+auto Break_Table<CharT>::break_and_spell(const StrT& s, Func spell_func) const
+    -> bool
 {
-	auto start_word_breaks =
-	    boost::make_iterator_range(begin(table), start_word_breaks_last_it);
-	auto end_word_breaks = boost::make_iterator_range(
-	    start_word_breaks_last_it, end_word_breaks_last_it);
-	auto middle_word_breaks =
-	    boost::make_iterator_range(end_word_breaks_last_it, end(table));
-
-	for (auto& pat : start_word_breaks) {
+	for (auto& pat : start_word_breaks()) {
 		if (s.compare(0, pat.size(), pat) == 0) {
 			auto res = spell_func(s.substr(pat.size()));
 			if (res)
 				return true;
 		}
 	}
-	for (auto& pat : end_word_breaks) {
+	for (auto& pat : end_word_breaks()) {
 		if (pat.size() > s.size())
 			continue;
 		if (s.compare(s.size() - pat.size(), pat.size(), pat) == 0) {
@@ -286,7 +292,7 @@ auto Break_Table<CharT>::break_and_spell(const basic_string<CharT>& s,
 		}
 	}
 
-	for (auto& pat : middle_word_breaks) {
+	for (auto& pat : middle_word_breaks()) {
 		auto i = s.find(pat);
 		if (i > 0 && i < s.size() - pat.size()) {
 			auto part1 = s.substr(0, i);

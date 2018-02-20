@@ -41,12 +41,13 @@ class Dictionary {
 
       private:
 	template <class CharT>
-	auto spell_priv(const std::basic_string<CharT> s) -> Spell_Result
-	{
-		if (dic_data.lookup(s))
-			return GOOD_WORD;
-		return BAD_WORD;
-	}
+	auto spell_priv(std::basic_string<CharT> s) -> Spell_Result;
+	template <class CharT>
+	auto spell_break(std::basic_string<CharT>& s) -> Spell_Result;
+	template <class CharT>
+	auto spell_casing(std::basic_string<CharT>& s) -> Spell_Result;
+	template <class CharT>
+	auto checkword(std::basic_string<CharT>& s) -> const Flag_Set*;
 
       public:
 	Dictionary()

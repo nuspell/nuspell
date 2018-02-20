@@ -30,6 +30,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
+#include <boost/range/adaptors.hpp>
 
 /*
  * Aff_Data class and the method parse() should be structured in the following
@@ -627,9 +628,6 @@ auto Aff_Data::parse(istream& in) -> bool
 			     << line << endl;
 		}
 	}
-	locale_aff = locale_generator(get_locale_name(language_code, encoding));
-	cerr.flush();
-
 	// default BREAK definition
 	if (!break_patterns.size()) {
 		break_patterns.push_back("-");
@@ -637,6 +635,33 @@ auto Aff_Data::parse(istream& in) -> bool
 		break_patterns.push_back("-$");
 	}
 
+	// now fill data structures from temporary data
+	locale_aff = locale_generator(get_locale_name(language_code, encoding));
+	if (encoding.is_utf8()) {
+		using namespace boost::locale::conv;
+		auto u_to_u_pair = [](auto& x) {
+			return make_pair(utf_to_utf<wchar_t>(x.first),
+			                 utf_to_utf<wchar_t>(x.first));
+		};
+		auto iconv =
+		    boost::adaptors::transform(input_conversion, u_to_u_pair);
+		wide_structures.input_substr_replacer = iconv;
+		auto oconv =
+		    boost::adaptors::transform(output_conversion, u_to_u_pair);
+		wide_structures.output_substr_replacer = oconv;
+
+		auto u_to_u = [](auto& x) { return utf_to_utf<wchar_t>(x); };
+		auto break_pat =
+		    boost::adaptors::transform(break_patterns, u_to_u);
+		wide_structures.break_table = break_pat;
+	}
+	else {
+		structures.input_substr_replacer = input_conversion;
+		structures.output_substr_replacer = output_conversion;
+		structures.break_table = break_patterns;
+	}
+
+	cerr.flush();
 	return in.eof(); // success when eof is reached
 }
 

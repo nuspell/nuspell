@@ -25,6 +25,8 @@
 #include <utility>
 #include <vector>
 
+#include <boost/range/iterator_range_core.hpp>
+
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index_container.hpp>
@@ -98,8 +100,18 @@ class Substr_Replacer {
 	Substr_Replacer() = default;
 	Substr_Replacer(const Table_Pairs& v);
 	Substr_Replacer(Table_Pairs&& v);
+
 	auto operator=(const Table_Pairs& v) -> Substr_Replacer&;
 	auto operator=(Table_Pairs&& v) -> Substr_Replacer&;
+	template <class Range>
+	auto operator=(const Range& range) -> Substr_Replacer&
+	{
+		table.clear();
+		table.insert(std::end(table), std::begin(range),
+		             std::end(range));
+		sort_uniq();
+		return *this;
+	}
 
 	auto replace(StrT& s) const -> StrT&;
 	auto replace_copy(StrT s) const -> StrT;
@@ -109,23 +121,55 @@ using WSubstring_Replacer = Substr_Replacer<wchar_t>;
 
 template <class CharT>
 class Break_Table {
-	std::vector<std::basic_string<CharT>> table;
-
-	using It = decltype(table.begin());
-	It start_word_breaks_last_it;
-	It end_word_breaks_last_it;
+      public:
+	using StrT = std::basic_string<CharT>;
+	using Table_Str = std::vector<StrT>;
+	using iterator = typename Table_Str::iterator;
+	using const_iterator = typename Table_Str::const_iterator;
 
       private:
+	Table_Str table;
+	iterator start_word_breaks_last_it;
+	iterator end_word_breaks_last_it;
+
 	auto order_entries() -> void;
 
       public:
 	Break_Table() = default;
-	Break_Table(const std::vector<std::basic_string<CharT>>& v);
-	Break_Table(std::vector<std::basic_string<CharT>>&& v);
+	Break_Table(const Table_Str& v);
+	Break_Table(Table_Str&& v);
+
+	auto operator=(const Table_Str& v) -> Break_Table&;
+	auto operator=(Table_Str&& v) -> Break_Table&;
+	template <class Range>
+	auto operator=(const Range& range) -> Break_Table&
+	{
+		table.clear();
+		table.insert(std::end(table), std::begin(range),
+		             std::end(range));
+		order_entries();
+		return *this;
+	}
+
+	auto start_word_breaks() const -> boost::iterator_range<const_iterator>
+	{
+		return {std::begin(table),
+			const_iterator(start_word_breaks_last_it)};
+	}
+	auto end_word_breaks() const -> boost::iterator_range<const_iterator>
+	{
+		return {const_iterator(start_word_breaks_last_it),
+			const_iterator(end_word_breaks_last_it)};
+	}
+	auto middle_word_breaks() const -> boost::iterator_range<const_iterator>
+	{
+		return {const_iterator(end_word_breaks_last_it),
+			std::end(table)};
+	}
 
 	template <class Func>
-	auto break_and_spell(const std::basic_string<CharT>& s, Func spell_func)
-	    -> bool;
+	auto break_and_spell(const std::basic_string<CharT>& s,
+	                     Func spell_func) const -> bool;
 };
 
 struct Affix_Entry {

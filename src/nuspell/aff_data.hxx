@@ -53,6 +53,13 @@ enum Flag_Type {
 	FLAG_UTF8 /*!< UTF-8 flag, e.g. for "á" */
 };
 
+template <class CharT>
+struct Aff_Structures {
+	Substr_Replacer<CharT> input_substr_replacer;
+	Substr_Replacer<CharT> output_substr_replacer;
+	Break_Table<CharT> break_table;
+};
+
 struct Affix {
 	using string = std::string;
 	template <class T>
@@ -85,6 +92,12 @@ struct Aff_Data {
 	using vector = std::vector<T>;
 	template <class T, class U>
 	using pair = std::pair<T, U>;
+
+	Aff_Structures<char> structures;
+	Aff_Structures<wchar_t> wide_structures;
+
+	template <class CharT>
+	auto get_structures() -> Aff_Structures<CharT>&;
 
 	Encoding encoding; // TODO This is only used during parsing. To prevent
 	                   // accidental usage of empty value, move this out of
@@ -164,6 +177,17 @@ struct Aff_Data {
 	auto decode_single_flag(istream& in, size_t line_num = 0) const
 	    -> char16_t;
 };
+
+template <>
+auto inline Aff_Data::get_structures<char>() -> Aff_Structures<char>&
+{
+	return structures;
+}
+template <>
+auto inline Aff_Data::get_structures<wchar_t>() -> Aff_Structures<wchar_t>&
+{
+	return wide_structures;
+}
 void parse_morhological_fields(std::istream& in,
                                std::vector<std::string>& vecOut);
 }
