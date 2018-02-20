@@ -23,6 +23,7 @@
 #include "../src/nuspell/locale_utils.hxx"
 
 using namespace std;
+using namespace std::literals::string_literals;
 using namespace hunspell;
 
 TEST_CASE("header locale_utils", "[locale_utils]")

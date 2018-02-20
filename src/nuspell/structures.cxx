@@ -40,34 +40,31 @@ void sort_uniq(Container& c)
 
 void Flag_Set::sort_uniq() { hunspell::sort_uniq(flags); }
 
-Flag_Set::Flag_Set(/* in */ const std::u16string& s) : flags(s) { sort_uniq(); }
+Flag_Set::Flag_Set(const std::u16string& s) : flags(s) { sort_uniq(); }
 
-Flag_Set::Flag_Set(/* in */ std::u16string&& s) : flags(move(s))
-{
-	sort_uniq();
-}
+Flag_Set::Flag_Set(std::u16string&& s) : flags(move(s)) { sort_uniq(); }
 
-auto Flag_Set::operator=(/* in */ const std::u16string& s) -> Flag_Set&
+auto Flag_Set::operator=(const std::u16string& s) -> Flag_Set&
 {
 	flags = s;
 	sort_uniq();
 	return *this;
 }
 
-auto Flag_Set::operator=(/* in */ std::u16string&& s) -> Flag_Set&
+auto Flag_Set::operator=(std::u16string&& s) -> Flag_Set&
 {
 	flags = move(s);
 	sort_uniq();
 	return *this;
 }
 
-auto Flag_Set::insert(/* in */ const std::u16string& s) -> void
+auto Flag_Set::insert(const std::u16string& s) -> void
 {
 	flags += s;
 	sort_uniq();
 }
 
-auto Flag_Set::erase(/* in */ char16_t flag) -> bool
+auto Flag_Set::erase(char16_t flag) -> bool
 {
 	auto i = flags.find(flag);
 	if (i != flags.npos) {
@@ -98,29 +95,25 @@ void Substr_Replacer<CharT>::sort_uniq()
 }
 
 template <class CharT>
-Substr_Replacer<CharT>::Substr_Replacer(/* in */ const Table_Pairs& v)
-    : table(v)
+Substr_Replacer<CharT>::Substr_Replacer(const Table_Pairs& v) : table(v)
 {
 	sort_uniq();
 }
 
 template <class CharT>
-Substr_Replacer<CharT>::Substr_Replacer(/* in */ Table_Pairs&& v)
-    : table(move(v))
+Substr_Replacer<CharT>::Substr_Replacer(Table_Pairs&& v) : table(move(v))
 {
 	sort_uniq();
 }
 template <class CharT>
-auto Substr_Replacer<CharT>::operator=(/* in */ const Table_Pairs& v)
-    -> Substr_Replacer&
+auto Substr_Replacer<CharT>::operator=(const Table_Pairs& v) -> Substr_Replacer&
 {
 	table = v;
 	sort_uniq();
 	return *this;
 }
 template <class CharT>
-auto Substr_Replacer<CharT>::operator=(/* in */ Table_Pairs&& v)
-    -> Substr_Replacer&
+auto Substr_Replacer<CharT>::operator=(Table_Pairs&& v) -> Substr_Replacer&
 {
 	table = move(v);
 	sort_uniq();
@@ -326,10 +319,9 @@ template class Break_Table<wchar_t>;
  * @param append
  * @param condition
  */
-Prefix_Entry::Prefix_Entry(/* in */ char16_t flag, /* in */ bool cross_product,
-                           /* in */ const std::string& strip,
-                           /* in */ const std::string& append,
-                           /* in */ std::string condition)
+Prefix_Entry::Prefix_Entry(char16_t flag, bool cross_product,
+                           const std::string& strip, const std::string& append,
+                           std::string condition)
     : Affix_Entry{flag, cross_product, strip, append,
                   regex(condition.insert(0, 1, '^'))}
 {
@@ -347,7 +339,7 @@ Prefix_Entry::Prefix_Entry(/* in */ char16_t flag, /* in */ bool cross_product,
  * @param word the word which is itself converted into a root
  * @return the resulting root
  */
-auto Prefix_Entry::to_root(/* in out */ string& word) const -> string&
+auto Prefix_Entry::to_root(string& word) const -> string&
 {
 	return word.replace(0, appending.size(), stripping);
 }
@@ -364,7 +356,7 @@ auto Prefix_Entry::to_root(/* in out */ string& word) const -> string&
  * @param word the word of which a copy is used to get converted into a root
  * @return the resulting root
  */
-auto Prefix_Entry::to_root_copy(/* in */ string word) const -> string
+auto Prefix_Entry::to_root_copy(string word) const -> string
 {
 	to_root(word);
 	return word;
@@ -379,7 +371,7 @@ auto Prefix_Entry::to_root_copy(/* in */ string word) const -> string
  * @param word the root word which is converted to a derived word
  * @return the resulting derived word
  */
-auto Prefix_Entry::to_derived(/* in out */ string& word) const -> string&
+auto Prefix_Entry::to_derived(string& word) const -> string&
 {
 	return word.replace(0, stripping.size(), appending);
 }
@@ -395,7 +387,7 @@ auto Prefix_Entry::to_derived(/* in out */ string& word) const -> string&
  * derived word
  * @return the resulting derived word
  */
-auto Prefix_Entry::to_derived_copy(/* in */ string word) const -> string
+auto Prefix_Entry::to_derived_copy(string word) const -> string
 {
 	to_derived(word);
 	return word;
@@ -415,7 +407,7 @@ auto Prefix_Entry::to_derived_copy(/* in */ string word) const -> string
  * @param word to check against the condition
  * @return the resulting of the check
  */
-auto Prefix_Entry::check_condition(/* in */ const string& word) const -> bool
+auto Prefix_Entry::check_condition(const string& word) const -> bool
 {
 	auto m = smatch();
 	return regex_search(word, m, condition);
@@ -435,10 +427,9 @@ auto Prefix_Entry::check_condition(/* in */ const string& word) const -> bool
  * @param append
  * @param condition
  */
-Suffix_Entry::Suffix_Entry(/* in */ char16_t flag, /* in */ bool cross_product,
-                           /* in */ const std::string& strip,
-                           /* in */ const std::string& append,
-                           /* in */ std::string condition)
+Suffix_Entry::Suffix_Entry(char16_t flag, bool cross_product,
+                           const std::string& strip, const std::string& append,
+                           std::string condition)
     : Affix_Entry{flag, cross_product, strip, append, regex(condition += '$')}
 {
 }
@@ -453,7 +444,7 @@ Suffix_Entry::Suffix_Entry(/* in */ char16_t flag, /* in */ bool cross_product,
  * @param word the word which is itself converted into a root
  * @return the resulting root
  */
-auto Suffix_Entry::to_root(/* in out */ string& word) const -> string&
+auto Suffix_Entry::to_root(string& word) const -> string&
 {
 	return word.replace(word.size() - appending.size(), appending.size(),
 	                    stripping);
@@ -469,7 +460,7 @@ auto Suffix_Entry::to_root(/* in out */ string& word) const -> string&
  * @param word the word of which a copy is used to get converted into a root
  * @return the resulting root
  */
-auto Suffix_Entry::to_root_copy(/* in */ string word) const -> string
+auto Suffix_Entry::to_root_copy(string word) const -> string
 {
 	return to_root(word);
 }
@@ -483,7 +474,7 @@ auto Suffix_Entry::to_root_copy(/* in */ string word) const -> string
  * @param word the root word which is converted to a derived word
  * @return the resulting derived word
  */
-auto Suffix_Entry::to_derived(/* in out */ string& word) const -> string&
+auto Suffix_Entry::to_derived(string& word) const -> string&
 {
 	return word.replace(word.size() - stripping.size(), stripping.size(),
 	                    appending);
@@ -500,7 +491,7 @@ auto Suffix_Entry::to_derived(/* in out */ string& word) const -> string&
  * derived word
  * @return the resulting derived word
  */
-auto Suffix_Entry::to_derived_copy(/* in */ string word) const -> string
+auto Suffix_Entry::to_derived_copy(string word) const -> string
 {
 	to_derived(word);
 	return word;
@@ -520,7 +511,7 @@ auto Suffix_Entry::to_derived_copy(/* in */ string word) const -> string
  * @param word to check against the condition
  * @return the resulting of the check
  */
-auto Suffix_Entry::check_condition(/* in */ const string& word) const -> bool
+auto Suffix_Entry::check_condition(const string& word) const -> bool
 {
 	auto m = smatch();
 	return regex_search(word, m, condition);
