@@ -298,7 +298,7 @@ auto parse_affix(/* in */ istream& in, /* in */ size_t line_num,
 		elem.flag = f;
 		elem.cross_product = dat->second.first;
 		in >> elem.stripping;
-		if (elem.stripping == "0") // QUESTION good bugfix?
+		if (elem.stripping == "0")
 			elem.stripping = "";
 		if (read_to_slash_or_space(in, elem.affix)) {
 			elem.new_flags = decode_flags(in, line_num, t, enc);
