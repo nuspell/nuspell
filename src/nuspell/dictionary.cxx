@@ -27,9 +27,9 @@ using namespace std;
 /**
  * Checks prefix.
  *
- * @param[in] dic dictionary to use.
- * @param[in] affix_table table with prefixes.
- * @param[in] word to check.
+ * @param dic dictionary to use.
+ * @param affix_table table with prefixes.
+ * @param word to check.
  * @return The TODO.
  */
 auto prefix_check(const Dic_Data& dic, const Prefix_Table& affix_table,

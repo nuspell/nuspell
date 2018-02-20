@@ -593,7 +593,7 @@ auto Finder::add_apacheopenoffice_paths() -> void
 /**
  * Searches path for dictionaries.
  *
- * @param[in] dir TODO.
+ * @param dir TODO.
  * @param[in,out] out TODO.
  */
 template <class OutIt>
@@ -655,7 +655,7 @@ auto Finder::search_dictionaries() -> void
 /**
  * Gets the directory.
  *
- * @param[in] dict TODO.
+ * @param dict TODO.
  * @return the TODO.
  */
 auto Finder::get_dictionary(const string& dict) const -> string

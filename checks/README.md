@@ -26,3 +26,12 @@ This is a programmable verification and analysis tool for C++. Install with `sud
 ## Qt Creator
 
 These static code checks and the code reformatter can also be run directly in Qt Creator as external tools, but needs investigation. See also https://sourceforge.net/projects/qtprojecttool
+
+
+## Doxygen
+
+TODO To investigate and add is reporting on doxygen coverage. See:
+* https://github.com/psycofdj/coverxygen
+* https://github.com/codecov/support/issues/364
+* https://github.com/alobbs/doxy-coverage
+* http://jessevdk.github.io/cldoc/
