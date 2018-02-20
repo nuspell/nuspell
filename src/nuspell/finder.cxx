@@ -72,7 +72,7 @@ const auto SEPARATORS = "/";
  * @return The vector with appended default search paths.
  */
 template <class OutIt>
-auto get_default_search_paths(OutIt out) -> OutIt
+auto get_default_search_paths(/* in out */ OutIt out) -> OutIt
 {
 	*out++ = ".";
 	char* dicpath = getenv("DICPATH");
@@ -364,7 +364,7 @@ struct Globber {
  * @return The vector with appended Mozilla paths.
  */
 template <class OutIt>
-auto get_mozilla_paths(OutIt out) -> OutIt
+auto get_mozilla_paths(/* in out */ OutIt out) -> OutIt
 {
 // Note that Iceweasel and Icedove use the same paths as Firefox and Thunderbird
 // respectively. SeaMonkey, a.k.a. Iceape, is no longer available on Debian or
@@ -445,7 +445,7 @@ auto Finder::add_mozilla_paths() -> void
  * @return The vector with appended LibreOffice paths.
  */
 template <class OutIt>
-auto get_libreoffice_paths(OutIt out) -> OutIt
+auto get_libreoffice_paths(/* in out */ OutIt out) -> OutIt
 {
 	string lo_user_glob;
 #ifdef _POSIX_VERSION
@@ -520,7 +520,7 @@ auto Finder::add_libreoffice_paths() -> void
  * @return The vector with appended Apache OpenOffice paths.
  */
 template <class OutIt>
-auto get_apacheopenoffice_paths(OutIt out) -> OutIt
+auto get_apacheopenoffice_paths(/* in out */ OutIt out) -> OutIt
 {
 	// Note that Apache OpenOffice is no longer available on Debian and
 	// Ubuntu. For legacy reasons, all paths are still supported.
@@ -591,7 +591,8 @@ auto Finder::add_apacheopenoffice_paths() -> void
 }
 
 template <class OutIt>
-auto search_path_for_dicts(const string& dir, OutIt out) -> OutIt
+auto search_path_for_dicts(/* in */ const string& dir, /* in out */ OutIt out)
+    -> OutIt
 {
 	Directory d;
 	if (d.open(dir) == false) {
@@ -646,7 +647,7 @@ auto Finder::search_dictionaries() -> void
 	}
 }
 
-auto Finder::get_dictionary(const string& dict) const -> string
+auto Finder::get_dictionary(/* in */ const string& dict) const -> string
 {
 	// first check if it is a path
 	if (dict.find_first_of(SEPARATORS) != dict.npos) {

@@ -313,11 +313,11 @@ template class Break_Table<wchar_t>;
  * function <hunspell>::<parse_affix> and should not be double checked here for
  * reasons of optimization.
  *
- * @param flag
- * @param cross_product
- * @param strip
- * @param append
- * @param condition
+ * @param flag TODO.
+ * @param cross_product TODO.
+ * @param strip TODO, see also note above.
+ * @param append TODO.
+ * @param condition TODO.
  */
 Prefix_Entry::Prefix_Entry(char16_t flag, bool cross_product,
                            const std::string& strip, const std::string& append,
@@ -331,13 +331,13 @@ Prefix_Entry::Prefix_Entry(char16_t flag, bool cross_product,
  * Converts a word into a root according to this prefix entry.
  *
  * The conversion of the word is done by removing at the beginning of the word
- * what
- * (could have been) appended and subsequently adding at the beginning (what
+ * what * (could have been) appended and subsequently adding at the beginning
+ * (what
  * could
  * have been) stripped. This method does the reverse of the derive method.
  *
- * @param word the word which is itself converted into a root
- * @return the resulting root
+ * @param word the word which is itself converted into a root.
+ * @return The resulting root.
  */
 auto Prefix_Entry::to_root(string& word) const -> string&
 {
@@ -348,13 +348,12 @@ auto Prefix_Entry::to_root(string& word) const -> string&
  * Converts a copy of a word into a root according to this prefix entry.
  *
  * The conversion of the word is done by removing at the beginning of the word
- * what
- * (could have been) appended and subsequently adding at the beginning (what
- * could
- * have been) stripped. This method does the reverse of the derive method.
+ * what (could have been) appended and subsequently adding at the beginning
+ * (what could have been) stripped. This method does the reverse of the derive
+ * method.
  *
- * @param word the word of which a copy is used to get converted into a root
- * @return the resulting root
+ * @param word the word of which a copy is used to get converted into a root.
+ * @return The resulting root.
  */
 auto Prefix_Entry::to_root_copy(string word) const -> string
 {
@@ -368,8 +367,8 @@ auto Prefix_Entry::to_root_copy(string word) const -> string
  * The conversion of the word is done by replacing at the beginning of the word
  * what to strip with what to append.
  *
- * @param word the root word which is converted to a derived word
- * @return the resulting derived word
+ * @param word the root word which is converted to a derived word.
+ * @return The resulting derived word.
  */
 auto Prefix_Entry::to_derived(string& word) const -> string&
 {
@@ -384,8 +383,8 @@ auto Prefix_Entry::to_derived(string& word) const -> string&
  * what to strip with what to append.
  *
  * @param word the root word of which a copy is used to get converted to a
- * derived word
- * @return the resulting derived word
+ * derived word.
+ * @return The resulting derived word.
  */
 auto Prefix_Entry::to_derived_copy(string word) const -> string
 {
@@ -399,13 +398,10 @@ auto Prefix_Entry::to_derived_copy(string word) const -> string
  * The conversion of the word is done by replacing at the end of the word
  * what to strip with what to append.
  *
- * @note Hunspell had the exception that "dots are not metacharacters in groups:
- * [.]". This feature was not used in any of the tests nor in any of the
- * language support of Hunspell. This feature has been dropped in Nuspell for
- * optimization, maintainability and for easy of implementation.
+ * @note In regular expressions, dots in groups are not metacharacters.
  *
- * @param word to check against the condition
- * @return the resulting of the check
+ * @param word to check against the condition.
+ * @return The result of the check.
  */
 auto Prefix_Entry::check_condition(const string& word) const -> bool
 {
@@ -421,11 +417,11 @@ auto Prefix_Entry::check_condition(const string& word) const -> bool
  * function <hunspell>::<parse_affix> and should not be double checked here for
  * reasons of optimization.
  *
- * @param flag
- * @param cross_product
- * @param strip
- * @param append
- * @param condition
+ * @param flag TODO.
+ * @param cross_product TODO.
+ * @param strip TODO, see also note above.
+ * @param append TODO.
+ * @param condition TODO.
  */
 Suffix_Entry::Suffix_Entry(char16_t flag, bool cross_product,
                            const std::string& strip, const std::string& append,
@@ -441,8 +437,8 @@ Suffix_Entry::Suffix_Entry(char16_t flag, bool cross_product,
  * (could have been) appended and subsequently adding at the end (what could
  * have been) stripped. This method does the reverse of the derive method.
  *
- * @param word the word which is itself converted into a root
- * @return the resulting root
+ * @param word the word which is itself converted into a root.
+ * @return The resulting root.
  */
 auto Suffix_Entry::to_root(string& word) const -> string&
 {
@@ -457,8 +453,8 @@ auto Suffix_Entry::to_root(string& word) const -> string&
  * (could have been) appended and subsequently adding at the end (what could
  * have been) stripped. This method does the reverse of the derive method.
  *
- * @param word the word of which a copy is used to get converted into a root
- * @return the resulting root
+ * @param word the word of which a copy is used to get converted into a root.
+ * @return The resulting root.
  */
 auto Suffix_Entry::to_root_copy(string word) const -> string
 {
@@ -471,8 +467,8 @@ auto Suffix_Entry::to_root_copy(string word) const -> string
  * The conversion of the word is done by replacing at the end of the word
  * what to strip with what to append.
  *
- * @param word the root word which is converted to a derived word
- * @return the resulting derived word
+ * @param word the root word which is converted to a derived word.
+ * @return The resulting derived word.
  */
 auto Suffix_Entry::to_derived(string& word) const -> string&
 {
@@ -488,8 +484,8 @@ auto Suffix_Entry::to_derived(string& word) const -> string&
  * what to strip with what to append.
  *
  * @param word the root word of which a copy is used to get converted to a
- * derived word
- * @return the resulting derived word
+ * derived word.
+ * @return The resulting derived word.
  */
 auto Suffix_Entry::to_derived_copy(string word) const -> string
 {
@@ -503,13 +499,10 @@ auto Suffix_Entry::to_derived_copy(string word) const -> string
  * The conversion of the word is done by replacing at the end of the word
  * what to strip with what to append.
  *
- * @note Hunspell had the exception that "dots are not metacharacters in groups:
- * [.]". This feature was not used in any of the tests nor in any of the
- * language support of Hunspell. This feature has been dropped in Nuspell for
- * optimization, maintainability and for easy of implementation.
+ * @note In regular expressions, dots in groups are not metacharacters.
  *
- * @param word to check against the condition
- * @return the resulting of the check
+ * @param word to check against the condition.
+ * @return The resulting of the check.
  */
 auto Suffix_Entry::check_condition(const string& word) const -> bool
 {

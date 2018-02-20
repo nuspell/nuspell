@@ -26,10 +26,10 @@
 namespace hunspell {
 
 enum Spell_Result {
-	BAD_WORD,
-	GOOD_WORD,
-	AFFIXED_GOOD_WORD,
-	COMPOUND_GOOD_WORD
+	BAD_WORD /*!< word is spelled incorrectly */,
+	GOOD_WORD /*!< word is spelled correctly */,
+	AFFIXED_GOOD_WORD /*!< affixed word is spelled correctly */,
+	COMPOUND_GOOD_WORD /*!< compound word is spelled correctly */
 };
 
 class Dictionary {

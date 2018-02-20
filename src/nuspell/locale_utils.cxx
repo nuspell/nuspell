@@ -37,6 +37,7 @@ using namespace std;
 #define unlikely(expr) (expr)
 #endif
 
+// TODO What is the source of the information below?
 namespace {
 // const unsigned char shift[] = {0, 6, 0, 0, 0, /**/ 0, 0, 0, 0};
 const unsigned char mask[] = {0xff, 0x3f, 0x1f, 0x0f, 0x07, /**/

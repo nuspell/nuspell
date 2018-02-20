@@ -101,9 +101,8 @@ TEST_CASE("class Suffix_Entry", "[structures]")
 	    hunspell::Suffix_Entry(*u"K", true, "0"s, "-san"s, "[^-]"s);
 	auto sfx_ar =
 	    hunspell::Suffix_Entry(*u"aa", true, "ه"s, "ي"s, "[^ءؤأ]ه"s);
-	// Is in the line below the proper way to simulate a numeric flag?
 	auto sfx_ko = hunspell::Suffix_Entry(
-	    *u"24", true, "ᅬ다"s, " ᅫᆻ어"s,
+	    24, true, "ᅬ다"s, " ᅫᆻ어"s,
 	    "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다"s);
 
 	SECTION("method to_root")

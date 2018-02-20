@@ -37,14 +37,15 @@ namespace hunspell {
  *
  * Consecutive separators are treated as separate and will emit empty strings.
  *
- * @param s a string to split.
- * @param sep char or string holding all separators to split on.
+ * @param s string to split.
+ * @param sep seperator to split on.
  * @param out start of the output range where separated strings are appended.
- * @return iterator that indicates the end of the output range.
+ * @return The start of the output range where separated strings are appended.
  */
 template <class ChT, class Tr, class Al, class SepT, class OutIt>
-auto split_on_any_of(const std::basic_string<ChT, Tr, Al>& s, const SepT& sep,
-                     OutIt out)
+auto split_on_any_of(/* in */ const std::basic_string<ChT, Tr, Al>& s,
+                     /* in */ const SepT& sep,
+                     /* in out */ OutIt out)
 {
 	using size_type = typename std::basic_string<ChT, Tr, Al>::size_type;
 	size_type i1 = 0;
@@ -68,10 +69,11 @@ auto split_on_any_of(const std::basic_string<ChT, Tr, Al>& s, const SepT& sep,
  * @param s a string to split.
  * @param sep char that acts as separator to split on.
  * @param out start of the output range where separated strings are appended.
- * @return iterator that indicates the end of the output range.
+ * @return The iterator that indicates the end of the output range.
  */
 template <class ChT, class Tr, class Al, class OutIt>
-auto split(const std::basic_string<ChT, Tr, Al>& s, ChT sep, OutIt out)
+auto split(/* in */ const std::basic_string<ChT, Tr, Al>& s, /* in */ ChT sep,
+           /* in out */ OutIt out)
 {
 	return split_on_any_of(s, sep, out);
 }
@@ -79,13 +81,15 @@ auto split(const std::basic_string<ChT, Tr, Al>& s, ChT sep, OutIt out)
 /**
  * Split string on string separator.
  *
- * @param s
- * @param sep
- * @param out
+ * @param s string to split.
+ * @param sep seperator to split on.
+ * @param out start of the output range where separated strings are appended.
+ * @return The start of the output range where separated strings are appended.
  */
 template <class ChT, class Tr, class Al, class OutIt>
-auto split(const std::basic_string<ChT, Tr, Al>& s,
-           const std::basic_string<ChT, Tr, Al>& sep, OutIt out)
+auto split(/* in */ const std::basic_string<ChT, Tr, Al>& s,
+           /* in */ const std::basic_string<ChT, Tr, Al>& sep,
+           /* in out */ OutIt out)
 {
 	using size_type = typename std::basic_string<ChT, Tr, Al>::size_type;
 	size_type i1 = 0;
@@ -101,12 +105,14 @@ auto split(const std::basic_string<ChT, Tr, Al>& s,
 /**
  * Split string on string separator.
  *
- * @param s
- * @param sep
- * @param out
+ * @param s string to split.
+ * @param sep seperator to split on.
+ * @param out start of the output range where separated strings are appended.
+ * @return The start of the output range where separated strings are appended.
  */
 template <class ChT, class Tr, class Al, class OutIt>
-auto split(const std::basic_string<ChT, Tr, Al>& s, const ChT* sep, OutIt out)
+auto split(/* in */ const std::basic_string<ChT, Tr, Al>& s,
+           /* in */ const ChT* sep, /* in out */ OutIt out)
 {
 	return split(s, std::basic_string<ChT, Tr, Al>(sep), out);
 }
@@ -116,13 +122,14 @@ auto split(const std::basic_string<ChT, Tr, Al>& s, const ChT* sep, OutIt out)
  *
  * See split().
  *
- * @param s in string
- * @param sep in separator
- * @param v out vector. The vector is first cleared.
+ * @param s string to split.
+ * @param sep separator to split on.
+ * @param v vector with separated strings. The vector is first cleared.
  */
 template <class ChT, class Tr, class Al, class CharOrStr>
-auto split_v(const std::basic_string<ChT, Tr, Al>& s, const CharOrStr& sep,
-             std::vector<std::basic_string<ChT, Tr, Al>>& v)
+auto split_v(/* in */ const std::basic_string<ChT, Tr, Al>& s,
+             /* in */ const CharOrStr& sep,
+             /* in out */ std::vector<std::basic_string<ChT, Tr, Al>>& v)
 {
 	v.clear();
 	split(s, sep, std::back_inserter(v));
@@ -131,13 +138,13 @@ auto split_v(const std::basic_string<ChT, Tr, Al>& s, const CharOrStr& sep,
 /**
  * Gets the first token of a splitted string.
  *
- * @param s a string to split.
+ * @param s string to split.
  * @param sep char or string that acts as separator to split on.
  * @return The string that has been split off.
  */
 template <class CharT, class CharOrStr>
-auto split_first(const std::basic_string<CharT>& s, const CharOrStr& sep)
-    -> std::basic_string<CharT>
+auto split_first(/* in */ const std::basic_string<CharT>& s,
+                 /* in */ const CharOrStr& sep) -> std::basic_string<CharT>
 {
 	auto index = s.find(sep);
 	return s.substr(0, index);
@@ -149,14 +156,16 @@ auto split_first(const std::basic_string<CharT>& s, const CharOrStr& sep)
  * Consecutive whitespace is treated as single separator. Behaves same as
  * Python's split called without separator argument.
  *
- * @param s a string to split.
+ * @param s string to split.
  * @param out start of the output range where separated strings are appended.
- * @param loc locale object that takes care of what is whitespace
- * @return iterator that indicates the end of the output range.
+ * @param loc locale object that takes care of what is whitespace.
+ * @return The iterator that indicates the end of the output range.
  */
 template <class CharT, class OutIt>
-auto split_on_whitespace(const std::basic_string<CharT>& s, OutIt out,
-                         const std::locale& loc = std::locale()) -> OutIt
+auto split_on_whitespace(/* in */ const std::basic_string<CharT>& s,
+                         /* in out */ OutIt out,
+                         /* in */ const std::locale& loc = std::locale())
+    -> OutIt
 {
 	auto& f = std::use_facet<std::ctype<CharT>>(loc);
 	auto isspace = [&](auto& c) { return f.is(std::ctype_base::space, c); };
@@ -178,35 +187,42 @@ auto split_on_whitespace(const std::basic_string<CharT>& s, OutIt out,
  *
  * See split_on_whitespace().
  *
- * @param s in string
- * @param v out vector. The vector is first cleared.
- * @param loc in locale
+ * @param s string to split.
+ * @param v vector with separated strings. The vector is first cleared.
+ * @param loc in locale.
  */
 template <class CharT>
-auto split_on_whitespace_v(const std::basic_string<CharT>& s,
-                           std::vector<std::basic_string<CharT>>& v,
-                           const std::locale& loc = std::locale()) -> void
+auto split_on_whitespace_v(
+    /* in */ const std::basic_string<CharT>& s,
+    /* in out */ std::vector<std::basic_string<CharT>>& v,
+    /* in */ const std::locale& loc = std::locale()) -> void
 {
 	v.clear();
 	split_on_whitespace(s, back_inserter(v), loc);
 }
 
 /**
- * Casing type enum
+ * Casing type enum, ignoring neutral case characters.
  */
-enum class Casing { SMALL, INIT_CAPITAL, ALL_CAPITAL, CAMEL, PASCAL };
+enum class Casing {
+	SMALL /*!< all lower case or neutral case, e.g. "lowercase" or "123" */,
+	INIT_CAPITAL /*!< start upper case, rest lower case, e.g. "InitCap" */,
+	ALL_CAPITAL /*!< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
+	CAMEL /*!< camel case, start lower case, e.g. "camelCase" */,
+	PASCAL /*!< pascal case, start upper case, e.g. "PascalCase" */
+};
 
 /**
  * Returns casing (capitalization) type for a word.
  *
- * Casing is sometimes reffered to as capitalization.
+ * Casing is sometimes referred to as capitalization.
  *
- * @param word word for which casing is determined.
- * @return casing type.
+ * @param s word for which casing is determined.
+ * @return The casing type.
  */
 template <class CharT>
-auto classify_casing(const std::basic_string<CharT>& s,
-                     const std::locale& loc = std::locale()) -> Casing
+auto classify_casing(/* in */ const std::basic_string<CharT>& s,
+                     /* in */ const std::locale& loc = std::locale()) -> Casing
 {
 	using namespace std;
 	size_t upper = 0;

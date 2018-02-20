@@ -46,7 +46,12 @@ class Encoding {
 	operator Type() const { return is_utf8() ? UTF8 : SINGLEBYTE; }
 };
 
-enum Flag_Type { FLAG_SINGLE_CHAR, FLAG_DOUBLE_CHAR, FLAG_NUMBER, FLAG_UTF8 };
+enum Flag_Type {
+	FLAG_SINGLE_CHAR /*!< single-character flag, e.g. for "a" */,
+	FLAG_DOUBLE_CHAR /*!< double-character flag, e.g for "aa" */,
+	FLAG_NUMBER /*!< numerical flag, e.g. for 61 */,
+	FLAG_UTF8 /*!< UTF-8 flag, e.g. for "á" */
+};
 
 struct Affix {
 	using string = std::string;
