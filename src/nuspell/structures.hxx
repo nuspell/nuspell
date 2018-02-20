@@ -106,9 +106,7 @@ class Substr_Replacer {
 	template <class Range>
 	auto operator=(const Range& range) -> Substr_Replacer&
 	{
-		table.clear();
-		table.insert(std::end(table), std::begin(range),
-		             std::end(range));
+		table.assign(std::begin(range), std::end(range));
 		sort_uniq();
 		return *this;
 	}
@@ -144,9 +142,7 @@ class Break_Table {
 	template <class Range>
 	auto operator=(const Range& range) -> Break_Table&
 	{
-		table.clear();
-		table.insert(std::end(table), std::begin(range),
-		             std::end(range));
+		table.assign(std::begin(range), std::end(range));
 		order_entries();
 		return *this;
 	}

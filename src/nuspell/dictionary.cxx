@@ -18,8 +18,6 @@
 
 #include "dictionary.hxx"
 
-#include <boost/range/iterator_range_core.hpp>
-
 namespace nuspell {
 
 using namespace std;
@@ -30,7 +28,7 @@ using namespace std;
  * @param dic dictionary to use.
  * @param affix_table table with prefixes.
  * @param word to check.
- * @return The TODO.
+ * @return
  */
 auto prefix_check(const Dic_Data& dic, const Prefix_Table& affix_table,
                   string word)
@@ -60,6 +58,9 @@ auto prefix_check(const Dic_Data& dic, const Prefix_Table& affix_table,
 template <class CharT>
 auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 {
+
+	auto& d = aff_data.get_structures<CharT>();
+	d.input_substr_replacer.replace(s);
 
 	if (dic_data.lookup(s))
 		return GOOD_WORD;

@@ -106,11 +106,11 @@ bool read_to_slash_or_space(std::istream& in, std::string& out)
 /**
  * Parses vector of class T.
  *
- * @param line_num TODO.
- * @param command TODO.
- * @param[in,out] counts TODO.
- * @param[in,out] vec TODO.
- * @param parseLineFunc TODO.
+ * @param line_num
+ * @param command
+ * @param[in,out] counts
+ * @param[in,out] vec
+ * @param parseLineFunc
  */
 template <class T, class Func>
 auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
@@ -154,10 +154,10 @@ auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
  * Decodes flags.
  *
  * @param in input stream to read from.
- * @param line_num TODO.
- * @param t TODO.
- * @param enc TODO.
- * @return return TODO.
+ * @param line_num
+ * @param t
+ * @param enc
+ * @return return
  */
 auto decode_flags(istream& in, size_t line_num, Flag_Type t,
                   const Encoding& enc) -> u16string
@@ -269,8 +269,8 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
  * Decodes a single flag.
  *
  * @param in stream to decode from.
- * @param line_num TODO.
- * @param t TODO.
+ * @param line_num
+ * @param t
  * @param enc encoding of the stream.
  * @return The value of the first decoded flag or 0 when no flag was decoded.
  */
@@ -288,12 +288,12 @@ auto decode_single_flag(istream& in, size_t line_num, Flag_Type t, Encoding enc)
  * Parses affix.
  *
  * @param in stream to parse from.
- * @param line_num TODO.
- * @param[in,out] command TODO.
- * @param t TODO.
- * @param enc encoding of the stream.
- * @param[in,out] vec TODO.
- * @param[in,out] cmd_affix The TODO.
+ * @param line_num
+ * @param[in,out] command
+ * @param t
+ * @param enc
+ * @param[in,out] vec
+ * @param[in,out] cmd_affix.
  */
 auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
                  Encoding enc, vector<Affix>& vec,
@@ -356,8 +356,8 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
  * Parses flag type.
  *
  * @param in stream to parse from.
- * @param line_num TODO.
- * @param[in,out] flag_type TODO.
+ * @param line_num
+ * @param[in,out] flag_type
  */
 auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
 {
@@ -379,7 +379,7 @@ auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
  * Parses morhological fields.
  *
  * @param in stream to parse from.
- * @param[in,out] vecOut TODO.
+ * @param[in,out] vecOut
  */
 auto parse_morhological_fields(istream& in, vector<string>& vecOut) -> void
 {
