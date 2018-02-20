@@ -24,9 +24,16 @@ namespace hunspell {
 
 using namespace std;
 
-auto prefix_check(/* in */ const Dic_Data& dic,
-                  /* in */ const Prefix_Table& affix_table,
-                  /* in */ string word)
+/**
+ * Checks prefix.
+ *
+ * @param[in] dic dictionary to use.
+ * @param[in] affix_table table with prefixes.
+ * @param[in] word to check.
+ * @return The TODO.
+ */
+auto prefix_check(const Dic_Data& dic, const Prefix_Table& affix_table,
+                  string word)
 {
 	for (size_t aff_len = 1; 0 < aff_len && aff_len <= word.size();
 	     ++aff_len) {

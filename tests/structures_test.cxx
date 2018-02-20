@@ -42,7 +42,7 @@ TEST_CASE("substring replacer", "[structures]")
 
 // See also tests/v1cmdline/condition.* and individual language support.
 
-//TODO add a third TEXT_CASE for twofold suffix stripping
+// TODO add a third TEXT_CASE for twofold suffix stripping
 
 TEST_CASE("class Prefix_Entry", "[structures]")
 {

@@ -102,12 +102,19 @@ bool read_to_slash_or_space(std::istream& in, std::string& out)
 	return slash;
 }
 
+/**
+ * Parses vector of class T.
+ *
+ * @param[in] line_num TODO.
+ * @param[in] command TODO.
+ * @param[in,out] counts TODO.
+ * @param[in,out] vec TODO.
+ * @param[in] parseLineFunc TODO.
+ */
 template <class T, class Func>
-auto parse_vector_of_T(/* in */ istream& in, /* in */ size_t line_num,
-                       /* in */ const string& command,
-                       /* in out */ unordered_map<string, int>& counts,
-                       /* in out */ vector<T>& vec,
-                       /* in */ Func parseLineFunc) -> void
+auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
+                       unordered_map<string, int>& counts, vector<T>& vec,
+                       Func parseLineFunc) -> void
 {
 	auto dat = counts.find(command);
 	if (dat == counts.end()) {
@@ -116,7 +123,7 @@ auto parse_vector_of_T(/* in */ istream& in, /* in */ size_t line_num,
 		in >> a;
 		if (in.fail()) {
 			a = 0; // err
-			cerr << "Hunspell error: a vector command (series of "
+			cerr << "Nuspell error: a vector command (series of "
 			        "of similar commands) has no count. Ignoring "
 			        "all of them.\n";
 		}
@@ -127,29 +134,36 @@ auto parse_vector_of_T(/* in */ istream& in, /* in */ size_t line_num,
 		parseLineFunc(in, vec.back());
 		if (in.fail()) {
 			vec.pop_back();
-			cerr << "Hunspell error: single entry of a vector "
+			cerr << "Nuspell error: single entry of a vector "
 			        "command (series of "
 			        "of similar commands) is invalid.\n";
 		}
 		dat->second--;
 	}
 	else {
-		cerr << "Hunspell warning: extra entries of " << command
-		     << '\n';
-		cerr << "Hunspell warning in line " << line_num << endl;
+		cerr << "Nuspell warning: extra entries of " << command << '\n';
+		cerr << "Nuspell warning in line " << line_num << endl;
 	}
 }
 
 // Expects that there are flags in the stream.
 // If there are no flags in the stream (eg, stream is at eof)
 // or if the format of the flags is incorrect the stream failbit will be set.
-auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
-                  /* in */ Flag_Type t, /* in */ const Encoding& enc)
-    -> u16string
+/**
+ * Decodes flags.
+ *
+ * @param[in] in input stream to read from.
+ * @param[in] line_num TODO.
+ * @param[in] t TODO.
+ * @param[in] enc TODO.
+ * @return return TODO.
+ */
+auto decode_flags(istream& in, size_t line_num, Flag_Type t,
+                  const Encoding& enc) -> u16string
 {
 	string s;
 	u16string ret;
-	const auto err_message = "Hunspell warning: bytes above 127 in UTF-8 "
+	const auto err_message = "Nuspell warning: bytes above 127 in UTF-8 "
 	                         "stream should not be treated alone as "
 	                         "flags. Please update dictionary to use "
 	                         "FLAG UTF-8 and make the file valid UTF-8.";
@@ -158,12 +172,12 @@ auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
 		in >> s;
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Hunspell error: missing flag\n";
+			cerr << "Nuspell error: missing flag\n";
 			break;
 		}
 		if (enc.is_utf8() && !is_all_ascii(s)) {
 			cerr << err_message << '\n';
-			cerr << "Hunspell warning in line " << line_num
+			cerr << "Nuspell warning in line " << line_num
 			     << "\n\n";
 			// This error will be triggered in Hungarian.
 			// Version 1 passed this, it just read a
@@ -180,12 +194,12 @@ auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
 		in >> s;
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Hunspell error: missing flag\n";
+			cerr << "Nuspell error: missing flag\n";
 			break;
 		}
 		if (enc.is_utf8() && !is_all_ascii(s)) {
 			cerr << err_message << endl;
-			cerr << "Hunspell warning in line " << line_num << endl;
+			cerr << "Nuspell warning in line " << line_num << endl;
 		}
 		auto i = s.begin();
 		auto e = s.end();
@@ -207,7 +221,7 @@ auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
 		in >> flag;
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Hunspell error: missing flag\n";
+			cerr << "Nuspell error: missing flag\n";
 			break;
 		}
 		ret.push_back(flag);
@@ -219,7 +233,7 @@ auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
 			}
 			else {
 				// err, comma and no number after that
-				cerr << "Hunspell error: long flag, no number "
+				cerr << "Nuspell error: long flag, no number "
 				        "after comma\n";
 				break;
 			}
@@ -229,19 +243,19 @@ auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
 		in >> s;
 		if (!enc.is_utf8()) {
 			// err
-			cerr << "Hunspell error: File encoding is not UTF-8, "
+			cerr << "Nuspell error: File encoding is not UTF-8, "
 			        "yet flags are\n";
 		}
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Hunspell error: missing flag\n";
+			cerr << "Nuspell error: missing flag\n";
 			break;
 		}
 		auto u32flags = decode_utf8(s);
 		if (!is_all_bmp(u32flags)) {
-			cerr << "Hunspell warning: flags must be in BMP. "
+			cerr << "Nuspell warning: flags must be in BMP. "
 			        "Skipping non-BMP\n"
-			     << "Hunspell warning in line " << line_num << endl;
+			     << "Nuspell warning in line " << line_num << endl;
 		}
 		ret = u32_to_ucs2_skip_non_bmp(u32flags);
 		break;
@@ -250,8 +264,17 @@ auto decode_flags(/* in */ istream& in, /* in */ size_t line_num,
 	return ret;
 }
 
-auto decode_single_flag(/* in */ istream& in, /* in */ size_t line_num,
-                        /* in */ Flag_Type t, /* in */ Encoding enc) -> char16_t
+/**
+ * Decodes a single flag.
+ *
+ * @param[in] in stream to decode from.
+ * @param[in] line_num TODO.
+ * @param[in] t TODO.
+ * @param[in] enc encoding of the stream.
+ * @return The value of the first decoded flag or 0 when no flag was decoded.
+ */
+auto decode_single_flag(istream& in, size_t line_num, Flag_Type t, Encoding enc)
+    -> char16_t
 {
 	auto flags = decode_flags(in, line_num, t, enc);
 	if (flags.size()) {
@@ -260,12 +283,20 @@ auto decode_single_flag(/* in */ istream& in, /* in */ size_t line_num,
 	return 0;
 }
 
-auto parse_affix(/* in */ istream& in, /* in */ size_t line_num,
-                 /* in out */ string& command,
-                 /* in */ Flag_Type t, /* in */ Encoding enc,
-                 /* in out */ vector<Affix>& vec,
-                 /* in out */ unordered_map<string, pair<bool, int>>& cmd_affix)
-    -> void
+/**
+ * Parses affix.
+ *
+ * @param[in] in stream to parse from.
+ * @param[in] line_num TODO.
+ * @param[in,out] command TODO.
+ * @param[in] t TODO.
+ * @param[in] enc encoding of the stream.
+ * @param[in,out] vec TODO.
+ * @param[in,out] cmd_affix The TODO.
+ */
+auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
+                 Encoding enc, vector<Affix>& vec,
+                 unordered_map<string, pair<bool, int>>& cmd_affix) -> void
 {
 	char16_t f = decode_single_flag(in, line_num, t, enc);
 	if (f == 0) {
@@ -287,7 +318,7 @@ auto parse_affix(/* in */ istream& in, /* in */ size_t line_num,
 		bool cross = cross_char == 'Y';
 		if (in.fail()) {
 			cnt = 0; // err
-			cerr << "Hunspell error: a SFX/PFX header command is "
+			cerr << "Nuspell error: a SFX/PFX header command is "
 			        "invalid. Missing count or cross product\n";
 		}
 		cmd_affix[command] = make_pair(cross, cnt);
@@ -314,14 +345,20 @@ auto parse_affix(/* in */ istream& in, /* in */ size_t line_num,
 		dat->second.second--;
 	}
 	else {
-		cerr << "Hunspell warning: extra entries of "
+		cerr << "Nuspell warning: extra entries of "
 		     << command.substr(0, 3) << '\n'
-		     << "Hunspell warning in line " << line_num << endl;
+		     << "Nuspell warning in line " << line_num << endl;
 	}
 }
 
-auto parse_flag_type(/* in */ istream& in, /* in */ size_t line_num,
-                     /* in out */ Flag_Type& flag_type) -> void
+/**
+ * Parses flag type.
+ *
+ * @param[in] in stream to parse from.
+ * @param line_num TODO.
+ * @param[in,out] flag_type TODO.
+ */
+auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
 {
 	(void)line_num;
 	string p;
@@ -334,11 +371,16 @@ auto parse_flag_type(/* in */ istream& in, /* in */ size_t line_num,
 	else if (p == "UTF-8")
 		flag_type = FLAG_UTF8;
 	else
-		cerr << "Hunspell error: unknown FLAG type\n";
+		cerr << "Nuspell error: unknown FLAG type\n";
 }
 
-auto parse_morhological_fields(/* in */ istream& in,
-                               /* in out */ vector<string>& vecOut) -> void
+/**
+ * Parses morhological fields.
+ *
+ * @param[in] in stream to parse from.
+ * @param[in,out] vecOut TODO.
+ */
+auto parse_morhological_fields(istream& in, vector<string>& vecOut) -> void
 {
 	if (!in.good()) {
 		return;
@@ -466,7 +508,7 @@ auto Aff_Data::parse(istream& in) -> bool
 		line_num++;
 
 		if (encoding.is_utf8() && !validate_utf8(line)) {
-			cerr << "Hunspell warning: invalid utf in aff file\n";
+			cerr << "Nuspell warning: invalid utf in aff file\n";
 			// Hungarian will triger this, contains mixed
 			// utf-8 and latin2. See note in decode_flags().
 		}
@@ -490,11 +532,11 @@ auto Aff_Data::parse(istream& in) -> bool
 			if (str.empty())
 				ss >> str;
 			else
-				cerr << "Hunspell warning: "
+				cerr << "Nuspell warning: "
 				        "Setting "
 				     << command
 				     << " more than once. Ignoring.\n"
-				     << "Hunspell warning in line " << line_num
+				     << "Nuspell warning in line " << line_num
 				     << '\n';
 		}
 		else if (command_bools.count(command)) {
@@ -528,11 +570,11 @@ auto Aff_Data::parse(istream& in) -> bool
 				encoding = str;
 			}
 			else {
-				cerr << "Hunspell warning: "
+				cerr << "Nuspell warning: "
 				        "Setting "
 				     << command
 				     << " more than once. Ignoring.\n"
-				     << "Hunspell warning in line " << line_num
+				     << "Nuspell warning in line " << line_num
 				     << '\n';
 			}
 		}
@@ -581,8 +623,8 @@ auto Aff_Data::parse(istream& in) -> bool
 			compound_syllable_num = decode_flags(ss, line_num);
 		}
 		if (ss.fail()) {
-			cerr << "Hunspell aff error in line " << line_num
-			     << ": " << line << endl;
+			cerr << "Nuspell aff error in line " << line_num << ": "
+			     << line << endl;
 		}
 	}
 	locale_aff = locale_generator(get_locale_name(language_code, encoding));
