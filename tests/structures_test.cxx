@@ -48,10 +48,10 @@ TEST_CASE("class Prefix_Entry", "[structures]")
 {
 	// TODO ignore "0" to make method more failsafe? See aff_data.cxx with
 	// elem.stripping == "0"
-	// auto pfx_tests = nuspell::Prefix_Entry(*u"U", true, "0"s, "un"s,
+	// auto pfx_tests = nuspell::Prefix_Entry(u'U', true, "0"s, "un"s,
 	// "wr."s);
 
-	auto pfx_tests = Prefix_Entry(*u"U", true, ""s, "un"s, "wr."s);
+	auto pfx_tests = Prefix_Entry<char>(u'U', true, ""s, "un"s, "wr."s);
 
 	SECTION("method to_root")
 	{
@@ -91,19 +91,17 @@ TEST_CASE("class Prefix_Entry", "[structures]")
 TEST_CASE("class Suffix_Entry", "[structures]")
 {
 	auto sfx_tests =
-	    nuspell::Suffix_Entry(*u"T", true, "y"s, "ies"s, ".[^aeiou]y"s);
-	auto sfx_sk_SK = nuspell::Suffix_Entry(*u"Z", true, "ata"s, "át"s,
-	                                        "[^áéíóúý].[^iš]ata"s);
+	    Suffix_Entry<char>(u'T', true, "y"s, "ies"s, ".[^aeiou]y"s);
+	auto sfx_sk_SK = Suffix_Entry<char>(u'Z', true, "ata"s, "át"s,
+	                                    "[^áéíóúý].[^iš]ata"s);
 	auto sfx_pt_PT =
-	    nuspell::Suffix_Entry(*u"X", true, "er"s, "a"s, "[^cug^-]er"s);
+	    Suffix_Entry<char>(u'X', true, "er"s, "a"s, "[^cug^-]er"s);
 	// TODO See above regarding "0"
-	auto sfx_gd_GB =
-	    nuspell::Suffix_Entry(*u"K", true, "0"s, "-san"s, "[^-]"s);
-	auto sfx_ar =
-	    nuspell::Suffix_Entry(*u"aa", true, "ه"s, "ي"s, "[^ءؤأ]ه"s);
-	auto sfx_ko = nuspell::Suffix_Entry(
-	    24, true, "ᅬ다"s, " ᅫᆻ어"s,
-	    "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다"s);
+	auto sfx_gd_GB = Suffix_Entry<char>(u'K', true, "0"s, "-san"s, "[^-]"s);
+	auto sfx_ar = Suffix_Entry<char>(u'a', true, "ه"s, "ي"s, "[^ءؤأ]ه"s);
+	auto sfx_ko =
+	    Suffix_Entry<char>(24, true, "ᅬ다"s, " ᅫᆻ어"s,
+	                       "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다"s);
 
 	SECTION("method to_root")
 	{

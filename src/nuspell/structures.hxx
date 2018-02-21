@@ -168,45 +168,54 @@ class Break_Table {
 	                     Func spell_func) const -> bool;
 };
 
-struct Affix_Entry {
+template <class CharT>
+class Prefix_Entry {
+      public:
+	using StrT = std::basic_string<CharT>;
+	using RegexT = std::basic_regex<CharT>;
+
 	const char16_t flag;
 	const bool cross_product;
-	const std::string stripping;
-	const std::string appending;
-	const std::regex condition;
-};
+	const StrT stripping;
+	const StrT appending;
+	const RegexT condition;
 
-class Prefix_Entry : public Affix_Entry {
-
-      public:
 	Prefix_Entry() = default;
-	Prefix_Entry(char16_t flag, bool cross_product,
-	             const std::string& strip, const std::string& append,
-	             std::string condition);
+	Prefix_Entry(char16_t flag, bool cross_product, const StrT& strip,
+	             const StrT& append, StrT condition);
 
-	auto to_root(std::string& word) const -> std::string&;
-	auto to_root_copy(std::string word) const -> std::string;
+	auto to_root(StrT& word) const -> StrT&;
+	auto to_root_copy(StrT word) const -> StrT;
 
-	auto to_derived(std::string& word) const -> std::string&;
-	auto to_derived_copy(std::string word) const -> std::string;
+	auto to_derived(StrT& word) const -> StrT&;
+	auto to_derived_copy(StrT word) const -> StrT;
 
-	auto check_condition(const std::string& word) const -> bool;
+	auto check_condition(const StrT& word) const -> bool;
 };
 
-class Suffix_Entry : public Affix_Entry {
+template <class CharT>
+class Suffix_Entry {
       public:
+	using StrT = std::basic_string<CharT>;
+	using RegexT = std::basic_regex<CharT>;
+
+	const char16_t flag;
+	const bool cross_product;
+	const StrT stripping;
+	const StrT appending;
+	const RegexT condition;
+
 	Suffix_Entry() = default;
-	Suffix_Entry(char16_t flag, bool cross_product,
-	             const std::string& strip, const std::string& append,
-	             std::string condition);
+	Suffix_Entry(char16_t flag, bool cross_product, const StrT& strip,
+	             const StrT& append, StrT condition);
 
-	auto to_root(std::string& word) const -> std::string&;
-	auto to_root_copy(std::string word) const -> std::string;
+	auto to_root(StrT& word) const -> StrT&;
+	auto to_root_copy(StrT word) const -> StrT;
 
-	auto to_derived(std::string& word) const -> std::string&;
-	auto to_derived_copy(std::string word) const -> std::string;
+	auto to_derived(StrT& word) const -> StrT&;
+	auto to_derived_copy(StrT word) const -> StrT;
 
-	auto check_condition(const std::string& word) const -> bool;
+	auto check_condition(const StrT& word) const -> bool;
 };
 
 using boost::multi_index_container;
@@ -215,8 +224,8 @@ using boost::multi_index::member;
 using boost::multi_index::hashed_non_unique;
 
 using Prefix_Table = multi_index_container<
-    Prefix_Entry,
-    indexed_by<hashed_non_unique<
-        member<Affix_Entry, const std::string, &Affix_Entry::appending>>>>;
+    Prefix_Entry<char>,
+    indexed_by<hashed_non_unique<member<Prefix_Entry<char>, const std::string,
+                                        &Prefix_Entry<char>::appending>>>>;
 }
 #endif

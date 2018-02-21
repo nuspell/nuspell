@@ -324,11 +324,12 @@ template class Break_Table<wchar_t>;
  * @param append TODO.
  * @param condition TODO.
  */
-Prefix_Entry::Prefix_Entry(char16_t flag, bool cross_product,
-                           const std::string& strip, const std::string& append,
-                           std::string condition)
-    : Affix_Entry{flag, cross_product, strip, append,
-                  regex(condition.insert(0, 1, '^'))}
+template <class CharT>
+Prefix_Entry<CharT>::Prefix_Entry(char16_t flag, bool cross_product,
+                                  const StrT& strip, const StrT& append,
+                                  StrT condition)
+    : flag{flag}, cross_product{cross_product}, stripping{strip},
+      appending{append}, condition{condition.insert(0, 1, '^')}
 {
 }
 
@@ -344,7 +345,8 @@ Prefix_Entry::Prefix_Entry(char16_t flag, bool cross_product,
  * @param word the word which is itself converted into a root.
  * @return The resulting root.
  */
-auto Prefix_Entry::to_root(string& word) const -> string&
+template <class CharT>
+auto Prefix_Entry<CharT>::to_root(StrT& word) const -> StrT&
 {
 	return word.replace(0, appending.size(), stripping);
 }
@@ -360,7 +362,8 @@ auto Prefix_Entry::to_root(string& word) const -> string&
  * @param word the word of which a copy is used to get converted into a root.
  * @return The resulting root.
  */
-auto Prefix_Entry::to_root_copy(string word) const -> string
+template <class CharT>
+auto Prefix_Entry<CharT>::to_root_copy(StrT word) const -> StrT
 {
 	to_root(word);
 	return word;
@@ -375,7 +378,8 @@ auto Prefix_Entry::to_root_copy(string word) const -> string
  * @param word the root word which is converted to a derived word.
  * @return The resulting derived word.
  */
-auto Prefix_Entry::to_derived(string& word) const -> string&
+template <class CharT>
+auto Prefix_Entry<CharT>::to_derived(StrT& word) const -> StrT&
 {
 	return word.replace(0, stripping.size(), appending);
 }
@@ -391,7 +395,8 @@ auto Prefix_Entry::to_derived(string& word) const -> string&
  * derived word.
  * @return The resulting derived word.
  */
-auto Prefix_Entry::to_derived_copy(string word) const -> string
+template <class CharT>
+auto Prefix_Entry<CharT>::to_derived_copy(StrT word) const -> StrT
 {
 	to_derived(word);
 	return word;
@@ -408,9 +413,10 @@ auto Prefix_Entry::to_derived_copy(string word) const -> string
  * @param word to check against the condition.
  * @return The result of the check.
  */
-auto Prefix_Entry::check_condition(const string& word) const -> bool
+template <class CharT>
+auto Prefix_Entry<CharT>::check_condition(const StrT& word) const -> bool
 {
-	auto m = smatch();
+	auto m = match_results<typename StrT::const_iterator>();
 	return regex_search(word, m, condition);
 }
 
@@ -428,10 +434,12 @@ auto Prefix_Entry::check_condition(const string& word) const -> bool
  * @param append TODO.
  * @param condition TODO.
  */
-Suffix_Entry::Suffix_Entry(char16_t flag, bool cross_product,
-                           const std::string& strip, const std::string& append,
-                           std::string condition)
-    : Affix_Entry{flag, cross_product, strip, append, regex(condition += '$')}
+template <class CharT>
+Suffix_Entry<CharT>::Suffix_Entry(char16_t flag, bool cross_product,
+                                  const StrT& strip, const StrT& append,
+                                  StrT condition)
+    : flag{flag}, cross_product{cross_product}, stripping{strip},
+      appending{append}, condition{condition += '$'}
 {
 }
 
@@ -445,7 +453,8 @@ Suffix_Entry::Suffix_Entry(char16_t flag, bool cross_product,
  * @param word the word which is itself converted into a root.
  * @return The resulting root.
  */
-auto Suffix_Entry::to_root(string& word) const -> string&
+template <class CharT>
+auto Suffix_Entry<CharT>::to_root(StrT& word) const -> StrT&
 {
 	return word.replace(word.size() - appending.size(), appending.size(),
 	                    stripping);
@@ -461,7 +470,8 @@ auto Suffix_Entry::to_root(string& word) const -> string&
  * @param word the word of which a copy is used to get converted into a root.
  * @return The resulting root.
  */
-auto Suffix_Entry::to_root_copy(string word) const -> string
+template <class CharT>
+auto Suffix_Entry<CharT>::to_root_copy(StrT word) const -> StrT
 {
 	return to_root(word);
 }
@@ -475,7 +485,8 @@ auto Suffix_Entry::to_root_copy(string word) const -> string
  * @param word the root word which is converted to a derived word.
  * @return The resulting derived word.
  */
-auto Suffix_Entry::to_derived(string& word) const -> string&
+template <class CharT>
+auto Suffix_Entry<CharT>::to_derived(StrT& word) const -> StrT&
 {
 	return word.replace(word.size() - stripping.size(), stripping.size(),
 	                    appending);
@@ -492,7 +503,8 @@ auto Suffix_Entry::to_derived(string& word) const -> string&
  * derived word.
  * @return The resulting derived word.
  */
-auto Suffix_Entry::to_derived_copy(string word) const -> string
+template <class CharT>
+auto Suffix_Entry<CharT>::to_derived_copy(StrT word) const -> StrT
 {
 	to_derived(word);
 	return word;
@@ -509,9 +521,15 @@ auto Suffix_Entry::to_derived_copy(string word) const -> string
  * @param word to check against the condition.
  * @return The resulting of the check.
  */
-auto Suffix_Entry::check_condition(const string& word) const -> bool
+template <class CharT>
+auto Suffix_Entry<CharT>::check_condition(const StrT& word) const -> bool
 {
-	auto m = smatch();
+	auto m = match_results<typename StrT::const_iterator>();
 	return regex_search(word, m, condition);
 }
+
+template class Prefix_Entry<char>;
+template class Prefix_Entry<wchar_t>;
+template class Suffix_Entry<char>;
+template class Suffix_Entry<wchar_t>;
 }
