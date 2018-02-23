@@ -287,3 +287,22 @@ TEST_CASE("method classify_casing", "[string_utils]")
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase"s));
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s));
 }
+
+TEST_CASE("method reverse_regex", "[string_utils")
+{
+	auto in = "abc"s;
+	CHECK("cba"s == to_reverse_regex_copy<char>(in));
+	CHECK("abc"s == in);
+
+	in = "[abc]"s;
+	// CHECK("[cba]"s == to_reverse_regex_copy<char>(in));
+	CHECK("[abc]"s == in);
+
+	in = "[^abc]abc"s;
+	// CHECK("cba[^cba]"s == to_reverse_regex_copy<char>(in));
+	CHECK("[^abc]abc"s == in);
+
+	in = "abc[abc].[^abc.].."s;
+	// CHECK("..[^.cba].[cba]cba"s == to_reverse_regex_copy<char>(in));
+	CHECK("abc[abc].[^abc.].."s == in);
+}

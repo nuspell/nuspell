@@ -26,7 +26,7 @@ using namespace std;
 using namespace std::literals::string_literals;
 using namespace nuspell;
 
-TEST_CASE("substring replacer", "[structures]")
+TEST_CASE("method substring replace copy", "[structures]")
 {
 	auto rep = Substring_Replacer({{"asd", "zxc"},
 	                               {"as", "rtt"},

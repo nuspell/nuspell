@@ -150,17 +150,17 @@ class Break_Table {
 	auto start_word_breaks() const -> boost::iterator_range<const_iterator>
 	{
 		return {std::begin(table),
-			const_iterator(start_word_breaks_last_it)};
+		        const_iterator(start_word_breaks_last_it)};
 	}
 	auto end_word_breaks() const -> boost::iterator_range<const_iterator>
 	{
 		return {const_iterator(start_word_breaks_last_it),
-			const_iterator(end_word_breaks_last_it)};
+		        const_iterator(end_word_breaks_last_it)};
 	}
 	auto middle_word_breaks() const -> boost::iterator_range<const_iterator>
 	{
 		return {const_iterator(end_word_breaks_last_it),
-			std::end(table)};
+		        std::end(table)};
 	}
 
 	template <class Func>
