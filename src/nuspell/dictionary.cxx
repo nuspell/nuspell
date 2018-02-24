@@ -18,6 +18,8 @@
 
 #include "dictionary.hxx"
 
+#include <boost/algorithm/string/trim.hpp>
+
 namespace nuspell {
 
 using namespace std;
@@ -30,8 +32,9 @@ using namespace std;
  * @param word to check.
  * @return
  */
-auto prefix_check(const Dic_Data& dic, const Prefix_Table& affix_table,
-                  string word)
+template <class CharT>
+auto prefix_check(const Dic_Data& dic, const Prefix_Table<CharT>& affix_table,
+                  const basic_string<CharT>& word)
 {
 	for (size_t aff_len = 1; 0 < aff_len && aff_len <= word.size();
 	     ++aff_len) {
@@ -58,13 +61,24 @@ auto prefix_check(const Dic_Data& dic, const Prefix_Table& affix_table,
 template <class CharT>
 auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 {
-
+	auto& loc = aff_data.locale_aff;
 	auto& d = aff_data.get_structures<CharT>();
-	d.input_substr_replacer.replace(s);
 
-	if (dic_data.lookup(s))
+	d.input_substr_replacer.replace(s);
+	boost::trim(s, loc);
+	if (s.empty())
 		return GOOD_WORD;
-	return BAD_WORD;
+	bool abbreviation = s.back() == '.';
+	boost::trim_right_if(s, [](auto c) { return c == '.'; });
+	if (s.empty())
+		return GOOD_WORD;
+
+	auto ret = spell_break<CharT>(s);
+	if (!ret && abbreviation) {
+		s += '.';
+		ret = spell_break<CharT>(s);
+	}
+	return ret;
 }
 template auto Dictionary::spell_priv(const string s) -> Spell_Result;
 template auto Dictionary::spell_priv(const wstring s) -> Spell_Result;
@@ -72,7 +86,43 @@ template auto Dictionary::spell_priv(const wstring s) -> Spell_Result;
 template <class CharT>
 auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
 {
-	(void)s;
+	auto res = spell_casing<CharT>(s);
+	if (res)
+		return res;
+
+	auto& break_table = aff_data.get_structures<CharT>().break_table;
+	for (auto& pat : break_table.start_word_breaks()) {
+		if (s.compare(0, pat.size(), pat) == 0) {
+			auto substr = s.substr(pat.size());
+			auto res = spell_break<CharT>(substr);
+			if (res)
+				return res;
+		}
+	}
+	for (auto& pat : break_table.end_word_breaks()) {
+		if (pat.size() > s.size())
+			continue;
+		if (s.compare(s.size() - pat.size(), pat.size(), pat) == 0) {
+			auto substr = s.substr(0, s.size() - pat.size());
+			auto res = spell_break<CharT>(substr);
+			if (res)
+				return res;
+		}
+	}
+
+	for (auto& pat : break_table.middle_word_breaks()) {
+		auto i = s.find(pat);
+		if (i > 0 && i < s.size() - pat.size()) {
+			auto part1 = s.substr(0, i);
+			auto part2 = s.substr(i + pat.size());
+			auto res1 = spell_break<CharT>(part1);
+			if (!res1)
+				continue;
+			auto res2 = spell_break<CharT>(part2);
+			if (res2)
+				return res2;
+		}
+	}
 	return BAD_WORD;
 }
 template auto Dictionary::spell_break(string& s) -> Spell_Result;
@@ -81,7 +131,8 @@ template auto Dictionary::spell_break(wstring& s) -> Spell_Result;
 template <class CharT>
 auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 {
-	(void)s;
+	if (dic_data.lookup(s))
+		return GOOD_WORD;
 	return BAD_WORD;
 }
 template auto Dictionary::spell_casing(string& s) -> Spell_Result;

@@ -162,10 +162,6 @@ class Break_Table {
 		return {const_iterator(end_word_breaks_last_it),
 		        std::end(table)};
 	}
-
-	template <class Func>
-	auto break_and_spell(const std::basic_string<CharT>& s,
-	                     Func spell_func) const -> bool;
 };
 
 template <class CharT>
@@ -223,9 +219,18 @@ using boost::multi_index::indexed_by;
 using boost::multi_index::member;
 using boost::multi_index::hashed_non_unique;
 
+template <class CharT>
 using Prefix_Table = multi_index_container<
-    Prefix_Entry<char>,
-    indexed_by<hashed_non_unique<member<Prefix_Entry<char>, const std::string,
-                                        &Prefix_Entry<char>::appending>>>>;
+    Prefix_Entry<CharT>,
+    indexed_by<hashed_non_unique<
+        member<Prefix_Entry<CharT>, const std::basic_string<CharT>,
+               &Prefix_Entry<CharT>::appending>>>>;
+
+template <class CharT>
+using Suffix_Table = multi_index_container<
+    Suffix_Entry<CharT>,
+    indexed_by<hashed_non_unique<
+        member<Suffix_Entry<CharT>, const std::basic_string<CharT>,
+               &Suffix_Entry<CharT>::appending>>>>;
 }
 #endif

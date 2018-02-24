@@ -99,10 +99,7 @@ struct Aff_Data {
 	template <class CharT>
 	auto get_structures() -> Aff_Structures<CharT>&;
 
-	Encoding encoding; // TODO This is only used during parsing. To prevent
-	                   // accidental usage of empty value, move this out of
-	                   // this class and let it only live locally in the
-	                   // parse method.
+	Encoding encoding;
 	Flag_Type flag_type;
 	bool complex_prefixes;
 	string language_code;

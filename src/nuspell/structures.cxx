@@ -269,44 +269,6 @@ auto Break_Table<CharT>::operator=(Table_Str&& v) -> Break_Table&
 	return *this;
 }
 
-template <class CharT>
-template <class Func>
-auto Break_Table<CharT>::break_and_spell(const StrT& s, Func spell_func) const
-    -> bool
-{
-	for (auto& pat : start_word_breaks()) {
-		if (s.compare(0, pat.size(), pat) == 0) {
-			auto res = spell_func(s.substr(pat.size()));
-			if (res)
-				return true;
-		}
-	}
-	for (auto& pat : end_word_breaks()) {
-		if (pat.size() > s.size())
-			continue;
-		if (s.compare(s.size() - pat.size(), pat.size(), pat) == 0) {
-			auto res = spell_func(s.substr(pat.size()));
-			if (res)
-				return true;
-		}
-	}
-
-	for (auto& pat : middle_word_breaks()) {
-		auto i = s.find(pat);
-		if (i > 0 && i < s.size() - pat.size()) {
-			auto part1 = s.substr(0, i);
-			auto part2 = s.substr(i + pat.size());
-			auto res1 = spell_func(part1);
-			if (!res1)
-				continue;
-			auto res2 = spell_func(part2);
-			if (res2)
-				return true;
-		}
-	}
-	return false;
-}
-
 template class Break_Table<char>;
 template class Break_Table<wchar_t>;
 
