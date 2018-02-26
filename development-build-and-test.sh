@@ -4,4 +4,9 @@ cd ../../tests
 ./clang-format.sh
 cd ..
 make
-make check
+if [ $? -eq 0 ]; then
+	make check
+else
+	echo FAILED
+	exit $?
+fi

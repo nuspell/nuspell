@@ -295,14 +295,18 @@ TEST_CASE("method reverse_regex", "[string_utils")
 	CHECK("abc"s == in);
 
 	in = "[abc]"s;
-	// CHECK("[cba]"s == to_reverse_regex_copy<char>(in));
+	// CHECK("[abc]"s == to_reverse_regex_copy<char>(in));
 	CHECK("[abc]"s == in);
 
+	in = "[a-z][0-9]"s;
+	// CHECK("[0-9][a-z]"s == to_reverse_regex_copy<char>(in));
+	CHECK("[a-z][0-9]"s == in);
+
 	in = "[^abc]abc"s;
-	// CHECK("cba[^cba]"s == to_reverse_regex_copy<char>(in));
+	// CHECK("cba[^abc]"s == to_reverse_regex_copy<char>(in));
 	CHECK("[^abc]abc"s == in);
 
-	in = "abc[abc].[^abc.].."s;
-	// CHECK("..[^.cba].[cba]cba"s == to_reverse_regex_copy<char>(in));
-	CHECK("abc[abc].[^abc.].."s == in);
+	in = "abc[abc].[^abc].."s;
+	// CHECK("..[^abc].[abc]cba"s == to_reverse_regex_copy<char>(in));
+	CHECK("abc[abc].[^abc].."s == in);
 }
