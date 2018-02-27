@@ -288,25 +288,43 @@ TEST_CASE("method classify_casing", "[string_utils]")
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s));
 }
 
-TEST_CASE("method reverse_regex", "[string_utils")
+TEST_CASE("method reverse_regex_copy", "[string_utils")
 {
 	auto in = "abc"s;
 	CHECK("cba"s == to_reverse_regex_copy<char>(in));
 	CHECK("abc"s == in);
 
 	in = "[abc]"s;
-	// CHECK("[abc]"s == to_reverse_regex_copy<char>(in));
-	CHECK("[abc]"s == in);
-
-	in = "[a-z][0-9]"s;
-	// CHECK("[0-9][a-z]"s == to_reverse_regex_copy<char>(in));
-	CHECK("[a-z][0-9]"s == in);
+	CHECK("[cba]"s == to_reverse_regex_copy<char>(in));
 
 	in = "[^abc]abc"s;
-	// CHECK("cba[^abc]"s == to_reverse_regex_copy<char>(in));
-	CHECK("[^abc]abc"s == in);
+	CHECK("cba[^cba]"s == to_reverse_regex_copy<char>(in));
 
 	in = "abc[abc].[^abc].."s;
-	// CHECK("..[^abc].[abc]cba"s == to_reverse_regex_copy<char>(in));
-	CHECK("abc[abc].[^abc].."s == in);
+	CHECK("..[^cba].[cba]cba"s == to_reverse_regex_copy<char>(in));
+
+	// Ranges such as [a-z] and [0-9] are not in affix files.
+	// Following tests are from existing language support.
+
+	in = "[cghjmsxyvzbdfklnprt-]"s; // 850 times
+	CHECK("[-trpnlkfdbzvyxsmjhgc]"s == to_reverse_regex_copy<char>(in));
+
+	in = "[áéiíóőuúüűy-àùø]"s; // 744 times
+	// FIXME	CHECK("[øùà-yűüúuőóíiéá]"s ==
+	// to_reverse_regex_copy<char>(in));
+
+	in = "[^-]"s; // 8 times
+	CHECK("[^-]"s == to_reverse_regex_copy<char>(in));
+
+	in = "[^cts]Z-"s; // 4 times
+	CHECK("-Z[^stc]"s == to_reverse_regex_copy<char>(in));
+
+	in = "[^-]ar"s; // 3 times
+	CHECK("ra[^-]"s == to_reverse_regex_copy<char>(in));
+
+	in = "[^cug-]ir"s; // 3 times
+	CHECK("ri[^-guc]"s == to_reverse_regex_copy<char>(in));
+
+	in = "[^cug^-]er"s; // 2 times
+	CHECK("re[^-^guc]"s == to_reverse_regex_copy<char>(in));
 }

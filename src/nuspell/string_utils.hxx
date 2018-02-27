@@ -260,12 +260,42 @@ template <class CharT>
 auto to_reverse_regex_copy(std::basic_string<CharT> c)
     -> std::basic_string<CharT>
 {
-	// incomplete implementation
-	// just placeholder for now
-	// see Hunspell AffixMgr::reverse_condition
-	// looking for existing solution in std or boost
-	// if none exists, reimplement here
+	if (c.empty() || c.size() == 1)
+		return c;
+
 	std::reverse(c.begin(), c.end());
+
+	int neg = 0;
+	for (std::string::reverse_iterator k = c.rbegin(); k != c.rend(); ++k) {
+		switch (*k) {
+		case '[': {
+			if (neg)
+				*(k - 1) = '[';
+			else
+				*k = ']';
+			break;
+		}
+		case ']': {
+			*k = '[';
+			if (neg)
+				*(k - 1) = '^';
+			neg = 0;
+			break;
+		}
+		case '^': {
+			if (*(k - 1) == ']')
+				neg = 1;
+			else
+				*(k - 1) = *k;
+			break;
+		}
+		default: {
+			if (neg)
+				*(k - 1) = *k;
+		}
+		}
+	}
+
 	return c;
 }
 }
