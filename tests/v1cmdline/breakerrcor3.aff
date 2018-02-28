@@ -1,0 +1,6 @@
+# table is corrupt, too many definitions
+BREAK 3
+BREAK -
+BREAK ^-
+BREAK _
+BREAK -$

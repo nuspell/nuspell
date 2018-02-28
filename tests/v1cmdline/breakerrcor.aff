@@ -1,0 +1,4 @@
+# table is corrupt, corrupted option name
+BREAK 2
+BREac -
+BREAK ^-
