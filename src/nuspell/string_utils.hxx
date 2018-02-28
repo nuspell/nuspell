@@ -246,57 +246,5 @@ auto classify_casing(const std::basic_string<CharT>& s,
 	else
 		return Casing::CAMEL;
 }
-
-/**
- * Reverses regular expression.
- *
- * A copy of the provided regex will be converted into a mirror version. That
- * resulting regex will match reversed words.
- *
- * @param c regex, usually this is a condition used with affixes.
- * @return The reversed regex.
- */
-template <class CharT>
-auto to_reverse_regex_copy(std::basic_string<CharT> c)
-    -> std::basic_string<CharT>
-{
-	if (c.empty() || c.size() == 1)
-		return c;
-
-	std::reverse(c.begin(), c.end());
-
-	int neg = 0;
-	for (std::string::reverse_iterator k = c.rbegin(); k != c.rend(); ++k) {
-		switch (*k) {
-		case '[': {
-			if (neg)
-				*(k - 1) = '[';
-			else
-				*k = ']';
-			break;
-		}
-		case ']': {
-			*k = '[';
-			if (neg)
-				*(k - 1) = '^';
-			neg = 0;
-			break;
-		}
-		case '^': {
-			if (*(k - 1) == ']')
-				neg = 1;
-			else
-				*(k - 1) = *k;
-			break;
-		}
-		default: {
-			if (neg)
-				*(k - 1) = *k;
-		}
-		}
-	}
-
-	return c;
-}
 }
 #endif
