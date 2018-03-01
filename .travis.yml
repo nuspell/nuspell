@@ -13,16 +13,16 @@ os:
 before_install:
 
   - cd ~ &&
-    wget https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.bz2/download -O - |
+    wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.bz2 -O - |
     tar -xj &&
     cd -
 
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      brew link icu4c --force
+      brew link icu4c --force;
     fi
   - export BOOST_ROOT=~/.local
-  - "cd ~/boost_1_62_0 &&
+  - "cd ~/boost_1_66_0 &&
     echo 'using gcc : : g++-5 : <cxxflags>-std=c++14 ;' > tools/build/src/user-config.jam &&
     ./bootstrap.sh --prefix=$BOOST_ROOT --with-libraries=locale &&
     ./b2 install -d0 -j 4 &&
