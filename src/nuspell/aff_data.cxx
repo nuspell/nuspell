@@ -654,11 +654,14 @@ auto Aff_Data::parse(istream& in) -> bool
 		auto break_pat =
 		    boost::adaptors::transform(break_patterns, u_to_u);
 		wide_structures.break_table = break_pat;
+
+		wide_structures.ignored_chars = u_to_u(ignore_chars);
 	}
 	else {
 		structures.input_substr_replacer = input_conversion;
 		structures.output_substr_replacer = output_conversion;
 		structures.break_table = break_patterns;
+		structures.ignored_chars = ignore_chars;
 	}
 
 	cerr.flush();

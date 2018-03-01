@@ -272,6 +272,56 @@ auto Break_Table<CharT>::operator=(Table_Str&& v) -> Break_Table&
 template class Break_Table<char>;
 template class Break_Table<wchar_t>;
 
+template <class CharT>
+auto Char_Eraser<CharT>::sort_uniq() -> void
+{
+	nuspell::sort_uniq(erase_chars);
+}
+
+template <class CharT>
+auto Char_Eraser<CharT>::lookup(CharT c) const -> bool
+{
+	return erase_chars.find(c) != erase_chars.npos;
+}
+
+template <class CharT>
+auto Char_Eraser<CharT>::operator=(const StrT& e) -> Char_Eraser&
+{
+	erase_chars = e;
+	sort_uniq();
+	return *this;
+}
+
+template <class CharT>
+auto Char_Eraser<CharT>::operator=(StrT&& e) -> Char_Eraser&
+{
+	erase_chars = move(e);
+	sort_uniq();
+	return *this;
+}
+
+template <class CharT>
+auto Char_Eraser<CharT>::erase(StrT& s) const -> StrT&
+{
+	auto is_erasable = [&](auto c) { return lookup(c); };
+	auto it = remove_if(begin(s), end(s), is_erasable);
+	s.erase(it, end(s));
+	return s;
+}
+
+template <class CharT>
+auto Char_Eraser<CharT>::erase_copy(const StrT& s) const -> StrT
+{
+	StrT ret(0, s.size());
+	auto is_erasable = [&](auto c) { return lookup(c); };
+	auto it = remove_copy_if(begin(s), end(s), begin(ret), is_erasable);
+	ret.erase(it, end(ret));
+	return ret;
+}
+
+template class Char_Eraser<char>;
+template class Char_Eraser<wchar_t>;
+
 /**
  * Constructs a prefix entry.
  *

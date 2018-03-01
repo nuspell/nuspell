@@ -165,6 +165,25 @@ class Break_Table {
 };
 
 template <class CharT>
+class Char_Eraser {
+      public:
+	using StrT = std::basic_string<CharT>;
+
+      private:
+	StrT erase_chars;
+
+	auto sort_uniq() -> void;
+	auto lookup(CharT c) const -> bool;
+
+      public:
+	auto operator=(const StrT& e) -> Char_Eraser&;
+	auto operator=(StrT&& e) -> Char_Eraser&;
+
+	auto erase(StrT& s) const -> StrT&;
+	auto erase_copy(const StrT& s) const -> StrT;
+};
+
+template <class CharT>
 class Prefix_Entry {
       public:
 	using StrT = std::basic_string<CharT>;
