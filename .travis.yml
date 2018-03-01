@@ -21,11 +21,13 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       brew link icu4c --force;
     fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      echo 'using gcc : : g++-5 : ;' > ~/user-config.jam ;
+    fi
   - export BOOST_ROOT=~/.local
   - "cd ~/boost_1_66_0 &&
-    echo 'using gcc : : g++-5 : <cxxflags>-std=c++14 ;' > tools/build/src/user-config.jam &&
     ./bootstrap.sh --prefix=$BOOST_ROOT --with-libraries=locale &&
-    ./b2 install -d0 -j 4 &&
+    ./b2 install -d0 -j 4 cxxflags=-std=c++14 &&
     cd -"
 
 before_script:
