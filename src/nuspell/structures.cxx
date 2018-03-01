@@ -303,7 +303,7 @@ auto Char_Eraser<CharT>::operator=(StrT&& e) -> Char_Eraser&
 template <class CharT>
 auto Char_Eraser<CharT>::erase(StrT& s) const -> StrT&
 {
-	auto is_erasable = [&](auto c) { return lookup(c); };
+	auto is_erasable = [&](auto c) { return this->lookup(c); };
 	auto it = remove_if(begin(s), end(s), is_erasable);
 	s.erase(it, end(s));
 	return s;
@@ -313,7 +313,7 @@ template <class CharT>
 auto Char_Eraser<CharT>::erase_copy(const StrT& s) const -> StrT
 {
 	StrT ret(0, s.size());
-	auto is_erasable = [&](auto c) { return lookup(c); };
+	auto is_erasable = [&](auto c) { return this->lookup(c); };
 	auto it = remove_copy_if(begin(s), end(s), begin(ret), is_erasable);
 	ret.erase(it, end(ret));
 	return ret;
