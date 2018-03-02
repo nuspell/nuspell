@@ -28,55 +28,9 @@ namespace nuspell {
 using namespace std;
 using boost::basic_string_view;
 
-template <class Container>
-void sort_uniq(Container& c)
-{
-	auto first = begin(c);
-	auto last = end(c);
-	sort(first, last);
-	c.erase(unique(first, last), last);
-}
-
-void Flag_Set::sort_uniq() { nuspell::sort_uniq(flags); }
-
-Flag_Set::Flag_Set(const std::u16string& s) : flags(s) { sort_uniq(); }
-
-Flag_Set::Flag_Set(std::u16string&& s) : flags(move(s)) { sort_uniq(); }
-
-auto Flag_Set::operator=(const std::u16string& s) -> Flag_Set&
-{
-	flags = s;
-	sort_uniq();
-	return *this;
-}
-
-auto Flag_Set::operator=(std::u16string&& s) -> Flag_Set&
-{
-	flags = move(s);
-	sort_uniq();
-	return *this;
-}
-
-auto Flag_Set::insert(const std::u16string& s) -> void
-{
-	flags += s;
-	sort_uniq();
-}
-
-auto Flag_Set::erase(char16_t flag) -> bool
-{
-	auto i = flags.find(flag);
-	if (i != flags.npos) {
-		flags.erase(i, 1);
-		return true;
-	}
-	return false;
-}
-
-static_assert(is_move_constructible<Flag_Set>::value,
-              "Flag Set Not move constructable");
-static_assert(is_move_assignable<Flag_Set>::value,
-              "Flag Set Not move assingable");
+template class String_Set<char>;
+template class String_Set<wchar_t>;
+template class String_Set<char16_t>;
 
 template <class CharT>
 void Substr_Replacer<CharT>::sort_uniq()
@@ -273,37 +227,23 @@ template class Break_Table<char>;
 template class Break_Table<wchar_t>;
 
 template <class CharT>
-auto Char_Eraser<CharT>::sort_uniq() -> void
-{
-	nuspell::sort_uniq(erase_chars);
-}
-
-template <class CharT>
-auto Char_Eraser<CharT>::lookup(CharT c) const -> bool
-{
-	return erase_chars.find(c) != erase_chars.npos;
-}
-
-template <class CharT>
-auto Char_Eraser<CharT>::operator=(const StrT& e) -> Char_Eraser&
+auto Char_Eraser<CharT>::operator=(const SetT& e) -> Char_Eraser&
 {
 	erase_chars = e;
-	sort_uniq();
 	return *this;
 }
 
 template <class CharT>
-auto Char_Eraser<CharT>::operator=(StrT&& e) -> Char_Eraser&
+auto Char_Eraser<CharT>::operator=(SetT&& e) -> Char_Eraser&
 {
 	erase_chars = move(e);
-	sort_uniq();
 	return *this;
 }
 
 template <class CharT>
 auto Char_Eraser<CharT>::erase(StrT& s) const -> StrT&
 {
-	auto is_erasable = [&](auto c) { return this->lookup(c); };
+	auto is_erasable = [&](auto c) { return erase_chars.exists(c); };
 	auto it = remove_if(begin(s), end(s), is_erasable);
 	s.erase(it, end(s));
 	return s;
@@ -313,7 +253,7 @@ template <class CharT>
 auto Char_Eraser<CharT>::erase_copy(const StrT& s) const -> StrT
 {
 	StrT ret(0, s.size());
-	auto is_erasable = [&](auto c) { return this->lookup(c); };
+	auto is_erasable = [&](auto c) { return erase_chars.exists(c); };
 	auto it = remove_copy_if(begin(s), end(s), begin(ret), is_erasable);
 	ret.erase(it, end(ret));
 	return ret;

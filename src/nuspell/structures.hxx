@@ -19,6 +19,7 @@
 #ifndef NUSPELL_STRUCTURES_HXX
 #define NUSPELL_STRUCTURES_HXX
 
+#include <algorithm>
 #include <regex>
 #include <string>
 #include <unordered_map>
@@ -33,58 +34,151 @@
 
 namespace nuspell {
 
+template <class Container>
+void sort_uniq(Container& c)
+{
+	auto first = begin(c);
+	auto last = end(c);
+	sort(first, last);
+	c.erase(unique(first, last), last);
+}
+
 /**
  * @brief A Set class backed by a string. Very useful for small sets.
  */
-class Flag_Set {
-	std::u16string flags;
-	auto sort_uniq() -> void;
+template <class CharT>
+class String_Set {
+      private:
+	std::basic_string<CharT> d;
+	auto sort_uniq() -> void { nuspell::sort_uniq(d); }
 
       public:
-	// creation
-	Flag_Set() = default;
-	Flag_Set(const std::u16string& s);
-	Flag_Set(std::u16string&& s);
-	auto operator=(const std::u16string& s) -> Flag_Set&;
-	auto operator=(std::u16string&& s) -> Flag_Set&;
+	using StrT = std::basic_string<CharT>;
+	using key_type = typename StrT::value_type;
+	// using key_compare = Compare;
+	using value_type = typename StrT::value_type;
+	// using value_compare = Compare;
+	using allocator_type = typename StrT::allocator_type;
+	using pointer = typename StrT::pointer;
+	using const_pointer = typename StrT::const_pointer;
+	using reference = typename StrT::reference;
+	using const_reference = typename StrT::const_reference;
+	using size_type = typename StrT::size_type;
+	using difference_type = typename StrT::difference_type;
+	using iterator = typename StrT::iterator;
+	using const_iterator = typename StrT::const_iterator;
+	using reverse_iterator = typename StrT::reverse_iterator;
+	using const_reverse_iterator = typename StrT::const_reverse_iterator;
 
-	// insert
-	// auto insert(char16_t flag) -> It;
+	String_Set() = default;
+	String_Set(const StrT& s) : d(s) { sort_uniq(); }
+	String_Set(StrT&& s) : d(std::move(s)) { sort_uniq(); }
+	template <class InputIterator>
+	String_Set(InputIterator first, InputIterator last) : d(first, last)
+	{
+		sort_uniq();
+	}
+	auto operator=(const StrT& s) -> String_Set&
+	{
+		d = s;
+		sort_uniq();
+		return *this;
+	}
+	auto operator=(StrT&& s) -> String_Set&
+	{
+		d = std::move(s);
+		sort_uniq();
+		return *this;
+	}
 
-	// bulk insert
-	// auto insert(It first, It last) -> void;
-	auto insert(const std::u16string& s) -> void;
-	auto operator+=(const std::u16string& s) -> Flag_Set&
+	auto data() const { return d; }
+	operator const StrT&() const noexcept { return d; }
+
+	// iterators:
+	iterator begin() noexcept { return d.begin(); }
+	const_iterator begin() const noexcept { return d.begin(); }
+	iterator end() noexcept { return d.end(); }
+	const_iterator end() const noexcept { return d.end(); }
+
+	reverse_iterator rbegin() noexcept { return d.rbegin(); }
+	const_reverse_iterator rbegin() const noexcept { return d.rbegin(); }
+	reverse_iterator rend() noexcept { return d.rend(); }
+	const_reverse_iterator rend() const noexcept { return d.rend(); }
+
+	const_iterator cbegin() const noexcept { return d.cbegin(); }
+	const_iterator cend() const noexcept { return d.cend(); }
+	const_reverse_iterator crbegin() const noexcept { return d.crbegin(); }
+	const_reverse_iterator crend() const noexcept { return d.crend(); }
+
+	// capacity:
+	bool empty() const noexcept { return d.empty(); }
+	size_type size() const noexcept { return d.size(); }
+	size_type max_size() const noexcept { return d.max_size(); }
+
+	// modifiers:
+	template <class InputIterator>
+	void insert(InputIterator first, InputIterator last)
+	{
+		d.insert(d.end(), first, last);
+		sort_uniq();
+	}
+	auto insert(const StrT& s) -> void
+	{
+		d += s;
+		sort_uniq();
+	}
+	auto operator+=(const StrT& s) -> String_Set
 	{
 		insert(s);
 		return *this;
 	}
 
-	// erase
-	auto erase(char16_t flag) -> bool;
+	iterator erase(const_iterator position) { return d.erase(position); }
 
-	// bulk erase
-	// auto clear() { return flags.clear(); }
-
-	// access
-	auto size() const noexcept { return flags.size(); }
-	auto data() const noexcept -> const std::u16string& { return flags; }
-	operator const std::u16string&() const noexcept { return flags; }
-	auto empty() const noexcept -> bool { return flags.empty(); }
-	auto exists(char16_t flag) const -> bool
+	size_type erase(const key_type& x)
 	{
-		// This method is most commonly called (on hotpath)
-		// put it in header so it is inlined.
-		// Flags are short strings.
-		// Optimized linear search should be better for short strings.
-		return flags.find(flag) != flags.npos;
+		auto i = d.find(x);
+		if (i != d.npos) {
+			d.erase(i, 1);
+			return true;
+		}
+		return false;
 	}
-	auto count(char16_t flag) const -> size_t { return exists(flag); }
+	// iterator erase(const_iterator first, const_iterator last);
+	void swap(String_Set& s) { d.swap(s.d); }
+	void clear() noexcept { d.clear(); }
 
-	auto begin() const noexcept { return flags.begin(); }
-	auto end() const noexcept { return flags.end(); }
-	auto friend swap(Flag_Set& a, Flag_Set& b) { a.flags.swap(b.flags); }
+	// set operations:
+	iterator find(const key_type& x)
+	{
+		auto i = d.find(x);
+		if (i != d.npos)
+			return begin() + i;
+		return end();
+	}
+
+	const_iterator find(const key_type& x) const
+	{
+		auto i = d.find(x);
+		if (i != d.npos)
+			return begin() + i;
+		return end();
+	}
+	bool exists(const key_type& x) const { return d.find(x) != d.npos; }
+	size_type count(const key_type& x) const { return exists(x); }
 };
+
+extern template class String_Set<char>;
+extern template class String_Set<wchar_t>;
+extern template class String_Set<char16_t>;
+
+template <class CharT>
+auto swap(String_Set<CharT>& a, String_Set<CharT>& b)
+{
+	a.swap(b);
+}
+
+using Flag_Set = String_Set<char16_t>;
 
 template <class CharT>
 class Substr_Replacer {
@@ -167,17 +261,15 @@ class Break_Table {
 template <class CharT>
 class Char_Eraser {
       public:
+	using SetT = String_Set<CharT>;
 	using StrT = std::basic_string<CharT>;
 
       private:
-	StrT erase_chars;
-
-	auto sort_uniq() -> void;
-	auto lookup(CharT c) const -> bool;
+	SetT erase_chars;
 
       public:
-	auto operator=(const StrT& e) -> Char_Eraser&;
-	auto operator=(StrT&& e) -> Char_Eraser&;
+	auto operator=(const SetT& e) -> Char_Eraser&;
+	auto operator=(SetT&& e) -> Char_Eraser&;
 
 	auto erase(StrT& s) const -> StrT&;
 	auto erase_copy(const StrT& s) const -> StrT;
