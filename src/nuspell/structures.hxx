@@ -133,7 +133,7 @@ class String_Set {
 		return *this;
 	}
 
-	iterator erase(const_iterator position) { return d.erase(position); }
+	// iterator erase(const_iterator position) { return d.erase(position); }
 
 	size_type erase(const key_type& x)
 	{
