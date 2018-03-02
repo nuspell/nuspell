@@ -91,6 +91,7 @@ class String_Set {
 		return *this;
 	}
 
+	// non standard underlying storage access:
 	auto data() const { return d; }
 	operator const StrT&() const noexcept { return d; }
 
@@ -116,12 +117,54 @@ class String_Set {
 	size_type max_size() const noexcept { return d.max_size(); }
 
 	// modifiers:
+	// template <class... Args>
+	// pair<iterator, bool> emplace(Args&&... args);
+	// template <class... Args>
+	// iterator emplace_hint(const_iterator hint, Args&&... args);
+	std::pair<iterator, bool> insert(const value_type& x)
+	{
+		auto it = std::lower_bound(begin(), end(), x);
+		if (it != end() && *it == x) {
+			return {it, false};
+		}
+		auto ret = d.insert(it, x);
+		return {ret, true};
+	}
+	// std::pair<iterator, bool> insert(value_type&& x);
+	iterator insert(iterator hint, const value_type& x)
+	{
+		if (hint == end() || x < *hint) {
+			if (hint == begin() || *(hint - 1) < x) {
+				return d.insert(hint, x);
+			}
+		}
+		return insert(x).first;
+	}
+
+	// iterator insert(const_iterator hint, value_type&& x);
 	template <class InputIterator>
 	void insert(InputIterator first, InputIterator last)
 	{
 		d.insert(d.end(), first, last);
 		sort_uniq();
 	}
+	// void insert(std::initializer_list<value_type>);
+
+	iterator erase(iterator position) { return d.erase(position); }
+	size_type erase(const key_type& x)
+	{
+		auto i = d.find(x);
+		if (i != d.npos) {
+			d.erase(i, 1);
+			return true;
+		}
+		return false;
+	}
+	iterator erase(iterator first, iterator last) { d.erase(first, last); }
+	void swap(String_Set& s) { d.swap(s.d); }
+	void clear() noexcept { d.clear(); }
+
+	// non standrd modifiers:
 	auto insert(const StrT& s) -> void
 	{
 		d += s;
@@ -133,39 +176,67 @@ class String_Set {
 		return *this;
 	}
 
-	// iterator erase(const_iterator position) { return d.erase(position); }
-
-	size_type erase(const key_type& x)
-	{
-		auto i = d.find(x);
-		if (i != d.npos) {
-			d.erase(i, 1);
-			return true;
-		}
-		return false;
-	}
-	// iterator erase(const_iterator first, const_iterator last);
-	void swap(String_Set& s) { d.swap(s.d); }
-	void clear() noexcept { d.clear(); }
+	// observers:
+	// key_compare   key_comp() const;
+	// value_compare value_comp() const;
 
 	// set operations:
-	iterator find(const key_type& x)
+      private:
+	auto lookup(const key_type& x) const
 	{
 		auto i = d.find(x);
 		if (i != d.npos)
-			return begin() + i;
-		return end();
+			i = d.size();
+		return i;
 	}
 
+      public:
+	iterator find(const key_type& x) { return begin() + lookup(x); }
 	const_iterator find(const key_type& x) const
 	{
-		auto i = d.find(x);
-		if (i != d.npos)
-			return begin() + i;
-		return end();
+		return begin() + lookup(x);
 	}
-	bool exists(const key_type& x) const { return d.find(x) != d.npos; }
-	size_type count(const key_type& x) const { return exists(x); }
+	size_type count(const key_type& x) const { return d.find(x) != d.npos; }
+
+	iterator lower_bound(const key_type& x)
+	{
+		return std::lower_bound(begin(), end(), x);
+	}
+
+	const_iterator lower_bound(const key_type& x) const
+	{
+		return std::lower_bound(begin(), end(), x);
+	}
+	iterator upper_bound(const key_type& x)
+	{
+		return std::upper_bound(begin(), end(), x);
+	}
+
+	const_iterator upper_bound(const key_type& x) const
+	{
+		return std::upper_bound(begin(), end(), x);
+	}
+	std::pair<iterator, iterator> equal_range(const key_type& x)
+	{
+		return std::equal_range(begin(), end(), x);
+	}
+
+	std::pair<const_iterator, const_iterator>
+	equal_range(const key_type& x) const
+	{
+		return std::equal_range(begin(), end(), x);
+	}
+
+	// non standard set operations:
+	bool exists(const key_type& x) const { return count(x); }
+
+	// compare
+	bool operator<(const String_Set& rhs) { return d < rhs.d; }
+	bool operator<=(const String_Set& rhs) { return d <= rhs.d; }
+	bool operator==(const String_Set& rhs) { return d == rhs.d; }
+	bool operator!=(const String_Set& rhs) { return d != rhs.d; }
+	bool operator>=(const String_Set& rhs) { return d >= rhs.d; }
+	bool operator>(const String_Set& rhs) { return d > rhs.d; }
 };
 
 extern template class String_Set<char>;
