@@ -243,8 +243,8 @@ struct hentry* PfxEntry::checkword(const char* word,
               !TESTAFF(contclass, pmyMgr->get_needaffix(), contclasslen) &&
               // needflag
               ((!needflag) || TESTAFF(he->astr, needflag, he->alen) ||
-               (contclass && TESTAFF(contclass, needflag, contclasslen))))
-            return he;
+	       (contclass && TESTAFF(contclass, needflag, contclasslen)))) {
+	    pmyMgr->get_log() << "  PfxEntry::checkword(word=" << word << ",needflag="<< needflag << ",*) appnd=" << appnd << ",strip=" << strip << ",c.conds=" << c.conds << ",aflag=" << (char)aflag << ",contclass=" << contclass << " TMPWORD=" << tmpword << " -> <HashEntry word=" << he->word << ",astr=" << he->astr << ">" << std::endl; return he; }
           he = he->next_homonym;  // check homonyms
         } while (he);
       }
@@ -257,8 +257,8 @@ struct hentry* PfxEntry::checkword(const char* word,
       if ((opts & aeXPRODUCT)) {
         he = pmyMgr->suffix_check(tmpword.c_str(), tmpl, aeXPRODUCT, this,
                                   FLAG_NULL, needflag, in_compound);
-        if (he)
-          return he;
+	if (he) {
+	  pmyMgr->get_log() << "  PfxEntry::checkword(word=" << word << ",*) appnd=" << appnd << ",strip=" << strip << ",c.conds=" << c.conds << ",opts=" << opts << " TMPWORD=" << tmpword << " -> <HashEntry word=" << he->word << ">" << std::endl; return he; }
       }
     }
   }
@@ -304,8 +304,8 @@ struct hentry* PfxEntry::check_twosfx(const char* word,
         // hash entry of root word or NULL
         struct hentry* he = pmyMgr->suffix_check_twosfx(tmpword.c_str(), tmpl, aeXPRODUCT, this,
                                                         needflag);
-        if (he)
-          return he;
+	if (he) {
+	  pmyMgr->get_log() << "  PfxEntry::check_twosfx(word=" << word << ",in_compound=" << in_compound << ",*) appnd=" << appnd << ",strip=" << strip << ",c.conds=" << c.conds << ",opts=" << opts << " TMPWORD=" << tmpword << " -> <HashEntry word=" << he->word << ">" << std::endl; return he; }
       }
     }
   }

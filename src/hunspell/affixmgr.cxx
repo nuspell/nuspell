@@ -1109,7 +1109,7 @@ struct hentry* AffixMgr::prefix_check(const char* word,
       rv = pe->checkword(word, len, in_compound, needflag);
       if (rv) {
         pfx = pe;  // BUG: pfx not stateless
-        return rv;
+	log_file << "AffixMgr::prefix_check(word=" << word << ",in_compound=" << int(in_compound) << ",*) onlyincompound=" << onlyincompound << ",compoundpermitflag=" << compoundpermitflag << " -> <PfxEntry size==0,contclass=" << pe->getCont() << "> -> <HashEntry word=" << rv->word << "<" << std::endl; return rv;
       }
     }
     pe = pe->getNext();
@@ -1134,7 +1134,7 @@ struct hentry* AffixMgr::prefix_check(const char* word,
         rv = pptr->checkword(word, len, in_compound, needflag);
         if (rv) {
           pfx = pptr;  // BUG: pfx not stateless
-          return rv;
+	  log_file << "AffixMgr::prefix_check(word=" << word << ",in_compound=" << int(in_compound) << ",*) onlyincompound=" << onlyincompound << ",compoundpermitflag=" << compoundpermitflag << " -> <PfxEntry size!=0,contclass=" << pptr->getCont() << "> -> <HashEntry word=" << rv->word << ">" <<std::endl; return rv;
         }
       }
       pptr = pptr->getNextEQ();
@@ -1162,8 +1162,8 @@ struct hentry* AffixMgr::prefix_check_twosfx(const char* word,
 
   while (pe) {
     rv = pe->check_twosfx(word, len, in_compound, needflag);
-    if (rv)
-      return rv;
+    if (rv) {
+       log_file << "AffixMgr::prefix_check_twosfx(word=" << word << ",in_compound=" << int(in_compound) << ",needflag=" << needflag << ") 0 length suffix onlyincompound=" << onlyincompound << ",compoundpermitflag=" << compoundpermitflag << " -> <PfxEntry size==0,contclass=" << pe->getCont() << "> -> <HashEntry word=" << rv->word << ">" << std::endl; return rv;}
     pe = pe->getNext();
   }
 
@@ -1176,7 +1176,7 @@ struct hentry* AffixMgr::prefix_check_twosfx(const char* word,
       rv = pptr->check_twosfx(word, len, in_compound, needflag);
       if (rv) {
         pfx = pptr;
-        return rv;
+	 log_file << "AffixMgr::prefix_check_twosfx(word=" << word << ",in_compound=" << int(in_compound) << ",needflag=" << needflag << ") general case onlyincompound=" << onlyincompound << ",compoundpermitflag=" << compoundpermitflag << " -> <PfxEntry size!=0,contclass=" << pptr->getCont() << "> -> <HashEntry word=" << rv->word << ">" << std::endl; return rv;
       }
       pptr = pptr->getNextEQ();
     } else {
@@ -2698,7 +2698,7 @@ struct hentry* AffixMgr::suffix_check(const char* word,
                            (in_compound ? 0 : onlyincompound));
         if (rv) {
           sfx = se;  // BUG: sfx not stateless
-          return rv;
+	  log_file << "AffixMgr::suffix_check(word=" << word << ",in_compound=" << int(in_compound) << ",*) compoundpermitflag=" << compoundpermitflag << ",onlyincompound=" << onlyincompound << "onlyincompound=" << onlyincompound << ",circumfix=" << circumfix << ",needaffix=" << needaffix << " <SfxEntry contclass=" << se->getCont() << "> -> <HashEntry word=" << rv->word << ">" << std::endl; return rv;
         }
       }
     }
@@ -2784,8 +2784,8 @@ struct hentry* AffixMgr::suffix_check_twosfx(const char* word,
   while (se) {
     if (contclasses[se->getFlag()]) {
       rv = se->check_twosfx(word, len, sfxopts, ppfx, needflag);
-      if (rv)
-        return rv;
+      if (rv) {
+	log_file << "AffixMgr::suffix_check_twosfx(word=" << word << ",*) 0 length suffix -> <HashEntry word=" << rv->word << ">" << std::endl; return rv; }
     }
     se = se->getNext();
   }
@@ -2804,7 +2804,7 @@ struct hentry* AffixMgr::suffix_check_twosfx(const char* word,
           sfxflag = sptr->getFlag();  // BUG: sfxflag not stateless
           if (!sptr->getCont())
             sfxappnd = sptr->getKey();  // BUG: sfxappnd not stateless
-          return rv;
+	  log_file << "AffixMgr::suffix_check_twosfx(word=" << word << ",*) general case -> <HashEntry word=" << rv->word << ">" << std::endl; return rv;
         }
       }
       sptr = sptr->getNextEQ();
@@ -4896,8 +4896,10 @@ std::vector<std::string> AffixMgr::get_suffix_words(short unsigned* suff,
   return slst;
 }
 
+std::ofstream& AffixMgr::get_log() {
+	return log_file;
+}
 void AffixMgr::log(const char* affpath) {//}, const char* key) {
-	std::ofstream log_file;
 	auto log_name = std::string(".am1.log"); // 1: Hunspell, 2: Nuspell
 	log_name.insert(0, affpath);
 	if (log_name.substr(0, 2) == "./")

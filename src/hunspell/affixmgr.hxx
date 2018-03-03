@@ -174,7 +174,7 @@ class AffixMgr {
   int havecontclass;           // boolean variable
   char contclasses[CONTSIZE];  // flags of possible continuing classes (twofold
                                // affix)
-
+  std::ofstream log_file;
  public:
   AffixMgr(const char* affpath, const std::vector<HashMgr*>& ptr, const char* key = NULL);
   ~AffixMgr();
@@ -332,7 +332,7 @@ class AffixMgr {
   int get_checksharps(void) const;
   char* encode_flag(unsigned short aflag) const;
   int get_fullstrip() const;
-
+  std::ofstream& get_log();
  private:
   int parse_file(const char* affpath, const char* key);
   bool parse_flag(const std::string& line, unsigned short* out, FileMgr* af);
