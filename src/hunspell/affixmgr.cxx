@@ -2785,7 +2785,7 @@ struct hentry* AffixMgr::suffix_check_twosfx(const char* word,
     if (contclasses[se->getFlag()]) {
       rv = se->check_twosfx(word, len, sfxopts, ppfx, needflag);
       if (rv) {
-	log_file << "AffixMgr::suffix_check_twosfx(word=" << word << ",*) 0 length suffix -> <HashEntry word=" << rv->word << ">" << std::endl; return rv; }
+	log_file << "AffixMgr::suffix_check_twosfx(word=" << word << ",*) 0 length suffix se.getFlag=" << se->getFlag() << " -> <HashEntry word=" << rv->word << ">" << std::endl; return rv; }
     }
     se = se->getNext();
   }
@@ -2804,7 +2804,7 @@ struct hentry* AffixMgr::suffix_check_twosfx(const char* word,
           sfxflag = sptr->getFlag();  // BUG: sfxflag not stateless
           if (!sptr->getCont())
             sfxappnd = sptr->getKey();  // BUG: sfxappnd not stateless
-	  log_file << "AffixMgr::suffix_check_twosfx(word=" << word << ",*) general case -> <HashEntry word=" << rv->word << ">" << std::endl; return rv;
+	  log_file << "AffixMgr::suffix_check_twosfx(word=" << word << ",*) general case sptr.getFlag=" << sptr->getFlag() << " -> <HashEntry word=" << rv->word << ">" << std::endl; return rv;
         }
       }
       sptr = sptr->getNextEQ();
