@@ -121,6 +121,14 @@ class String_Set {
 	// pair<iterator, bool> emplace(Args&&... args);
 	// template <class... Args>
 	// iterator emplace_hint(const_iterator hint, Args&&... args);
+
+	/**
+	 * Inserts a value.
+	 *
+	 * @param x the value to insert.
+	 * @return The pair holding the post-insert iterator and a boolean
+	 * representing insert succes.
+	 */
 	std::pair<iterator, bool> insert(const value_type& x)
 	{
 		auto it = std::lower_bound(begin(), end(), x);

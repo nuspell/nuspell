@@ -137,3 +137,27 @@ TEST_CASE("class Suffix_Entry", "[structures]")
 		CHECK(false == sfx_tests.check_condition("wries"s));
 	}
 }
+TEST_CASE("class String_Set", "[structures]")
+{
+	auto ss1 = String_Set<char>();
+	auto ss2 = String_Set<char>();
+	auto ss3 = String_Set<char>();
+	ss1.insert("one");
+	ss1.insert("two");
+	ss1.insert("three");
+	ss2.insert("one");
+	ss2.insert("two");
+	ss2.insert("three");
+	ss3.insert("one");
+	ss3.insert("two");
+
+	auto t = ss1 == ss2;
+	auto f = ss1 != ss3;
+	SECTION("method insert")
+	{
+		// FIXME This is not working CHECK(ss1 == ss2);
+		// FIXME This is not working CHECK(ss1 != ss3);
+		CHECK(t);
+		CHECK(f);
+	}
+}
