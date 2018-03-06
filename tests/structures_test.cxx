@@ -151,13 +151,9 @@ TEST_CASE("class String_Set", "[structures]")
 	ss3.insert("one");
 	ss3.insert("two");
 
-	auto t = ss1 == ss2;
-	auto f = ss1 != ss3;
 	SECTION("method insert")
 	{
-		// FIXME This is not working CHECK(ss1 == ss2);
-		// FIXME This is not working CHECK(ss1 != ss3);
-		CHECK(t);
-		CHECK(f);
+		CHECK(ss1 == ss2);
+		CHECK(ss1 != ss3);
 	}
 }

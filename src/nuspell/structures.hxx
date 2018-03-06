@@ -168,7 +168,10 @@ class String_Set {
 		}
 		return false;
 	}
-	iterator erase(iterator first, iterator last) { d.erase(first, last); }
+	iterator erase(iterator first, iterator last)
+	{
+		return d.erase(first, last);
+	}
 	void swap(String_Set& s) { d.swap(s.d); }
 	void clear() noexcept { d.clear(); }
 
@@ -239,12 +242,12 @@ class String_Set {
 	bool exists(const key_type& x) const { return count(x); }
 
 	// compare
-	bool operator<(const String_Set& rhs) { return d < rhs.d; }
-	bool operator<=(const String_Set& rhs) { return d <= rhs.d; }
-	bool operator==(const String_Set& rhs) { return d == rhs.d; }
-	bool operator!=(const String_Set& rhs) { return d != rhs.d; }
-	bool operator>=(const String_Set& rhs) { return d >= rhs.d; }
-	bool operator>(const String_Set& rhs) { return d > rhs.d; }
+	bool operator<(const String_Set& rhs) const { return d < rhs.d; }
+	bool operator<=(const String_Set& rhs) const { return d <= rhs.d; }
+	bool operator==(const String_Set& rhs) const { return d == rhs.d; }
+	bool operator!=(const String_Set& rhs) const { return d != rhs.d; }
+	bool operator>=(const String_Set& rhs) const { return d >= rhs.d; }
+	bool operator>(const String_Set& rhs) const { return d > rhs.d; }
 };
 
 extern template class String_Set<char>;
