@@ -104,7 +104,7 @@ bool read_to_slash_or_space(std::istream& in, std::string& out)
 }
 
 /**
- * Parses vector of class T.
+ * Parses vector of class T from an input stream.
  *
  * @param line_num
  * @param command
@@ -266,9 +266,9 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 }
 
 /**
- * Decodes a single flag.
+ * Decodes a single flag from an input stream.
  *
- * @param in stream to decode from.
+ * @param in input stream to decode from.
  * @param line_num
  * @param t
  * @param enc encoding of the stream.
@@ -285,9 +285,9 @@ auto decode_single_flag(istream& in, size_t line_num, Flag_Type t, Encoding enc)
 }
 
 /**
- * Parses affix.
+ * Parses an affix from an input stream.
  *
- * @param in stream to parse from.
+ * @param in input stream to parse from.
  * @param line_num
  * @param[in,out] command
  * @param t
@@ -355,7 +355,7 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 /**
  * Parses flag type.
  *
- * @param in stream to parse from.
+ * @param in input stream to parse from.
  * @param line_num
  * @param[in,out] flag_type
  */
@@ -378,7 +378,7 @@ auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
 /**
  * Parses morhological fields.
  *
- * @param in stream to parse from.
+ * @param in input stream to parse from.
  * @param[in,out] vecOut
  */
 auto parse_morhological_fields(istream& in, vector<string>& vecOut) -> void
