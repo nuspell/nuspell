@@ -45,6 +45,8 @@ void sort_uniq(Container& c)
 
 /**
  * @brief A Set class backed by a string. Very useful for small sets.
+ *
+ * Has the same interface as std::set.
  */
 template <class CharT>
 class String_Set {
@@ -78,6 +80,11 @@ class String_Set {
 	{
 		sort_uniq();
 	}
+	String_Set(std::initializer_list<value_type> il) : d(il)
+	{
+		sort_uniq();
+	}
+
 	auto operator=(const StrT& s) -> String_Set&
 	{
 		d = s;
@@ -87,6 +94,12 @@ class String_Set {
 	auto operator=(StrT&& s) -> String_Set&
 	{
 		d = std::move(s);
+		sort_uniq();
+		return *this;
+	}
+	auto operator=(std::initializer_list<value_type> il) -> String_Set&
+	{
+		d = il;
 		sort_uniq();
 		return *this;
 	}
@@ -117,18 +130,6 @@ class String_Set {
 	size_type max_size() const noexcept { return d.max_size(); }
 
 	// modifiers:
-	// template <class... Args>
-	// pair<iterator, bool> emplace(Args&&... args);
-	// template <class... Args>
-	// iterator emplace_hint(const_iterator hint, Args&&... args);
-
-	/**
-	 * Inserts a value.
-	 *
-	 * @param x the value to insert.
-	 * @return The pair holding the post-insert iterator and a boolean
-	 * representing insert succes.
-	 */
 	std::pair<iterator, bool> insert(const value_type& x)
 	{
 		auto it = std::lower_bound(begin(), end(), x);
@@ -156,7 +157,22 @@ class String_Set {
 		d.insert(d.end(), first, last);
 		sort_uniq();
 	}
-	// void insert(std::initializer_list<value_type>);
+	void insert(std::initializer_list<value_type> il)
+	{
+		d.insert(end(), il);
+		sort_uniq();
+	}
+	template <class... Args>
+	std::pair<iterator, bool> emplace(Args&&... args)
+	{
+		return insert(CharT(args...));
+	}
+
+	template <class... Args>
+	iterator emplace_hint(iterator hint, Args&&... args)
+	{
+		return insert(hint, CharT(args...));
+	}
 
 	iterator erase(iterator position) { return d.erase(position); }
 	size_type erase(const key_type& x)
