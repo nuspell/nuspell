@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Dimitrij Mijoski
+/* Copyright 2016-2018 Dimitrij Mijoski
  *
  * This file is part of Nuspell.
  *
@@ -41,11 +41,8 @@ class Finder {
 	auto add_apacheopenoffice_paths() -> void;
 	auto search_dictionaries() -> void;
 
-	auto get_all_paths() const -> const vector<string>& { return paths; }
-	auto get_all_dictionaries() const -> const vector<pair<string, string>>&
-	{
-		return dictionaries;
-	}
+	auto& get_all_paths() const { return paths; }
+	auto& get_all_dictionaries() const { return dictionaries; }
 
 	auto get_dictionary(const string& dict) const -> string;
 };

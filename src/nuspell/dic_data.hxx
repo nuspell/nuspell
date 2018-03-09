@@ -33,18 +33,22 @@ class Dic_Data {
 	// for long flag vectors like in Korean dict
 	// we should keep pointers to the string in the affix aliases vector
 	// for now we will leave it like this
-	std::unordered_map<std::string, Flag_Set> words;
+	using MapT = std::unordered_map<std::string, Flag_Set>;
+	MapT words;
 
 	// word and morphological data
 	// we keep them separate because morph data is generally absent
 	std::unordered_map<std::string, std::vector<std::string>> morph_data;
 
       public:
+	using iterator = MapT::iterator;
+	using const_iterator = MapT::const_iterator;
+
 	// methods
 	// parses the dic data to hashtable
 	auto parse(std::istream& in, const Aff_Data& aff) -> bool;
 
-	auto data() const { return words; }
+	auto& data() const { return words; }
 
 	auto lookup(const std::string& word) -> Flag_Set*;
 	auto lookup(const std::string& word) const -> const Flag_Set*;

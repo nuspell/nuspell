@@ -105,7 +105,7 @@ class String_Set {
 	}
 
 	// non standard underlying storage access:
-	auto data() const { return d; }
+	auto& data() const { return d; }
 	operator const StrT&() const noexcept { return d; }
 
 	// iterators:
@@ -374,7 +374,7 @@ class Char_Eraser {
 };
 
 template <class CharT>
-class Prefix_Entry {
+class Prefix {
       public:
 	using StrT = std::basic_string<CharT>;
 	using RegexT = std::basic_regex<CharT>;
@@ -385,9 +385,9 @@ class Prefix_Entry {
 	const StrT appending;
 	const RegexT condition;
 
-	Prefix_Entry() = default;
-	Prefix_Entry(char16_t flag, bool cross_product, const StrT& strip,
-	             const StrT& append, StrT condition);
+	Prefix() = default;
+	Prefix(char16_t flag, bool cross_product, const StrT& strip,
+	       const StrT& append, StrT condition);
 
 	auto to_root(StrT& word) const -> StrT&;
 	auto to_root_copy(StrT word) const -> StrT;
@@ -399,7 +399,7 @@ class Prefix_Entry {
 };
 
 template <class CharT>
-class Suffix_Entry {
+class Suffix {
       public:
 	using StrT = std::basic_string<CharT>;
 	using RegexT = std::basic_regex<CharT>;
@@ -410,9 +410,9 @@ class Suffix_Entry {
 	const StrT appending;
 	const RegexT condition;
 
-	Suffix_Entry() = default;
-	Suffix_Entry(char16_t flag, bool cross_product, const StrT& strip,
-	             const StrT& append, StrT condition);
+	Suffix() = default;
+	Suffix(char16_t flag, bool cross_product, const StrT& strip,
+	       const StrT& append, StrT condition);
 
 	auto to_root(StrT& word) const -> StrT&;
 	auto to_root_copy(StrT word) const -> StrT;
@@ -430,16 +430,14 @@ using boost::multi_index::hashed_non_unique;
 
 template <class CharT>
 using Prefix_Table = multi_index_container<
-    Prefix_Entry<CharT>,
-    indexed_by<hashed_non_unique<
-        member<Prefix_Entry<CharT>, const std::basic_string<CharT>,
-               &Prefix_Entry<CharT>::appending>>>>;
+    Prefix<CharT>, indexed_by<hashed_non_unique<
+                       member<Prefix<CharT>, const std::basic_string<CharT>,
+                              &Prefix<CharT>::appending>>>>;
 
 template <class CharT>
 using Suffix_Table = multi_index_container<
-    Suffix_Entry<CharT>,
-    indexed_by<hashed_non_unique<
-        member<Suffix_Entry<CharT>, const std::basic_string<CharT>,
-               &Suffix_Entry<CharT>::appending>>>>;
+    Suffix<CharT>, indexed_by<hashed_non_unique<
+                       member<Suffix<CharT>, const std::basic_string<CharT>,
+                              &Suffix<CharT>::appending>>>>;
 }
 #endif

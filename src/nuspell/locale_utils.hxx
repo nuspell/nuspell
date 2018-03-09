@@ -44,9 +44,9 @@ namespace nuspell {
  * agorithms will be used. If the dictionary is singlebyte then everything is
  * char.
  *
- * The functions cvt_for_byte_dict() and cvt_for_u8_dict() convert from input
- * into intermediate and call the right template instantiation (char or wide
- * char).
+ * The functions Locale_Input::cvt_for_byte_dict() and
+ * Locale_Input::cvt_for_u8_dict() convert from input
+ * into intermediate.
  *
  * If the dictionary is UTF-8, we should still store large data in it because
  * storing the wordlist in UTF-32 will take more memory.
@@ -88,7 +88,7 @@ template <
     class FromStr,
     class = std::enable_if_t<std::is_same<
         typename std::remove_reference_t<FromStr>::value_type, char>::value>>
-auto to_dict_encoding(FromStr&& from) -> FromStr&&
+auto&& to_dict_encoding(FromStr&& from)
 {
 	return std::forward<FromStr>(from);
 }
@@ -103,7 +103,7 @@ auto from_dict_to_wide_encoding(const std::string& from)
 
 template <class ToCharT, class FromStr,
           class = std::enable_if_t<std::is_same<ToCharT, char>::value>>
-auto from_dict_to_wide_encoding(FromStr&& from) -> FromStr&&
+auto&& from_dict_to_wide_encoding(FromStr&& from)
 {
 	return std::forward<FromStr>(from);
 }
@@ -133,7 +133,7 @@ template <
     class ToCharT, class FromStr,
     class = std::enable_if_t<std::is_same<
         typename std::remove_reference_t<FromStr>::value_type, ToCharT>::value>>
-auto convert_encoding(FromStr&& from) -> FromStr&&
+auto&& convert_encoding(FromStr&& from)
 {
 	return std::forward<FromStr>(from);
 }
@@ -189,14 +189,16 @@ auto inline Locale_Input::cvt_for_u8_dict(const std::string& in,
 	return to_wide(in, inloc);
 }
 
-struct Utf_8_Input {
-	auto cvt_for_byte_dict(const std::string& in, const std::locale& dicloc)
+template <class CharT>
+struct Unicode_Input {
+	auto static cvt_for_byte_dict(const std::basic_string<CharT>& in,
+	                              const std::locale& dicloc)
 	{
 		using namespace boost::locale::conv;
 		return to_singlebyte(utf_to_utf<wchar_t>(in), dicloc);
 	}
 
-	auto cvt_for_u8_dict(const std::string& in)
+	auto static cvt_for_u8_dict(const std::basic_string<CharT>& in)
 	{
 		using namespace boost::locale::conv;
 		return utf_to_utf<wchar_t>(in);
@@ -207,7 +209,7 @@ struct Same_As_Dict_Input {
 	template <class Str,
 	          class = std::enable_if_t<std::is_same<
 	              typename std::remove_reference<Str>, std::string>::value>>
-	auto cvt_for_byte_dict(Str&& in) -> Str&&
+	auto&& cvt_for_byte_dict(Str&& in)
 	{
 		return std::forward<Str>(in);
 	}
@@ -215,23 +217,6 @@ struct Same_As_Dict_Input {
 	{
 		using namespace boost::locale::conv;
 		return utf_to_utf<wchar_t>(in);
-	}
-};
-
-struct Wide_Input {
-	auto cvt_for_byte_dict(const std::wstring& in,
-	                       const std::locale& dicloc)
-	{
-		return to_singlebyte(in, dicloc);
-	}
-
-	template <
-	    class Str,
-	    class = std::enable_if_t<std::is_same<
-	        typename std::remove_reference<Str>, std::wstring>::value>>
-	auto cvt_for_u8_dict(Str&& in) -> Str&&
-	{
-		return std::forward<Str>(in);
 	}
 };
 }
