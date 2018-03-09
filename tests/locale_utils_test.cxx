@@ -30,9 +30,12 @@ TEST_CASE("header locale_utils", "[locale_utils]")
 {
 	SECTION("method decode_utf8")
 	{
-		CHECK(U"" == decode_utf8(""s));
-		// Omit constructor "..."s without risk for UTF-8?
-		CHECK(U"azĳß«" == decode_utf8("azĳß«"s));
+		CHECK(U""s == decode_utf8(""s));
+
+		CHECK(
+		    U"abczĳß«абвњ\U0001FFFFерњеӤ\u0801\u0912日本にреѐ"s ==
+		    decode_utf8(
+		        u8"abczĳß«абвњ\U0001FFFFерњеӤ\u0801\u0912日本にреѐ"s));
 		CHECK(U"日  Ӥ" != decode_utf8("Ӥ日本に"s));
 		// need counter example too
 	}

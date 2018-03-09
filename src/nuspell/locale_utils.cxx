@@ -43,26 +43,7 @@ using namespace std;
 #define unlikely(expr) (expr)
 #endif
 
-// TODO What is the source of the information below?
 namespace {
-// const unsigned char shift[] = {0, 6, 0, 0, 0, /**/ 0, 0, 0, 0};
-const unsigned char mask[] = {0xff, 0x3f, 0x1f, 0x0f, 0x07, /**/
-                              0x03, 0x01, 0x00, 0x00};
-const unsigned char min_rep_mask[] = {
-    0xff, 0xff, 0b00011110, 0b00001111, 0b00000111, 0, 0, 0, 0};
-// for decoding
-const unsigned char next_state[][9] = {{0, 4, 1, 2, 3, 4, 4, 4, 4},
-                                       {0, 0, 1, 2, 3, 4, 4, 4, 4},
-                                       {0, 1, 1, 2, 3, 4, 4, 4, 4},
-                                       {0, 2, 1, 2, 3, 4, 4, 4, 4},
-                                       {0, 4, 1, 2, 3, 4, 4, 4, 4}};
-
-// for validating
-const unsigned char next_state2[][9] = {{0, 4, 1, 2, 3, 4, 4, 4, 4},
-                                        {4, 0, 4, 4, 4, 4, 4, 4, 4},
-                                        {4, 1, 4, 4, 4, 4, 4, 4, 4},
-                                        {4, 2, 4, 4, 4, 4, 4, 4, 4},
-                                        {4, 4, 4, 4, 4, 4, 4, 4, 4}};
 
 auto inline count_leading_ones(unsigned char c)
 {
@@ -98,88 +79,154 @@ auto inline count_leading_ones(unsigned char c)
 	return clz;
 #endif
 }
-}
 
-struct Utf8_Decoder {
-	unsigned char state = 0;
-	bool short_sequence_error = false;
-	// bool long_sequence_error = false;
-	char32_t cp = 0;
-
-	auto next(unsigned char in) -> void;
-
-	template <class InpIter, class OutIter>
-	auto decode(InpIter first, InpIter last, OutIter out) -> OutIter;
-#define minimal_representation_error(in, clz)                                  \
-	(((in | 0x80) & min_rep_mask[clz]) == 0)
-};
-
-/**
- * Finite state transducer used for decoding UTF-8 stream.
- *
- * Formally, the state is a pair (state, cp) and
- * output is a triplet (is_cp_ready, out_cp, too_short_error).
- * This function mutates the state and returns that third element of the output.
- *
- * Initial state is (0, 0).
- *
- *  - is_cp_ready <=> state == 0 so we do not return it since it is
- *    directly derived from the UPDATED state (after the call).
- *  - out_cp = cp for states 0 to 3, otherwise it is FFFD.
- *    We do not return out_cp for same reason.
- *
- * We only return too_short_err.
- *
- * If too_short_err is true, we should generally emit FFFD in the output
- * stream. Then we check the state.
- * Whenever it goes to state = 0, emit out_cp = cp,   reset cp = 0.
- * Whenever it goes to state = 4, emit out_cp = FFFD, reset cp = 0.
- *
- * At the end of the input stream, we should check if the state is 1, 2 or 3
- * which indicates that too_short_err happend. FFFD should be emitted.
- *
- * @param in Input byte.
- * @return true if too short sequence error happend. False otherwise.
- */
-auto inline Utf8_Decoder::next(unsigned char in) -> void
+auto is_not_continuation_byte(unsigned char c)
 {
-	char32_t cc = in;
-	auto clz = count_leading_ones(in);
-	// cp = (cp << shift[clz]) | (cc & mask[clz]);
-	if (clz == 1)
-		cp <<= 6;
-	cp |= cc & mask[clz];
-
-	//(state & 3)!=0 == state >=1 && state <= 3
-	short_sequence_error = (state & 3) && clz != 1;
-	state = next_state[state][clz];
-
-	if (unlikely(minimal_representation_error(in, clz)))
-		state = 4;
+	return (c & 0b11000000) != 0b10000000;
+}
+auto update_cp_with_continuation_byte(char32_t& cp, unsigned char c)
+{
+	cp = (cp << 6) | (c & 0b00111111);
+}
 }
 
 template <class InpIter, class OutIter>
 auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
 {
-	Utf8_Decoder u8;
 	constexpr auto REP_CH = U'\uFFFD';
+	char32_t cp;
+	bool min_rep_err;
+	bool surrogate_err;
 	for (auto i = first; i != last; ++i) {
-		auto&& c = *i;
-		u8.next(c);
-		if (unlikely(u8.short_sequence_error)) {
+		unsigned char c = *i;
+		switch (count_leading_ones(c)) {
+		case 0:
+			*out++ = c;
+			break;
+		case 1:
 			*out++ = REP_CH;
-		}
-		if (u8.state == 0) {
-			*out++ = u8.cp;
-			u8.cp = 0;
-		}
-		else if (unlikely(u8.state == 4)) {
+			break;
+		case 2:
+			min_rep_err = (c & 0b00011110) == 0;
+			if (unlikely(min_rep_err)) {
+				*out++ = REP_CH;
+				break;
+			}
+			cp = c & 0b00011111;
+
+			// processing second byte
+			if (unlikely(++i == last)) {
+				*out++ = REP_CH;
+				goto out_of_u8_loop;
+			}
+			c = *i;
+			if (unlikely(is_not_continuation_byte(c))) {
+				// sequence too short error
+				--i;
+				*out++ = REP_CH;
+				break;
+			}
+			update_cp_with_continuation_byte(cp, c);
+			*out++ = cp;
+			break;
+		case 3:
+			cp = c & 0b00001111;
+
+			// processing second byte
+			if (unlikely(++i == last)) {
+				*out++ = REP_CH;
+				goto out_of_u8_loop;
+			}
+			c = *i;
+			if (unlikely(is_not_continuation_byte(c))) {
+				// sequence too short error
+				--i;
+				*out++ = REP_CH;
+				break;
+			}
+			min_rep_err = cp == 0 && (c & 0b00100000) == 0;
+			surrogate_err =
+			    cp == 0b00001101 && (c & 0b00100000) != 0;
+			if (unlikely(min_rep_err || surrogate_err)) {
+				*out++ = REP_CH;
+				break;
+			}
+			update_cp_with_continuation_byte(cp, c);
+
+			// proccesing third byte
+			if (unlikely(++i == last)) {
+				*out++ = REP_CH;
+				goto out_of_u8_loop;
+			}
+			c = *i;
+			if (unlikely(is_not_continuation_byte(c))) {
+				// sequence too short error
+				--i;
+				*out++ = REP_CH;
+				break;
+			}
+			update_cp_with_continuation_byte(cp, c);
+
+			*out++ = cp;
+			break;
+		case 4:
+			cp = c & 0b00000111;
+
+			// processing second byte
+			if (unlikely(++i == last)) {
+				*out++ = REP_CH;
+				goto out_of_u8_loop;
+			}
+			c = *i;
+			if (unlikely(is_not_continuation_byte(c))) {
+				// sequence too short error
+				--i;
+				*out++ = REP_CH;
+				break;
+			}
+			min_rep_err = cp == 0 && (c & 0b00110000) == 0;
+			if (min_rep_err) {
+				*out++ = REP_CH;
+				break;
+			}
+			update_cp_with_continuation_byte(cp, c);
+
+			// proccesing third byte
+			if (unlikely(++i == last)) {
+				*out++ = REP_CH;
+				goto out_of_u8_loop;
+			}
+			c = *i;
+			if (unlikely(is_not_continuation_byte(c))) {
+				// sequence too short error
+				--i;
+				*out++ = REP_CH;
+				break;
+			}
+			update_cp_with_continuation_byte(cp, c);
+
+			// proccesing fourth byte
+			if (unlikely(++i == last)) {
+				*out++ = REP_CH;
+				goto out_of_u8_loop;
+			}
+			c = *i;
+			if (unlikely(is_not_continuation_byte(c))) {
+				// sequence too short error
+				--i;
+				*out++ = REP_CH;
+				break;
+			}
+			update_cp_with_continuation_byte(cp, c);
+
+			*out++ = cp;
+			break;
+		default:
 			*out++ = REP_CH;
-			u8.cp = 0;
+			break;
 		}
 	}
-	if (unlikely(u8.state & 3))
-		*out++ = REP_CH;
+out_of_u8_loop:
 	return out;
 }
 
@@ -189,16 +236,6 @@ auto decode_utf8(const std::string& s) -> std::u32string
 	auto last = decode_utf8(begin(s), end(s), begin(ret));
 	ret.erase(last, ret.end());
 	return ret;
-}
-
-auto inline utf8_validate_dfa(unsigned char state, char in) -> unsigned char
-{
-	auto clz = count_leading_ones(in);
-	state = next_state2[state][clz];
-	if (unlikely(minimal_representation_error(in, clz))) {
-		state = 4;
-	}
-	return state;
 }
 
 auto validate_utf8(const std::string& s) -> bool
