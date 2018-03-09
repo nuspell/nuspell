@@ -252,7 +252,7 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			cerr << "Nuspell error: missing flag\n";
 			break;
 		}
-		auto u32flags = decode_utf8(s);
+		auto u32flags = boost::locale::conv::utf_to_utf<char32_t>(s);
 		if (!is_all_bmp(u32flags)) {
 			cerr << "Nuspell warning: flags must be in BMP. "
 			        "Skipping non-BMP\n"

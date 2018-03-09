@@ -203,13 +203,14 @@ auto inline utf8_validate_dfa(unsigned char state, char in) -> unsigned char
 
 auto validate_utf8(const std::string& s) -> bool
 {
-	unsigned char state = 0;
-	for (auto& c : s) {
-		state = utf8_validate_dfa(state, c);
-		if (unlikely(state == 4))
-			return false;
+	using namespace boost::locale::conv;
+	try {
+		utf_to_utf<char32_t>(s, stop);
 	}
-	return state == 0;
+	catch (const conversion_error& e) {
+		return false;
+	}
+	return true;
 }
 
 auto is_ascii(char c) -> bool { return (unsigned char)c <= 127; }
