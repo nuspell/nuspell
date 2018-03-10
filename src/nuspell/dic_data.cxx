@@ -124,7 +124,7 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 
 auto Dic_Data::lookup(const string& word) -> Flag_Set*
 {
-	auto&& kv = words.find(word);
+	auto kv = words.find(word);
 	if (kv != end(words))
 		return &kv->second;
 	return nullptr;
@@ -132,7 +132,7 @@ auto Dic_Data::lookup(const string& word) -> Flag_Set*
 
 auto Dic_Data::lookup(const string& word) const -> const Flag_Set*
 {
-	auto&& kv = words.find(word);
+	auto kv = words.find(word);
 	if (kv != end(words))
 		return &kv->second;
 	return nullptr;

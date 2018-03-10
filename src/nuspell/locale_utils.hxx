@@ -84,14 +84,9 @@ auto to_dict_encoding(const std::basic_string<FromCharT>& from)
 	return utf_to_utf<char>(from);
 }
 
-template <
-    class FromStr,
-    class = std::enable_if_t<std::is_same<
-        typename std::remove_reference_t<FromStr>::value_type, char>::value>>
-auto&& to_dict_encoding(FromStr&& from)
-{
-	return std::forward<FromStr>(from);
-}
+inline auto& to_dict_encoding(std::string& from) { return from; }
+inline auto& to_dict_encoding(const std::string& from) { return from; }
+inline auto to_dict_encoding(std::string&& from) { return std::move(from); }
 
 template <class ToCharT,
           class = std::enable_if_t<!std::is_same<ToCharT, char>::value>>
@@ -101,52 +96,24 @@ auto from_dict_to_wide_encoding(const std::string& from)
 	return utf_to_utf<ToCharT>(from);
 }
 
-template <class ToCharT, class FromStr,
+template <class ToCharT,
           class = std::enable_if_t<std::is_same<ToCharT, char>::value>>
-auto&& from_dict_to_wide_encoding(FromStr&& from)
+auto& from_dict_to_wide_encoding(std::string& from)
 {
-	return std::forward<FromStr>(from);
+	return from;
 }
-
-#if 0
-
-template <
-    class ToCharT, class FromStr,
-    class = std::enable_if_t<std::is_same<
-        typename std::remove_reference_t<FromStr>::value_type, ToCharT>::value>>
-auto convert_encoding(FromStr&& from, std::basic_string<ToCharT>& to)
+template <class ToCharT,
+          class = std::enable_if_t<std::is_same<ToCharT, char>::value>>
+auto& from_dict_to_wide_encoding(const std::string& from)
 {
-	to = std::forward(from);
+	return from;
 }
-
-template <
-    class ToCharT, class FromCharT,
-    class = std::enable_if_t<false == std::is_same<FromCharT, ToCharT>::value>>
-auto convert_encoding(const std::basic_string<FromCharT>& from,
-                      std::basic_string<ToCharT>& to)
+template <class ToCharT,
+          class = std::enable_if_t<std::is_same<ToCharT, char>::value>>
+auto from_dict_to_wide_encoding(std::string&& from)
 {
-	using namespace boost::locale::conv;
-	to = utf_to_utf<ToCharT>(from);
+	return from;
 }
-
-template <
-    class ToCharT, class FromStr,
-    class = std::enable_if_t<std::is_same<
-        typename std::remove_reference_t<FromStr>::value_type, ToCharT>::value>>
-auto&& convert_encoding(FromStr&& from)
-{
-	return std::forward<FromStr>(from);
-}
-
-template <
-    class ToCharT, class FromCharT,
-    class = std::enable_if_t<false == std::is_same<FromCharT, ToCharT>::value>>
-auto convert_encoding(const std::basic_string<FromCharT>& from)
-{
-	using namespace boost::locale::conv;
-	return utf_to_utf<ToCharT>(from);
-}
-#endif
 
 struct Locale_Input {
 	auto static cvt_for_byte_dict(const std::string& in,
@@ -206,13 +173,10 @@ struct Unicode_Input {
 };
 
 struct Same_As_Dict_Input {
-	template <class Str,
-	          class = std::enable_if_t<std::is_same<
-	              typename std::remove_reference<Str>, std::string>::value>>
-	auto&& cvt_for_byte_dict(Str&& in)
-	{
-		return std::forward<Str>(in);
-	}
+	auto& cvt_for_byte_dict(std::string& in) { return in; }
+	auto& cvt_for_byte_dict(const std::string& in) { return in; }
+	auto cvt_for_byte_dict(std::string&& in) { return std::move(in); }
+
 	auto cvt_for_u8_dict(const std::string& in)
 	{
 		using namespace boost::locale::conv;
