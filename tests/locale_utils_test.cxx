@@ -18,6 +18,7 @@
 
 #include "catch.hpp"
 
+#include <algorithm>
 #include <iostream>
 
 #include "../src/nuspell/locale_utils.hxx"
@@ -89,4 +90,11 @@ TEST_CASE("header locale_utils", "[locale_utils]")
 	{
 		CHECK(u"ABC" == u32_to_ucs2_skip_non_bmp(U"ABC"));
 	}
+}
+
+TEST_CASE("boost locale has icu", "[locale_utils]")
+{
+	using lbm = boost::locale::localization_backend_manager;
+	auto v = lbm::global().get_all_backends();
+	CHECK(std::find(v.begin(), v.end(), "icu") != v.end());
 }

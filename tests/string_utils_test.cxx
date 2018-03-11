@@ -92,6 +92,7 @@ TEST_CASE("method split_on_whitespace", "[string_utils]")
 	CHECK(exp == out);
 }
 
+#if 0
 TEST_CASE("method to_upper", "[string_utils]")
 {
 	// Major note here. boost::locale::to_upper is different
@@ -273,6 +274,7 @@ TEST_CASE("method to_title", "[string_utils]")
 
 	// TODO Add some Arabic and Hebrew examples.
 }
+#endif
 
 TEST_CASE("method classify_casing", "[string_utils]")
 {
