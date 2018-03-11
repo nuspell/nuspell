@@ -26,10 +26,10 @@
 namespace nuspell {
 
 enum Spell_Result {
-	BAD_WORD /*!< word is spelled incorrectly */,
-	GOOD_WORD /*!< word is spelled correctly */,
-	AFFIXED_GOOD_WORD /*!< affixed word is spelled correctly */,
-	COMPOUND_GOOD_WORD /*!< compound word is spelled correctly */
+	BAD_WORD /**< word is spelled incorrectly */,
+	GOOD_WORD /**< word is spelled correctly */,
+	AFFIXED_GOOD_WORD /**< affixed word is spelled correctly */,
+	COMPOUND_GOOD_WORD /**< compound word is spelled correctly */
 };
 
 class Dictionary {

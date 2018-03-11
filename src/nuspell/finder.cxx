@@ -68,8 +68,8 @@ const auto SEPARATORS = "/";
 /**
  * Gets the default search paths.
  *
- * @param[in,out] out a vector to which append default search paths.
- * @return The vector with appended default search paths.
+ * @param out Output iterator, begin of the output range.
+ * @return End of the output range.
  */
 template <class OutIt>
 auto get_default_search_paths(OutIt out) -> OutIt
@@ -360,8 +360,8 @@ struct Globber {
 /**
  * Gets the Mozilla search paths.
  *
- * @param[in,out] out a vector to which append Mozilla paths.
- * @return The vector with appended Mozilla paths.
+ * @param out Output iterator, begin of the output range.
+ * @return End of the output range.
  */
 template <class OutIt>
 auto get_mozilla_paths(OutIt out) -> OutIt
@@ -441,8 +441,8 @@ auto Finder::add_mozilla_paths() -> void
 /**
  * Gets the LibreOffice search paths.
  *
- * @param[in,out] out a vector to which append LibreOffice paths.
- * @return The vector with appended LibreOffice paths.
+ * @param out Output iterator, begin of the output range.
+ * @return End of the output range.
  */
 template <class OutIt>
 auto get_libreoffice_paths(OutIt out) -> OutIt
@@ -516,8 +516,8 @@ auto Finder::add_libreoffice_paths() -> void
 /**
  * Gets the Apache OpenOffice search paths.
  *
- * @param[in,out] out a vector to which append Apache OpenOffice paths.
- * @return The vector with appended Apache OpenOffice paths.
+ * @param out Output iterator, begin of the output range.
+ * @return End of the output range.
  */
 template <class OutIt>
 auto get_apacheopenoffice_paths(OutIt out) -> OutIt
@@ -593,8 +593,9 @@ auto Finder::add_apacheopenoffice_paths() -> void
 /**
  * Searches path for dictionaries.
  *
- * @param dir TODO.
- * @param[in,out] out TODO.
+ * @param dir directory path.
+ * @param out output iter where to append the found dictionary names.
+ * @return end of the output range
  */
 template <class OutIt>
 auto search_path_for_dicts(const string& dir, OutIt out) -> OutIt
@@ -653,10 +654,10 @@ auto Finder::search_dictionaries() -> void
 }
 
 /**
- * Gets the directory.
+ * Gets the dictionary.
  *
- * @param dict TODO.
- * @return the TODO.
+ * @param dict name or path of dictionary without the trailing .aff/.dic.
+ * @return the full path to dictionary or empty if does not exists.
  */
 auto Finder::get_dictionary(const string& dict) const -> string
 {

@@ -47,10 +47,10 @@ class Encoding {
 };
 
 enum Flag_Type {
-	FLAG_SINGLE_CHAR /*!< single-character flag, e.g. for "a" */,
-	FLAG_DOUBLE_CHAR /*!< double-character flag, e.g for "aa" */,
-	FLAG_NUMBER /*!< numerical flag, e.g. for 61 */,
-	FLAG_UTF8 /*!< UTF-8 flag, e.g. for "á" */
+	FLAG_SINGLE_CHAR /**< single-character flag, e.g. for "a" */,
+	FLAG_DOUBLE_CHAR /**< double-character flag, e.g for "aa" */,
+	FLAG_NUMBER /**< numerical flag, e.g. for 61 */,
+	FLAG_UTF8 /**< UTF-8 flag, e.g. for "á" */
 };
 
 template <class CharT>

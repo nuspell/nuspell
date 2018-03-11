@@ -39,9 +39,9 @@ namespace nuspell {
  *
  * @param s string to split.
  * @param sep seperator to split on.
- * @param[in,out] out start of the output range where separated strings are
+ * @param out start of the output range where separated strings are
  * appended.
- * @return The start of the output range where separated strings are appended.
+ * @return The end of the output range where separated strings are appended.
  */
 template <class ChT, class Tr, class Al, class SepT, class OutIt>
 auto split_on_any_of(const std::basic_string<ChT, Tr, Al>& s, const SepT& sep,
@@ -68,7 +68,7 @@ auto split_on_any_of(const std::basic_string<ChT, Tr, Al>& s, const SepT& sep,
  *
  * @param s string to split.
  * @param sep char that acts as separator to split on.
- * @param[in,out] out start of the output range where separated strings are
+ * @param out start of the output range where separated strings are
  * appended.
  * @return The iterator that indicates the end of the output range.
  */
@@ -83,9 +83,9 @@ auto split(const std::basic_string<ChT, Tr, Al>& s, ChT sep, OutIt out)
  *
  * @param s string to split.
  * @param sep seperator to split on.
- * @param[in,out] out start of the output range where separated strings are
+ * @param out start of the output range where separated strings are
  * appended.
- * @return The start of the output range where separated strings are appended.
+ * @return The end of the output range where separated strings are appended.
  */
 template <class ChT, class Tr, class Al, class OutIt>
 auto split(const std::basic_string<ChT, Tr, Al>& s,
@@ -107,9 +107,9 @@ auto split(const std::basic_string<ChT, Tr, Al>& s,
  *
  * @param s string to split.
  * @param sep seperator to split on.
- * @param[in,out] out start of the output range where separated strings are
+ * @param out start of the output range where separated strings are
  * appended.
- * @return The start of the output range where separated strings are appended.
+ * @return The end of the output range where separated strings are appended.
  */
 template <class ChT, class Tr, class Al, class OutIt>
 auto split(const std::basic_string<ChT, Tr, Al>& s, const ChT* sep, OutIt out)
@@ -156,7 +156,7 @@ auto split_first(const std::basic_string<CharT>& s, const CharOrStr& sep)
  * Python's split called without separator argument.
  *
  * @param s string to split.
- * @param[in,out] out start of the output range where separated strings are
+ * @param out start of the output range where separated strings are
  * appended.
  * @param loc locale object that takes care of what is whitespace.
  * @return The iterator that indicates the end of the output range.
@@ -202,11 +202,11 @@ auto split_on_whitespace_v(const std::basic_string<CharT>& s,
  * Casing type enum, ignoring neutral case characters.
  */
 enum class Casing {
-	SMALL /*!< all lower case or neutral case, e.g. "lowercase" or "123" */,
-	INIT_CAPITAL /*!< start upper case, rest lower case, e.g. "InitCap" */,
-	ALL_CAPITAL /*!< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
-	CAMEL /*!< camel case, start lower case, e.g. "camelCase" */,
-	PASCAL /*!< pascal case, start upper case, e.g. "PascalCase" */
+	SMALL /**< all lower case or neutral case, e.g. "lowercase" or "123" */,
+	INIT_CAPITAL /**< start upper case, rest lower case, e.g. "InitCap" */,
+	ALL_CAPITAL /**< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
+	CAMEL /**< camel case, start lower case, e.g. "camelCase" */,
+	PASCAL /**< pascal case, start upper case, e.g. "PascalCase" */
 };
 
 /**
