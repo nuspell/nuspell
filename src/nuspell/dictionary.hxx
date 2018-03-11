@@ -23,6 +23,8 @@
 #include <fstream>
 #include <locale>
 
+#include <boost/optional.hpp>
+
 namespace nuspell {
 
 enum Spell_Result {
@@ -48,6 +50,62 @@ class Dictionary {
 	auto spell_casing(std::basic_string<CharT>& s) -> Spell_Result;
 	template <class CharT>
 	auto checkword(std::basic_string<CharT>& s) -> const Flag_Set*;
+
+	/**
+	 * @brief strip_prefix_only
+	 * @param s derived word with affixes
+	 * @return if found, root word + prefix
+	 */
+	template <class CharT>
+	auto strip_prefix_only(std::basic_string<CharT>& s) -> boost::optional<
+	    std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	               const Prefix<CharT>&>>;
+
+	/**
+	 * @brief strip_suffix_only
+	 * @param s derived word with affixes
+	 * @return if found, root word + suffix
+	 */
+	template <class CharT>
+	auto strip_suffix_only(std::basic_string<CharT>& s) -> boost::optional<
+	    std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	               const Suffix<CharT>&>>;
+
+	/**
+	 * @brief strip_prefix_then_suffix
+	 *
+	 * This accepts a derived word that was formed first by adding
+	 * suffix then prefix to the root. The stripping is in reverse.
+	 *
+	 * @param s derived word with affixes
+	 * @return if found, root word + suffix + prefix
+	 */
+	template <class CharT>
+	auto strip_prefix_then_suffix(std::basic_string<CharT>& s)
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	                   const Suffix<CharT>&, const Prefix<CharT>&>>;
+
+	/**
+	 * @brief strip_suffix_then_prefix
+	 *
+	 * This accepts a derived word that was formed first by adding
+	 * prefix then suffix to the root. The stripping is in reverse.
+	 *
+	 * @param s derived word with prefix and suffix
+	 * @return if found, root word + prefix + suffix
+	 */
+	template <class CharT>
+	auto strip_suffix_then_prefix(std::basic_string<CharT>& s)
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	                   const Prefix<CharT>&, const Suffix<CharT>&>>;
+
+	template <class CharT>
+	auto strip_suffix_then_suffix(std::basic_string<CharT>& s)
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	                   const Suffix<CharT>&, const Suffix<CharT>&>>;
 
       public:
 	Dictionary()
