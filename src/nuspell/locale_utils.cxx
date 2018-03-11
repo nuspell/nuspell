@@ -190,6 +190,11 @@ auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
 				break;
 			}
 			update_cp_with_continuation_byte(cp, c);
+			if (unlikely(cp > 0x10f)) {
+				// cp larger that 0x10FFFF
+				*out++ = REP_CH;
+				break;
+			}
 
 			// proccesing third byte
 			if (unlikely(++i == last)) {
