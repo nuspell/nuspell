@@ -32,14 +32,16 @@ TEST_CASE("class dictionary", "[dictionary]")
 	// set executable ch.catch
 	// and set working directory to %{buildDir}/tests
 	// (Probably move this info to the wiki and/or README.)
+	//
+	// This type of test is maybe better suited via the cmd-line tool
 	auto dictionary = Dictionary("v1cmdline/base");
 
 	SECTION("method spell")
 	{
 		// correct word without affixes
-		CHECK(GOOD_WORD == dictionary.spell("sawyer"));
+		// CHECK(GOOD_WORD == dictionary.spell("sawyer"));
 		// correct word with unused prefix U
-		CHECK(GOOD_WORD == dictionary.spell("created"));
+		// CHECK(GOOD_WORD == dictionary.spell("created"));
 		// correct word with used suffix D
 		// CHECK(GOOD_WORD == dictionary.spell("looked"));
 		// incorrect word with used suffix D

@@ -25,15 +25,4 @@
 using namespace std;
 using namespace nuspell;
 
-TEST_CASE("class Finder", "[finder]")
-{
-	auto f = Finder();
-	//	f.add_default_paths();
-	//	f.add_libreoffice_paths();
-	//	f.add_mozilla_paths();
-	//	f.add_apacheopenoffice_paths();
-	f.search_dictionaries();
-	f.get_all_paths();
-	f.get_all_dictionaries();
-	//	CHECK(0 == 0);
-}
+TEST_CASE("class Finder", "[finder]") { auto f = Finder(); }
