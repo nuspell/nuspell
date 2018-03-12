@@ -72,15 +72,6 @@ TEST_CASE("method latin1_to_ucs2", "[locale_utils]")
 	CHECK(u"Ӥ日本に" != latin1_to_ucs2("Ӥ日本に"s));
 }
 
-TEST_CASE("method latin1_to_u32", "[locale_utils]")
-{
-	CHECK(U"" == latin1_to_u32(""s));
-	CHECK(U"abc~" == latin1_to_u32("abc~"s));
-	// QUESTION Is next line OK?
-	CHECK(U"²¿ýþÿ" != latin1_to_u32("²¿ýþÿ"s));
-	CHECK(U"Ӥ日本に" != latin1_to_u32("Ӥ日本に"s));
-}
-
 TEST_CASE("method is_all_bmp", "[locale_utils]")
 {
 	CHECK(true == is_all_bmp(U"abcýþÿӤ"));

@@ -275,14 +275,6 @@ auto latin1_to_ucs2(const std::string& s) -> std::u16string
 	return ret;
 }
 
-auto latin1_to_u32(const std::string& s) -> std::u32string
-{
-	// UNUSED FUNCTION, maybe remove
-	u32string ret(s.size(), 0);
-	transform(s.begin(), s.end(), ret.begin(), widen_latin1<char32_t>);
-	return ret;
-}
-
 auto is_bmp(char32_t c) -> bool { return c <= 0xFFFF; }
 
 auto is_all_bmp(const std::u32string& s) -> bool

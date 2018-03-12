@@ -63,7 +63,6 @@ auto is_ascii(char c) -> bool;
 auto is_all_ascii(const std::string& s) -> bool;
 
 auto latin1_to_ucs2(const std::string& s) -> std::u16string;
-auto latin1_to_u32(const std::string& s) -> std::u32string;
 
 auto is_bmp(char32_t c) -> bool;
 auto is_all_bmp(const std::u32string& s) -> bool;
