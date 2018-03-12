@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <iterator>
 #include <locale>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -245,6 +246,22 @@ auto classify_casing(const std::basic_string<CharT>& s,
 		return Casing::PASCAL;
 	else
 		return Casing::CAMEL;
+}
+/**
+ * Tests if word is a number.
+ *
+ * @param s word for which casing is determined.
+ * @return The boolean indicating if it is a number or not.
+ */
+template <class CharT>
+auto is_number(const std::basic_string<CharT>& s) -> bool
+{
+	using namespace std;
+	// in the line below ,.- between [] could be extended with +
+	return regex_match(s, regex("[\\d.,-]*\\d")) &&
+	       !regex_match(s, regex(".*[.,-]{2}.*"));
+	// in the line above "[\\d.,-]+" should be investaged to be better or
+	// not
 }
 }
 #endif

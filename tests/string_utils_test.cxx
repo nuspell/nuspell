@@ -289,3 +289,53 @@ TEST_CASE("method classify_casing", "[string_utils]")
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase"s));
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s));
 }
+
+TEST_CASE("method is_number", "[string_utils]")
+{
+	CHECK(false == is_number(""s));
+	CHECK(false == is_number("a"s));
+	CHECK(false == is_number("1a"s));
+	CHECK(false == is_number("a1"s));
+	CHECK(false == is_number(".a"s));
+	CHECK(false == is_number("a."s));
+	CHECK(false == is_number(",a"s));
+	CHECK(false == is_number("a,"s));
+	CHECK(false == is_number("-a"s));
+	CHECK(false == is_number("a-"s));
+
+	CHECK(false == is_number("1..1"s));
+	CHECK(false == is_number("1,,1"s));
+	CHECK(false == is_number("1--1"s));
+
+	CHECK(false == is_number("1.,1"s));
+	CHECK(false == is_number("1.-1"s));
+	CHECK(false == is_number("1,.1"s));
+	CHECK(false == is_number("1,-1"s));
+	CHECK(false == is_number("1-.1"s));
+	CHECK(false == is_number("1-,1"s));
+
+	// should this be true for wider mathcing? old code results in false
+	CHECK(false == is_number("-.1"s));
+	CHECK(false == is_number("1."s));
+	CHECK(false == is_number("1,"s));
+
+	CHECK(false == is_number("1-"s));
+	CHECK(false == is_number("1.1-"s));
+	CHECK(false == is_number("1,1-"s));
+
+	CHECK(true == is_number("1"s));
+	CHECK(true == is_number("-1"s));
+	CHECK(true == is_number("1.1"s));
+	CHECK(true == is_number("-1.1"s));
+	CHECK(true == is_number("1,1"s));
+	CHECK(true == is_number("-1,1"s));
+
+	CHECK(true == is_number("1,1111"s));
+	CHECK(true == is_number("-1,1111"s));
+	CHECK(true == is_number("1,1111.00"s));
+	CHECK(true == is_number("-1,1111.00"s));
+	CHECK(true == is_number("1.1111"s));
+	CHECK(true == is_number("-1.1111"s));
+	CHECK(true == is_number("1.1111,00"s));
+	CHECK(true == is_number("-1.1111,00"s));
+}
