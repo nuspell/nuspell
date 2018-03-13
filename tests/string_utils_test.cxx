@@ -314,7 +314,6 @@ TEST_CASE("method is_number", "[string_utils]")
 	CHECK(false == is_number("1-.1"s));
 	CHECK(false == is_number("1-,1"s));
 
-	// should this be true for wider mathcing? old code results in false
 	CHECK(false == is_number("-.1"s));
 	CHECK(false == is_number("1."s));
 	CHECK(false == is_number("1,"s));

@@ -33,6 +33,21 @@
 
 namespace nuspell {
 
+#define LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
+
+template <class CharT>
+auto constexpr literal_choose(const char* narrow, const wchar_t* wide);
+template <>
+auto constexpr literal_choose<char>(const char* narrow, const wchar_t*)
+{
+	return narrow;
+}
+template <>
+auto constexpr literal_choose<wchar_t>(const char*, const wchar_t* wide)
+{
+	return wide;
+}
+
 /**
  * Splits string on set of single char seperators.
  *
@@ -257,11 +272,9 @@ template <class CharT>
 auto is_number(const std::basic_string<CharT>& s) -> bool
 {
 	using namespace std;
-	// in the line below ,.- between [] could be extended with +
-	return regex_match(s, regex("[\\d.,-]*\\d")) &&
-	       !regex_match(s, regex(".*[.,-]{2}.*"));
-	// in the line above "[\\d.,-]+" should be investaged to be better or
-	// not
+	auto number_pat = LITERAL(CharT, R"(-?\d([,.-]?\d)*)");
+	auto number_re = basic_regex<CharT>(number_pat);
+	return regex_match(s, number_re);
 }
 }
 #endif
