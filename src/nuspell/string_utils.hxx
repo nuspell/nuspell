@@ -59,11 +59,11 @@ auto constexpr literal_choose<wchar_t>(const char*, const wchar_t* wide)
  * appended.
  * @return The end of the output range where separated strings are appended.
  */
-template <class ChT, class Tr, class Al, class SepT, class OutIt>
-auto split_on_any_of(const std::basic_string<ChT, Tr, Al>& s, const SepT& sep,
+template <class CharT, class SepT, class OutIt>
+auto split_on_any_of(const std::basic_string<CharT>& s, const SepT& sep,
                      OutIt out)
 {
-	using size_type = typename std::basic_string<ChT, Tr, Al>::size_type;
+	using size_type = typename std::basic_string<CharT>::size_type;
 	size_type i1 = 0;
 	size_type i2;
 	do {
@@ -88,8 +88,8 @@ auto split_on_any_of(const std::basic_string<ChT, Tr, Al>& s, const SepT& sep,
  * appended.
  * @return The iterator that indicates the end of the output range.
  */
-template <class ChT, class Tr, class Al, class OutIt>
-auto split(const std::basic_string<ChT, Tr, Al>& s, ChT sep, OutIt out)
+template <class CharT, class OutIt>
+auto split(const std::basic_string<CharT>& s, CharT sep, OutIt out)
 {
 	return split_on_any_of(s, sep, out);
 }
@@ -103,11 +103,11 @@ auto split(const std::basic_string<ChT, Tr, Al>& s, ChT sep, OutIt out)
  * appended.
  * @return The end of the output range where separated strings are appended.
  */
-template <class ChT, class Tr, class Al, class OutIt>
-auto split(const std::basic_string<ChT, Tr, Al>& s,
-           const std::basic_string<ChT, Tr, Al>& sep, OutIt out)
+template <class CharT, class OutIt>
+auto split(const std::basic_string<CharT>& s,
+           const std::basic_string<CharT>& sep, OutIt out)
 {
-	using size_type = typename std::basic_string<ChT, Tr, Al>::size_type;
+	using size_type = typename std::basic_string<CharT>::size_type;
 	size_type i1 = 0;
 	size_type i2;
 	do {
@@ -127,10 +127,10 @@ auto split(const std::basic_string<ChT, Tr, Al>& s,
  * appended.
  * @return The end of the output range where separated strings are appended.
  */
-template <class ChT, class Tr, class Al, class OutIt>
-auto split(const std::basic_string<ChT, Tr, Al>& s, const ChT* sep, OutIt out)
+template <class CharT, class OutIt>
+auto split(const std::basic_string<CharT>& s, const CharT* sep, OutIt out)
 {
-	return split(s, std::basic_string<ChT, Tr, Al>(sep), out);
+	return split(s, std::basic_string<CharT>(sep), out);
 }
 
 /**
@@ -142,9 +142,9 @@ auto split(const std::basic_string<ChT, Tr, Al>& s, const ChT* sep, OutIt out)
  * @param sep separator to split on.
  * @param[out] v vector with separated strings. The vector is first cleared.
  */
-template <class ChT, class Tr, class Al, class CharOrStr>
-auto split_v(const std::basic_string<ChT, Tr, Al>& s, const CharOrStr& sep,
-             std::vector<std::basic_string<ChT, Tr, Al>>& v)
+template <class CharT, class CharOrStr>
+auto split_v(const std::basic_string<CharT>& s, const CharOrStr& sep,
+             std::vector<std::basic_string<CharT>>& v)
 {
 	v.clear();
 	split(s, sep, std::back_inserter(v));
@@ -262,6 +262,7 @@ auto classify_casing(const std::basic_string<CharT>& s,
 	else
 		return Casing::CAMEL;
 }
+
 /**
  * Tests if word is a number.
  *

@@ -267,11 +267,11 @@ template class Char_Eraser<wchar_t>;
  * function nuspell::parse_affix and should not be double checked here for
  * reasons of optimization.
  *
- * @param flag TODO.
- * @param cross_product TODO.
- * @param strip TODO, see also note above.
- * @param append TODO.
- * @param condition TODO.
+ * @param flag
+ * @param cross_product
+ * @param strip
+ * @param append
+ * @param condition
  */
 template <class CharT>
 Prefix<CharT>::Prefix(char16_t flag, bool cross_product, const StrT& strip,
@@ -350,8 +350,7 @@ auto Prefix<CharT>::to_derived_copy(StrT word) const -> StrT
 template <class CharT>
 auto Prefix<CharT>::check_condition(const StrT& word) const -> bool
 {
-	auto m = match_results<typename StrT::const_iterator>();
-	return regex_search(word, m, condition);
+	return regex_search(word, condition);
 }
 
 /**
@@ -362,11 +361,11 @@ auto Prefix<CharT>::check_condition(const StrT& word) const -> bool
  * function nuspell::parse_affix and should not be double checked here for
  * reasons of optimization.
  *
- * @param flag TODO.
- * @param cross_product TODO.
- * @param strip TODO, see also note above.
- * @param append TODO.
- * @param condition TODO.
+ * @param flag
+ * @param cross_product
+ * @param strip
+ * @param append
+ * @param condition
  */
 template <class CharT>
 Suffix<CharT>::Suffix(char16_t flag, bool cross_product, const StrT& strip,
@@ -443,8 +442,7 @@ auto Suffix<CharT>::to_derived_copy(StrT word) const -> StrT
 template <class CharT>
 auto Suffix<CharT>::check_condition(const StrT& word) const -> bool
 {
-	auto m = match_results<typename StrT::const_iterator>();
-	return regex_search(word, m, condition);
+	return regex_search(word, condition);
 }
 
 template class Prefix<char>;
