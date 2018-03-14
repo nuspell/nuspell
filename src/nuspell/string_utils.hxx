@@ -214,6 +214,18 @@ auto split_on_whitespace_v(const std::basic_string<CharT>& s,
 	split_on_whitespace(s, back_inserter(v), loc);
 }
 
+template <class CharT>
+auto& erase_chars(std::basic_string<CharT>& s,
+                  const std::basic_string<CharT>& erase_chars)
+{
+	auto is_erasable = [&](CharT c) {
+		return erase_chars.find(c) != erase_chars.npos;
+	};
+	auto it = remove_if(begin(s), end(s), is_erasable);
+	s.erase(it, end(s));
+	return s;
+}
+
 /**
  * Casing type enum, ignoring neutral case characters.
  */

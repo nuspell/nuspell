@@ -18,9 +18,6 @@
 
 #include "structures.hxx"
 
-#include <algorithm>
-#include <type_traits>
-
 #include <boost/utility/string_view.hpp>
 
 namespace nuspell {
@@ -222,42 +219,6 @@ auto Break_Table<CharT>::operator=(Table_Str&& v) -> Break_Table&
 
 template class Break_Table<char>;
 template class Break_Table<wchar_t>;
-
-template <class CharT>
-auto Char_Eraser<CharT>::operator=(const SetT& e) -> Char_Eraser&
-{
-	erase_chars = e;
-	return *this;
-}
-
-template <class CharT>
-auto Char_Eraser<CharT>::operator=(SetT&& e) -> Char_Eraser&
-{
-	erase_chars = move(e);
-	return *this;
-}
-
-template <class CharT>
-auto Char_Eraser<CharT>::erase(StrT& s) const -> StrT&
-{
-	auto is_erasable = [&](auto c) { return erase_chars.exists(c); };
-	auto it = remove_if(begin(s), end(s), is_erasable);
-	s.erase(it, end(s));
-	return s;
-}
-
-template <class CharT>
-auto Char_Eraser<CharT>::erase_copy(const StrT& s) const -> StrT
-{
-	StrT ret(0, s.size());
-	auto is_erasable = [&](auto c) { return erase_chars.exists(c); };
-	auto it = remove_copy_if(begin(s), end(s), begin(ret), is_erasable);
-	ret.erase(it, end(ret));
-	return ret;
-}
-
-template class Char_Eraser<char>;
-template class Char_Eraser<wchar_t>;
 
 /**
  * Constructs a prefix entry.

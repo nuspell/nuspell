@@ -22,15 +22,13 @@
 #include <algorithm>
 #include <regex>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
-
-#include <boost/range/iterator_range_core.hpp>
 
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index_container.hpp>
+#include <boost/range/iterator_range_core.hpp>
 
 namespace nuspell {
 
@@ -354,23 +352,6 @@ class Break_Table {
 		return {const_iterator(end_word_breaks_last_it),
 		        std::end(table)};
 	}
-};
-
-template <class CharT>
-class Char_Eraser {
-      public:
-	using SetT = String_Set<CharT>;
-	using StrT = std::basic_string<CharT>;
-
-      private:
-	SetT erase_chars;
-
-      public:
-	auto operator=(const SetT& e) -> Char_Eraser&;
-	auto operator=(SetT&& e) -> Char_Eraser&;
-
-	auto erase(StrT& s) const -> StrT&;
-	auto erase_copy(const StrT& s) const -> StrT;
 };
 
 template <class CharT>

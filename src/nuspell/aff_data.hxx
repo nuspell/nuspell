@@ -19,7 +19,7 @@
 #ifndef HUNSPELL_AFF_MANAGER_HXX
 #define HUNSPELL_AFF_MANAGER_HXX
 
-#include <istream>
+#include <iosfwd>
 #include <string>
 #include <utility>
 #include <vector>
@@ -58,7 +58,7 @@ struct Aff_Structures {
 	Substr_Replacer<CharT> input_substr_replacer;
 	Substr_Replacer<CharT> output_substr_replacer;
 	Break_Table<CharT> break_table;
-	Char_Eraser<CharT> ignored_chars;
+	String_Set<CharT> ignored_chars;
 };
 
 struct Affix {

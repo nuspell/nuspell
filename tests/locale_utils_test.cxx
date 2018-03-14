@@ -23,6 +23,8 @@
 
 #include "../src/nuspell/locale_utils.hxx"
 
+#include <boost/locale/localization_backend.hpp>
+
 using namespace std;
 using namespace std::literals::string_literals;
 using namespace nuspell;

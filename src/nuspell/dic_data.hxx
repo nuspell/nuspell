@@ -20,7 +20,7 @@
 #define HUNSPELL_DIC_MANAGER_HXX
 
 #include "aff_data.hxx"
-#include <istream>
+#include <iosfwd>
 #include <string>
 #include <unordered_map>
 #include <vector>

@@ -24,7 +24,8 @@
 #ifndef LOCALE_UTILS_HXX
 #define LOCALE_UTILS_HXX
 
-#include <boost/locale.hpp>
+#include <boost/locale/encoding_utf.hpp>
+#include <boost/locale/info.hpp>
 #include <locale>
 #include <string>
 #include <type_traits>
