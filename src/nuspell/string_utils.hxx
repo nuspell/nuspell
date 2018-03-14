@@ -275,19 +275,7 @@ auto classify_casing(const std::basic_string<CharT>& s,
 		return Casing::CAMEL;
 }
 
-/**
- * Tests if word is a number.
- *
- * @param s word for which casing is determined.
- * @return The boolean indicating if it is a number or not.
- */
 template <class CharT>
-auto is_number(const std::basic_string<CharT>& s) -> bool
-{
-	using namespace std;
-	auto number_pat = LITERAL(CharT, R"(-?\d([,.-]?\d)*)");
-	auto number_re = basic_regex<CharT>(number_pat);
-	return regex_match(s, number_re);
-}
+auto is_number(const std::basic_string<CharT>& s) -> bool;
 }
 #endif

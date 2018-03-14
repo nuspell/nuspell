@@ -70,6 +70,7 @@ auto Substr_Replacer<CharT>::operator=(Table_Pairs&& v) -> Substr_Replacer&
 	return *this;
 }
 
+namespace {
 template <class CharT>
 struct Comparer_Str_Rep {
 
@@ -122,6 +123,7 @@ auto find_match(const typename Substr_Replacer<CharT>::Table_Pairs& t,
 	}
 	return last_match;
 }
+}
 
 template <class CharT>
 auto Substr_Replacer<CharT>::replace(StrT& s) const -> StrT&
@@ -154,11 +156,6 @@ auto Substr_Replacer<CharT>::replace_copy(StrT s) const -> StrT
 
 template class Substr_Replacer<char>;
 template class Substr_Replacer<wchar_t>;
-
-static_assert(is_move_constructible<Substr_Replacer<char>>::value,
-              "Substring_Replacer Not move constructable");
-static_assert(is_move_assignable<Substr_Replacer<char>>::value,
-              "Substring_Replacer Not move assingable");
 
 template <class CharT>
 auto Break_Table<CharT>::order_entries() -> void
