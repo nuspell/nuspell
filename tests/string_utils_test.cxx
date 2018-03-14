@@ -304,30 +304,14 @@ TEST_CASE("method is_number", "[string_utils]")
 	CHECK(false == is_number("a-"s));
 
 	CHECK(false == is_number("1..1"s));
-	CHECK(false == is_number("1,,1"s));
-	CHECK(false == is_number("1--1"s));
-
 	CHECK(false == is_number("1.,1"s));
 	CHECK(false == is_number("1.-1"s));
 	CHECK(false == is_number("1,.1"s));
+	CHECK(false == is_number("1,,1"s));
 	CHECK(false == is_number("1,-1"s));
 	CHECK(false == is_number("1-.1"s));
 	CHECK(false == is_number("1-,1"s));
-
-	CHECK(false == is_number("-.1"s));
-	CHECK(false == is_number("1."s));
-	CHECK(false == is_number("1,"s));
-
-	CHECK(false == is_number("1-"s));
-	CHECK(false == is_number("1.1-"s));
-	CHECK(false == is_number("1,1-"s));
-
-	CHECK(true == is_number("1"s));
-	CHECK(true == is_number("-1"s));
-	CHECK(true == is_number("1.1"s));
-	CHECK(true == is_number("-1.1"s));
-	CHECK(true == is_number("1,1"s));
-	CHECK(true == is_number("-1,1"s));
+	CHECK(false == is_number("1--1"s));
 
 	CHECK(true == is_number("1,1111"s));
 	CHECK(true == is_number("-1,1111"s));
@@ -337,4 +321,34 @@ TEST_CASE("method is_number", "[string_utils]")
 	CHECK(true == is_number("-1.1111"s));
 	CHECK(true == is_number("1.1111,00"s));
 	CHECK(true == is_number("-1.1111,00"s));
+
+	// below needs extra review
+
+	CHECK(true == is_number("1"s));
+	CHECK(true == is_number("-1"s));
+	CHECK(false == is_number("1-"s));
+
+	CHECK(false == is_number("1."s));
+	CHECK(false == is_number("-1."s));
+	CHECK(false == is_number("1.-"s));
+
+	CHECK(false == is_number("1,"s));
+	CHECK(false == is_number("-1,"s));
+	CHECK(false == is_number("1,-"s));
+
+	CHECK(true == is_number("1.1"s));
+	CHECK(true == is_number("-1.1"s));
+	CHECK(false == is_number("1.1-"s));
+
+	CHECK(true == is_number("1,1"s));
+	CHECK(true == is_number("-1,1"s));
+	CHECK(false == is_number("1,1-"s));
+
+	CHECK(false == is_number(".1"s));
+	CHECK(false == is_number("-.1"s));
+	CHECK(false == is_number(".1-"s));
+
+	CHECK(false == is_number(",1"s));
+	CHECK(false == is_number("-,1"s));
+	CHECK(false == is_number(",1-"s));
 }
