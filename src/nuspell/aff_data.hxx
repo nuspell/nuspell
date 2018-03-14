@@ -69,7 +69,7 @@ struct Affix {
 	char16_t flag;
 	bool cross_product;
 	string stripping;
-	string affix;
+	string appending;
 	Flag_Set new_flags;
 	string condition;
 	vector<string> morphological_fields;

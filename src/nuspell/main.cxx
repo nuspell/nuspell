@@ -375,7 +375,7 @@ auto diagnose_dic_and_aff(Aff_Data& aff, Dic_Data& dic)
 	}
 	for (auto& a : aff.suffixes) {
 		cout << (char)a.flag << ' ' << (a.cross_product ? 'Y' : 'N')
-		     << ' ' << a.stripping << ' ' << a.affix
+		     << ' ' << a.stripping << ' ' << a.appending
 		     << (a.new_flags.data().size() ? "/ " : " ") << a.condition;
 		cout << '\n';
 	}

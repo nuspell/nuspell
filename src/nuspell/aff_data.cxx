@@ -332,9 +332,11 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 		in >> elem.stripping;
 		if (elem.stripping == "0")
 			elem.stripping = "";
-		if (read_to_slash_or_space(in, elem.affix)) {
+		if (read_to_slash_or_space(in, elem.appending)) {
 			elem.new_flags = decode_flags(in, line_num, t, enc);
 		}
+		if (elem.appending == "0")
+			elem.appending = "";
 		in >> elem.condition;
 		if (in.fail()) {
 			vec.pop_back();
@@ -728,7 +730,7 @@ void Aff_Data::log(const string& affpath)
 			         << i->flag << std::endl;
 		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0')
 		         << i - prefixes.begin() + 1
-		         << ".appnd@getKey/affix\t\"" << i->affix << "\""
+		         << ".appnd@getKey/affix\t\"" << i->appending << "\""
 		         << std::endl;
 		//		log_file << "pfx/prefixes_" <<
 		// std::setw(3) <<
@@ -753,7 +755,7 @@ void Aff_Data::log(const string& affpath)
 			         << i->flag << std::endl;
 		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
 		         << i - suffixes.begin() + 1
-		         << ".appnd@getKey/affix\t\"" << i->affix << "\""
+		         << ".appnd@getKey/affix\t\"" << i->appending << "\""
 		         << std::endl;
 		// later		log_file << "sfx/suffixes_" <<
 		// std::setw(3)
