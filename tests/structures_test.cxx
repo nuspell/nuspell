@@ -28,6 +28,7 @@ using namespace nuspell;
 
 TEST_CASE("method substring replace copy", "[structures]")
 {
+	using Substring_Replacer = Substr_Replacer<char>;
 	auto rep = Substring_Replacer({{"asd", "zxc"},
 	                               {"as", "rtt"},
 	                               {"a", "A"},

@@ -263,7 +263,6 @@ class String_Set {
 	bool operator>=(const String_Set& rhs) const { return d >= rhs.d; }
 	bool operator>(const String_Set& rhs) const { return d > rhs.d; }
 };
-
 extern template class String_Set<char>;
 extern template class String_Set<wchar_t>;
 extern template class String_Set<char16_t>;
@@ -284,15 +283,26 @@ class Substr_Replacer {
 
       private:
 	Table_Pairs table;
-	void sort_uniq();
+	void sort_uniq(); // implemented in cxx
 
       public:
 	Substr_Replacer() = default;
-	Substr_Replacer(const Table_Pairs& v);
-	Substr_Replacer(Table_Pairs&& v);
+	Substr_Replacer(const Table_Pairs& v) : table(v) { sort_uniq(); }
+	Substr_Replacer(const Table_Pairs&& v) : table(move(v)) { sort_uniq(); }
 
-	auto operator=(const Table_Pairs& v) -> Substr_Replacer&;
-	auto operator=(Table_Pairs&& v) -> Substr_Replacer&;
+	auto& operator=(const Table_Pairs& v)
+	{
+		table = v;
+		sort_uniq();
+		return *this;
+	}
+	auto& operator=(const Table_Pairs&& v)
+	{
+		table = move(v);
+		sort_uniq();
+		return *this;
+	}
+
 	template <class Range>
 	auto operator=(const Range& range) -> Substr_Replacer&
 	{
@@ -301,11 +311,15 @@ class Substr_Replacer {
 		return *this;
 	}
 
-	auto replace(StrT& s) const -> StrT&;
-	auto replace_copy(StrT s) const -> StrT;
+	auto replace(StrT& s) const -> StrT&; // implemented in cxx
+	auto replace_copy(StrT s) const -> StrT
+	{
+		replace(s);
+		return s;
+	}
 };
-using Substring_Replacer = Substr_Replacer<char>;
-using WSubstring_Replacer = Substr_Replacer<wchar_t>;
+extern template class Substr_Replacer<char>;
+extern template class Substr_Replacer<wchar_t>;
 
 template <class CharT>
 class Break_Table {
@@ -320,15 +334,28 @@ class Break_Table {
 	iterator start_word_breaks_last_it;
 	iterator end_word_breaks_last_it;
 
-	auto order_entries() -> void;
+	auto order_entries() -> void; // implemented in cxx
 
       public:
 	Break_Table() = default;
-	Break_Table(const Table_Str& v);
-	Break_Table(Table_Str&& v);
+	Break_Table(const Table_Str& v) : table(v) { order_entries(); }
 
-	auto operator=(const Table_Str& v) -> Break_Table&;
-	auto operator=(Table_Str&& v) -> Break_Table&;
+	Break_Table(Table_Str&& v) : table(move(v)) { order_entries(); }
+
+	auto& operator=(const Table_Str& v)
+	{
+		table = v;
+		order_entries();
+		return *this;
+	}
+
+	auto& operator=(Table_Str&& v)
+	{
+		table = move(v);
+		order_entries();
+		return *this;
+	}
+
 	template <class Range>
 	auto operator=(const Range& range) -> Break_Table&
 	{
@@ -353,6 +380,8 @@ class Break_Table {
 		        std::end(table)};
 	}
 };
+extern template class Break_Table<char>;
+extern template class Break_Table<wchar_t>;
 
 template <class CharT>
 class Prefix {
@@ -403,6 +432,10 @@ class Suffix {
 
 	auto check_condition(const StrT& word) const -> bool;
 };
+extern template class Prefix<char>;
+extern template class Prefix<wchar_t>;
+extern template class Suffix<char>;
+extern template class Suffix<wchar_t>;
 
 using boost::multi_index_container;
 using boost::multi_index::indexed_by;

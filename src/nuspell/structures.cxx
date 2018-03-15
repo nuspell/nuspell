@@ -44,32 +44,6 @@ void Substr_Replacer<CharT>::sort_uniq()
 		table.erase(table.begin());
 }
 
-template <class CharT>
-Substr_Replacer<CharT>::Substr_Replacer(const Table_Pairs& v) : table(v)
-{
-	sort_uniq();
-}
-
-template <class CharT>
-Substr_Replacer<CharT>::Substr_Replacer(Table_Pairs&& v) : table(move(v))
-{
-	sort_uniq();
-}
-template <class CharT>
-auto Substr_Replacer<CharT>::operator=(const Table_Pairs& v) -> Substr_Replacer&
-{
-	table = v;
-	sort_uniq();
-	return *this;
-}
-template <class CharT>
-auto Substr_Replacer<CharT>::operator=(Table_Pairs&& v) -> Substr_Replacer&
-{
-	table = move(v);
-	sort_uniq();
-	return *this;
-}
-
 namespace {
 template <class CharT>
 struct Comparer_Str_Rep {
@@ -147,13 +121,6 @@ auto Substr_Replacer<CharT>::replace(StrT& s) const -> StrT&
 	return s;
 }
 
-template <class CharT>
-auto Substr_Replacer<CharT>::replace_copy(StrT s) const -> StrT
-{
-	replace(s);
-	return s;
-}
-
 template class Substr_Replacer<char>;
 template class Substr_Replacer<wchar_t>;
 
@@ -185,35 +152,6 @@ auto Break_Table<CharT>::order_entries() -> void
 		e.pop_back();
 	}
 }
-
-template <class CharT>
-Break_Table<CharT>::Break_Table(const Table_Str& v) : table(v)
-{
-	order_entries();
-}
-
-template <class CharT>
-Break_Table<CharT>::Break_Table(Table_Str&& v) : table(move(v))
-{
-	order_entries();
-}
-
-template <class CharT>
-auto Break_Table<CharT>::operator=(const Table_Str& v) -> Break_Table&
-{
-	table = v;
-	order_entries();
-	return *this;
-}
-
-template <class CharT>
-auto Break_Table<CharT>::operator=(Table_Str&& v) -> Break_Table&
-{
-	table = move(v);
-	order_entries();
-	return *this;
-}
-
 template class Break_Table<char>;
 template class Break_Table<wchar_t>;
 
