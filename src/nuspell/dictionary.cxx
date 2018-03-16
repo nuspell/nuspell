@@ -17,6 +17,7 @@
  */
 
 #include "dictionary.hxx"
+#include "string_utils.hxx"
 
 #include <boost/algorithm/string/trim.hpp>
 
@@ -64,7 +65,16 @@ auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 	auto& loc = aff_data.locale_aff;
 	auto& d = aff_data.get_structures<CharT>();
 
+	// allow words under maximum length
+	// TODO move definition below to more generic place
+	size_t MAXWORDLENGTH = 100;
+	if (s.size() >= MAXWORDLENGTH)
+		return BAD_WORD;
+
+	// do input conversion (iconv)
 	d.input_substr_replacer.replace(s);
+
+	// clean word from whitespaces and periods
 	boost::trim(s, loc);
 	if (s.empty())
 		return GOOD_WORD;
@@ -73,10 +83,15 @@ auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 	if (s.empty())
 		return GOOD_WORD;
 
-	auto ret = spell_break<CharT>(s);
+	// omit numbers containing common break pattern
+	if (is_number(s))
+		return GOOD_WORD;
+
+	// handle break patterns
+	auto ret = spell_break<CharT>(s, abbreviation);
 	if (!ret && abbreviation) {
 		s += '.';
-		ret = spell_break<CharT>(s);
+		ret = spell_break<CharT>(s, abbreviation);
 	}
 	return ret;
 }
@@ -84,59 +99,93 @@ template auto Dictionary::spell_priv(const string s) -> Spell_Result;
 template auto Dictionary::spell_priv(const wstring s) -> Spell_Result;
 
 template <class CharT>
-auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
+auto Dictionary::spell_break(std::basic_string<CharT>& s, bool a)
+    -> Spell_Result
 {
-	auto res = spell_casing<CharT>(s);
+	// check spelling accoring to case
+	auto res = spell_casing<CharT>(s, a);
 	if (res)
+		// handle forbidden words
+		// TODO aff_data.forbiddenword_flag
 		return res;
 
 	auto& break_table = aff_data.get_structures<CharT>().break_table;
+
+	// handle break pattern at start of a word
 	for (auto& pat : break_table.start_word_breaks()) {
 		if (s.compare(0, pat.size(), pat) == 0) {
 			auto substr = s.substr(pat.size());
-			auto res = spell_break<CharT>(substr);
+			auto res = spell_break<CharT>(substr, a);
 			if (res)
 				return res;
 		}
 	}
+
+	// handle break pattern at end of a word
 	for (auto& pat : break_table.end_word_breaks()) {
 		if (pat.size() > s.size())
 			continue;
 		if (s.compare(s.size() - pat.size(), pat.size(), pat) == 0) {
 			auto substr = s.substr(0, s.size() - pat.size());
-			auto res = spell_break<CharT>(substr);
+			auto res = spell_break<CharT>(substr, a);
 			if (res)
 				return res;
 		}
 	}
 
+	// handle break pattern in middle of a word
 	for (auto& pat : break_table.middle_word_breaks()) {
 		auto i = s.find(pat);
 		if (i > 0 && i < s.size() - pat.size()) {
 			auto part1 = s.substr(0, i);
 			auto part2 = s.substr(i + pat.size());
-			auto res1 = spell_break<CharT>(part1);
+			auto res1 = spell_break<CharT>(part1, a);
 			if (!res1)
 				continue;
-			auto res2 = spell_break<CharT>(part2);
+			auto res2 = spell_break<CharT>(part2, a);
 			if (res2)
 				return res2;
 		}
 	}
+
 	return BAD_WORD;
 }
-template auto Dictionary::spell_break(string& s) -> Spell_Result;
-template auto Dictionary::spell_break(wstring& s) -> Spell_Result;
+template auto Dictionary::spell_break(string& s, bool a) -> Spell_Result;
+template auto Dictionary::spell_break(wstring& s, bool a) -> Spell_Result;
 
 template <class CharT>
-auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
+auto Dictionary::spell_casing(std::basic_string<CharT>& s, bool a)
+    -> Spell_Result
 {
+	auto c = classify_casing(s);
+	auto spell_orig_case = false;
+	std::basic_string<CharT>* root;
+
+	if (c == Casing::SMALL || c == Casing::CAMEL || c == Casing::PASCAL) {
+		if (c == Casing::CAMEL || c == Casing::PASCAL)
+			spell_orig_case = true;
+		// root = check_word(c);
+		if (a && !root) {
+			auto t = std::basic_string<CharT>(s);
+			// t.append(".");
+			// or
+			// auto t = c.copy().append(".";
+			// root = check_word(t);
+		}
+	}
+	else if (c == Casing::ALL_CAPITAL || c == Casing::INIT_CAPITAL) {
+		//
+	}
+	else {
+		// report error on unsupported casing value
+	}
+
 	if (dic_data.lookup(s))
 		return GOOD_WORD;
 	return BAD_WORD;
 }
-template auto Dictionary::spell_casing(string& s) -> Spell_Result;
-template auto Dictionary::spell_casing(wstring& s) -> Spell_Result;
+template auto Dictionary::spell_casing(string& s, bool a) -> Spell_Result;
+template auto Dictionary::spell_casing(wstring& s, bool a) -> Spell_Result;
 
 template <class CharT>
 auto Dictionary::checkword(std::basic_string<CharT>& s) -> const Flag_Set*
