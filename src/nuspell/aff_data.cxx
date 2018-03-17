@@ -126,7 +126,8 @@ auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
 			a = 0; // err
 			cerr << "Nuspell error: a vector command (series of "
 			        "of similar commands) has no count. Ignoring "
-			        "all of them.\n";
+			        "all of them."
+			     << endl;
 		}
 		counts[command] = a;
 	}
@@ -137,12 +138,13 @@ auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
 			vec.pop_back();
 			cerr << "Nuspell error: single entry of a vector "
 			        "command (series of "
-			        "of similar commands) is invalid.\n";
+			        "of similar commands) is invalid."
+			     << endl;
 		}
 		dat->second--;
 	}
 	else {
-		cerr << "Nuspell warning: extra entries of " << command << '\n';
+		cerr << "Nuspell warning: extra entries of " << command << endl;
 		cerr << "Nuspell warning in line " << line_num << endl;
 	}
 }
@@ -173,13 +175,13 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 		in >> s;
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Nuspell error: missing flag\n";
+			cerr << "Nuspell error: missing flag" << endl;
 			break;
 		}
 		if (enc.is_utf8() && !is_all_ascii(s)) {
-			cerr << err_message << '\n';
-			cerr << "Nuspell warning in line " << line_num
-			     << "\n\n";
+			cerr << err_message << endl;
+			cerr << "Nuspell warning in line " << line_num << endl
+			     << endl;
 			// This error will be triggered in Hungarian.
 			// Version 1 passed this, it just read a
 			// single byte even if the stream utf-8.
@@ -195,7 +197,7 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 		in >> s;
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Nuspell error: missing flag\n";
+			cerr << "Nuspell error: missing flag" << endl;
 			break;
 		}
 		if (enc.is_utf8() && !is_all_ascii(s)) {
@@ -222,7 +224,7 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 		in >> flag;
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Nuspell error: missing flag\n";
+			cerr << "Nuspell error: missing flag" << endl;
 			break;
 		}
 		ret.push_back(flag);
@@ -235,7 +237,8 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			else {
 				// err, comma and no number after that
 				cerr << "Nuspell error: long flag, no number "
-				        "after comma\n";
+				        "after comma"
+				     << endl;
 				break;
 			}
 		}
@@ -245,17 +248,19 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 		if (!enc.is_utf8()) {
 			// err
 			cerr << "Nuspell error: File encoding is not UTF-8, "
-			        "yet flags are\n";
+			        "yet flags are"
+			     << endl;
 		}
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Nuspell error: missing flag\n";
+			cerr << "Nuspell error: missing flag" << endl;
 			break;
 		}
 		auto u32flags = boost::locale::conv::utf_to_utf<char32_t>(s);
 		if (!is_all_bmp(u32flags)) {
 			cerr << "Nuspell warning: flags must be in BMP. "
-			        "Skipping non-BMP\n"
+			        "Skipping non-BMP"
+			     << endl
 			     << "Nuspell warning in line " << line_num << endl;
 		}
 		ret = u32_to_ucs2_skip_non_bmp(u32flags);
@@ -320,7 +325,8 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 		if (in.fail()) {
 			cnt = 0; // err
 			cerr << "Nuspell error: a SFX/PFX header command is "
-			        "invalid. Missing count or cross product\n";
+			        "invalid. Missing count or cross product"
+			     << endl;
 		}
 		cmd_affix[command] = make_pair(cross, cnt);
 	}
@@ -349,7 +355,7 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 	}
 	else {
 		cerr << "Nuspell warning: extra entries of "
-		     << command.substr(0, 3) << '\n'
+		     << command.substr(0, 3) << endl
 		     << "Nuspell warning in line " << line_num << endl;
 	}
 }
@@ -374,7 +380,7 @@ auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
 	else if (p == "UTF-8")
 		flag_type = FLAG_UTF8;
 	else
-		cerr << "Nuspell error: unknown FLAG type\n";
+		cerr << "Nuspell error: unknown FLAG type" << endl;
 }
 
 /**
@@ -511,7 +517,8 @@ auto Aff_Data::parse(istream& in) -> bool
 		line_num++;
 
 		if (encoding.is_utf8() && !validate_utf8(line)) {
-			cerr << "Nuspell warning: invalid utf in aff file\n";
+			cerr << "Nuspell warning: invalid utf in aff file"
+			     << endl;
 			// Hungarian will triger this, contains mixed
 			// utf-8 and latin2. See note in decode_flags().
 		}
@@ -537,10 +544,10 @@ auto Aff_Data::parse(istream& in) -> bool
 			else
 				cerr << "Nuspell warning: "
 				        "Setting "
-				     << command
-				     << " more than once. Ignoring.\n"
+				     << command << " more than once. Ignoring."
+				     << endl
 				     << "Nuspell warning in line " << line_num
-				     << '\n';
+				     << endl;
 		}
 		else if (command_bools.count(command)) {
 			*command_bools[command] = true;
@@ -575,10 +582,10 @@ auto Aff_Data::parse(istream& in) -> bool
 			else {
 				cerr << "Nuspell warning: "
 				        "Setting "
-				     << command
-				     << " more than once. Ignoring.\n"
+				     << command << " more than once. Ignoring."
+				     << endl
 				     << "Nuspell warning in line " << line_num
-				     << '\n';
+				     << endl;
 			}
 		}
 		else if (command == "FLAG") {

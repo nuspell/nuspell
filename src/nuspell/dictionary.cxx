@@ -19,6 +19,8 @@
 #include "dictionary.hxx"
 #include "string_utils.hxx"
 
+#include <iostream>
+
 #include <boost/algorithm/string/trim.hpp>
 
 namespace nuspell {
@@ -83,7 +85,7 @@ auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 	if (s.empty())
 		return GOOD_WORD;
 
-	// omit numbers containing common break pattern
+	// omit numbers containing, except those with double separators
 	if (is_number(s))
 		return GOOD_WORD;
 
@@ -159,25 +161,23 @@ auto Dictionary::spell_casing(std::basic_string<CharT>& s, bool a)
 {
 	auto c = classify_casing(s);
 	auto spell_orig_case = false;
-	std::basic_string<CharT>* root;
 
 	if (c == Casing::SMALL || c == Casing::CAMEL || c == Casing::PASCAL) {
 		if (c == Casing::CAMEL || c == Casing::PASCAL)
 			spell_orig_case = true;
-		// root = check_word(c);
-		if (a && !root) {
-			auto t = std::basic_string<CharT>(s);
-			// t.append(".");
-			// or
-			// auto t = c.copy().append(".";
-			// root = check_word(t);
+		auto root = std::basic_string<CharT>(s);
+		auto fs = checkword<CharT>(root);
+		if (a && !root.size()) {
+			root = std::basic_string<CharT>(s);
+			root += '.';
+			fs = checkword<CharT>(root);
 		}
 	}
 	else if (c == Casing::ALL_CAPITAL || c == Casing::INIT_CAPITAL) {
 		//
 	}
 	else {
-		// report error on unsupported casing value
+		cerr << "Nuspell error: unsupported casing" << std::endl;
 	}
 
 	if (dic_data.lookup(s))
