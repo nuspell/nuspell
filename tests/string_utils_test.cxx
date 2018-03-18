@@ -19,6 +19,7 @@
 #include "catch.hpp"
 
 #include <boost/locale.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <iostream>
 
 #include "../src/nuspell/string_utils.hxx"
@@ -153,6 +154,11 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK("ĲSSELMEER"s == to_upper("ĳsselmeer"s, l));
 	CHECK("ĲSSELMEER"s == to_upper("Ĳsselmeer"s, l));
 	CHECK("ĲSSELMEER"s == to_upper("ĲSSELMEER"s, l));
+
+	using boost::algorithm::to_upper;
+	CHECK("AA"s == to_upper("aa"s, l));
+	using boost::algorithm::to_upper_copy;
+	CHECK("AA"s == to_upper_copy("aa"s, l));
 }
 
 TEST_CASE("method to_lower", "[string_utils]")
@@ -215,6 +221,11 @@ TEST_CASE("method to_lower", "[string_utils]")
 	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
 	CHECK("ĳsselmeer"s == to_lower("ĲSSELMEER"s, l));
 	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
+
+	using boost::algorithm::to_lower;
+	CHECK("aa"s == to_lower("AA"s, l));
+	using boost::algorithm::to_lower_copy;
+	CHECK("aa"s == to_lower_copy("AA"s, l));
 }
 
 TEST_CASE("method to_title", "[string_utils]")
