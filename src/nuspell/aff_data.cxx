@@ -144,7 +144,7 @@ auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
 		dat->second--;
 	}
 	else {
-		cerr << "Nuspell warning: extra entries of " << command << endl;
+		cerr << "Nuspell warning: extra entries of " << command << "\n";
 		cerr << "Nuspell warning in line " << line_num << endl;
 	}
 }
@@ -179,8 +179,8 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			break;
 		}
 		if (enc.is_utf8() && !is_all_ascii(s)) {
-			cerr << err_message << endl;
-			cerr << "Nuspell warning in line " << line_num << endl
+			cerr << err_message << "\n";
+			cerr << "Nuspell warning in line " << line_num << "\n"
 			     << endl;
 			// This error will be triggered in Hungarian.
 			// Version 1 passed this, it just read a
@@ -201,7 +201,7 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			break;
 		}
 		if (enc.is_utf8() && !is_all_ascii(s)) {
-			cerr << err_message << endl;
+			cerr << err_message << "\n";
 			cerr << "Nuspell warning in line " << line_num << endl;
 		}
 		auto i = s.begin();
@@ -259,8 +259,7 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 		auto u32flags = boost::locale::conv::utf_to_utf<char32_t>(s);
 		if (!is_all_bmp(u32flags)) {
 			cerr << "Nuspell warning: flags must be in BMP. "
-			        "Skipping non-BMP"
-			     << endl
+			        "Skipping non-BMP\n"
 			     << "Nuspell warning in line " << line_num << endl;
 		}
 		ret = u32_to_ucs2_skip_non_bmp(u32flags);
@@ -355,7 +354,7 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 	}
 	else {
 		cerr << "Nuspell warning: extra entries of "
-		     << command.substr(0, 3) << endl
+		     << command.substr(0, 3) << "\n"
 		     << "Nuspell warning in line " << line_num << endl;
 	}
 }
@@ -544,8 +543,8 @@ auto Aff_Data::parse(istream& in) -> bool
 			else
 				cerr << "Nuspell warning: "
 				        "Setting "
-				     << command << " more than once. Ignoring."
-				     << endl
+				     << command
+				     << " more than once. Ignoring.\n"
 				     << "Nuspell warning in line " << line_num
 				     << endl;
 		}
@@ -582,8 +581,8 @@ auto Aff_Data::parse(istream& in) -> bool
 			else {
 				cerr << "Nuspell warning: "
 				        "Setting "
-				     << command << " more than once. Ignoring."
-				     << endl
+				     << command
+				     << " more than once. Ignoring.\n"
 				     << "Nuspell warning in line " << line_num
 				     << endl;
 			}
@@ -690,18 +689,21 @@ void Aff_Data::log(const string& affpath)
 		return;
 	}
 	log_file << "affpath/affpath\t"
-	         << log_name.erase(log_name.size() - 8, 8) << std::endl;
-	//	log_file << "key\tTODO" << std::endl;
-	log_file << "AFTER parse" << std::endl;
+	         << log_name.erase(log_name.size() - 8, 8) << "\n";
+	//	log_file << "key\tTODO" << "\n";
+	log_file << "AFTER parse"
+	         << "\n";
 
-	log_file << std::endl << "BASIC" << std::endl;
+	log_file << "\n"
+	         << "BASIC"
+	         << "\n";
 	// The contents of alldic and pHMgr are logged by a
 	// seprate log
 	// method in the hash manager.
 
 	// log_file << "encoding/encoding.value\t\"" <<
 	// encoding.value()
-	//	 << "\"" << std::endl;
+	//	 << "\"" << "\n";
 	log_file << "pHMgr->flag_mode/flag_type\t";
 	if (flag_type == FLAG_DOUBLE_CHAR)
 		log_file << "double char";
@@ -711,13 +713,13 @@ void Aff_Data::log(const string& affpath)
 		log_file << "number";
 	else if (flag_type == FLAG_UTF8)
 		log_file << "utf8";
-	log_file << std::endl;
+	log_file << "\n";
 	log_file << "complexprefixes/complex_prefixes\t" << complex_prefixes
-	         << std::endl;
+	         << "\n";
 	log_file << "lang/language_code\t\"" << language_code << "\""
-	         << std::endl;
+	         << "\n";
 	log_file << "ignorechars/ignore_chars\t\"" << ignore_chars << "\""
-	         << std::endl;
+	         << "\n";
 	// TODO flag_aliases
 	// TODO morphological_aliases
 
@@ -729,16 +731,16 @@ void Aff_Data::log(const string& affpath)
 			log_file << "pfx/prefixes_" << std::setw(3)
 			         << std::setfill('0')
 			         << i - prefixes.begin() + 1 << ".aflag/flag\t"
-			         << (char)i->flag << std::endl;
+			         << (char)i->flag << "\n";
 		else
 			log_file << "pfx/prefixes_" << std::setw(3)
 			         << std::setfill('0')
 			         << i - prefixes.begin() + 1 << ".aflag/flag\t"
-			         << i->flag << std::endl;
+			         << i->flag << "\n";
 		log_file << "pfx/prefixes_" << std::setw(3) << std::setfill('0')
 		         << i - prefixes.begin() + 1
 		         << ".appnd@getKey/affix\t\"" << i->appending << "\""
-		         << std::endl;
+		         << "\n";
 		//		log_file << "pfx/prefixes_" <<
 		// std::setw(3) <<
 		// std::setfill('0')
@@ -746,7 +748,7 @@ void Aff_Data::log(const string& affpath)
 		// 1 <<
 		//".contclasslen\t"
 		//		         << i->affix <<
-		// std::endl;
+		// "\n";
 	}
 	for (std::vector<Affix>::const_iterator i = suffixes.begin();
 	     i != suffixes.end(); ++i) {
@@ -754,16 +756,16 @@ void Aff_Data::log(const string& affpath)
 			log_file << "sfx/suffixes_" << std::setw(3)
 			         << std::setfill('0')
 			         << i - suffixes.begin() + 1 << ".aflag/flag\t"
-			         << (char)i->flag << std::endl;
+			         << (char)i->flag << "\n";
 		else
 			log_file << "sfx/suffixes_" << std::setw(3)
 			         << std::setfill('0')
 			         << i - suffixes.begin() + 1 << ".aflag/flag\t"
-			         << i->flag << std::endl;
+			         << i->flag << "\n";
 		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
 		         << i - suffixes.begin() + 1
 		         << ".appnd@getKey/affix\t\"" << i->appending << "\""
-		         << std::endl;
+		         << "\n";
 		// later		log_file << "sfx/suffixes_" <<
 		// std::setw(3)
 		// <<
@@ -771,7 +773,7 @@ void Aff_Data::log(const string& affpath)
 		// later			 << i - suffixes.begin() <<
 		// ".cross()/cross_product\t"
 		// later			 << i->cross_product <<
-		// std::endl;
+		// "\n";
 		//		log_gile << "sfx/suffixes_" <<
 		// std::setw(3) <<
 		// std::setfill('0')
@@ -779,45 +781,50 @@ void Aff_Data::log(const string& affpath)
 		//<<
 		//".contclasslen\t"
 		//			 << i->affix <<
-		// std::endl;
+		// "\n";
 		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
 		         << i - suffixes.begin() + 1 << ".rappnd@getKey/\t"
-		         << std::endl;
+		         << "\n";
 		log_file << "sfx/suffixes_" << std::setw(3) << std::setfill('0')
 		         << i - suffixes.begin() + 1 << ".strip/stripping\t\""
-		         << i->stripping << "\"" << std::endl;
+		         << i->stripping << "\""
+		         << "\n";
 	}
 
-	log_file << std::endl << "SUGGESTION OPTIONS" << std::endl;
+	log_file << "\n"
+	         << "SUGGESTION OPTIONS"
+	         << "\n"
+	            "\n";
 	log_file << "keystring/keyboard_layout\t\"" << keyboard_layout << "\""
-	         << std::endl;
-	log_file << "trystring/try_chars\t\"" << try_chars << "\"" << std::endl;
-	log_file << "nosuggest/nosuggest_flag\t" << nosuggest_flag << std::endl;
+	         << "\n";
+	log_file << "trystring/try_chars\t\"" << try_chars << "\""
+	         << "\n";
+	log_file << "nosuggest/nosuggest_flag\t" << nosuggest_flag << "\n";
 	log_file << "maxcpdsugs/max_compound_suggestions\t"
-	         << max_compound_suggestions << std::endl;
+	         << max_compound_suggestions << "\n";
 	log_file << "maxngramsugs/max_ngram_suggestions\t"
-	         << max_ngram_suggestions << std::endl;
-	log_file << "maxdiff/max_diff_factor\t" << max_diff_factor << std::endl;
-	log_file << "onlymaxdiff/only_max_diff;\t" << only_max_diff
-	         << std::endl;
+	         << max_ngram_suggestions << "\n";
+	log_file << "maxdiff/max_diff_factor\t" << max_diff_factor << "\n";
+	log_file << "onlymaxdiff/only_max_diff;\t" << only_max_diff << "\n";
 	log_file << "nosplitsugs/no_split_suggestions\t" << no_split_suggestions
-	         << std::endl;
+	         << "\n";
 	log_file << "sugswithdots/suggest_with_dots\t" << suggest_with_dots
-	         << std::endl;
+	         << "\n";
 	for (std::vector<pair<string, string>>::const_iterator i =
 	         replacements.begin();
 	     i != replacements.end(); ++i) {
 		log_file << "reptable/replacements_" << std::setw(3)
 		         << std::setfill('0') << i - replacements.begin() + 1
 		         << "\t\"" << i->first << "\"\t\"" << i->second << "\""
-		         << std::endl;
+		         << "\n";
 	}
 	for (std::vector<std::string>::const_iterator i =
 	         map_related_chars.begin();
 	     i != map_related_chars.end(); ++i) {
 		log_file << "maptable_" << std::setw(3) << std::setfill('0')
 		         << i - map_related_chars.begin() + 1 << "\t\"" << *i
-		         << "\"" << std::endl;
+		         << "\""
+		         << "\n";
 	}
 	for (std::vector<pair<string, string>>::const_iterator i =
 	         phonetic_replacements.begin();
@@ -826,87 +833,94 @@ void Aff_Data::log(const string& affpath)
 		         << std::setfill('0')
 		         << i - phonetic_replacements.begin() << "\t\""
 		         << i->first << "\"\t\"" << i->second << "\""
-		         << std::endl;
+		         << "\n";
 		// TODO phone->hash
 		// TODO phone->utf8
 	}
-	log_file << "warn/warn_flag\t" << warn_flag << std::endl;
-	log_file << "forbidwarn/forbid_warn\t" << forbid_warn << std::endl;
+	log_file << "warn/warn_flag\t" << warn_flag << "\n";
+	log_file << "forbidwarn/forbid_warn\t" << forbid_warn << "\n";
 
-	log_file << std::endl << "COMPOUNDING OPTIONS" << std::endl;
+	log_file << "\n"
+	         << "COMPOUNDING OPTIONS"
+	         << "\n";
 	for (std::vector<std::string>::const_iterator i =
 	         break_patterns.begin();
 	     i != break_patterns.end(); ++i) {
 		log_file << "breaktable/break_patterns_" << std::setw(3)
 		         << std::setfill('0') << i - break_patterns.begin() + 1
-		         << "\t\"" << *i << "\"" << std::endl;
+		         << "\t\"" << *i << "\""
+		         << "\n";
 	}
 	// TODO compound_rules
-	log_file << "cpdmin/compound_minimum\t" << compound_minimum
-	         << std::endl;
-	log_file << "compoundflag/compound_flag\t" << compound_flag
-	         << std::endl;
+	log_file << "cpdmin/compound_minimum\t" << compound_minimum << "\n";
+	log_file << "compoundflag/compound_flag\t" << compound_flag << "\n";
 	log_file << "compoundbegin/compound_begin_flag\t" << compound_begin_flag
-	         << std::endl;
+	         << "\n";
 	log_file << "compoundend/compound_last_flag\t" << compound_last_flag
-	         << std::endl;
+	         << "\n";
 	log_file << "compoundmiddle/compound_middle_flag\t"
-	         << compound_middle_flag << std::endl;
+	         << compound_middle_flag << "\n";
 	log_file << "onlyincompound/compound_onlyin_flag\t"
-	         << compound_onlyin_flag << std::endl;
+	         << compound_onlyin_flag << "\n";
 	log_file << "compoundpermitflag/compound_permit_flag\t"
-	         << compound_permit_flag << std::endl;
+	         << compound_permit_flag << "\n";
 	log_file << "compoundforbidflag/compound_forbid_flag\t"
-	         << compound_forbid_flag << std::endl;
+	         << compound_forbid_flag << "\n";
 	log_file << "compoundmoresuffixes/compound_more_suffixes\t"
-	         << compound_more_suffixes << std::endl;
+	         << compound_more_suffixes << "\n";
 	log_file << "compoundroot/compound_root_flag\t" << compound_root_flag
-	         << std::endl;
+	         << "\n";
 	log_file << "cpdwordmax/compound_word_max\t" << compound_word_max
-	         << std::endl;
+	         << "\n";
 	log_file << "checkcompounddup/compound_check_up\t" << compound_check_up
-	         << std::endl;
+	         << "\n";
 	log_file << "checkcompoundrep/compound_check_rep\t"
-	         << compound_check_rep << std::endl;
+	         << compound_check_rep << "\n";
 	log_file << "checkcompoundcase/compound_check_case\t"
-	         << compound_check_case << std::endl;
+	         << compound_check_case << "\n";
 	log_file << "checkcompoundtriple/compound_check_triple\t"
-	         << compound_check_triple << std::endl;
+	         << compound_check_triple << "\n";
 	log_file << "simplifiedtriple/compound_simplified_triple\t"
-	         << compound_simplified_triple << std::endl;
+	         << compound_simplified_triple << "\n";
 	for (std::vector<Compound_Check_Pattern>::const_iterator i =
 	         compound_check_patterns.begin();
 	     i != compound_check_patterns.end(); ++i) {
 		log_file << "checkcpdtable/compound_check_patterns_"
 		         << std::setw(3) << std::setfill('0')
 		         << i - compound_check_patterns.begin() << "\t\""
-		         << i->end_chars << "\"" << std::endl;
+		         << i->end_chars << "\""
+		         << "\n";
 		log_file << "checkcpdtable/compound_check_patterns_"
 		         << std::setw(3) << std::setfill('0')
 		         << i - compound_check_patterns.begin() << "\t\""
-		         << i->begin_chars << "\"" << std::endl;
+		         << i->begin_chars << "\""
+		         << "\n";
 		log_file << "checkcpdtable/compound_check_patterns_"
 		         << std::setw(3) << std::setfill('0')
 		         << i - compound_check_patterns.begin() << "\t\""
-		         << i->replacement << "\"" << std::endl;
+		         << i->replacement << "\""
+		         << "\n";
 		// TODO cond and cond2
 	}
 	log_file << "forceucase/compound_force_uppercase\t"
-	         << compound_force_uppercase << std::endl;
+	         << compound_force_uppercase << "\n";
 	log_file << "cpdmaxsyllable/compound_syllable_max\t"
-	         << compound_syllable_max << std::endl;
+	         << compound_syllable_max << "\n";
 	log_file << "cpdvowels/compound_syllable_vowels\t\""
-	         << compound_syllable_vowels << "\"" << std::endl;
+	         << compound_syllable_vowels << "\""
+	         << "\n";
 	log_file << "cpdsyllablenum.length/"
 	            "compound_syllable_num.size\t"
-	         << compound_syllable_num.size() << std::endl;
+	         << compound_syllable_num.size() << "\n";
 
-	log_file << std::endl << "OTHERS" << std::endl;
-	log_file << "circumfix/circumfix_flag\t" << circumfix_flag << std::endl;
+	log_file << "\n"
+	         << "OTHERS"
+	         << "\n";
+	log_file << "circumfix/circumfix_flag\t" << circumfix_flag << "\n";
 	log_file << "forbiddenword/forbiddenword_flag\t" << forbiddenword_flag
-	         << std::endl;
-	log_file << "fullstrip/fullstrip\t" << fullstrip << std::endl;
-	log_file << "keepcase/keepcase_flag\t" << keepcase_flag << std::endl;
+	         << "\n";
+	log_file << "fullstrip/fullstrip\t" << fullstrip << "\n";
+	log_file << "keepcase/keepcase_flag\t" << keepcase_flag << "\n";
 	for (std::vector<pair<string, string>>::const_iterator i =
 	         input_conversion.begin();
 	     i != input_conversion.end(); ++i) {
@@ -914,7 +928,7 @@ void Aff_Data::log(const string& affpath)
 		         << std::setfill('0')
 		         << i - input_conversion.begin() + 1 << "\t\""
 		         << i->first << "\"\t\"" << i->second << "\""
-		         << std::endl;
+		         << "\n";
 	}
 	for (std::vector<pair<string, string>>::const_iterator i =
 	         output_conversion.begin();
@@ -923,15 +937,14 @@ void Aff_Data::log(const string& affpath)
 		         << std::setfill('0')
 		         << i - output_conversion.begin() + 1 << "\t\""
 		         << i->first << "\"\t\"" << i->second << "\""
-		         << std::endl;
+		         << "\n";
 	}
-	log_file << "needaffix/need_affix_flag\t" << need_affix_flag
-	         << std::endl;
+	log_file << "needaffix/need_affix_flag\t" << need_affix_flag << "\n";
 	log_file << "substandard/substandard_flag\t" << substandard_flag
-	         << std::endl;
+	         << "\n";
 	// deprecated? log_file << "wordchars/wordchars\t\"" << wordchars <<
-	// "\"" << std::endl;
-	log_file << "checksharps/checksharps\t" << checksharps << std::endl;
+	// "\"" << "\n";
+	log_file << "checksharps/checksharps\t" << checksharps << "\n";
 
 	log_file << "END" << std::endl;
 }

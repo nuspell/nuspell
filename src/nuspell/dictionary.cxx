@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/locale.hpp>
 
 namespace nuspell {
 
@@ -90,10 +91,10 @@ auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 		return GOOD_WORD;
 
 	// handle break patterns
-	auto ret = spell_break<CharT>(s, abbreviation);
+	auto ret = spell_break<CharT>(s);
 	if (!ret && abbreviation) {
 		s += '.';
-		ret = spell_break<CharT>(s, abbreviation);
+		ret = spell_break<CharT>(s);
 	}
 	return ret;
 }
@@ -101,14 +102,11 @@ template auto Dictionary::spell_priv(const string s) -> Spell_Result;
 template auto Dictionary::spell_priv(const wstring s) -> Spell_Result;
 
 template <class CharT>
-auto Dictionary::spell_break(std::basic_string<CharT>& s, bool a)
-    -> Spell_Result
+auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
 {
 	// check spelling accoring to case
-	auto res = spell_casing<CharT>(s, a);
+	auto res = spell_casing<CharT>(s);
 	if (res)
-		// handle forbidden words
-		// TODO aff_data.forbiddenword_flag
 		return res;
 
 	auto& break_table = aff_data.get_structures<CharT>().break_table;
@@ -117,7 +115,7 @@ auto Dictionary::spell_break(std::basic_string<CharT>& s, bool a)
 	for (auto& pat : break_table.start_word_breaks()) {
 		if (s.compare(0, pat.size(), pat) == 0) {
 			auto substr = s.substr(pat.size());
-			auto res = spell_break<CharT>(substr, a);
+			auto res = spell_break<CharT>(substr);
 			if (res)
 				return res;
 		}
@@ -129,7 +127,7 @@ auto Dictionary::spell_break(std::basic_string<CharT>& s, bool a)
 			continue;
 		if (s.compare(s.size() - pat.size(), pat.size(), pat) == 0) {
 			auto substr = s.substr(0, s.size() - pat.size());
-			auto res = spell_break<CharT>(substr, a);
+			auto res = spell_break<CharT>(substr);
 			if (res)
 				return res;
 		}
@@ -141,10 +139,10 @@ auto Dictionary::spell_break(std::basic_string<CharT>& s, bool a)
 		if (i > 0 && i < s.size() - pat.size()) {
 			auto part1 = s.substr(0, i);
 			auto part2 = s.substr(i + pat.size());
-			auto res1 = spell_break<CharT>(part1, a);
+			auto res1 = spell_break<CharT>(part1);
 			if (!res1)
 				continue;
-			auto res2 = spell_break<CharT>(part2, a);
+			auto res2 = spell_break<CharT>(part2);
 			if (res2)
 				return res2;
 		}
@@ -152,40 +150,94 @@ auto Dictionary::spell_break(std::basic_string<CharT>& s, bool a)
 
 	return BAD_WORD;
 }
-template auto Dictionary::spell_break(string& s, bool a) -> Spell_Result;
-template auto Dictionary::spell_break(wstring& s, bool a) -> Spell_Result;
+template auto Dictionary::spell_break(string& s) -> Spell_Result;
+template auto Dictionary::spell_break(wstring& s) -> Spell_Result;
 
 template <class CharT>
-auto Dictionary::spell_casing(std::basic_string<CharT>& s, bool a)
-    -> Spell_Result
+auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 {
+	auto INFO_WARNING = false;  // needs global storage
+	auto SPELL_ORIGCAP = false; // needs more generic storing
+	auto SPELL_INITCAP = false; // needs more generic storing
 	auto c = classify_casing(s);
-	auto spell_orig_case = false;
 
+	// handle small case, camel case and pascal case
 	if (c == Casing::SMALL || c == Casing::CAMEL || c == Casing::PASCAL) {
 		if (c == Casing::CAMEL || c == Casing::PASCAL)
-			spell_orig_case = true;
-		auto root = std::basic_string<CharT>(s);
-		auto fs = checkword<CharT>(root);
-		if (a && !root.size()) {
-			root = std::basic_string<CharT>(s);
-			root += '.';
-			fs = checkword<CharT>(root);
+			SPELL_ORIGCAP = true;
+		auto res = checkword<CharT>(s);
+		if (!res) {
+			auto t = std::basic_string<CharT>(s);
+			t += '.';
+			res = checkword<CharT>(t);
 		}
 	}
+	// handle upper case and capitalized case
 	else if (c == Casing::ALL_CAPITAL || c == Casing::INIT_CAPITAL) {
+		SPELL_ORIGCAP = true;
+		if (c == Casing::ALL_CAPITAL) {
+			auto res = checkword<CharT>(s);
+			if (!res) {
+				auto t = std::basic_string<CharT>(s);
+				t += '.';
+				res = checkword<CharT>(t);
+			}
+			if (!res) {
+				// handle apostrophe for Catalan, French and
+				// Italian prefixes
+				if (!res) {
+					// handle German sharp s
+				}
+			}
+		}
+		if (c == Casing::INIT_CAPITAL) {
+			auto t = boost::locale::to_title(s);
+			// handle idot
+		}
+		if (c == Casing::INIT_CAPITAL) {
+			SPELL_INITCAP = true;
+		}
+		auto res = checkword<CharT>(s);
+		if (c == Casing::INIT_CAPITAL) {
+			SPELL_INITCAP = false;
+		}
+		// forbid bad capitalization
+		// (for example, ijs -> Ijs instead of IJs in Dutch)
+		// use explicit forms in dic: Ijs/F (F = FORBIDDENWORD flag)
 		//
+		// the example above is no longer valid, could not find other
+		// examples
+		//		if (res &&
+		//res->lookup<CharT>(aff_data.forbiddenword_flag)) {
+		//			res = NULL;
+		//		} else {
+		//			if (res &&
+		//res->lookup<CharT>(aff_data.keepcase_flag && c ==
+		//Casing::ALL_CAPITAL))
+		//				res = NULL;
+		//		}
 	}
 	else {
 		cerr << "Nuspell error: unsupported casing" << std::endl;
 	}
 
-	if (dic_data.lookup(s))
-		return GOOD_WORD;
+	// handle forbidden words
+	//	if (res) {
+	//		if (res->lookup<CharT>(aff_data.forbiddenword_flag)) {
+	//			INFO_WARNING = true;
+	//			if (aff_data.forbid_warn) {
+	//				return BAD_WORD;
+	//			}
+	//		}
+	//		return GOOD_WORD;
+	//	}
+
+	if (dic_data.lookup(s))   // remove
+		return GOOD_WORD; // remove
 	return BAD_WORD;
 }
-template auto Dictionary::spell_casing(string& s, bool a) -> Spell_Result;
-template auto Dictionary::spell_casing(wstring& s, bool a) -> Spell_Result;
+template auto Dictionary::spell_casing(string& s) -> Spell_Result;
+template auto Dictionary::spell_casing(wstring& s) -> Spell_Result;
 
 template <class CharT>
 auto Dictionary::checkword(std::basic_string<CharT>& s) -> const Flag_Set*

@@ -92,7 +92,6 @@ TEST_CASE("method split_on_whitespace", "[string_utils]")
 	CHECK(exp == out);
 }
 
-#if 0
 TEST_CASE("method to_upper", "[string_utils]")
 {
 	// Major note here. boost::locale::to_upper is different
@@ -154,8 +153,6 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK("ĲSSELMEER"s == to_upper("ĳsselmeer"s, l));
 	CHECK("ĲSSELMEER"s == to_upper("Ĳsselmeer"s, l));
 	CHECK("ĲSSELMEER"s == to_upper("ĲSSELMEER"s, l));
-
-	// TODO Add some Arabic and Hebrew examples.
 }
 
 TEST_CASE("method to_lower", "[string_utils]")
@@ -199,6 +196,10 @@ TEST_CASE("method to_lower", "[string_utils]")
 	CHECK("ελλάδα"s == to_lower("Ελλάδα"s, l));
 	CHECK("ελλάδα"s == to_lower("ΕΛΛΆΔΑ"s, l));
 
+	l = g("tr_TR.UTF-8");
+	CHECK("istanbul"s == to_lower("İstanbul"s, l));
+	CHECK("diyarbakır"s == to_lower("Diyarbakır"s, l));
+
 	l = g("de_DE.UTF-8");
 	CHECK("grüßen"s == to_lower("grüßen"s, l));
 	CHECK("grüssen"s == to_lower("grüssen"s, l));
@@ -214,8 +215,6 @@ TEST_CASE("method to_lower", "[string_utils]")
 	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
 	CHECK("ĳsselmeer"s == to_lower("ĲSSELMEER"s, l));
 	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
-
-	// TODO Add some Arabic and Hebrew examples.
 }
 
 TEST_CASE("method to_title", "[string_utils]")
@@ -256,6 +255,22 @@ TEST_CASE("method to_title", "[string_utils]")
 	// Use of ς where σ is expected, should convert to upper case Σ.
 	CHECK("Σίγμα"s == to_title("ςίγμα"s, l));
 
+	l = g("tr_TR.UTF-8");
+	CHECK("İstanbul"s == to_title("istanbul"s, l));
+	CHECK("İstanbul"s == to_title("iSTANBUL"s, l));
+	CHECK("İstanbul"s == to_title("İSTANBUL"s, l));
+	CHECK("Istanbul"s == to_title("ISTANBUL"s, l));
+	CHECK("Diyarbakır"s == to_title("diyarbakır"s, l));
+	l = g("tr_CY.UTF-8");
+	CHECK("İstanbul"s == to_title("istanbul"s, l));
+	l = g("crh_UA.UTF-8");
+	// Note that lower case i is not converted to upper case İ, bug?
+	CHECK("Istanbul"s == to_title("istanbul"s, l));
+	l = g("az_AZ.UTF-8");
+	CHECK("İstanbul"s == to_title("istanbul"s, l));
+	l = g("az_IR.UTF-8");
+	CHECK("İstanbul"s == to_title("istanbul"s, l));
+
 	l = g("de_DE.UTF-8");
 	CHECK("Grüßen"s == to_title("grüßen"s, l));
 	CHECK("Grüßen"s == to_title("GRÜßEN"s, l));
@@ -271,10 +286,7 @@ TEST_CASE("method to_title", "[string_utils]")
 	CHECK("Ĳsselmeer"s == to_title("ĳsselmeer"s, l));
 	CHECK("Ĳsselmeer"s == to_title("Ĳsselmeer"s, l));
 	CHECK("Ĳsselmeer"s == to_title("ĲSSELMEER"s, l));
-
-	// TODO Add some Arabic and Hebrew examples.
 }
-#endif
 
 TEST_CASE("method classify_casing", "[string_utils]")
 {
@@ -282,6 +294,8 @@ TEST_CASE("method classify_casing", "[string_utils]")
 	CHECK(Casing::SMALL == classify_casing("alllowercase3"s));
 	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase"s));
 	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase_"s));
+	// FIXME bug? CHECK(Casing::INIT_CAPITAL ==
+	// classify_casing("İstanbul"s));
 	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE"s));
 	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE."s));
 	CHECK(Casing::CAMEL == classify_casing("iCamelCase"s));

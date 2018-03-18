@@ -45,9 +45,9 @@ class Dictionary {
 	template <class CharT>
 	auto spell_priv(std::basic_string<CharT> s) -> Spell_Result;
 	template <class CharT>
-	auto spell_break(std::basic_string<CharT>& s, bool a) -> Spell_Result;
+	auto spell_break(std::basic_string<CharT>& s) -> Spell_Result;
 	template <class CharT>
-	auto spell_casing(std::basic_string<CharT>& s, bool a) -> Spell_Result;
+	auto spell_casing(std::basic_string<CharT>& s) -> Spell_Result;
 	template <class CharT>
 	auto checkword(std::basic_string<CharT>& s) -> const Flag_Set*;
 
