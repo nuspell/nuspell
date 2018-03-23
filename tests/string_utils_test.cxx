@@ -18,8 +18,10 @@
 
 #include "catch.hpp"
 
-#include <boost/locale.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/locale.hpp>
 #include <iostream>
 
 #include "../src/nuspell/string_utils.hxx"
@@ -90,6 +92,14 @@ TEST_CASE("method split_on_whitespace", "[string_utils]")
 	exp = vector<string>{};
 	// out = vector<string>();
 	split_on_whitespace_v(in, out);
+	// FIXME Statement above results in message below. Cannot put breakpoint on it. Is triggered by catch before code is executed. Looks like all locale settings are passed as encoding. Alls after ;lc_numeric... should be trimmed.
+	//
+	// locale_utils_test.cxx:94: FAILED:
+	// due to unexpected exception with message:
+	//  Invalid or unsupported charset:utf-8;lc_numeric=c;lc_time=en_us.utf-8;
+	//  lc_collate=en_us.utf-8;lc_monetary=en_us.utf-8;lc_messages=en_us.utf-8;
+	//  lc_paper=en_us.utf-8;lc_name=en_us.utf-8;lc_address=en_us.utf-8;lc_telephone=
+	//  en_us.utf-8;lc_measurement=en_us.utf-8;lc_identification=en_us.utf-8
 	CHECK(exp == out);
 }
 
@@ -105,7 +115,7 @@ TEST_CASE("method to_upper", "[string_utils]")
 	// Here locale::to_upper is tested.
 	//
 	// As the active locale may vary from machine to machine, each test must
-	// explicitely be provided withw a locale.
+	// explicitely be provided with a locale.
 
 	boost::locale::generator g;
 	using boost::locale::to_upper;
@@ -139,6 +149,10 @@ TEST_CASE("method to_upper", "[string_utils]")
 	// Use of ς where σ is expected, should convert to upper case Σ.
 	CHECK("ΣΊΓΜΑ"s == to_upper("ςίγμα"s, l));
 
+	l = g("tr_TR.UTF-8");
+	CHECK("İSTANBUL"s == to_upper("İstanbul"s, l));
+	CHECK("DİYARBAKIR"s == to_upper("Diyarbakır"s, l));
+
 	l = g("de_DE.UTF-8");
 	// Note that lower case ü is not converted to upper case Ü.
 	// Note that lower case ß is converted to double SS.
@@ -159,6 +173,9 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK("AA"s == to_upper("aa"s, l));
 	using boost::algorithm::to_upper_copy;
 	CHECK("AA"s == to_upper_copy("aa"s, l));
+	using boost::algorithm::is_upper;
+	CHECK("a"s ==
+	      trim_copy_if("AaA"s, is_upper(std::locale("en_US.UTF-8"))));
 }
 
 TEST_CASE("method to_lower", "[string_utils]")
@@ -173,7 +190,7 @@ TEST_CASE("method to_lower", "[string_utils]")
 	// Here locale::to_lower is tested.
 	//
 	// As the active locale may vary from machine to machine, each test must
-	// explicitely be provided withw a locale.
+	// explicitely be provided with a locale.
 
 	boost::locale::generator g;
 	using boost::locale::to_lower;
@@ -226,6 +243,9 @@ TEST_CASE("method to_lower", "[string_utils]")
 	CHECK("aa"s == to_lower("AA"s, l));
 	using boost::algorithm::to_lower_copy;
 	CHECK("aa"s == to_lower_copy("AA"s, l));
+	using boost::algorithm::is_lower;
+	CHECK("A"s ==
+	      trim_copy_if("aAa"s, is_lower(std::locale("en_US.UTF-8"))));
 }
 
 TEST_CASE("method to_title", "[string_utils]")
@@ -233,7 +253,7 @@ TEST_CASE("method to_title", "[string_utils]")
 	// Here locale::to_upper is tested.
 	//
 	// As the active locale may vary from machine to machine, each test must
-	// explicitely be provided withw a locale.
+	// explicitely be provided with a locale.
 
 	boost::locale::generator g;
 	using boost::locale::to_title;
@@ -301,18 +321,22 @@ TEST_CASE("method to_title", "[string_utils]")
 
 TEST_CASE("method classify_casing", "[string_utils]")
 {
+	CHECK(Casing::SMALL == classify_casing(""s));
 	CHECK(Casing::SMALL == classify_casing("alllowercase"s));
 	CHECK(Casing::SMALL == classify_casing("alllowercase3"s));
 	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase"s));
 	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase_"s));
-	// FIXME bug? CHECK(Casing::INIT_CAPITAL ==
-	// classify_casing("İstanbul"s));
 	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE"s));
 	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE."s));
 	CHECK(Casing::CAMEL == classify_casing("iCamelCase"s));
 	CHECK(Casing::CAMEL == classify_casing("iCamelCase@"s));
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase"s));
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s));
+
+	boost::locale::generator g;
+	//FIXME statement below causes c in method classify_casing to process two characters for dotted capital I as c == -60 and c == -80
+	// method returns Casing::SMALL but as it fails at the moment, no expansion is done, but that is not the problem.
+	//CHECK(Casing::INIT_CAPITAL == classify_casing("İstanbul"s, g("tr_TR.UTF-8")));
 }
 
 TEST_CASE("method is_number", "[string_utils]")

@@ -202,7 +202,7 @@ auto print_help(const string& program_name) -> void
 	     "input.\n"
 	     "\n"
 	     "  -d di_CT      use di_CT dictionary. Only one dictionary is\n"
-	     "                currently supported.\n"
+	     "                currently supported\n"
 	     "  -D            show available dictionaries and exit\n"
 	     "  -i enc        input encoding, default is active locale\n"
 	     "  -l            print only misspelled words or lines\n"
@@ -414,7 +414,7 @@ int main(int argc, char* argv[])
 	auto args = Args_t(argc, argv);
 	if (args.mode == ERROR_MODE) {
 		cerr << "Invalid arguments, try '" << args.program_name
-		     << " --help' for more information.\n";
+		     << " --help' for more information\n";
 		return 1;
 	}
 	boost::locale::generator gen;
@@ -423,7 +423,16 @@ int main(int argc, char* argv[])
 		cin.imbue(loc);
 	}
 	else {
-		cin.imbue(gen("en_US." + args.encoding));
+		try {
+			cin.imbue(gen("en_US." + args.encoding));
+		}
+		catch (const boost::locale::conv::invalid_charset_error& e) {
+			cerr << "Invalid or unsupported encoding " << args.encoding << endl;
+#ifdef __GNUC__
+			cerr << "Hunspell error: see `locale -m` for supported encodings" << endl;
+#endif
+			return 1;
+		}
 	}
 	cout.imbue(loc);
 	cerr.imbue(loc);
@@ -467,10 +476,10 @@ int main(int argc, char* argv[])
 	auto filename = f.get_dictionary(args.dictionary);
 	if (filename.empty()) {
 		if (args.dictionary.empty())
-			cerr << "No dictionary provided.\n";
+			cerr << "No dictionary provided\n";
 		else
 			cerr << "Dictionary " << args.dictionary
-			     << " not found.\n";
+			     << " not found\n";
 		return 1;
 	}
 	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";

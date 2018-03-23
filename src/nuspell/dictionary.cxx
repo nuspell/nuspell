@@ -156,6 +156,7 @@ template auto Dictionary::spell_break(wstring& s) -> Spell_Result;
 template <class CharT>
 auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 {
+	auto& loc = aff_data.locale_aff;
 	auto INFO_WARNING = false;  // needs global storage
 	auto SPELL_ORIGCAP = false; // needs more generic storing
 	auto SPELL_INITCAP = false; // needs more generic storing
@@ -191,7 +192,7 @@ auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 			}
 		}
 		if (c == Casing::INIT_CAPITAL) {
-			auto t = boost::locale::to_title(s);
+			auto t = boost::locale::to_title(s, loc);
 			// handle idot
 		}
 		if (c == Casing::INIT_CAPITAL) {
@@ -208,12 +209,12 @@ auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 		// the example above is no longer valid, could not find other
 		// examples
 		//		if (res &&
-		//res->lookup<CharT>(aff_data.forbiddenword_flag)) {
+		// res->lookup<CharT>(aff_data.forbiddenword_flag)) {
 		//			res = NULL;
 		//		} else {
 		//			if (res &&
-		//res->lookup<CharT>(aff_data.keepcase_flag && c ==
-		//Casing::ALL_CAPITAL))
+		// res->lookup<CharT>(aff_data.keepcase_flag && c ==
+		// Casing::ALL_CAPITAL))
 		//				res = NULL;
 		//		}
 	}
