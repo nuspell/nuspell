@@ -26,6 +26,7 @@ AM_CONDITIONAL([HAVE_RONN], [test x$ronn = xyes])
 AM_ICONV
 BOOST_REQUIRE([1.62.0])
 BOOST_LOCALE
+PKG_CHECK_MODULES([ICU], [icu-uc])
 AC_REQUIRE_AUX_FILE([tap-driver.sh])
 
 # Checks for header files.

@@ -9,4 +9,5 @@ URL: @PACKAGE_URL@
 Version: @VERSION@
 Libs: -L${libdir} -lnuspell
 Libs.private: @BOOST_LOCALE_LIBS@
-Cflags: -I${includedir}/@PACKAGE@
+Requires: icu-uc
+Cflags: -I${includedir}

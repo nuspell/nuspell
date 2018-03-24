@@ -21,6 +21,10 @@
 #include <algorithm>
 #include <limits>
 
+#include <unicode/uchar.h>
+#include <unicode/ucnv.h>
+#include <unicode/unistr.h>
+
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
@@ -341,5 +345,116 @@ auto to_singlebyte(const std::wstring& in, const std::locale& outloc)
 	cvt.narrow(&in[0], &in[in.size()], '?', &out[0]);
 	return out;
 }
+
+auto get_char_mask(UChar32 cp)
+{
+	auto ret = ctype_base::mask{};
+	if (u_isspace(cp)) {
+		ret |= ctype_base::space;
+	}
+	if (u_isprint(cp)) {
+		ret |= ctype_base::print;
+	}
+	if (u_iscntrl(cp)) {
+		ret |= ctype_base::cntrl;
+	}
+	if (u_isupper(cp)) {
+		ret |= ctype_base::upper;
+	}
+	if (u_islower(cp)) {
+		ret |= ctype_base::lower;
+	}
+	if (u_isalpha(cp)) {
+		ret |= ctype_base::alpha;
+	}
+	if (u_isdigit(cp)) {
+		ret |= ctype_base::digit;
+	}
+	if (u_ispunct(cp)) {
+		ret |= ctype_base::punct;
+	}
+	if (u_isxdigit(cp)) {
+		ret |= ctype_base::xdigit;
+	}
+	if (u_isblank(cp)) {
+		ret |= ctype_base::blank;
+	}
+	if (u_isalnum(cp)) {
+		ret |= ctype_base::alnum;
+	}
+	if (u_isgraph(cp)) {
+		ret |= ctype_base::graph;
+	}
+	return ret;
+}
+
+auto fill_ctype(const string& enc, ctype_base::mask* m, char* upper,
+                char* lower)
+{
+	auto err = UErrorCode{};
+	auto cvt = ucnv_open(enc.c_str(), &err);
+	icu::UnicodeString out;
+	for (size_t i = 0; i < 256; ++i) {
+		const char ch = i;
+		auto ch_ptr = &ch;
+		auto cp = ucnv_getNextUChar(cvt, &ch_ptr, ch_ptr + 1, &err);
+		ucnv_reset(cvt);
+		if (U_SUCCESS(err)) {
+			m[i] = get_char_mask(cp);
+			out = u_toupper(cp);
+			auto len = out.extract(&upper[i], 1, cvt, err);
+			if (len == 0)
+				upper[i] = i;
+			out = u_tolower(cp);
+			len = out.extract(&lower[i], 1, cvt, err);
+			if (len == 0)
+				lower[i] = i;
+		}
+		else {
+			m[i] = ctype_base::mask{};
+			upper[i] = i;
+			lower[i] = i;
+		}
+	}
+	ucnv_close(cvt);
+}
+
+class icu_ctype_char : public std::ctype<char> {
+      private:
+	mask tbl[256];
+	char upper[256];
+	char lower[256];
+
+      public:
+	icu_ctype_char(const std::string& enc, std::size_t refs = 0)
+	    : std::ctype<char>(tbl, false, refs)
+	{
+		fill_ctype(enc, tbl, upper, lower);
+	}
+	char_type do_toupper(char_type c) const override
+	{
+		return upper[static_cast<unsigned char>(c)];
+	}
+	const char_type* do_toupper(char_type* low,
+	                            const char_type* high) const override
+	{
+		for (; low != high; ++low) {
+			*low = upper[static_cast<unsigned char>(*low)];
+		}
+		return high;
+	}
+	char_type do_tolower(char_type c) const override
+	{
+		return lower[static_cast<unsigned char>(c)];
+	}
+	const char_type* do_tolower(char_type* low,
+	                            const char_type* high) const override
+	{
+		for (; low != high; ++low) {
+			*low = lower[static_cast<unsigned char>(*low)];
+		}
+		return high;
+	}
+};
 }
 }

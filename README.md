@@ -44,7 +44,7 @@ Runtime dependencies:
 |-----------------|--------------------|------------------|
 | libnuspell 1    |                    |                  |
 | cmd line tool 1 | libiconv           | ncurses readline |
-| libnuspell 2    | boost-locale with icu4c|              |
+| libnuspell 2    | boost-locale, icu4c|                  |
 | cmd line tool 2 |                    |                  |
 
 Recommended tools for developers:
@@ -213,7 +213,7 @@ Myspell dictionary:
 
 Including in your program:
 
-    #include <nuspell.hxx>
+    #include <nuspell/dictionary.hxx>
 
 Linking with Nuspell static library:
 
