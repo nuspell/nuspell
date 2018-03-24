@@ -138,7 +138,7 @@ auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
 			vec.pop_back();
 			cerr << "Nuspell error: single entry of a vector "
 			        "command (series of "
-				"of similar commands) is invalid"
+			        "of similar commands) is invalid"
 			     << endl;
 		}
 		dat->second--;
@@ -168,14 +168,16 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 	u16string ret;
 	const auto err_message = "Nuspell warning: bytes above 127 in UTF-8 "
 	                         "stream should not be treated alone as "
-				 "flags, please update dictionary to use "
-				 "FLAG UTF-8 and make the file valid UTF-8";
+	                         "flags, please update dictionary to use "
+	                         "FLAG UTF-8 and make the file valid UTF-8";
 	switch (t) {
 	case FLAG_SINGLE_CHAR:
 		in >> s;
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Nuspell error: missing single-character flag in line " << line_num << endl;
+			cerr << "Nuspell error: missing single-character flag "
+			        "in line "
+			     << line_num << endl;
 			exit(0);
 			break;
 		}
@@ -198,7 +200,9 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 		in >> s;
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Nuspell error: missing double-character flag in line " << line_num << endl;
+			cerr << "Nuspell error: missing double-character flag "
+			        "in line "
+			     << line_num << endl;
 			break;
 		}
 		if (enc.is_utf8() && !is_all_ascii(s)) {
@@ -225,7 +229,8 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 		in >> flag;
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Nuspell error: missing numerical flag in line " << line_num << endl;
+			cerr << "Nuspell error: missing numerical flag in line "
+			     << line_num << endl;
 			break;
 		}
 		ret.push_back(flag);
@@ -254,13 +259,14 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 		}
 		if (in.fail()) {
 			// err no flag at all
-			cerr << "Nuspell error: missing UTF-8 flag in line " << line_num << endl;
+			cerr << "Nuspell error: missing UTF-8 flag in line "
+			     << line_num << endl;
 			break;
 		}
 		auto u32flags = boost::locale::conv::utf_to_utf<char32_t>(s);
 		if (!is_all_bmp(u32flags)) {
 			cerr << "Nuspell warning: flags must be in BMP, "
-				"skipping non-BMP\n"
+			        "skipping non-BMP\n"
 			     << "Nuspell warning in line " << line_num << endl;
 		}
 		ret = u32_to_ucs2_skip_non_bmp(u32flags);
@@ -325,7 +331,9 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 		if (in.fail()) {
 			cnt = 0; // err
 			cerr << "Nuspell error: a SFX/PFX header command is "
-				"invalid, missing count or cross product in line " << line_num << endl;
+			        "invalid, missing count or cross product in "
+			        "line "
+			     << line_num << endl;
 		}
 		cmd_affix[command] = make_pair(cross, cnt);
 	}
@@ -542,9 +550,8 @@ auto Aff_Data::parse(istream& in) -> bool
 				ss >> str;
 			else
 				cerr << "Nuspell warning: "
-					"setting "
-				     << command
-				     << " more than once, ignoring\n"
+				        "setting "
+				     << command << " more than once, ignoring\n"
 				     << "Nuspell warning in line " << line_num
 				     << endl;
 		}
@@ -580,9 +587,8 @@ auto Aff_Data::parse(istream& in) -> bool
 			}
 			else {
 				cerr << "Nuspell warning: "
-					"setting "
-				     << command
-				     << " more than once, ignoring\n"
+				        "setting "
+				     << command << " more than once, ignoring\n"
 				     << "Nuspell warning in line " << line_num
 				     << endl;
 			}
@@ -632,8 +638,8 @@ auto Aff_Data::parse(istream& in) -> bool
 			compound_syllable_num = decode_flags(ss, line_num);
 		}
 		if (ss.fail()) {
-			cerr << "Nuspell error: could no parse affix file line " << line_num << ": "
-			     << line << endl;
+			cerr << "Nuspell error: could no parse affix file line "
+			     << line_num << ": " << line << endl;
 		}
 	}
 	// default BREAK definition
