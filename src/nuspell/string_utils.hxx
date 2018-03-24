@@ -249,6 +249,18 @@ template <class CharT>
 auto classify_casing(const std::basic_string<CharT>& s,
                      const std::locale& loc = std::locale()) -> Casing
 {
+	// TODO implement Default Case Detection from unicode standard
+	// https://www.unicode.org/versions/Unicode10.0.0/ch03.pdf
+	// See Chapter 13.3
+	//
+	// use boost::locale::to_lower to upper etc.
+	//
+	// Boost locale ctype facet with icu backend actually just uses
+	// the same from locale::classic(). It is useless for anything above
+	// ascii.
+	//
+	// alternatively implement good ctype facet
+
 	using namespace std;
 	size_t upper = 0;
 	size_t lower = 0;

@@ -76,6 +76,8 @@ auto to_singlebyte(const std::wstring& in, const std::locale& outloc)
 // put template function definitions bellow the declarations above
 // otherwise doxygen has bugs when generating call graphs
 
+// TODO implement icu_ctype facet.
+
 template <class FromCharT,
           class = std::enable_if_t<!std::is_same<FromCharT, char>::value>>
 auto to_dict_encoding(const std::basic_string<FromCharT>& from)

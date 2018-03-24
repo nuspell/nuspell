@@ -427,9 +427,10 @@ int main(int argc, char* argv[])
 			cin.imbue(gen("en_US." + args.encoding));
 		}
 		catch (const boost::locale::conv::invalid_charset_error& e) {
-			cerr << "Invalid or unsupported encoding " << args.encoding << endl;
-#ifdef __GNUC__
-			cerr << "Hunspell error: see `locale -m` for supported encodings" << endl;
+			cerr << e.what() << '\n';
+#ifdef _POSIX_VERSION
+			cerr << "Nuspell error: see `locale -m` for supported "
+			        "encodings.\n";
 #endif
 			return 1;
 		}

@@ -52,10 +52,8 @@ TEST_CASE("method is_ascii", "[locale_utils]")
 {
 	CHECK(is_ascii('a'));
 	CHECK(is_ascii('\t'));
-	// Results in warning "multi-character character constant
-	// [-Wmultichar]"
-	// FIXME Add this to Makefile.am for only this source file.
-	//        CHECK_FALSE(is_ascii('Ӥ'));
+
+	CHECK_FALSE(is_ascii(char_traits<char>::to_char_type(128)));
 }
 
 TEST_CASE("method is_all_ascii", "[locale_utils]")
@@ -68,10 +66,9 @@ TEST_CASE("method is_all_ascii", "[locale_utils]")
 TEST_CASE("method latin1_to_ucs2", "[locale_utils]")
 {
 	CHECK(u"" == latin1_to_ucs2(""s));
-	CHECK(u"abc" == latin1_to_ucs2("abc"s));
-	// QUESTION Is next line OK?
-	CHECK(u"²¿ýþÿ" != latin1_to_ucs2("²¿ýþÿ"s));
-	CHECK(u"Ӥ日本に" != latin1_to_ucs2("Ӥ日本に"s));
+	CHECK(u"abc\u0080" == latin1_to_ucs2("abc\x80"s));
+	CHECK(u"²¿ýþÿ" != latin1_to_ucs2(u8"²¿ýþÿ"s));
+	CHECK(u"Ӥ日本に" != latin1_to_ucs2(u8"Ӥ日本に"s));
 }
 
 TEST_CASE("method is_all_bmp", "[locale_utils]")
@@ -89,37 +86,4 @@ TEST_CASE("boost locale has icu", "[locale_utils]")
 	using lbm = boost::locale::localization_backend_manager;
 	auto v = lbm::global().get_all_backends();
 	CHECK(std::find(v.begin(), v.end(), "icu") != v.end());
-}
-
-TEST_CASE("boost locales", "[locale_utils]")
-{
-	boost::locale::generator g;
-
-	// comments below will partly be moved to wiki
-
-	// works only if a locale has been generated on the operating system
-	// list all locales `$ locale -a` and interpret UTF-8 for utf8
-	// generate a locale with `$ sudo locale-gen "de_DE.UTF-8"`
-	// update system for new locales `$ sudo dpkg-reconfigure locales`
-	auto sl = std::locale("");
-	sl = std::locale("en_US.UTF-8");
-	//	sl = std::locale("de_DE.UTF-8");
-	//	sl = std::locale("nl_NL.UTF-8");
-	//	sl = std::locale("el_GR.UTF-8");
-	//	sl = std::locale("tr_TR.UTF-8");
-	auto bl = g(std::locale("").name());
-	bl = g(std::locale("en_US.UTF-8").name());
-	//	bl = g(std::locale("de_DE.UTF-8").name());
-	//	bl = g(std::locale("nl_NL.UTF-8").name());
-	//	bl = g(std::locale("el_GR.UTF-8").name());
-	//	bl = g(std::locale("tr_TR.UTF-8").name());
-
-	// always works, independent of generated locales on the operating
-	// system
-	bl = g("");
-	bl = g("en_US.UTF-8");
-	bl = g("de_DE.UTF-8");
-	bl = g("nl_NL.UTF-8");
-	bl = g("el_GR.UTF-8");
-	bl = g("tr_TR.UTF-8");
 }

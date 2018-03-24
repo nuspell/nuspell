@@ -89,17 +89,8 @@ TEST_CASE("method split_on_whitespace", "[string_utils]")
 	CHECK(exp == out);
 
 	in = "   \t\r\n  "s;
-	exp = vector<string>{};
-	// out = vector<string>();
+	exp = vector<string>();
 	split_on_whitespace_v(in, out);
-	// FIXME Statement above results in message below. Cannot put breakpoint on it. Is triggered by catch before code is executed. Looks like all locale settings are passed as encoding. Alls after ;lc_numeric... should be trimmed.
-	//
-	// locale_utils_test.cxx:94: FAILED:
-	// due to unexpected exception with message:
-	//  Invalid or unsupported charset:utf-8;lc_numeric=c;lc_time=en_us.utf-8;
-	//  lc_collate=en_us.utf-8;lc_monetary=en_us.utf-8;lc_messages=en_us.utf-8;
-	//  lc_paper=en_us.utf-8;lc_name=en_us.utf-8;lc_address=en_us.utf-8;lc_telephone=
-	//  en_us.utf-8;lc_measurement=en_us.utf-8;lc_identification=en_us.utf-8
 	CHECK(exp == out);
 }
 
@@ -169,10 +160,6 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK("ĲSSELMEER"s == to_upper("Ĳsselmeer"s, l));
 	CHECK("ĲSSELMEER"s == to_upper("ĲSSELMEER"s, l));
 
-	using boost::algorithm::to_upper;
-	CHECK("AA"s == to_upper("aa"s, l));
-	using boost::algorithm::to_upper_copy;
-	CHECK("AA"s == to_upper_copy("aa"s, l));
 	using boost::algorithm::is_upper;
 	CHECK("a"s ==
 	      trim_copy_if("AaA"s, is_upper(std::locale("en_US.UTF-8"))));
@@ -239,10 +226,6 @@ TEST_CASE("method to_lower", "[string_utils]")
 	CHECK("ĳsselmeer"s == to_lower("ĲSSELMEER"s, l));
 	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
 
-	using boost::algorithm::to_lower;
-	CHECK("aa"s == to_lower("AA"s, l));
-	using boost::algorithm::to_lower_copy;
-	CHECK("aa"s == to_lower_copy("AA"s, l));
 	using boost::algorithm::is_lower;
 	CHECK("A"s ==
 	      trim_copy_if("aAa"s, is_lower(std::locale("en_US.UTF-8"))));
@@ -263,7 +246,7 @@ TEST_CASE("method to_title", "[string_utils]")
 	//     $ sudo dpkg-reconfigure locales
 	// This is not needed for any of the boost::locale used in the
 	// non-English tests below.
-	auto l = g(std::locale("en_US.UTF-8").name());
+	auto l = g("en_US.UTF-8");
 	CHECK(""s == to_title(""s, l));
 	CHECK("A"s == to_title("a"s, l));
 	CHECK("A"s == to_title("A"s, l));
@@ -334,9 +317,14 @@ TEST_CASE("method classify_casing", "[string_utils]")
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s));
 
 	boost::locale::generator g;
-	//FIXME statement below causes c in method classify_casing to process two characters for dotted capital I as c == -60 and c == -80
-	// method returns Casing::SMALL but as it fails at the moment, no expansion is done, but that is not the problem.
-	//CHECK(Casing::INIT_CAPITAL == classify_casing("İstanbul"s, g("tr_TR.UTF-8")));
+	auto loc = g("tr_TR.UTF-8");
+	CHECK_FALSE(Casing::INIT_CAPITAL == classify_casing("İstanbul"s, loc));
+	// FIXME implement good ctype facet
+	// CHECK(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"s, loc));
+	// auto& ct = use_facet<ctype<wchar_t>>(loc);
+	// CHECK(ct.tolower(L'İ') == L'i');
+	// CHECK(ct.toupper(L'i') == L'İ');
+	// CHECK(ct.tolower(L'Њ') == L'њ');
 }
 
 TEST_CASE("method is_number", "[string_utils]")
