@@ -419,12 +419,15 @@ int main(int argc, char* argv[])
 	}
 	boost::locale::generator gen;
 	auto loc = gen("");
+	install_ctype_facets_inplace(loc);
 	if (args.encoding.empty()) {
 		cin.imbue(loc);
 	}
 	else {
 		try {
-			cin.imbue(gen("en_US." + args.encoding));
+			auto loc2 = gen("en_US." + args.encoding);
+			install_ctype_facets_inplace(loc2);
+			cin.imbue(loc2);
 		}
 		catch (const boost::locale::conv::invalid_charset_error& e) {
 			cerr << e.what() << '\n';

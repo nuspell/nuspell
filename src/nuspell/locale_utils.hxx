@@ -73,6 +73,8 @@ auto to_wide(const std::string& in, const std::locale& inloc) -> std::wstring;
 auto to_singlebyte(const std::wstring& in, const std::locale& outloc)
     -> std::string;
 
+auto install_ctype_facets_inplace(std::locale& boost_loc) -> void;
+
 // put template function definitions bellow the declarations above
 // otherwise doxygen has bugs when generating call graphs
 

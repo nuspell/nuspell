@@ -651,6 +651,7 @@ auto Aff_Data::parse(istream& in) -> bool
 
 	// now fill data structures from temporary data
 	locale_aff = locale_generator(get_locale_name(language_code, encoding));
+	install_ctype_facets_inplace(locale_aff);
 	if (encoding.is_utf8()) {
 		using namespace boost::locale::conv;
 		auto u_to_u_pair = [](auto& x) {

@@ -23,7 +23,7 @@
 
 #include "../src/nuspell/locale_utils.hxx"
 
-#include <boost/locale/localization_backend.hpp>
+#include <boost/locale.hpp>
 
 using namespace std;
 using namespace std::literals::string_literals;
@@ -86,4 +86,65 @@ TEST_CASE("boost locale has icu", "[locale_utils]")
 	using lbm = boost::locale::localization_backend_manager;
 	auto v = lbm::global().get_all_backends();
 	CHECK(std::find(v.begin(), v.end(), "icu") != v.end());
+}
+
+TEST_CASE("icu ctype facets", "[locale_utils]")
+{
+	boost::locale::generator g;
+	auto loc = g("en_US.UTF-8");
+	install_ctype_facets_inplace(loc);
+
+	// test narrow ctype
+	CHECK(isupper('A', loc));
+	CHECK_FALSE(isupper('a', loc));
+	CHECK(islower('a', loc));
+	CHECK(ispunct('.', loc));
+	CHECK_FALSE(ispunct('a', loc));
+
+	CHECK(tolower('I', loc) == 'i');
+	CHECK(toupper('i', loc) == 'I');
+
+	// test above ascii, shoud be false
+	CHECK_FALSE(isupper('\xC0', loc));
+	CHECK_FALSE(islower('\xC0', loc));
+	CHECK_FALSE(isalnum('\xC0', loc));
+	CHECK(tolower('\xC0', loc) == '\xC0');
+	CHECK(toupper('\xC0', loc) == '\xC0');
+
+	// test wide
+	CHECK(isupper(L'A', loc));
+	CHECK_FALSE(isupper(L'a', loc));
+	CHECK(islower(L'a', loc));
+	CHECK(ispunct(L'.', loc));
+	CHECK_FALSE(ispunct(L'a', loc));
+
+	CHECK(isupper(L'Ш', loc));
+	CHECK_FALSE(isupper(L'ш', loc));
+	CHECK(islower(L'ш', loc));
+	CHECK(ispunct(L'¿', loc));
+	CHECK_FALSE(ispunct(L'ш', loc));
+
+	CHECK(tolower(L'I', loc) == L'i');
+	CHECK(toupper(L'i', loc) == L'I');
+
+	CHECK(toupper(L'г', loc) == L'Г');
+	CHECK(tolower(L'Г', loc) == L'г');
+
+	CHECK(toupper(L'У', loc) == L'У');
+	CHECK(tolower(L'м', loc) == L'м');
+
+	loc = g("ru_RU.ISO8859-5");
+	install_ctype_facets_inplace(loc);
+
+	CHECK(isupper('\xC8', loc));
+	CHECK_FALSE(isupper('\xE8', loc));
+	CHECK(islower('\xE8', loc));
+	CHECK(ispunct(',', loc));
+	CHECK_FALSE(ispunct('\xE8', loc));
+
+	CHECK(tolower('\xC8', loc) == '\xE8'); // Ш to ш
+	CHECK(tolower('\xE8', loc) == '\xE8'); // ш to ш
+
+	CHECK(toupper('\xE8', loc) == '\xC8'); // ш to Ш
+	CHECK(toupper('\xC8', loc) == '\xC8'); // Ш to Ш
 }

@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <limits>
 
+#include <boost/locale.hpp>
+
 #include <unicode/uchar.h>
 #include <unicode/ucnv.h>
 #include <unicode/unistr.h>
@@ -295,54 +297,84 @@ auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string
 	return ret;
 }
 
-auto to_wide(const std::string& in, const std::locale& inloc) -> std::wstring
+auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring
 {
 	using namespace std;
-	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(inloc);
-	auto wide = std::wstring();
-	wide.resize(in.size(), L'\0');
+	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
+	auto out = std::wstring(in.size(), L'\0');
 	auto state = mbstate_t{};
-	auto char_ptr = in.c_str();
-	auto last = in.c_str() + in.size();
-	auto wchar_ptr = &wide[0];
-	auto wlast = &wide[wide.size()];
+	auto in_ptr = in.c_str();
+	auto in_last = in.c_str() + in.size();
+	auto out_ptr = &out[0];
+	auto out_last = &out[out.size()];
 	for (;;) {
-		auto err = cvt.in(state, char_ptr, last, char_ptr, wchar_ptr,
-		                  wlast, wchar_ptr);
+		auto err = cvt.in(state, in_ptr, in_last, in_ptr, out_ptr,
+		                  out_last, out_ptr);
 		if (err == cvt.ok || err == cvt.noconv) {
 			break;
 		}
-		if (wchar_ptr == wlast) {
-			auto idx = wchar_ptr - &wide[0];
-			wide.resize(wide.size() * 2);
-			wchar_ptr = &wide[idx];
-			wlast = &wide[wide.size()];
+		if (out_ptr == out_last) {
+			auto idx = out_ptr - &out[0];
+			out.resize(out.size() * 2);
+			out_ptr = &out[idx];
+			out_last = &out[out.size()];
 		}
 		if (err == cvt.partial) {
-			if (char_ptr == last) {
-				*wchar_ptr++ = L'\uFFFD';
+			if (in_ptr == in_last) {
+				*out_ptr++ = L'\uFFFD';
 				break;
 			}
 		}
 		else if (err == cvt.error) {
-			char_ptr++;
-			*wchar_ptr++ = L'\uFFFD';
+			in_ptr++;
+			*out_ptr++ = L'\uFFFD';
 		}
 		else {
 			break; // should never happend
 		}
 	}
-	wide.erase(wchar_ptr - &wide[0]);
-	return wide;
+	out.erase(out_ptr - &out[0]);
+	return out;
 }
 
-auto to_singlebyte(const std::wstring& in, const std::locale& outloc)
+auto to_singlebyte(const std::wstring& in, const std::locale& loc)
     -> std::string
 {
 	using namespace std;
-	auto& cvt = use_facet<ctype<wchar_t>>(outloc);
-	string out(in.size(), 0);
-	cvt.narrow(&in[0], &in[in.size()], '?', &out[0]);
+	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
+	auto out = std::string(in.size(), '\0');
+	auto state = mbstate_t{};
+	auto in_ptr = in.c_str();
+	auto in_last = in.c_str() + in.size();
+	auto out_ptr = &out[0];
+	auto out_last = &out[out.size()];
+	for (;;) {
+		auto err = cvt.out(state, in_ptr, in_last, in_ptr, out_ptr,
+		                   out_last, out_ptr);
+		if (err == cvt.ok || err == cvt.noconv) {
+			break;
+		}
+		if (out_ptr == out_last) {
+			auto idx = out_ptr - &out[0];
+			out.resize(out.size() * 2);
+			out_ptr = &out[idx];
+			out_last = &out[out.size()];
+		}
+		if (err == cvt.partial) {
+			if (in_ptr == in_last) {
+				*out_ptr++ = '?';
+				break;
+			}
+		}
+		else if (err == cvt.error) {
+			in_ptr++;
+			*out_ptr++ = '?';
+		}
+		else {
+			break; // should never happend
+		}
+	}
+	out.erase(out_ptr - &out[0]);
 	return out;
 }
 
@@ -379,13 +411,85 @@ auto get_char_mask(UChar32 cp)
 	if (u_isblank(cp)) {
 		ret |= ctype_base::blank;
 	}
-	if (u_isalnum(cp)) {
-		ret |= ctype_base::alnum;
-	}
-	if (u_isgraph(cp)) {
-		ret |= ctype_base::graph;
-	}
+
+	// don't uncoment this
+	// if (u_isalnum(cp)) {
+	//	ret |= ctype_base::alnum;
+	//}
+	// if (u_isgraph(cp)) {
+	//	ret |= ctype_base::graph;
+	//}
 	return ret;
+}
+
+auto general_category_to_ctype_mask(UCharCategory cat) -> ctype_base::mask
+{
+	switch (cat) {
+	case U_UNASSIGNED:
+		// case U_GENERAL_OTHER_TYPES:
+		// no print, graph
+		return {};
+	case U_UPPERCASE_LETTER:
+		return ctype_base::upper | ctype_base::alpha |
+		       ctype_base::print;
+	case U_LOWERCASE_LETTER:
+		return ctype_base::lower | ctype_base::alpha |
+		       ctype_base::print;
+	case U_TITLECASE_LETTER:
+		return ctype_base::upper | ctype_base::alpha |
+		       ctype_base::print;
+	case U_MODIFIER_LETTER:
+		return ctype_base::alpha | ctype_base::print;
+	case U_OTHER_LETTER:
+		return ctype_base::alpha | ctype_base::print;
+	case U_NON_SPACING_MARK:
+		return ctype_base::print;
+	case U_ENCLOSING_MARK:
+		return ctype_base::print;
+	case U_COMBINING_SPACING_MARK:
+		return ctype_base::print;
+	case U_DECIMAL_DIGIT_NUMBER:
+	case U_LETTER_NUMBER:
+	case U_OTHER_NUMBER:
+		return ctype_base::digit | ctype_base::print;
+	case U_SPACE_SEPARATOR:
+		return ctype_base::space | ctype_base::blank |
+		       ctype_base::print; // no graph
+	case U_LINE_SEPARATOR:
+		return ctype_base::space | ctype_base::cntrl |
+		       ctype_base::print; // no graph
+	case U_PARAGRAPH_SEPARATOR:
+		return ctype_base::space | ctype_base::cntrl |
+		       ctype_base::print; // no graph
+	case U_CONTROL_CHAR:
+		return ctype_base::cntrl; // no print, graph
+	case U_FORMAT_CHAR:
+		return ctype_base::cntrl; // no print, graph
+	case U_PRIVATE_USE_CHAR:
+		// no print
+	        {};
+	case U_SURROGATE:
+		// no print, graph
+		return {};
+	case U_DASH_PUNCTUATION:
+	case U_START_PUNCTUATION:
+	case U_END_PUNCTUATION:
+	case U_CONNECTOR_PUNCTUATION:
+	case U_OTHER_PUNCTUATION:
+		return ctype_base::punct | ctype_base::print;
+
+	case U_MATH_SYMBOL:
+	case U_CURRENCY_SYMBOL:
+	case U_MODIFIER_SYMBOL:
+	case U_OTHER_SYMBOL:
+		return ctype_base::print;
+	case U_INITIAL_PUNCTUATION:
+	case U_FINAL_PUNCTUATION:
+		return ctype_base::punct | ctype_base::print;
+	case U_CHAR_CATEGORY_COUNT:
+		return {};
+	}
+	return {};
 }
 
 auto fill_ctype(const string& enc, ctype_base::mask* m, char* upper,
@@ -393,33 +497,38 @@ auto fill_ctype(const string& enc, ctype_base::mask* m, char* upper,
 {
 	auto err = UErrorCode{};
 	auto cvt = ucnv_open(enc.c_str(), &err);
-	icu::UnicodeString out;
+	auto out = icu::UnicodeString();
 	for (size_t i = 0; i < 256; ++i) {
 		const char ch = i;
 		auto ch_ptr = &ch;
 		auto cp = ucnv_getNextUChar(cvt, &ch_ptr, ch_ptr + 1, &err);
-		ucnv_reset(cvt);
-		if (U_SUCCESS(err)) {
+		ucnv_resetToUnicode(cvt);
+		if (cp != 0xfffd && U_SUCCESS(err)) {
 			m[i] = get_char_mask(cp);
 			out = u_toupper(cp);
-			auto len = out.extract(&upper[i], 1, cvt, err);
-			if (len == 0)
+			out.extract(&upper[i], 1, cvt, err);
+			if (U_FAILURE(err)) {
 				upper[i] = i;
+				err = UErrorCode{};
+			}
 			out = u_tolower(cp);
-			len = out.extract(&lower[i], 1, cvt, err);
-			if (len == 0)
+			out.extract(&lower[i], 1, cvt, err);
+			if (U_FAILURE(err)) {
 				lower[i] = i;
+				err = UErrorCode{};
+			}
 		}
 		else {
 			m[i] = ctype_base::mask{};
 			upper[i] = i;
 			lower[i] = i;
+			err = UErrorCode{};
 		}
 	}
 	ucnv_close(cvt);
 }
 
-class icu_ctype_char : public std::ctype<char> {
+class icu_ctype_char final : public std::ctype<char> {
       private:
 	mask tbl[256];
 	char upper[256];
@@ -435,26 +544,165 @@ class icu_ctype_char : public std::ctype<char> {
 	{
 		return upper[static_cast<unsigned char>(c)];
 	}
-	const char_type* do_toupper(char_type* low,
-	                            const char_type* high) const override
+	const char_type* do_toupper(char_type* first,
+	                            const char_type* last) const override
 	{
-		for (; low != high; ++low) {
-			*low = upper[static_cast<unsigned char>(*low)];
+		for (; first != last; ++first) {
+			*first = do_toupper(*first);
 		}
-		return high;
+		return last;
 	}
 	char_type do_tolower(char_type c) const override
 	{
 		return lower[static_cast<unsigned char>(c)];
 	}
-	const char_type* do_tolower(char_type* low,
-	                            const char_type* high) const override
+	const char_type* do_tolower(char_type* first,
+	                            const char_type* last) const override
+	{
+		for (; first != last; ++first) {
+			*first = do_tolower(*first);
+		}
+		return last;
+	}
+};
+
+auto fill_ctype_wide(const string& enc, wchar_t* widen)
+{
+	auto err = UErrorCode{};
+	auto cvt = ucnv_open(enc.c_str(), &err);
+	auto out = icu::UnicodeString();
+	for (size_t i = 0; i < 256; ++i) {
+		const char ch = i;
+		auto ch_ptr = &ch;
+		auto cp = ucnv_getNextUChar(cvt, &ch_ptr, ch_ptr + 1, &err);
+		ucnv_resetToUnicode(cvt);
+		if (U_SUCCESS(err)) {
+			widen[i] = cp;
+		}
+		else {
+			widen[i] = -1;
+		}
+	}
+	ucnv_close(cvt);
+}
+
+class icu_ctype_wide final : public std::ctype<wchar_t> {
+      private:
+	char_type wd[256];
+
+      public:
+	icu_ctype_wide(const std::string& enc, std::size_t refs = 0)
+	    : std::ctype<wchar_t>(refs)
+	{
+		fill_ctype_wide(enc, wd);
+	}
+
+	virtual bool do_is(mask m, char_type c) const
+	{
+		if ((m & space) && u_isspace(c))
+			return true;
+		if ((m & print) && u_isprint(c))
+			return true;
+		if ((m & cntrl) && u_iscntrl(c))
+			return true;
+		if ((m & upper) && u_isupper(c))
+			return true;
+		if ((m & lower) && u_islower(c))
+			return true;
+		if ((m & alpha) && u_isalpha(c))
+			return true;
+		if ((m & digit) && u_isdigit(c))
+			return true;
+		if ((m & punct) && u_ispunct(c))
+			return true;
+		if ((m & xdigit) && u_isxdigit(c))
+			return true;
+		if ((m & blank) && u_isblank(c))
+			return true;
+
+		// don't uncoment this
+		// if ((m & alnum) && u_isalnum(c))
+		//	return true;
+		// if ((m & graph) && u_isgraph(c))
+		//	return true;
+
+		return false;
+	}
+	virtual const char_type* do_is(const char_type* first,
+	                               const char_type* last, mask* vec) const
+	{
+		for (; first != last; ++first, ++vec) {
+			*vec = get_char_mask(*first);
+		}
+		return last;
+	}
+	virtual const char_type* do_scan_is(mask m, const char_type* first,
+	                                    const char_type* last) const
+	{
+		return std::find_if(first, last,
+		                    [&](auto c) { return do_is(m, c); });
+	}
+	virtual const char_type* do_scan_not(mask m, const char_type* first,
+	                                     const char_type* last) const
+	{
+		return std::find_if_not(first, last,
+		                        [&](auto c) { return do_is(m, c); });
+	}
+
+	virtual char_type do_toupper(char_type c) const { return u_toupper(c); }
+	virtual const char_type* do_toupper(char_type* low,
+	                                    const char_type* high) const
 	{
 		for (; low != high; ++low) {
-			*low = lower[static_cast<unsigned char>(*low)];
+			*low = u_toupper(*low);
 		}
 		return high;
 	}
+	virtual char_type do_tolower(char_type c) const { return u_tolower(c); }
+	virtual const char_type* do_tolower(char_type* first,
+	                                    const char_type* last) const
+	{
+		for (; first != last; ++first) {
+			*first = u_tolower(*first);
+		}
+		return last;
+	}
+
+	virtual char_type do_widen(char c) const
+	{
+		return wd[static_cast<unsigned char>(c)];
+	}
+	virtual const char* do_widen(const char* low, const char* high,
+	                             char_type* dest) const
+	{
+		std::transform(low, high, dest,
+		               [&](auto c) { return do_widen(c); });
+		return high;
+	}
+	virtual char do_narrow(char_type c, char dfault) const
+	{
+		auto n = std::char_traits<char_type>::find(wd, 256, c);
+		if (n)
+			return n - wd;
+		return dfault;
+	}
+	virtual const char_type* do_narrow(const char_type* low,
+	                                   const char_type* high, char dfault,
+	                                   char* dest) const
+	{
+		std::transform(low, high, dest,
+		               [&](auto c) { return do_narrow(c, dfault); });
+		return high;
+	}
 };
+
+auto install_ctype_facets_inplace(std::locale& boost_loc) -> void
+{
+
+	auto& info = use_facet<boost::locale::info>(boost_loc);
+	auto enc = info.encoding();
+	boost_loc = locale(boost_loc, new icu_ctype_char(enc));
+	boost_loc = locale(boost_loc, new icu_ctype_wide(enc));
+}
 }
 }

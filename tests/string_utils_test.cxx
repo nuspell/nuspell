@@ -19,13 +19,11 @@
 #include "catch.hpp"
 
 #include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/case_conv.hpp>
-#include <boost/algorithm/string/classification.hpp>
 #include <boost/locale.hpp>
 #include <iostream>
 
+#include "../src/nuspell/locale_utils.hxx"
 #include "../src/nuspell/string_utils.hxx"
-#include "../src/nuspell/structures.hxx"
 
 using namespace std;
 using namespace std::literals::string_literals;
@@ -318,13 +316,9 @@ TEST_CASE("method classify_casing", "[string_utils]")
 
 	boost::locale::generator g;
 	auto loc = g("tr_TR.UTF-8");
+	install_ctype_facets_inplace(loc);
 	CHECK_FALSE(Casing::INIT_CAPITAL == classify_casing("İstanbul"s, loc));
-	// FIXME implement good ctype facet
-	// CHECK(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"s, loc));
-	// auto& ct = use_facet<ctype<wchar_t>>(loc);
-	// CHECK(ct.tolower(L'İ') == L'i');
-	// CHECK(ct.toupper(L'i') == L'İ');
-	// CHECK(ct.tolower(L'Њ') == L'њ');
+	CHECK(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"s, loc));
 }
 
 TEST_CASE("method is_number", "[string_utils]")
