@@ -631,9 +631,8 @@ class icu_ctype_wide final : public std::ctype<wchar_t> {
 	virtual const char_type* do_is(const char_type* first,
 	                               const char_type* last, mask* vec) const
 	{
-		for (; first != last; ++first, ++vec) {
-			*vec = get_char_mask(*first);
-		}
+		std::transform(first, last, vec,
+		               [&](auto c) { return get_char_mask(c); });
 		return last;
 	}
 	virtual const char_type* do_scan_is(mask m, const char_type* first,
