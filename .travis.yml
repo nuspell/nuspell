@@ -23,7 +23,7 @@ install:
   fi
 - |
   if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-    echo 'using gcc : : g++-6 : ;' > ~/user-config.jam
+    echo 'using gcc : : g++-7 : ;' > ~/user-config.jam
   fi
 - export BOOST_ROOT=~/.local
 - |
@@ -41,7 +41,7 @@ before_script:
 - |
   # On Linux Use gcc-5. On OS X always use clang, dont download gcc from Homebrew.
   if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then
-    export CXX="g++-6" CC="gcc-6";
+    export CXX="g++-7" CC="gcc-7";
   fi
 - export CXXFLAGS='-g -O2 -Wno-deprecated-declarations'
 
@@ -62,6 +62,6 @@ addons:
     packages:
     - autoconf
     - automake
-    - gcc-6
-    - g++-6
+    - gcc-7
+    - g++-7
     - libicu-dev
