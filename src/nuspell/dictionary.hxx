@@ -55,7 +55,7 @@ class Dictionary {
 	template <class CharT>
 	auto spell_casing_title(std::basic_string<CharT>& s) -> const Flag_Set*;
 	template <class CharT>
-	auto spell_sharps(std::basic_string<CharT>& s) -> const Flag_Set*;
+	auto spell_sharps(std::basic_string<CharT>& base, size_t n_pos = 0, int n = 0, int repnum = 0) -> const Flag_Set*;
 	template <class CharT>
 	auto checkword(std::basic_string<CharT>& s) -> const Flag_Set*;
 
