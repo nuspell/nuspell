@@ -4,10 +4,13 @@ testSubDir
 *.gv
 *.svg
 /*_test
-/*.catch
 
 # https://gcc.gnu.org/onlinedocs/gcc/Gcov.html
 /*.gcno
 /*.gcda
 
-catch*.hpp
+# https://github.com/catchorg/Catch2
+/*.catch
+/catch*.hpp
+/v*.*.*.zip
+/Catch*

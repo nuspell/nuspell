@@ -467,7 +467,7 @@ auto general_category_to_ctype_mask(UCharCategory cat) -> ctype_base::mask
 		return ctype_base::cntrl; // no print, graph
 	case U_PRIVATE_USE_CHAR:
 		// no print
-	        {};
+		{};
 	case U_SURROGATE:
 		// no print, graph
 		return {};
