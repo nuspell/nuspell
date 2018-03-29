@@ -7,15 +7,12 @@ LDADD = ../src/nuspell/libnuspell.a $(BOOST_LOCALE_LIBS) $(CODE_COVERAGE_LIBS) $
 
 
 BUILT_SOURCES = catch.hpp catch_reporter_tap.hpp
-catch_version = 2.2.1
-catch_zip = v$(catch_version).zip
-catch_dir = Catch2-$(catch_version)
-catch_url = https://github.com/catchorg/Catch2/archive/$(catch_zip)
+catch_url = https://raw.githubusercontent.com/catchorg/Catch2/v2.2.1
 catch.hpp:
-	if [ ! -e $(catch_zip) ]; then wget $(catch_url); fi; unzip $(catch_zip) $(catch_dir)/single_include/catch.hpp; mv -f $(catch_dir)/single_include/catch.hpp .
+	wget $(catch_url)/single_include/catch.hpp
 
 catch_reporter_tap.hpp:
-	if [ ! -e $(catch_zip) ]; then wget $(catch_url); fi; unzip $(catch_zip) $(catch_dir)/single_include/catch_reporter_tap.hpp; mv -f $(catch_dir)/single_include/catch_reporter_tap.hpp .
+	wget $(catch_url)/single_include/catch_reporter_tap.hpp
 
 CLEANFILES = catch.hpp catch_reporter_tap.hpp
 
