@@ -155,8 +155,6 @@ template auto Dictionary::spell_break(wstring& s) -> Spell_Result;
 template <class CharT>
 auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 {
-	auto& loc = aff_data.locale_aff;
-	auto INFO_WARNING = false; // TODO refactor to more global storage
 	auto c = classify_casing(s);
 	const Flag_Set* res = NULL;
 
@@ -180,7 +178,8 @@ auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 	if (res) {
 		// handle forbidden words
 		if (res->exists(aff_data.forbiddenword_flag)) {
-			INFO_WARNING = true;
+			cerr << "Nuspell warning: word " << s.c_str()
+			     << " has forbiden flag" << std::endl;
 			if (aff_data.forbid_warn) {
 				// return BAD_WORD; //TODO enable
 			}
@@ -273,16 +272,18 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
 	auto t = boost::locale::to_title(s, loc);
 	// handle idot
 	auto res = checkword<CharT>(s);
+
+	return res;
 }
 template auto Dictionary::spell_casing_title(string& s) -> const Flag_Set*;
 template auto Dictionary::spell_casing_title(wstring& s) -> const Flag_Set*;
 
 template <class CharT>
 auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t n_pos,
-                              int n, int rep) -> const Flag_Set*
+                              size_t n, size_t rep) -> const Flag_Set*
 {
 	size_t MAXSHARPS = 5; // TODO refactor to more global
-	size_t pos = base.find(LITERAL(CharT, "ss"), n_pos);
+	auto pos = base.find(LITERAL(CharT, "ss"), n_pos);
 	if (pos != std::string::npos && (n < MAXSHARPS)) {
 		base[pos] = 223; // ß
 		base.erase(pos + 1, 1);
@@ -300,10 +301,10 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t n_pos,
 	}
 	return NULL;
 }
-template auto Dictionary::spell_sharps(string& base, size_t n_pos, int n,
-                                       int rep) -> const Flag_Set*;
-template auto Dictionary::spell_sharps(wstring& base, size_t n_pos, int n,
-                                       int rep) -> const Flag_Set*;
+template auto Dictionary::spell_sharps(string& base, size_t n_pos, size_t n,
+                                       size_t rep) -> const Flag_Set*;
+template auto Dictionary::spell_sharps(wstring& base, size_t n_pos, size_t n,
+                                       size_t rep) -> const Flag_Set*;
 
 template <class CharT>
 auto Dictionary::checkword(std::basic_string<CharT>& s) -> const Flag_Set*
