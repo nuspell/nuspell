@@ -3048,7 +3048,7 @@ struct hentry* AffixMgr::affix_check(const char* word,
   // check all prefixes (also crossed with suffixes if allowed)
   struct hentry* rv = prefix_check(word, len, in_compound, needflag);
   if (rv) {
-    log_file << "  AffixMgr::affix_check(word=" << word << ") prefix_check() -> <HashEntry word=" << rv->word << ",astr=" << (char)*rv->astr << ">" << std::endl; return rv; }
+    log_file << "  AffixMgr::affix_check(word=" << word << ") prefix_check() -> <HashEntry word=" << (rv ? rv->word: "NULL") << ",astr=" << (rv ? (char)*rv->astr : ' ') << ">" << std::endl; return rv; }
 
   // if still not found check all suffixes
   rv = suffix_check(word, len, 0, NULL, FLAG_NULL, needflag, in_compound);
@@ -3058,17 +3058,17 @@ struct hentry* AffixMgr::affix_check(const char* word,
     pfx = NULL;
 
     if (rv) {
-      log_file << "  AffixMgr::affix_check(word=" << word << ") suffix_check() -> <HashEntry word=" << rv->word << ",astr=" << (char)*rv->astr << ">" << std::endl; return rv; }
+      log_file << "  AffixMgr::affix_check(word=" << word << ") suffix_check() -> <HashEntry word=" << (rv ? rv->word: "NULL") << ",astr=" << (rv ? (char)*rv->astr : ' ') << ">" << std::endl; return rv; }
     // if still not found check all two-level suffixes
     rv = suffix_check_twosfx(word, len, 0, NULL, needflag);
 
     if (rv) {
-      log_file << "  AffixMgr::affix_check(word=" << word << ") suffix_check_twosfx() -> <HashEntry word=" << rv->word << ",astr=" << (char)*rv->astr << ">" << std::endl; return rv; }
+      log_file << "  AffixMgr::affix_check(word=" << word << ") suffix_check_twosfx() -> <HashEntry word=" << (rv ? rv->word: "NULL") << ",astr=" << (rv ? (char)*rv->astr : ' ') << ">" << std::endl; return rv; }
     // if still not found check all two-level suffixes
     rv = prefix_check_twosfx(word, len, IN_CPD_NOT, needflag);
   }
 
-  log_file << "  AffixMgr::affix_check(word=" << word << ") prefix_check_twosfx() -> <HashEntry word=" << rv->word << ",astr=" << (char)*rv->astr << ">" << std::endl; return rv;
+  log_file << "  AffixMgr::affix_check(word=" << word << ") prefix_check_twosfx() -> <HashEntry word=" << (rv ? rv->word: "NULL") << ",astr=" << (rv ? (char)*rv->astr : ' ') << ">" << std::endl; return rv;
 }
 
 // check if word with affixes is correctly spelled

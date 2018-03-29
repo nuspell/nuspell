@@ -284,7 +284,7 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t n_pos,
 	size_t MAXSHARPS = 5; // TODO refactor to more global
 	size_t pos = base.find(LITERAL(CharT, "ss"), n_pos);
 	if (pos != std::string::npos && (n < MAXSHARPS)) {
-		base[pos] = 'ß';
+		base[pos] = 223; // ß
 		base.erase(pos + 1, 1);
 		auto res = spell_sharps(base, pos + 2, n + 1, rep + 1);
 		if (res)
