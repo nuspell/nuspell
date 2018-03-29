@@ -553,7 +553,7 @@ bool HunspellImpl::spell(const std::string& word, int* info, std::string* root) 
         if (rv)
           break;
       }
-    }
+    } /* FALLTHROUGH */
     case INITCAP: {
       // handle special capitalization of dotted I
       bool Idot = (utf8 && (unsigned char) scw[0] == 0xc4 && (unsigned char) scw[1] == 0xb0);
@@ -894,7 +894,7 @@ std::vector<std::string> HunspellImpl::suggest(const std::string& word) {
       break;
     }
     case HUHINITCAP:
-      capwords = 1;
+      capwords = 1; /* FALLTHROUGH */
     case HUHCAP: {
       pSMgr->suggest(slst, scw.c_str(), &onlycmpdsug);
       // something.The -> something. The
@@ -1006,7 +1006,7 @@ std::vector<std::string> HunspellImpl::suggest(const std::string& word) {
         break;
       }
       case HUHINITCAP:
-        capwords = 1;
+        capwords = 1; /* FALLTHROUGH */
       case HUHCAP: {
         std::string wspace(scw);
         mkallsmall2(wspace, sunicw);
