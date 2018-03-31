@@ -20,6 +20,7 @@
 #include "string_utils.hxx"
 
 #include <iostream>
+#include <stdexcept>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/locale.hpp>
@@ -184,27 +185,26 @@ template auto Dictionary::spell_break(wstring& s) -> Spell_Result;
 template <class CharT>
 auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 {
-	auto c = classify_casing(s);
-	const Flag_Set* res = NULL;
+	auto casing_type = classify_casing(s);
+	const Flag_Set* res = nullptr;
 
-	if (c == Casing::SMALL || c == Casing::CAMEL || c == Casing::PASCAL) {
-		// handle small case, camel case and pascal case
+	switch (casing_type) {
+	case Casing::SMALL:
+	case Casing::CAMEL:
+	case Casing::PASCAL:
 		res = checkword<CharT>(s);
-		;
-	}
-	else if (c == Casing::ALL_CAPITAL) {
-		// handle upper case
+		break;
+	case Casing::ALL_CAPITAL:
 		res = spell_casing_upper(s);
-	}
-	else if (c == Casing::INIT_CAPITAL) {
-		// handle capitalized case
+		break;
+	case Casing::INIT_CAPITAL:
 		res = spell_casing_title(s);
+		break;
+	default:
+		throw logic_error(
+		    "Fatal error, bad casing type, should never execute");
+		break;
 	}
-	else {
-		// handle forbidden state
-		cerr << "Nuspell error: unsupported casing" << std::endl;
-	}
-
 	if (res) {
 		// handle forbidden words
 		if (res->exists(aff_data.forbiddenword_flag)) {
@@ -300,7 +300,7 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t n_pos,
 	size_t MAXSHARPS = 5; // TODO refactor to more global
 	auto pos = base.find(LITERAL(CharT, "ss"), n_pos);
 	if (pos != std::string::npos && (n < MAXSHARPS)) {
-		base[pos] = 223; // ß
+		base[pos] = static_cast<CharT>(223); // ß
 		base.erase(pos + 1, 1);
 		auto res = spell_sharps(base, pos + 2, n + 1, rep + 1);
 		if (res)

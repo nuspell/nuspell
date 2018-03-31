@@ -215,12 +215,12 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			--e;
 		}
 		for (; i != e; i += 2) {
-			char16_t c1 = (unsigned char)*i;
-			char16_t c2 = (unsigned char)*(i + 1);
+			char16_t c1 = static_cast<unsigned char>(*i);
+			char16_t c2 = static_cast<unsigned char>(*(i + 1));
 			ret.push_back((c1 << 8) | c2);
 		}
 		if (i != s.end()) {
-			ret.push_back((unsigned char)*i);
+			ret.push_back(static_cast<unsigned char>(*i));
 		}
 		break;
 	}
