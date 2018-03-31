@@ -189,7 +189,8 @@ auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 
 	if (c == Casing::SMALL || c == Casing::CAMEL || c == Casing::PASCAL) {
 		// handle small case, camel case and pascal case
-		res = spell_casing_lower(s);
+		res = checkword<CharT>(s);
+		;
 	}
 	else if (c == Casing::ALL_CAPITAL) {
 		// handle upper case
@@ -224,26 +225,11 @@ template auto Dictionary::spell_casing(string& s) -> Spell_Result;
 template auto Dictionary::spell_casing(wstring& s) -> Spell_Result;
 
 template <class CharT>
-auto Dictionary::spell_casing_lower(std::basic_string<CharT>& s)
-    -> const Flag_Set*
-{
-	auto res = checkword<CharT>(s);
-	if (!res) {
-		auto t = std::basic_string<CharT>(s);
-		t += '.';
-		res = checkword<CharT>(t);
-	}
-	return res;
-}
-template auto Dictionary::spell_casing_lower(string& s) -> const Flag_Set*;
-template auto Dictionary::spell_casing_lower(wstring& s) -> const Flag_Set*;
-
-template <class CharT>
 auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
     -> const Flag_Set*
 {
 	auto& loc = aff_data.locale_aff;
-	auto res = spell_casing_lower(s);
+	auto res = checkword<CharT>(s);
 	if (res)
 		return res;
 
