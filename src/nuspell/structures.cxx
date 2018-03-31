@@ -171,9 +171,11 @@ template class Break_Table<wchar_t>;
  */
 template <class CharT>
 Prefix<CharT>::Prefix(char16_t flag, bool cross_product, const StrT& strip,
-                      const StrT& append, StrT condition)
-    : flag{flag}, cross_product{cross_product}, stripping{strip},
-      appending{append}, condition{condition.insert(0, 1, '^')}
+                      const StrT& append, const Flag_Set& cont_flags,
+                      StrT condition)
+    : flag{flag},
+      cross_product{cross_product}, stripping{strip}, appending{append},
+      cont_flags{cont_flags}, condition{condition.insert(0, 1, '^')}
 {
 }
 
@@ -265,9 +267,10 @@ auto Prefix<CharT>::check_condition(const StrT& word) const -> bool
  */
 template <class CharT>
 Suffix<CharT>::Suffix(char16_t flag, bool cross_product, const StrT& strip,
-                      const StrT& append, StrT condition)
+                      const StrT& append, const Flag_Set& cont_flags,
+                      StrT condition)
     : flag{flag}, cross_product{cross_product}, stripping{strip},
-      appending{append}, condition{condition += '$'}
+      appending{append}, cont_flags{cont_flags}, condition{condition += '$'}
 {
 }
 

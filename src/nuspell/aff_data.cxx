@@ -669,14 +669,37 @@ auto Aff_Data::parse(istream& in) -> bool
 		auto break_pat =
 		    boost::adaptors::transform(break_patterns, u_to_u);
 		wide_structures.break_table = break_pat;
-
 		wide_structures.ignored_chars = u_to_u(ignore_chars);
+
+		for (auto& x : prefixes) {
+			wide_structures.prefixes.emplace(
+			    x.flag, x.cross_product, u_to_u(x.stripping),
+			    u_to_u(x.appending), x.new_flags,
+			    u_to_u(x.condition));
+		}
+		for (auto& x : suffixes) {
+			wide_structures.suffixes.emplace(
+			    x.flag, x.cross_product, u_to_u(x.stripping),
+			    u_to_u(x.appending), x.new_flags,
+			    u_to_u(x.condition));
+		}
 	}
 	else {
 		structures.input_substr_replacer = input_conversion;
 		structures.output_substr_replacer = output_conversion;
 		structures.break_table = break_patterns;
 		structures.ignored_chars = ignore_chars;
+
+		for (auto& x : prefixes) {
+			structures.prefixes.emplace(x.flag, x.cross_product,
+			                            x.stripping, x.appending,
+			                            x.new_flags, x.condition);
+		}
+		for (auto& x : suffixes) {
+			structures.suffixes.emplace(x.flag, x.cross_product,
+			                            x.stripping, x.appending,
+			                            x.new_flags, x.condition);
+		}
 	}
 
 	cerr.flush();

@@ -52,7 +52,8 @@ TEST_CASE("class Prefix_Entry", "[structures]")
 	// auto pfx_tests = nuspell::Prefix_Entry(u'U', true, "0"s, "un"s,
 	// "wr."s);
 
-	auto pfx_tests = Prefix<char>(u'U', true, ""s, "un"s, "wr."s);
+	auto pfx_tests =
+	    Prefix<char>(u'U', true, ""s, "un"s, Flag_Set(), "wr."s);
 
 	SECTION("method to_root")
 	{
@@ -91,15 +92,19 @@ TEST_CASE("class Prefix_Entry", "[structures]")
 
 TEST_CASE("class Suffix", "[structures]")
 {
-	auto sfx_tests = Suffix<char>(u'T', true, "y"s, "ies"s, ".[^aeiou]y"s);
-	auto sfx_sk_SK =
-	    Suffix<char>(u'Z', true, "ata"s, "át"s, "[^áéíóúý].[^iš]ata"s);
-	auto sfx_pt_PT = Suffix<char>(u'X', true, "er"s, "a"s, "[^cug^-]er"s);
+	auto sfx_tests =
+	    Suffix<char>(u'T', true, "y"s, "ies"s, Flag_Set(), ".[^aeiou]y"s);
+	auto sfx_sk_SK = Suffix<char>(u'Z', true, "ata"s, "át"s, Flag_Set(),
+	                              "[^áéíóúý].[^iš]ata"s);
+	auto sfx_pt_PT =
+	    Suffix<char>(u'X', true, "er"s, "a"s, Flag_Set(), "[^cug^-]er"s);
 	// TODO See above regarding "0"
-	auto sfx_gd_GB = Suffix<char>(u'K', true, "0"s, "-san"s, "[^-]"s);
-	auto sfx_ar = Suffix<char>(u'a', true, "ه"s, "ي"s, "[^ءؤأ]ه"s);
+	auto sfx_gd_GB =
+	    Suffix<char>(u'K', true, "0"s, "-san"s, Flag_Set(), "[^-]"s);
+	auto sfx_ar =
+	    Suffix<char>(u'a', true, "ه"s, "ي"s, Flag_Set(), "[^ءؤأ]ه"s);
 	auto sfx_ko =
-	    Suffix<char>(24, true, "ᅬ다"s, " ᅫᆻ어"s,
+	    Suffix<char>(24, true, "ᅬ다"s, " ᅫᆻ어"s, Flag_Set(),
 	                 "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다"s);
 
 	SECTION("method to_root")

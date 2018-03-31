@@ -393,11 +393,12 @@ class Prefix {
 	const bool cross_product;
 	const StrT stripping;
 	const StrT appending;
+	Flag_Set cont_flags;
 	const RegexT condition;
 
 	Prefix() = default;
 	Prefix(char16_t flag, bool cross_product, const StrT& strip,
-	       const StrT& append, StrT condition);
+	       const StrT& append, const Flag_Set& cont_flags, StrT condition);
 
 	auto to_root(StrT& word) const -> StrT&;
 	auto to_root_copy(StrT word) const -> StrT;
@@ -418,11 +419,12 @@ class Suffix {
 	const bool cross_product;
 	const StrT stripping;
 	const StrT appending;
+	Flag_Set cont_flags;
 	const RegexT condition;
 
 	Suffix() = default;
 	Suffix(char16_t flag, bool cross_product, const StrT& strip,
-	       const StrT& append, StrT condition);
+	       const StrT& append, const Flag_Set& cont_flags, StrT condition);
 
 	auto to_root(StrT& word) const -> StrT&;
 	auto to_root_copy(StrT word) const -> StrT;

@@ -37,30 +37,59 @@ using namespace std;
  * @return
  */
 template <class CharT>
-auto prefix_check(const Dic_Data& dic, const Prefix_Table<CharT>& affix_table,
-                  const basic_string<CharT>& word)
+auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word)
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
+                                  const Prefix<CharT>&>>
 {
-	for (size_t aff_len = 1; 0 < aff_len && aff_len <= word.size();
-	     ++aff_len) {
+        auto& aff = aff_data;
+        auto& dic = dic_data;
+        auto& affixes = aff.get_structures<CharT>().affixes;
 
+        for (size_t aff_len = 0; 0 < aff_len && aff_len <= word.size();
+	     ++aff_len) {
 		auto affix = word.substr(0, aff_len);
-		auto entries = affix_table.equal_range(affix);
+		auto entries = affixes.equal_range(affix);
 		for (auto& e : boost::make_iterator_range(entries)) {
+			if (/*full word &&*/ e.cont_flags.exists(
+			    aff.compound_onlyin_flag))
+				continue;
+			// if (/*at compount end &&*/ !e.cont_flags.exists(
+			//    aff.compound_permit_flag))
+			//	continue;
+			if (e.cont_flags.exists(aff.need_affix_flag))
+				continue;
+			if (e.cont_flags.exists(aff.circumfix_flag))
+				continue;
 
 			e.to_root(word);
-			auto matched = e.check_condition(word);
-			if (matched) {
-				auto flags = dic.lookup(word);
-				if (flags && flags->exists(e.flag)) {
-					// success
-					return true;
-				}
+			if (!e.check_condition(word)) {
+				e.to_derived(word);
+				continue;
 			}
-			e.to_derived(word);
+			auto word_flags = dic.lookup(word);
+			if (!word_flags) {
+				e.to_derived(word);
+				continue;
+			}
+			if (!word_flags.exists(e.flag)) {
+				e.to_derived(word);
+				continue;
+			}
+			// needflag check here if needed
+
+			auto word2 = word;
+			e.to_derived(word); // revert word as it was passed
+			return {word2, word_flags, e};
 		}
 	}
-	return false;
+        return {};
 }
+template <>
+auto Dictionary::strip_prefix_only(std::string& word) -> boost::optional<
+    std::tuple<std::string, const Flag_Set&, const Prefix<char>&>>;
+template <>
+auto Dictionary::strip_prefix_only(std::wstring& word) -> boost::optional<
+    std::tuple<std::wstring, const Flag_Set&, const Prefix<wchar_t>&>>;
 
 template <class CharT>
 auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result

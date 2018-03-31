@@ -59,6 +59,8 @@ struct Aff_Structures {
 	Substr_Replacer<CharT> output_substr_replacer;
 	Break_Table<CharT> break_table;
 	String_Set<CharT> ignored_chars;
+	Prefix_Table<CharT> prefixes;
+	Suffix_Table<CharT> suffixes;
 };
 
 struct Affix {
