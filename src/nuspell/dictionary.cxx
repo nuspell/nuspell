@@ -70,7 +70,7 @@ template auto Dictionary::spell_priv(const string s) -> Spell_Result;
 template auto Dictionary::spell_priv(const wstring s) -> Spell_Result;
 
 template <class CharT>
-auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
+auto Dictionary::spell_break(std::basic_string<CharT> s) -> Spell_Result
 {
 	// check spelling accoring to case
 	auto res = spell_casing<CharT>(s);
@@ -120,7 +120,7 @@ auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
 }
 
 template <class CharT>
-auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
+auto Dictionary::spell_casing(std::basic_string<CharT> s) -> Spell_Result
 {
 	auto casing_type = classify_casing(s);
 	const Flag_Set* res = nullptr;
@@ -145,22 +145,18 @@ auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 	if (res) {
 		// handle forbidden words
 		if (res->exists(aff_data.forbiddenword_flag)) {
-			cerr << "Nuspell warning: word " << s.c_str()
-			     << " has forbiden flag" << std::endl;
-			if (aff_data.forbid_warn) {
-				// return BAD_WORD; //TODO enable
-			}
+			return BAD_WORD;
 		}
-		// return GOOD_WORD; //TODO enable
+		if (aff_data.forbid_warn && res->exists(aff_data.warn_flag)) {
+			return BAD_WORD;
+		}
+		return GOOD_WORD;
 	}
-
-	if (dic_data.lookup(s))   // TODO remove
-		return GOOD_WORD; // TODO remove
 	return BAD_WORD;
 }
 
 template <class CharT>
-auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
+auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
     -> const Flag_Set*
 {
 	auto& loc = aff_data.locale_aff;
@@ -210,7 +206,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
 }
 
 template <class CharT>
-auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
+auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
     -> const Flag_Set*
 {
 	auto& loc = aff_data.locale_aff;
@@ -225,7 +221,7 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
 }
 
 template <class CharT>
-auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t n_pos,
+auto Dictionary::spell_sharps(std::basic_string<CharT> base, size_t n_pos,
                               size_t n, size_t rep) -> const Flag_Set*
 {
 	size_t MAXSHARPS = 5; // TODO refactor to more global
@@ -249,7 +245,7 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t n_pos,
 }
 
 template <class CharT>
-auto Dictionary::checkword(std::basic_string<CharT>& s) -> const Flag_Set*
+auto Dictionary::checkword(std::basic_string<CharT> s) -> const Flag_Set*
 {
 	{
 		auto ret = dic_data.lookup(s);
@@ -271,7 +267,7 @@ auto Dictionary::checkword(std::basic_string<CharT>& s) -> const Flag_Set*
 }
 
 template <class CharT>
-auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word)
+auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&>>
 {
@@ -279,8 +275,7 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word)
         auto& dic = dic_data;
         auto& affixes = aff.get_structures<CharT>().prefixes;
 
-        for (size_t aff_len = 0; 0 < aff_len && aff_len <= word.size();
-             ++aff_len) {
+        for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
 	        auto affix = word.substr(0, aff_len);
 		auto entries = affixes.equal_range(affix);
 		for (auto& e : boost::make_iterator_range(entries)) {
@@ -311,19 +306,19 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word)
 			}
 			// needflag check here if needed
 
-			auto word2 = word;
-			e.to_derived(word); // revert word as it was passed
+			// auto word2 = word;
+			// e.to_derived(word); // revert word as it was passed
 			using tup =
 			    std::tuple<std::basic_string<CharT>,
 			               const Flag_Set&, const Prefix<CharT>&>;
-			return tup{word2, *word_flags, e};
+			return tup{word, *word_flags, e};
 		}
         }
         return {};
 }
 
 template <class CharT>
-auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word)
+auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Suffix<CharT>&>>
 {
@@ -331,8 +326,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word)
         auto& dic = dic_data;
         auto& affixes = aff.get_structures<CharT>().suffixes;
 
-        for (size_t aff_len = 0; 0 < aff_len && aff_len <= word.size();
-             ++aff_len) {
+        for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
 	        auto affix = word.substr(word.size() - aff_len);
 		auto entries = affixes.equal_range(affix);
 		for (auto& e : boost::make_iterator_range(entries)) {
@@ -369,12 +363,12 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word)
 			}
 			*/
 			// needflag check here if needed
-			auto word2 = word;
-			e.to_derived(word); // revert word as it was passed
+			// auto word2 = word;
+			// e.to_derived(word); // revert word as it was passed
 			using tup =
 			    std::tuple<std::basic_string<CharT>,
 			               const Flag_Set&, const Suffix<CharT>&>;
-			return tup{word2, *word_flags, e};
+			return tup{word, *word_flags, e};
 		}
         }
         return {};

@@ -45,18 +45,18 @@ class Dictionary {
 	template <class CharT>
 	auto spell_priv(std::basic_string<CharT> s) -> Spell_Result;
 	template <class CharT>
-	auto spell_break(std::basic_string<CharT>& s) -> Spell_Result;
+	auto spell_break(std::basic_string<CharT> s) -> Spell_Result;
 	template <class CharT>
-	auto spell_casing(std::basic_string<CharT>& s) -> Spell_Result;
+	auto spell_casing(std::basic_string<CharT> s) -> Spell_Result;
 	template <class CharT>
-	auto spell_casing_upper(std::basic_string<CharT>& s) -> const Flag_Set*;
+	auto spell_casing_upper(std::basic_string<CharT> s) -> const Flag_Set*;
 	template <class CharT>
-	auto spell_casing_title(std::basic_string<CharT>& s) -> const Flag_Set*;
+	auto spell_casing_title(std::basic_string<CharT> s) -> const Flag_Set*;
 	template <class CharT>
-	auto spell_sharps(std::basic_string<CharT>& base, size_t n_pos = 0,
+	auto spell_sharps(std::basic_string<CharT> base, size_t n_pos = 0,
 	                  size_t n = 0, size_t rep = 0) -> const Flag_Set*;
 	template <class CharT>
-	auto checkword(std::basic_string<CharT>& s) -> const Flag_Set*;
+	auto checkword(std::basic_string<CharT> s) -> const Flag_Set*;
 
 	/**
 	 * @brief strip_prefix_only
@@ -64,7 +64,7 @@ class Dictionary {
 	 * @return if found, root word + prefix
 	 */
 	template <class CharT>
-	auto strip_prefix_only(std::basic_string<CharT>& s) -> boost::optional<
+	auto strip_prefix_only(std::basic_string<CharT> s) -> boost::optional<
 	    std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	               const Prefix<CharT>&>>;
 
@@ -74,7 +74,7 @@ class Dictionary {
 	 * @return if found, root word + suffix
 	 */
 	template <class CharT>
-	auto strip_suffix_only(std::basic_string<CharT>& s) -> boost::optional<
+	auto strip_suffix_only(std::basic_string<CharT> s) -> boost::optional<
 	    std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	               const Suffix<CharT>&>>;
 
@@ -88,7 +88,7 @@ class Dictionary {
 	 * @return if found, root word + suffix + prefix
 	 */
 	template <class CharT>
-	auto strip_prefix_then_suffix(std::basic_string<CharT>& s)
+	auto strip_prefix_then_suffix(std::basic_string<CharT> s)
 	    -> boost::optional<
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Suffix<CharT>&, const Prefix<CharT>&>>;
@@ -103,13 +103,13 @@ class Dictionary {
 	 * @return if found, root word + prefix + suffix
 	 */
 	template <class CharT>
-	auto strip_suffix_then_prefix(std::basic_string<CharT>& s)
+	auto strip_suffix_then_prefix(std::basic_string<CharT> s)
 	    -> boost::optional<
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Prefix<CharT>&, const Suffix<CharT>&>>;
 
 	template <class CharT>
-	auto strip_suffix_then_suffix(std::basic_string<CharT>& s)
+	auto strip_suffix_then_suffix(std::basic_string<CharT> s)
 	    -> boost::optional<
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Suffix<CharT>&, const Suffix<CharT>&>>;
