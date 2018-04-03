@@ -29,69 +29,6 @@ namespace nuspell {
 
 using namespace std;
 
-/**
- * Checks prefix.
- *
- * @param dic dictionary to use.
- * @param affix_table table with prefixes.
- * @param word to check.
- * @return
- */
-template <class CharT>
-auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word)
-    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
-                                  const Prefix<CharT>&>>
-{
-        auto& aff = aff_data;
-        auto& dic = dic_data;
-        auto& affixes = aff.get_structures<CharT>().affixes;
-
-        for (size_t aff_len = 0; 0 < aff_len && aff_len <= word.size();
-	     ++aff_len) {
-		auto affix = word.substr(0, aff_len);
-		auto entries = affixes.equal_range(affix);
-		for (auto& e : boost::make_iterator_range(entries)) {
-			if (/*full word &&*/ e.cont_flags.exists(
-			    aff.compound_onlyin_flag))
-				continue;
-			// if (/*at compount end &&*/ !e.cont_flags.exists(
-			//    aff.compound_permit_flag))
-			//	continue;
-			if (e.cont_flags.exists(aff.need_affix_flag))
-				continue;
-			if (e.cont_flags.exists(aff.circumfix_flag))
-				continue;
-
-			e.to_root(word);
-			if (!e.check_condition(word)) {
-				e.to_derived(word);
-				continue;
-			}
-			auto word_flags = dic.lookup(word);
-			if (!word_flags) {
-				e.to_derived(word);
-				continue;
-			}
-			if (!word_flags.exists(e.flag)) {
-				e.to_derived(word);
-				continue;
-			}
-			// needflag check here if needed
-
-			auto word2 = word;
-			e.to_derived(word); // revert word as it was passed
-			return {word2, word_flags, e};
-		}
-	}
-        return {};
-}
-template <>
-auto Dictionary::strip_prefix_only(std::string& word) -> boost::optional<
-    std::tuple<std::string, const Flag_Set&, const Prefix<char>&>>;
-template <>
-auto Dictionary::strip_prefix_only(std::wstring& word) -> boost::optional<
-    std::tuple<std::wstring, const Flag_Set&, const Prefix<wchar_t>&>>;
-
 template <class CharT>
 auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 {
@@ -127,6 +64,8 @@ auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 	}
 	return ret;
 }
+// only these explicit template instantiations are needed for the spell_*
+// functions.
 template auto Dictionary::spell_priv(const string s) -> Spell_Result;
 template auto Dictionary::spell_priv(const wstring s) -> Spell_Result;
 
@@ -179,8 +118,6 @@ auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
 
 	return BAD_WORD;
 }
-template auto Dictionary::spell_break(string& s) -> Spell_Result;
-template auto Dictionary::spell_break(wstring& s) -> Spell_Result;
 
 template <class CharT>
 auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
@@ -221,8 +158,6 @@ auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 		return GOOD_WORD; // TODO remove
 	return BAD_WORD;
 }
-template auto Dictionary::spell_casing(string& s) -> Spell_Result;
-template auto Dictionary::spell_casing(wstring& s) -> Spell_Result;
 
 template <class CharT>
 auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
@@ -273,8 +208,6 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
 		res = NULL;
 	return res;
 }
-template auto Dictionary::spell_casing_upper(string& s) -> const Flag_Set*;
-template auto Dictionary::spell_casing_upper(wstring& s) -> const Flag_Set*;
 
 template <class CharT>
 auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
@@ -290,8 +223,6 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
 
 	return res;
 }
-template auto Dictionary::spell_casing_title(string& s) -> const Flag_Set*;
-template auto Dictionary::spell_casing_title(wstring& s) -> const Flag_Set*;
 
 template <class CharT>
 auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t n_pos,
@@ -316,16 +247,136 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t n_pos,
 	}
 	return NULL;
 }
-template auto Dictionary::spell_sharps(string& base, size_t n_pos, size_t n,
-                                       size_t rep) -> const Flag_Set*;
-template auto Dictionary::spell_sharps(wstring& base, size_t n_pos, size_t n,
-                                       size_t rep) -> const Flag_Set*;
 
 template <class CharT>
 auto Dictionary::checkword(std::basic_string<CharT>& s) -> const Flag_Set*
 {
-	return dic_data.lookup(s);
+	{
+		auto ret = dic_data.lookup(s);
+		if (ret)
+			return ret;
+	}
+
+	{
+		auto ret2 = strip_prefix_only(s);
+		if (ret2)
+			return &get<1>(*ret2);
+	}
+	{
+		auto ret3 = strip_suffix_only(s);
+		if (ret3)
+			return &get<1>(*ret3);
+	}
+	return nullptr;
 }
-template auto Dictionary::checkword(string& s) -> const Flag_Set*;
-template auto Dictionary::checkword(wstring& s) -> const Flag_Set*;
+
+template <class CharT>
+auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word)
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
+                                  const Prefix<CharT>&>>
+{
+        auto& aff = aff_data;
+        auto& dic = dic_data;
+        auto& affixes = aff.get_structures<CharT>().prefixes;
+
+        for (size_t aff_len = 0; 0 < aff_len && aff_len <= word.size();
+             ++aff_len) {
+	        auto affix = word.substr(0, aff_len);
+		auto entries = affixes.equal_range(affix);
+		for (auto& e : boost::make_iterator_range(entries)) {
+			if (/*full word &&*/ e.cont_flags.exists(
+			    aff.compound_onlyin_flag))
+				continue;
+			// if (/*at compount end &&*/ !e.cont_flags.exists(
+			//    aff.compound_permit_flag))
+			//	continue;
+			if (e.cont_flags.exists(aff.need_affix_flag))
+				continue;
+			if (e.cont_flags.exists(aff.circumfix_flag))
+				continue;
+
+			e.to_root(word);
+			if (!e.check_condition(word)) {
+				e.to_derived(word);
+				continue;
+			}
+			auto word_flags = dic.lookup(word);
+			if (!word_flags) {
+				e.to_derived(word);
+				continue;
+			}
+			if (!word_flags->exists(e.flag)) {
+				e.to_derived(word);
+				continue;
+			}
+			// needflag check here if needed
+
+			auto word2 = word;
+			e.to_derived(word); // revert word as it was passed
+			using tup =
+			    std::tuple<std::basic_string<CharT>,
+			               const Flag_Set&, const Prefix<CharT>&>;
+			return tup{word2, *word_flags, e};
+		}
+        }
+        return {};
+}
+
+template <class CharT>
+auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word)
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
+                                  const Suffix<CharT>&>>
+{
+        auto& aff = aff_data;
+        auto& dic = dic_data;
+        auto& affixes = aff.get_structures<CharT>().suffixes;
+
+        for (size_t aff_len = 0; 0 < aff_len && aff_len <= word.size();
+             ++aff_len) {
+	        auto affix = word.substr(word.size() - aff_len);
+		auto entries = affixes.equal_range(affix);
+		for (auto& e : boost::make_iterator_range(entries)) {
+			if (/*(full word || (aff_len == 0
+			      && at compund end)) &&*/
+			    e.cont_flags.exists(aff.compound_onlyin_flag))
+				continue;
+			// if (/*at compount begin &&*/ !e.cont_flags.exists(
+			//    aff.compound_permit_flag))
+			//	continue;
+			if (e.cont_flags.exists(aff.need_affix_flag))
+				continue;
+			if (e.cont_flags.exists(aff.circumfix_flag))
+				continue;
+
+			e.to_root(word);
+			if (!e.check_condition(word)) {
+				e.to_derived(word);
+				continue;
+			}
+			auto word_flags = dic.lookup(word);
+			if (!word_flags) {
+				e.to_derived(word);
+				continue;
+			}
+			if (!word_flags->exists(e.flag)) {
+				e.to_derived(word);
+				continue;
+			}
+			/*if (! full word &&
+			    word_flags->exists(aff.compound_onlyin_flag)) {
+				e.to_derived(word);
+				continue;
+			}
+			*/
+			// needflag check here if needed
+			auto word2 = word;
+			e.to_derived(word); // revert word as it was passed
+			using tup =
+			    std::tuple<std::basic_string<CharT>,
+			               const Flag_Set&, const Suffix<CharT>&>;
+			return tup{word2, *word_flags, e};
+		}
+        }
+        return {};
+}
 }
