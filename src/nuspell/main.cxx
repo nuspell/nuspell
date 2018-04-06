@@ -50,16 +50,16 @@ using namespace std;
 using namespace nuspell;
 
 enum Mode {
-	DEFAULT_MODE,
-	MISSPELLED_WORDS_MODE,
-	MISSPELLED_LINES_MODE,
-	CORRECT_WORDS_MODE,
-	CORRECT_LINES_MODE,
-	LINES_MODE,
-	LIST_DICTIONARIES_MODE,
-	HELP_MODE,
-	VERSION_MODE,
-	ERROR_MODE
+	DEFAULT_MODE /**< mode printing correct and misspelled words */,
+	MISSPELLED_WORDS_MODE /**< mode printing only misspelled words */,
+	MISSPELLED_LINES_MODE /**< mode printing only misspelled lines */,
+	CORRECT_WORDS_MODE /**< mode printing only correct words */,
+	CORRECT_LINES_MODE /**< mode printing only correct lines */,
+	LINES_MODE /**< mode where correctness is based on entire line */,
+	LIST_DICTIONARIES_MODE /**< more printing available dictionaries */,
+	HELP_MODE /**< mode printing help information */,
+	VERSION_MODE /**< mode printing version information */,
+	ERROR_MODE /**< mode where the arguments used caused an error */
 };
 
 struct Args_t {

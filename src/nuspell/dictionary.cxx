@@ -271,12 +271,12 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&>>
 {
-        auto& aff = aff_data;
-        auto& dic = dic_data;
-        auto& affixes = aff.get_structures<CharT>().prefixes;
+	auto& aff = aff_data;
+	auto& dic = dic_data;
+	auto& affixes = aff.get_structures<CharT>().prefixes;
 
-        for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-	        auto affix = word.substr(0, aff_len);
+	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
+		auto affix = word.substr(0, aff_len);
 		auto entries = affixes.equal_range(affix);
 		for (auto& e : boost::make_iterator_range(entries)) {
 			if (/*full word &&*/ e.cont_flags.exists(
@@ -313,8 +313,8 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
 			               const Flag_Set&, const Prefix<CharT>&>;
 			return tup{word, *word_flags, e};
 		}
-        }
-        return {};
+	}
+	return {};
 }
 
 template <class CharT>
@@ -322,12 +322,12 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Suffix<CharT>&>>
 {
-        auto& aff = aff_data;
-        auto& dic = dic_data;
-        auto& affixes = aff.get_structures<CharT>().suffixes;
+	auto& aff = aff_data;
+	auto& dic = dic_data;
+	auto& affixes = aff.get_structures<CharT>().suffixes;
 
-        for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-	        auto affix = word.substr(word.size() - aff_len);
+	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
+		auto affix = word.substr(word.size() - aff_len);
 		auto entries = affixes.equal_range(affix);
 		for (auto& e : boost::make_iterator_range(entries)) {
 			if (/*(full word || (aff_len == 0
@@ -358,8 +358,8 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
 			}
 			/*if (! full word &&
 			    word_flags->exists(aff.compound_onlyin_flag)) {
-				e.to_derived(word);
-				continue;
+			        e.to_derived(word);
+			        continue;
 			}
 			*/
 			// needflag check here if needed
@@ -370,7 +370,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
 			               const Flag_Set&, const Suffix<CharT>&>;
 			return tup{word, *word_flags, e};
 		}
-        }
-        return {};
+	}
+	return {};
 }
 }

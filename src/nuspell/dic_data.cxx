@@ -32,6 +32,13 @@ namespace nuspell {
 
 using namespace std;
 
+/**
+ * Parses an input stream offering dictionary information.
+ *
+ * @param in input stream to read from.
+ * @param aff affix data to retrive locale and flag settings from.
+ * @return The boolean indication reacing the end of stream after parsing.
+ */
 auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 {
 	size_t line_number = 1;
@@ -122,6 +129,13 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 	return in.eof(); // success if we reached eof
 }
 
+/**
+ * Looks up a word in the unordered map words.
+ *
+ * @param word string to look up.
+ * @return The flag set belonging to the word found or a null pointer when
+ * nothing has been found.
+ */
 auto Dic_Data::lookup(const string& word) -> Flag_Set*
 {
 	auto kv = words.find(word);

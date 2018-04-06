@@ -432,6 +432,12 @@ auto get_locale_name(string lang, string enc, const string& filename) -> string
 	return lang + "." + enc;
 }
 
+/**
+ * Parses an input stream offering affix information.
+ *
+ * @param in input stream to parse from.
+ * @return The boolean indication reacing the end of stream after parsing.
+ */
 auto Aff_Data::parse(istream& in) -> bool
 {
 	unordered_map<string, string*> command_strings = {

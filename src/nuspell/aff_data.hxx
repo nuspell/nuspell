@@ -35,7 +35,10 @@ class Encoding {
 	std::string name;
 
       public:
-	enum Type { SINGLEBYTE = false, UTF8 = true };
+	enum Type {
+		SINGLEBYTE = false /**< single-byte encoding type */,
+		UTF8 = true /**< UTF-8 encoding type */
+	};
 
 	Encoding() = default;
 	Encoding(const std::string& e);

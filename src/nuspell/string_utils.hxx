@@ -203,7 +203,7 @@ auto split_on_whitespace(const std::basic_string<CharT>& s, OutIt out,
  *
  * @param s string to split.
  * @param[out] v vector with separated strings. The vector is first cleared.
- * @param loc in locale.
+ * @param loc input locale.
  */
 template <class CharT>
 auto split_on_whitespace_v(const std::basic_string<CharT>& s,
