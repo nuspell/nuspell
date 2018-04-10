@@ -129,7 +129,7 @@ auto Dictionary::spell_casing(std::basic_string<CharT> s) -> Spell_Result
 	case Casing::SMALL:
 	case Casing::CAMEL:
 	case Casing::PASCAL:
-		res = checkword<CharT>(s);
+		res = checkword(s);
 		break;
 	case Casing::ALL_CAPITAL:
 		res = spell_casing_upper(s);
@@ -160,7 +160,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
     -> const Flag_Set*
 {
 	auto& loc = aff_data.locale_aff;
-	auto res = checkword<CharT>(s);
+	auto res = checkword(s);
 	if (res)
 		return res;
 
@@ -171,7 +171,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
 		if (apos == s.size() - 1) {
 			// apostrophe is at end of word
 			auto t = boost::locale::to_title(s, loc);
-			res = checkword<CharT>(t);
+			res = checkword(t);
 		}
 		else {
 			// apostophe is at beginning of word or diving the word
@@ -180,7 +180,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
 			auto part2 =
 			    boost::locale::to_title(s.substr(apos + 1), loc);
 			auto t = part1 + part2;
-			res = checkword<CharT>(t);
+			res = checkword(t);
 		}
 		if (res)
 			return res;
@@ -201,7 +201,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
 	// if not returned earlier
 	res = spell_casing_title(s);
 	if (res && res->exists(aff_data.keepcase_flag))
-		res = NULL;
+		res = nullptr;
 	return res;
 }
 
@@ -210,23 +210,23 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
     -> const Flag_Set*
 {
 	auto& loc = aff_data.locale_aff;
-	//	const Flag_Set* res = NULL;
+	//	const Flag_Set* res = nullptr;
 	// TODO compelte this method!
 
 	auto t = boost::locale::to_title(s, loc);
 	// handle idot
-	auto res = checkword<CharT>(s);
+	auto res = checkword(s);
 
 	return res;
 }
 
 template <class CharT>
-auto Dictionary::spell_sharps(std::basic_string<CharT> base, size_t n_pos,
+auto Dictionary::spell_sharps(std::basic_string<CharT> base, size_t pos,
                               size_t n, size_t rep) -> const Flag_Set*
 {
-	size_t MAXSHARPS = 5; // TODO refactor to more global
-	auto pos = base.find(LITERAL(CharT, "ss"), n_pos);
-	if (pos != std::string::npos && (n < MAXSHARPS)) {
+	const size_t MAX_SHARPS = 5;
+	pos = base.find(LITERAL(CharT, "ss"), pos);
+	if (pos != std::string::npos && (n < MAX_SHARPS)) {
 		base[pos] = static_cast<CharT>(223); // ß
 		base.erase(pos + 1, 1);
 		auto res = spell_sharps(base, pos + 2, n + 1, rep + 1);
@@ -241,7 +241,7 @@ auto Dictionary::spell_sharps(std::basic_string<CharT> base, size_t n_pos,
 	else if (rep > 0) {
 		return checkword(base);
 	}
-	return NULL;
+	return nullptr;
 }
 
 template <class CharT>
@@ -266,7 +266,7 @@ auto Dictionary::checkword(std::basic_string<CharT> s) -> const Flag_Set*
 	return nullptr;
 }
 
-template <class CharT>
+template <Dictionary::Affixing_Mode m, class CharT>
 auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&>>
@@ -279,12 +279,12 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
 		auto affix = word.substr(0, aff_len);
 		auto entries = affixes.equal_range(affix);
 		for (auto& e : boost::make_iterator_range(entries)) {
-			if (/*full word &&*/ e.cont_flags.exists(
-			    aff.compound_onlyin_flag))
+			if (m == FULL_WORD &&
+			    e.cont_flags.exists(aff.compound_onlyin_flag))
 				continue;
-			// if (/*at compount end &&*/ !e.cont_flags.exists(
-			//    aff.compound_permit_flag))
-			//	continue;
+			if (m == AT_COMPOUND_END &&
+			    !e.cont_flags.exists(aff.compound_permit_flag))
+				continue;
 			if (e.cont_flags.exists(aff.need_affix_flag))
 				continue;
 			if (e.cont_flags.exists(aff.circumfix_flag))
@@ -308,16 +308,13 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
 
 			// auto word2 = word;
 			// e.to_derived(word); // revert word as it was passed
-			using tup =
-			    std::tuple<std::basic_string<CharT>,
-			               const Flag_Set&, const Prefix<CharT>&>;
-			return tup{word, *word_flags, e};
+			return {{word, *word_flags, e}};
 		}
 	}
 	return {};
 }
 
-template <class CharT>
+template <Dictionary::Affixing_Mode m, class CharT>
 auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Suffix<CharT>&>>
@@ -330,13 +327,13 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
 		auto affix = word.substr(word.size() - aff_len);
 		auto entries = affixes.equal_range(affix);
 		for (auto& e : boost::make_iterator_range(entries)) {
-			if (/*(full word || (aff_len == 0
-			      && at compund end)) &&*/
+			if ((m == FULL_WORD ||
+			     (aff_len == 0 && m == AT_COMPOUND_END)) &&
 			    e.cont_flags.exists(aff.compound_onlyin_flag))
 				continue;
-			// if (/*at compount begin &&*/ !e.cont_flags.exists(
-			//    aff.compound_permit_flag))
-			//	continue;
+			if (m == AT_COMPOUND_BEGIN &&
+			    !e.cont_flags.exists(aff.compound_permit_flag))
+				continue;
 			if (e.cont_flags.exists(aff.need_affix_flag))
 				continue;
 			if (e.cont_flags.exists(aff.circumfix_flag))
@@ -356,19 +353,16 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
 				e.to_derived(word);
 				continue;
 			}
-			/*if (! full word &&
+			if (m != FULL_WORD &&
 			    word_flags->exists(aff.compound_onlyin_flag)) {
-			        e.to_derived(word);
-			        continue;
+				e.to_derived(word);
+				continue;
 			}
-			*/
 			// needflag check here if needed
+
 			// auto word2 = word;
 			// e.to_derived(word); // revert word as it was passed
-			using tup =
-			    std::tuple<std::basic_string<CharT>,
-			               const Flag_Set&, const Suffix<CharT>&>;
-			return tup{word, *word_flags, e};
+			return {{word, *word_flags, e}};
 		}
 	}
 	return {};

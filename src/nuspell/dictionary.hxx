@@ -58,12 +58,19 @@ class Dictionary {
 	template <class CharT>
 	auto checkword(std::basic_string<CharT> s) -> const Flag_Set*;
 
+	enum Affixing_Mode {
+		FULL_WORD,
+		AT_COMPOUND_BEGIN,
+		AT_COMPOUND_END,
+		AT_COMPOUND_MIDDLE
+	};
+
 	/**
 	 * @brief strip_prefix_only
 	 * @param s derived word with affixes
 	 * @return if found, root word + prefix
 	 */
-	template <class CharT>
+	template <Affixing_Mode m = FULL_WORD, class CharT>
 	auto strip_prefix_only(std::basic_string<CharT> s) -> boost::optional<
 	    std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	               const Prefix<CharT>&>>;
@@ -73,7 +80,7 @@ class Dictionary {
 	 * @param s derived word with affixes
 	 * @return if found, root word + suffix
 	 */
-	template <class CharT>
+	template <Affixing_Mode m = FULL_WORD, class CharT>
 	auto strip_suffix_only(std::basic_string<CharT> s) -> boost::optional<
 	    std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	               const Suffix<CharT>&>>;
