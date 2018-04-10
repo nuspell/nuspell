@@ -94,9 +94,10 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	// command line options. mode is FSM state, this while loop is FSM.
 	const char* shortopts = ":d:i:DGLlhv";
 	const struct option longopts[] = {
-	    {"version", 0, 0, 'v'}, {"help", 0, 0, 'h'}, {NULL, 0, 0, 0},
+	    {"version", 0, 0, 'v'}, {"help", 0, 0, 'h'}, {nullptr, 0, 0, 0},
 	};
-	while ((c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, shortopts, longopts, nullptr)) !=
+	       -1) {
 		switch (c) {
 		case 'd':
 			if (dictionary.empty())

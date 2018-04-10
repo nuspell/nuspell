@@ -129,6 +129,14 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK("TABLE"s == to_upper("tABLE"s, l));
 	CHECK("TABLE"s == to_upper("TABLE"s, l));
 
+	// Note that i is converted to I, not İ
+	CHECK_FALSE("İSTANBUL"s == to_upper("istanbul"s, l));
+	l = g("tr_TR.UTF-8");
+	CHECK("İSTANBUL"s == to_upper("istanbul"s, l));
+	// Note that I remains and is not converted to İ
+	CHECK_FALSE("İSTANBUL"s == to_upper("Istanbul"s, l));
+	CHECK("DİYARBAKIR"s == to_upper("Diyarbakır"s, l));
+
 	l = g("el_GR.UTF-8");
 	CHECK("ΕΛΛΆΔΑ"s == to_upper("ελλάδα"s, l));
 	CHECK("ΕΛΛΆΔΑ"s == to_upper("Ελλάδα"s, l));
@@ -137,10 +145,6 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK("ΣΊΓΜΑ"s == to_upper("σίγμα"s, l));
 	// Use of ς where σ is expected, should convert to upper case Σ.
 	CHECK("ΣΊΓΜΑ"s == to_upper("ςίγμα"s, l));
-
-	l = g("tr_TR.UTF-8");
-	CHECK("İSTANBUL"s == to_upper("İstanbul"s, l));
-	CHECK("DİYARBAKIR"s == to_upper("Diyarbakır"s, l));
 
 	l = g("de_DE.UTF-8");
 	// Note that lower case ü is not converted to upper case Ü.
@@ -199,14 +203,19 @@ TEST_CASE("method to_lower", "[string_utils]")
 	CHECK("table"s == to_lower("Table"s, l));
 	CHECK("table"s == to_lower("TABLE"s, l));
 
+	// Note that İ is converted to i followed by COMBINING DOT ABOVE U+0307
+	CHECK_FALSE("istanbul"s == to_lower("İSTANBUL"s, l));
+	// Note that İ is converted to i followed by COMBINING DOT ABOVE U+0307
+	CHECK_FALSE("istanbul"s == to_lower("İstanbul"s, l));
+	l = g("tr_TR.UTF-8");
+	CHECK("istanbul"s == to_lower("İSTANBUL"s, l));
+	CHECK("istanbul"s == to_lower("İstanbul"s, l));
+	CHECK("diyarbakır"s == to_lower("Diyarbakır"s, l));
+
 	l = g("el_GR.UTF-8");
 	CHECK("ελλάδα"s == to_lower("ελλάδα"s, l));
 	CHECK("ελλάδα"s == to_lower("Ελλάδα"s, l));
 	CHECK("ελλάδα"s == to_lower("ΕΛΛΆΔΑ"s, l));
-
-	l = g("tr_TR.UTF-8");
-	CHECK("istanbul"s == to_lower("İstanbul"s, l));
-	CHECK("diyarbakır"s == to_lower("Diyarbakır"s, l));
 
 	l = g("de_DE.UTF-8");
 	CHECK("grüßen"s == to_lower("grüßen"s, l));
@@ -258,15 +267,12 @@ TEST_CASE("method to_title", "[string_utils]")
 	CHECK("Table"s == to_title("tABLE"s, l));
 	CHECK("Table"s == to_title("TABLE"s, l));
 
-	l = g("el_GR.UTF-8");
-	CHECK("Ελλάδα"s == to_title("ελλάδα"s, l));
-	CHECK("Ελλάδα"s == to_title("Ελλάδα"s, l));
-	CHECK("Ελλάδα"s == to_title("ΕΛΛΆΔΑ"s, l));
-	CHECK("Σίγμα"s == to_title("Σίγμα"s, l));
-	CHECK("Σίγμα"s == to_title("σίγμα"s, l));
-	// Use of ς where σ is expected, should convert to upper case Σ.
-	CHECK("Σίγμα"s == to_title("ςίγμα"s, l));
-
+	// Note that i is converted to I, not İ
+	CHECK_FALSE("İstanbul"s == to_title("istanbul"s, l));
+	// Note that i is converted to I, not İ
+	CHECK_FALSE("İstanbul"s == to_title("iSTANBUL"s, l));
+	CHECK("İstanbul"s == to_title("İSTANBUL"s, l));
+	CHECK("Istanbul"s == to_title("ISTANBUL"s, l));
 	l = g("tr_TR.UTF-8");
 	CHECK("İstanbul"s == to_title("istanbul"s, l));
 	CHECK("İstanbul"s == to_title("iSTANBUL"s, l));
@@ -282,6 +288,15 @@ TEST_CASE("method to_title", "[string_utils]")
 	CHECK("İstanbul"s == to_title("istanbul"s, l));
 	l = g("az_IR.UTF-8");
 	CHECK("İstanbul"s == to_title("istanbul"s, l));
+
+	l = g("el_GR.UTF-8");
+	CHECK("Ελλάδα"s == to_title("ελλάδα"s, l));
+	CHECK("Ελλάδα"s == to_title("Ελλάδα"s, l));
+	CHECK("Ελλάδα"s == to_title("ΕΛΛΆΔΑ"s, l));
+	CHECK("Σίγμα"s == to_title("Σίγμα"s, l));
+	CHECK("Σίγμα"s == to_title("σίγμα"s, l));
+	// Use of ς where σ is expected, should convert to upper case Σ.
+	CHECK("Σίγμα"s == to_title("ςίγμα"s, l));
 
 	l = g("de_DE.UTF-8");
 	CHECK("Grüßen"s == to_title("grüßen"s, l));
@@ -314,6 +329,8 @@ TEST_CASE("method classify_casing", "[string_utils]")
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase"s));
 	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s));
 
+	CHECK_FALSE(Casing::INIT_CAPITAL == classify_casing("İstanbul"s));
+	CHECK_FALSE(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"s));
 	boost::locale::generator g;
 	auto loc = g("tr_TR.UTF-8");
 	install_ctype_facets_inplace(loc);

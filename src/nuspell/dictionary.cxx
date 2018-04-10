@@ -29,6 +29,11 @@ namespace nuspell {
 
 using namespace std;
 
+/** Check spelling for a word.
+ *
+ * @param s string to check spelling for.
+ * @return The spelling result.
+ */
 template <class CharT>
 auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 {
@@ -69,6 +74,12 @@ auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 template auto Dictionary::spell_priv(const string s) -> Spell_Result;
 template auto Dictionary::spell_priv(const wstring s) -> Spell_Result;
 
+/**
+ * Checks recursively the spelling according to break patterns.
+ *
+ * @param s string to check spelling for.
+ * @return The spelling result.
+ */
 template <class CharT>
 auto Dictionary::spell_break(std::basic_string<CharT> s) -> Spell_Result
 {
@@ -119,6 +130,12 @@ auto Dictionary::spell_break(std::basic_string<CharT> s) -> Spell_Result
 	return BAD_WORD;
 }
 
+/**
+ * Calls appropriate spell cehck method accoring to the word's casing.
+ *
+ * @param s string to check spelling for.
+ * @return The spelling result.
+ */
 template <class CharT>
 auto Dictionary::spell_casing(std::basic_string<CharT> s) -> Spell_Result
 {
@@ -155,6 +172,13 @@ auto Dictionary::spell_casing(std::basic_string<CharT> s) -> Spell_Result
 	return BAD_WORD;
 }
 
+/**
+ * Checks spelling for word in upper case. Note that additionally, when at the
+ * end no result has been found, that spell_casing_title is called.
+ *
+ * @param s string to check spelling for.
+ * @return The spelling result.
+ */
 template <class CharT>
 auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
     -> const Flag_Set*
@@ -199,7 +223,8 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
 	}
 
 	// if not returned earlier
-	res = spell_casing_title(s);
+	auto t = boost::locale::to_title(s, loc);
+	res = spell_casing_title(t);
 	if (res && res->exists(aff_data.keepcase_flag))
 		res = nullptr;
 	return res;
@@ -210,12 +235,27 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
     -> const Flag_Set*
 {
 	auto& loc = aff_data.locale_aff;
-	//	const Flag_Set* res = nullptr;
-	// TODO compelte this method!
+	auto res = checkword<CharT>(s);
 
-	auto t = boost::locale::to_title(s, loc);
-	// handle idot
-	auto res = checkword(s);
+	// handle forbidden words
+	if (res && res->exists(aff_data.forbiddenword_flag)) {
+		res = nullptr;
+	}
+
+	// attempt checking lower case spelling
+	auto t = boost::locale::to_lower(s, loc);
+	// omit when e.g. İ at beginning of word does not convert to i,
+	// that has already been checked and this optimised for speed
+	if (s != t) {
+		res = checkword<CharT>(t);
+	}
+
+	// while CHECKSHARPS, ß is allowed to in KEEPCASE words with title case
+	if (res && res->exists(aff_data.keepcase_flag) &&
+	    !(aff_data.checksharps &&
+	      (t.find(static_cast<CharT>(223)) != std::string::npos))) {
+		res = nullptr;
+	}
 
 	return res;
 }
