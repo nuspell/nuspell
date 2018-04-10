@@ -246,7 +246,7 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
 	auto t = boost::locale::to_lower(s, loc);
 	// omit when e.g. İ at beginning of word does not convert to i,
 	// that has already been checked and this optimised for speed
-	if (s != t) {
+	if (!res && s != t) {
 		res = checkword<CharT>(t);
 	}
 
