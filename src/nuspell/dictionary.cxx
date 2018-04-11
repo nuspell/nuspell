@@ -235,6 +235,8 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
     -> const Flag_Set*
 {
 	auto& loc = aff_data.locale_aff;
+
+	// check title case
 	auto res = checkword<CharT>(s);
 
 	// handle forbidden words
@@ -242,15 +244,23 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
 		res = nullptr;
 	}
 
+	// return result
+	if (res) {
+		return res;
+	}
+
 	// attempt checking lower case spelling
 	auto t = boost::locale::to_lower(s, loc);
 	// omit when e.g. İ at beginning of word does not convert to i,
 	// that has already been checked and this optimised for speed
-	if (!res && s != t) {
+	if (s != t) {
 		res = checkword<CharT>(t);
 	}
+	else {
+		// TODO log for regression test to prove benefit
+	}
 
-	// while CHECKSHARPS, ß is allowed to in KEEPCASE words with title case
+	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
 	if (res && res->exists(aff_data.keepcase_flag) &&
 	    !(aff_data.checksharps &&
 	      (t.find(static_cast<CharT>(223)) != std::string::npos))) {

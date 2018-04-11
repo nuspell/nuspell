@@ -219,7 +219,7 @@ int checkapos = 0;  // force typographic apostrophe
 int warn = 0;  // warn potential mistakes (dictionary words with WARN flags)
 const char* ui_enc = NULL;  // locale character encoding (default for I/O)
 const char* io_enc = NULL;  // I/O character encoding
-
+int omit_suggestion = 0; // ONLY FOR TEMPORARILY SPEEDING UP TESTS
 #define DMAX 10  // maximal count of loaded dictionaries
 
 const char* dic_enc[DMAX];  // dictionary encoding
@@ -922,7 +922,7 @@ nextline:
               } else {
                 char_offset = byte_offset;
               }
-              std::vector<std::string> wlst =
+	      if (omit_suggestion) { fprintf(stdout, "# %s %d", token.c_str(), char_offset); } else { std::vector<std::string> wlst =
                 pMS[d]->suggest(chenc(token, io_enc, dic_enc[d]));
               if (wlst.empty()) {
                 fprintf(stdout, "# %s %d", token.c_str(), char_offset);
@@ -932,7 +932,7 @@ nextline:
               }
               for (size_t j = 1; j < wlst.size(); ++j) {
                   fprintf(stdout, ", %s", chenc(wlst[j], dic_enc[d], io_enc).c_str());
-              }
+	      } }
               fprintf(stdout, "\n");
               fflush(stdout);
             }
@@ -1974,7 +1974,7 @@ int main(int argc, char** argv) {
     } else if ((strcmp(argv[i], "-D") == 0)) {
       showpath = 1;
     } else if ((strcmp(argv[i], "-r") == 0)) {
-      warn = 1;
+      warn = 1; } else if ((strcmp(argv[i], "-Y") == 0)) { omit_suggestion = 1; //ONLY TEMPORARILY
     } else if ((strcmp(argv[i], "--check-url") == 0)) {
       checkurl = 1;
     } else if ((strcmp(argv[i], "--check-apostrophe") == 0)) {
