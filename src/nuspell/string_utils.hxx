@@ -254,12 +254,6 @@ auto classify_casing(const std::basic_string<CharT>& s,
 	// See Chapter 13.3
 	//
 	// use boost::locale::to_lower to upper etc.
-	//
-	// Boost locale ctype facet with icu backend actually just uses
-	// the same from locale::classic(). It is useless for anything above
-	// ascii.
-	//
-	// alternatively implement good ctype facet
 
 	using namespace std;
 	size_t upper = 0;
