@@ -32,15 +32,6 @@
 
 namespace nuspell {
 
-template <class Container>
-void sort_uniq(Container& c)
-{
-	auto first = begin(c);
-	auto last = end(c);
-	sort(first, last);
-	c.erase(unique(first, last), last);
-}
-
 /**
  * @brief A Set class backed by a string. Very useful for small sets.
  *
@@ -50,14 +41,23 @@ template <class CharT>
 class String_Set {
       private:
 	std::basic_string<CharT> d;
-	auto sort_uniq() -> void { nuspell::sort_uniq(d); }
+	auto sort_uniq() -> void
+	{
+		auto first = begin();
+		auto last = end();
+		using t = traits_type;
+		sort(first, last, t::lt);
+		d.erase(unique(first, last, t::eq), last);
+	}
 
       public:
 	using StrT = std::basic_string<CharT>;
+	using traits_type = typename StrT::traits_type;
+
 	using key_type = typename StrT::value_type;
-	// using key_compare = Compare;
+	using key_compare = decltype((traits_type::lt));
 	using value_type = typename StrT::value_type;
-	// using value_compare = Compare;
+	using value_compare = key_compare;
 	using allocator_type = typename StrT::allocator_type;
 	using pointer = typename StrT::pointer;
 	using const_pointer = typename StrT::const_pointer;
@@ -130,7 +130,7 @@ class String_Set {
 	// modifiers:
 	std::pair<iterator, bool> insert(const value_type& x)
 	{
-		auto it = std::lower_bound(begin(), end(), x);
+		auto it = lower_bound(x);
 		if (it != end() && *it == x) {
 			return {it, false};
 		}
@@ -202,8 +202,8 @@ class String_Set {
 	}
 
 	// observers:
-	// key_compare   key_comp() const;
-	// value_compare value_comp() const;
+	key_compare key_comp() const { return traits_type::lt; }
+	value_compare value_comp() const { return key_comp(); };
 
 	// set operations:
       private:
@@ -225,31 +225,31 @@ class String_Set {
 
 	iterator lower_bound(const key_type& x)
 	{
-		return std::lower_bound(begin(), end(), x);
+		return std::lower_bound(begin(), end(), x, traits_type::lt);
 	}
 
 	const_iterator lower_bound(const key_type& x) const
 	{
-		return std::lower_bound(begin(), end(), x);
+		return std::lower_bound(begin(), end(), x, traits_type::lt);
 	}
 	iterator upper_bound(const key_type& x)
 	{
-		return std::upper_bound(begin(), end(), x);
+		return std::upper_bound(begin(), end(), x, traits_type::lt);
 	}
 
 	const_iterator upper_bound(const key_type& x) const
 	{
-		return std::upper_bound(begin(), end(), x);
+		return std::upper_bound(begin(), end(), x, traits_type::lt);
 	}
 	std::pair<iterator, iterator> equal_range(const key_type& x)
 	{
-		return std::equal_range(begin(), end(), x);
+		return std::equal_range(begin(), end(), x, traits_type::lt);
 	}
 
 	std::pair<const_iterator, const_iterator>
 	equal_range(const key_type& x) const
 	{
-		return std::equal_range(begin(), end(), x);
+		return std::equal_range(begin(), end(), x, traits_type::lt);
 	}
 
 	// non standard set operations:
