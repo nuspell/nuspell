@@ -49,6 +49,27 @@ class Dic_Data {
 	auto parse(std::istream& in, const Aff_Data& aff) -> bool;
 
 	auto& data() const { return words; }
+	auto begin() { return words.begin(); }
+	auto begin() const { return words.begin(); }
+	auto end() { return words.end(); }
+	auto end() const { return words.end(); }
+
+	auto find(const std::string& word) { return words.find(word); }
+	auto find(const std::string& word) const { return words.find(word); }
+	auto find(const std::wstring& word) -> iterator;
+	auto find(const std::wstring& word) const -> const_iterator;
+	auto equal_range(const std::string& word)
+	{
+		return words.equal_range(word);
+	}
+	auto equal_range(const std::string& word) const
+	{
+		return words.equal_range(word);
+	}
+	auto equal_range(const std::wstring& word)
+	    -> std::pair<iterator, iterator>;
+	auto equal_range(const std::wstring& word) const
+	    -> std::pair<const_iterator, const_iterator>;
 
 	auto lookup(const std::string& word) -> Flag_Set*;
 	auto lookup(const std::string& word) const -> const Flag_Set*;

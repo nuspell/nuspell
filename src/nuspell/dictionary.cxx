@@ -342,13 +342,15 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
 
 			if (!e.check_condition(word))
 				continue;
-			auto word_flags = dic.lookup(word);
-			if (!word_flags)
-				continue;
-			if (!word_flags->exists(e.flag))
-				continue;
-			// needflag check here if needed
-			return {{word, *word_flags, e}};
+			using boost::make_iterator_range;
+			for (auto word_entry :
+			     make_iterator_range(dic.equal_range(word))) {
+				auto& word_flags = word_entry.second;
+				if (!word_flags.exists(e.flag))
+					continue;
+				// needflag check here if needed
+				return {{word, word_flags, e}};
+			}
 		}
 	}
 	return {};
@@ -387,16 +389,19 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
 
 			if (!e.check_condition(word))
 				continue;
-			auto word_flags = dic.lookup(word);
-			if (!word_flags)
-				continue;
-			if (!word_flags->exists(e.flag))
-				continue;
-			if (m != FULL_WORD &&
-			    word_flags->exists(aff.compound_onlyin_flag))
-				continue;
-			// needflag check here if needed
-			return {{word, *word_flags, e}};
+
+			using boost::make_iterator_range;
+			for (auto word_entry :
+			     make_iterator_range(dic.equal_range(word))) {
+				auto& word_flags = word_entry.second;
+				if (!word_flags.exists(e.flag))
+					continue;
+				if (m != FULL_WORD &&
+				    word_flags.exists(aff.compound_onlyin_flag))
+					continue;
+				// needflag check here if needed
+				return {{word, word_flags, e}};
+			}
 		}
 	}
 	return {};

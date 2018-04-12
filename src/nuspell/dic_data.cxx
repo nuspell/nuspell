@@ -129,6 +129,26 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 	return in.eof(); // success if we reached eof
 }
 
+auto Dic_Data::find(const wstring& word) -> iterator
+{
+	return find(boost::locale::conv::utf_to_utf<char>(word));
+}
+
+auto Dic_Data::find(const wstring& word) const -> const_iterator
+{
+	return find(boost::locale::conv::utf_to_utf<char>(word));
+}
+auto Dic_Data::equal_range(const std::wstring& word)
+    -> std::pair<iterator, iterator>
+{
+	return equal_range(boost::locale::conv::utf_to_utf<char>(word));
+}
+auto Dic_Data::equal_range(const std::wstring& word) const
+    -> std::pair<const_iterator, const_iterator>
+{
+	return equal_range(boost::locale::conv::utf_to_utf<char>(word));
+}
+
 /**
  * Looks up a word in the unordered map words.
  *
@@ -139,7 +159,7 @@ auto Dic_Data::parse(istream& in, const Aff_Data& aff) -> bool
 auto Dic_Data::lookup(const string& word) -> Flag_Set*
 {
 	auto kv = words.find(word);
-	if (kv != end(words))
+	if (kv != end())
 		return &kv->second;
 	return nullptr;
 }
@@ -147,7 +167,7 @@ auto Dic_Data::lookup(const string& word) -> Flag_Set*
 auto Dic_Data::lookup(const string& word) const -> const Flag_Set*
 {
 	auto kv = words.find(word);
-	if (kv != end(words))
+	if (kv != end())
 		return &kv->second;
 	return nullptr;
 }
