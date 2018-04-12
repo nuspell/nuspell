@@ -207,6 +207,7 @@ TEST_CASE("method to_lower", "[string_utils]")
 	CHECK_FALSE("istanbul"s == to_lower("İSTANBUL"s, l));
 	// Note that İ is converted to i followed by COMBINING DOT ABOVE U+0307
 	CHECK_FALSE("istanbul"s == to_lower("İstanbul"s, l));
+
 	l = g("tr_TR.UTF-8");
 	CHECK("istanbul"s == to_lower("İSTANBUL"s, l));
 	CHECK("istanbul"s == to_lower("İstanbul"s, l));
@@ -273,6 +274,7 @@ TEST_CASE("method to_title", "[string_utils]")
 	CHECK_FALSE("İstanbul"s == to_title("iSTANBUL"s, l));
 	CHECK("İstanbul"s == to_title("İSTANBUL"s, l));
 	CHECK("Istanbul"s == to_title("ISTANBUL"s, l));
+
 	l = g("tr_TR.UTF-8");
 	CHECK("İstanbul"s == to_title("istanbul"s, l));
 	CHECK("İstanbul"s == to_title("iSTANBUL"s, l));
