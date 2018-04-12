@@ -17,7 +17,6 @@
  */
 
 #include "aff_data.hxx"
-#include "dic_data.hxx"
 #include "locale_utils.hxx"
 
 #include <fstream>
@@ -39,7 +38,7 @@ class Dictionary {
 	using u16string = std::u16string;
 
 	Aff_Data aff_data;
-	Dic_Data dic_data;
+	Dic_Data& dic_data;
 
       private:
 	template <class CharT>
@@ -125,11 +124,11 @@ class Dictionary {
 	Dictionary()
 	    : // we explicity do value init so content is zeroed
 	      aff_data(),
-	      dic_data()
+	      dic_data(aff_data.words)
 	{
 	}
 	explicit Dictionary(const string& dict_file_path)
-	    : aff_data(), dic_data()
+	    : aff_data(), dic_data(aff_data.words)
 	{
 		std::ifstream aff_file(dict_file_path + ".aff");
 		std::ifstream dic_file(dict_file_path + ".dic");
@@ -137,7 +136,7 @@ class Dictionary {
 		// Set to false to disable logging.
 		if (true)
 			aff_data.log(dict_file_path + ".aff");
-		dic_data.parse(dic_file, aff_data);
+		aff_data.parse_dic(dic_file, aff_data);
 	}
 
 	auto spell_dict_encoding(const std::string& word) -> Spell_Result;

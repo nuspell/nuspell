@@ -21,6 +21,7 @@
 
 #include <iosfwd>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -90,6 +91,34 @@ struct Compound_Check_Pattern {
 	string replacement;
 };
 
+class Dic_Data : public std::unordered_map<std::string, Flag_Set> {
+	// word and flag vector
+	// efficient for short flag vectors
+	// for long flag vectors like in Korean dict
+	// we should keep pointers to the string in the affix aliases vector
+	// for now we will leave it like this
+	using MapT = std::unordered_map<std::string, Flag_Set>;
+
+	// word and morphological data
+	// we keep them separate because morph data is generally absent
+	// std::unordered_map<std::string, std::vector<std::string>> morph_data;
+
+      public:
+	using MapT::find;
+	auto find(const std::wstring& word) -> iterator;
+	auto find(const std::wstring& word) const -> const_iterator;
+	using MapT::equal_range;
+	auto equal_range(const std::wstring& word)
+	    -> std::pair<iterator, iterator>;
+	auto equal_range(const std::wstring& word) const
+	    -> std::pair<const_iterator, const_iterator>;
+
+	auto lookup(const std::string& word) -> Flag_Set*;
+	auto lookup(const std::string& word) const -> const Flag_Set*;
+	auto lookup(const std::wstring& word) -> Flag_Set*;
+	auto lookup(const std::wstring& word) const -> const Flag_Set*;
+};
+
 struct Aff_Data {
 	using string = std::string;
 	using u16string = std::u16string;
@@ -98,6 +127,8 @@ struct Aff_Data {
 	using vector = std::vector<T>;
 	template <class T, class U>
 	using pair = std::pair<T, U>;
+
+	Dic_Data words;
 
 	Aff_Structures<char> structures;
 	Aff_Structures<wchar_t> wide_structures;
@@ -174,6 +205,7 @@ struct Aff_Data {
 
 	// methods
 	auto parse(istream& in) -> bool;
+	auto parse_dic(std::istream& in, const Aff_Data& aff) -> bool;
 	void log(const string& affpath);
 
 	auto decode_flags(istream& in, size_t line_num = 0) const -> u16string;

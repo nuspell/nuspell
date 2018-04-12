@@ -380,7 +380,7 @@ auto diagnose_dic_and_aff(Aff_Data& aff, Dic_Data& dic)
 		     << (a.new_flags.data().size() ? "/ " : " ") << a.condition;
 		cout << '\n';
 	}
-	for (auto& wd : dic.data()) {
+	for (auto& wd : dic) {
 		cout << wd.first;
 		if (wd.second.size()) {
 			cout << '/';
