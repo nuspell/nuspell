@@ -310,7 +310,7 @@ auto Dictionary::checkword(std::basic_string<CharT> s) -> const Flag_Set*
 }
 
 template <Dictionary::Affixing_Mode m, class CharT>
-auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
+auto Dictionary::strip_prefix_only(std::basic_string<CharT> word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&>>
 {
@@ -366,7 +366,7 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
 }
 
 template <Dictionary::Affixing_Mode m, class CharT>
-auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
+auto Dictionary::strip_suffix_only(std::basic_string<CharT> word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Suffix<CharT>&>>
 {

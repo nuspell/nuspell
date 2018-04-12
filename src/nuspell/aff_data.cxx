@@ -811,22 +811,22 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 
 auto Dic_Data::find(const wstring& word) -> iterator
 {
-	return MapT::find(boost::locale::conv::utf_to_utf<char>(word));
+	return find(boost::locale::conv::utf_to_utf<char>(word));
 }
 
 auto Dic_Data::find(const wstring& word) const -> const_iterator
 {
-	return MapT::find(boost::locale::conv::utf_to_utf<char>(word));
+	return find(boost::locale::conv::utf_to_utf<char>(word));
 }
 auto Dic_Data::equal_range(const std::wstring& word)
     -> std::pair<iterator, iterator>
 {
-	return MapT::equal_range(boost::locale::conv::utf_to_utf<char>(word));
+	return equal_range(boost::locale::conv::utf_to_utf<char>(word));
 }
 auto Dic_Data::equal_range(const std::wstring& word) const
     -> std::pair<const_iterator, const_iterator>
 {
-	return MapT::equal_range(boost::locale::conv::utf_to_utf<char>(word));
+	return equal_range(boost::locale::conv::utf_to_utf<char>(word));
 }
 
 /**
@@ -838,7 +838,7 @@ auto Dic_Data::equal_range(const std::wstring& word) const
  */
 auto Dic_Data::lookup(const string& word) -> Flag_Set*
 {
-	auto kv = MapT::find(word);
+	auto kv = find(word);
 	if (kv != end())
 		return &kv->second;
 	return nullptr;
@@ -846,7 +846,7 @@ auto Dic_Data::lookup(const string& word) -> Flag_Set*
 
 auto Dic_Data::lookup(const string& word) const -> const Flag_Set*
 {
-	auto kv = MapT::find(word);
+	auto kv = find(word);
 	if (kv != end())
 		return &kv->second;
 	return nullptr;

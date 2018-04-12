@@ -36,10 +36,7 @@ class Encoding {
 	std::string name;
 
       public:
-	enum Type {
-		SINGLEBYTE = false /**< single-byte encoding type */,
-		UTF8 = true /**< UTF-8 encoding type */
-	};
+	enum Enc_Type { SINGLEBYTE = false, UTF8 = true };
 
 	Encoding() = default;
 	Encoding(const std::string& e);
@@ -47,7 +44,7 @@ class Encoding {
 	operator const std::string&() const { return name; }
 	auto value() const -> const std::string& { return name; }
 	auto is_utf8() const -> bool { return name == "UTF-8"; }
-	operator Type() const { return is_utf8() ? UTF8 : SINGLEBYTE; }
+	operator Enc_Type() const { return is_utf8() ? UTF8 : SINGLEBYTE; }
 };
 
 enum Flag_Type {
@@ -91,23 +88,22 @@ struct Compound_Check_Pattern {
 	string replacement;
 };
 
-class Dic_Data : public std::unordered_map<std::string, Flag_Set> {
-	// word and flag vector
-	// efficient for short flag vectors
-	// for long flag vectors like in Korean dict
-	// we should keep pointers to the string in the affix aliases vector
-	// for now we will leave it like this
-	using MapT = std::unordered_map<std::string, Flag_Set>;
-
-	// word and morphological data
-	// we keep them separate because morph data is generally absent
-	// std::unordered_map<std::string, std::vector<std::string>> morph_data;
-
+using Dic_Data_Base = std::unordered_map<std::string, Flag_Set>;
+/**
+ * @brief Map between words and word_flags.
+ *
+ * Flags are stored as part of the container. Maybe for the future flags should
+ * be stored elsewhere (flag aliases) and this should store pointers.
+ *
+ * Does not store morphological data as is low priority feature and is out of
+ * scope.
+ */
+class Dic_Data : public Dic_Data_Base {
       public:
-	using MapT::find;
+	using Dic_Data_Base::find;
 	auto find(const std::wstring& word) -> iterator;
 	auto find(const std::wstring& word) const -> const_iterator;
-	using MapT::equal_range;
+	using Dic_Data_Base::equal_range;
 	auto equal_range(const std::wstring& word)
 	    -> std::pair<iterator, iterator>;
 	auto equal_range(const std::wstring& word) const
@@ -120,6 +116,7 @@ class Dic_Data : public std::unordered_map<std::string, Flag_Set> {
 };
 
 struct Aff_Data {
+	// types
 	using string = std::string;
 	using u16string = std::u16string;
 	using istream = std::istream;
@@ -128,14 +125,10 @@ struct Aff_Data {
 	template <class T, class U>
 	using pair = std::pair<T, U>;
 
+	// data members
 	Dic_Data words;
-
 	Aff_Structures<char> structures;
 	Aff_Structures<wchar_t> wide_structures;
-
-	template <class CharT>
-	auto get_structures() -> Aff_Structures<CharT>&;
-
 	Encoding encoding;
 	Flag_Type flag_type;
 	bool complex_prefixes;
@@ -143,7 +136,6 @@ struct Aff_Data {
 	string ignore_chars;
 	vector<Flag_Set> flag_aliases;
 	vector<vector<string>> morphological_aliases;
-
 	std::locale locale_aff;
 
 	vector<Affix> prefixes;
@@ -213,19 +205,22 @@ struct Aff_Data {
 		return a && b;
 	}
 	void log(const string& affpath);
-
 	auto decode_flags(istream& in, size_t line_num = 0) const -> u16string;
 	auto decode_single_flag(istream& in, size_t line_num = 0) const
 	    -> char16_t;
+	template <class CharT>
+	auto get_structures() const -> const Aff_Structures<CharT>&;
 };
 
 template <>
-auto inline Aff_Data::get_structures<char>() -> Aff_Structures<char>&
+auto inline Aff_Data::get_structures<char>() const
+    -> const Aff_Structures<char>&
 {
 	return structures;
 }
 template <>
-auto inline Aff_Data::get_structures<wchar_t>() -> Aff_Structures<wchar_t>&
+auto inline Aff_Data::get_structures<wchar_t>() const
+    -> const Aff_Structures<wchar_t>&
 {
 	return wide_structures;
 }

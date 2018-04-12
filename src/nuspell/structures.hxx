@@ -456,4 +456,4 @@ using Suffix_Table = multi_index_container<
                        member<Suffix<CharT>, const std::basic_string<CharT>,
                               &Suffix<CharT>::appending>>>>;
 }
-#endif
+#endif // NUSPELL_STRUCTURES_HXX

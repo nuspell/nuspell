@@ -16,8 +16,8 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HUNSPELL_DIC_FINDER_HXX
-#define HUNSPELL_DIC_FINDER_HXX
+#ifndef NUSPELL_FINDER_HXX
+#define NUSPELL_FINDER_HXX
 #include <string>
 #include <utility>
 #include <vector>
@@ -48,4 +48,4 @@ class Finder {
 };
 }
 
-#endif
+#endif // NUSPELL_FINDER_HXX

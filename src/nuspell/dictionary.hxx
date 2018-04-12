@@ -67,9 +67,10 @@ class Dictionary : protected Aff_Data {
 	 * @return if found, root word + prefix
 	 */
 	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_prefix_only(std::basic_string<CharT> s) -> boost::optional<
-	    std::tuple<std::basic_string<CharT>, const Flag_Set&,
-	               const Prefix<CharT>&>>;
+	auto strip_prefix_only(std::basic_string<CharT> s) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	                   const Prefix<CharT>&>>;
 
 	/**
 	 * @brief strip_suffix_only
@@ -77,9 +78,10 @@ class Dictionary : protected Aff_Data {
 	 * @return if found, root word + suffix
 	 */
 	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_suffix_only(std::basic_string<CharT> s) -> boost::optional<
-	    std::tuple<std::basic_string<CharT>, const Flag_Set&,
-	               const Suffix<CharT>&>>;
+	auto strip_suffix_only(std::basic_string<CharT> s) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	                   const Suffix<CharT>&>>;
 
 	/**
 	 * @brief strip_prefix_then_suffix
@@ -159,4 +161,4 @@ class Dictionary : protected Aff_Data {
 	auto spell(const std::u32string& word) -> Spell_Result;
 };
 }
-#endif
+#endif // NUSPELL_DICTIONARY_HXX

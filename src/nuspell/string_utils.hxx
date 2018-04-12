@@ -21,8 +21,8 @@
  * @brief String algorithms.
  */
 
-#ifndef HUNSPELL_STRING_UTILS_HXX
-#define HUNSPELL_STRING_UTILS_HXX
+#ifndef NUSPELL_STRING_UTILS_HXX
+#define NUSPELL_STRING_UTILS_HXX
 
 #include <algorithm>
 #include <iterator>
@@ -284,4 +284,4 @@ auto classify_casing(const std::basic_string<CharT>& s,
 template <class CharT>
 auto is_number(const std::basic_string<CharT>& s) -> bool;
 }
-#endif
+#endif // NUSPELL_STRING_UTILS_HXX
