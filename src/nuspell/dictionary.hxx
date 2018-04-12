@@ -16,6 +16,9 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef NUSPELL_DICTIONARY_HXX
+#define NUSPELL_DICTIONARY_HXX
+
 #include "aff_data.hxx"
 #include "locale_utils.hxx"
 
@@ -33,13 +36,7 @@ enum Spell_Result {
 	COMPOUND_GOOD_WORD /**< compound word is spelled correctly */
 };
 
-class Dictionary {
-	using string = std::string;
-	using u16string = std::u16string;
-
-	Aff_Data aff_data;
-	Dic_Data& dic_data;
-
+class Dictionary : protected Aff_Data {
       private:
 	template <class CharT>
 	auto spell_priv(std::basic_string<CharT> s) -> Spell_Result;
@@ -123,20 +120,17 @@ class Dictionary {
       public:
 	Dictionary()
 	    : // we explicity do value init so content is zeroed
-	      aff_data(),
-	      dic_data(aff_data.words)
+	      Aff_Data()
 	{
 	}
-	explicit Dictionary(const string& dict_file_path)
-	    : aff_data(), dic_data(aff_data.words)
+	explicit Dictionary(const string& dict_file_path) : Aff_Data()
 	{
 		std::ifstream aff_file(dict_file_path + ".aff");
 		std::ifstream dic_file(dict_file_path + ".dic");
-		aff_data.parse(aff_file);
+		parse(aff_file, dic_file);
 		// Set to false to disable logging.
 		if (true)
-			aff_data.log(dict_file_path + ".aff");
-		aff_data.parse_dic(dic_file, aff_data);
+			log(dict_file_path + ".aff");
 	}
 
 	auto spell_dict_encoding(const std::string& word) -> Spell_Result;
@@ -148,15 +142,15 @@ class Dictionary {
 	{
 		using namespace std;
 		using info_t = boost::locale::info;
-		auto& dic_info = use_facet<info_t>(aff_data.locale_aff);
+		auto& dic_info = use_facet<info_t>(locale_aff);
 		Locale_Input l;
 		if (dic_info.utf8()) {
 			return spell_priv<wchar_t>(
 			    l.cvt_for_u8_dict(word, loc));
 		}
 		else {
-			return spell_priv<char>(l.cvt_for_byte_dict(
-			    word, loc, aff_data.locale_aff));
+			return spell_priv<char>(
+			    l.cvt_for_byte_dict(word, loc, locale_aff));
 		}
 	}
 	auto spell_u8(const std::string& word) -> Spell_Result;
@@ -165,3 +159,4 @@ class Dictionary {
 	auto spell(const std::u32string& word) -> Spell_Result;
 };
 }
+#endif

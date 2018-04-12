@@ -38,8 +38,8 @@ using namespace std;
 template <class CharT>
 auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 {
-	auto& loc = aff_data.locale_aff;
-	auto& d = aff_data.get_structures<CharT>();
+	auto& loc = locale_aff;
+	auto& d = get_structures<CharT>();
 
 	// allow words under maximum length
 	size_t MAXWORDLENGTH = 100; // TODO refactor to more global
@@ -89,7 +89,7 @@ auto Dictionary::spell_break(std::basic_string<CharT> s) -> Spell_Result
 	if (res)
 		return res;
 
-	auto& break_table = aff_data.get_structures<CharT>().break_table;
+	auto& break_table = get_structures<CharT>().break_table;
 
 	// handle break pattern at start of a word
 	for (auto& pat : break_table.start_word_breaks()) {
@@ -162,10 +162,10 @@ auto Dictionary::spell_casing(std::basic_string<CharT> s) -> Spell_Result
 	}
 	if (res) {
 		// handle forbidden words
-		if (res->exists(aff_data.forbiddenword_flag)) {
+		if (res->exists(forbiddenword_flag)) {
 			return BAD_WORD;
 		}
-		if (aff_data.forbid_warn && res->exists(aff_data.warn_flag)) {
+		if (forbid_warn && res->exists(warn_flag)) {
 			return BAD_WORD;
 		}
 		return GOOD_WORD;
@@ -184,7 +184,7 @@ template <class CharT>
 auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
     -> const Flag_Set*
 {
-	auto& loc = aff_data.locale_aff;
+	auto& loc = locale_aff;
 	auto res = checkword(s);
 	if (res)
 		return res;
@@ -212,8 +212,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
 	}
 
 	// handle German sharp s
-	if (aff_data.checksharps &&
-	    s.find(LITERAL(CharT, "SS")) != std::string::npos) {
+	if (checksharps && s.find(LITERAL(CharT, "SS")) != std::string::npos) {
 		auto t = boost::locale::to_lower(s, loc);
 		res = spell_sharps(t);
 		if (!res)
@@ -226,7 +225,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
 	// if not returned earlier
 	auto t = boost::locale::to_title(s, loc);
 	res = spell_casing_title(t);
-	if (res && res->exists(aff_data.keepcase_flag))
+	if (res && res->exists(keepcase_flag))
 		res = nullptr;
 	return res;
 }
@@ -235,13 +234,13 @@ template <class CharT>
 auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
     -> const Flag_Set*
 {
-	auto& loc = aff_data.locale_aff;
+	auto& loc = locale_aff;
 
 	// check title case
 	auto res = checkword<CharT>(s);
 
 	// handle forbidden words
-	if (res && res->exists(aff_data.forbiddenword_flag)) {
+	if (res && res->exists(forbiddenword_flag)) {
 		res = nullptr;
 	}
 
@@ -255,8 +254,8 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
 	res = checkword<CharT>(t);
 
 	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
-	if (res && res->exists(aff_data.keepcase_flag) &&
-	    !(aff_data.checksharps &&
+	if (res && res->exists(keepcase_flag) &&
+	    !(checksharps &&
 	      (t.find(static_cast<CharT>(223)) != std::string::npos))) {
 		res = nullptr;
 	}
@@ -292,7 +291,7 @@ template <class CharT>
 auto Dictionary::checkword(std::basic_string<CharT> s) -> const Flag_Set*
 {
 	{
-		auto ret = dic_data.lookup(s);
+		auto ret = words.lookup(s);
 		if (ret)
 			return ret;
 	}
@@ -315,23 +314,22 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&>>
 {
-	auto& aff = aff_data;
-	auto& dic = dic_data;
-	auto& affixes = aff.get_structures<CharT>().prefixes;
+        auto& dic = words;
+        auto& affixes = get_structures<CharT>().prefixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
 		auto affix = word.substr(0, aff_len);
 		auto entries = affixes.equal_range(affix);
 		for (auto& e : boost::make_iterator_range(entries)) {
 			if (m == FULL_WORD &&
-			    e.cont_flags.exists(aff.compound_onlyin_flag))
+			    e.cont_flags.exists(compound_onlyin_flag))
 				continue;
 			if (m == AT_COMPOUND_END &&
-			    !e.cont_flags.exists(aff.compound_permit_flag))
+			    !e.cont_flags.exists(compound_permit_flag))
 				continue;
-			if (e.cont_flags.exists(aff.need_affix_flag))
+			if (e.cont_flags.exists(need_affix_flag))
 				continue;
-			if (e.cont_flags.exists(aff.circumfix_flag))
+			if (e.cont_flags.exists(circumfix_flag))
 				continue;
 
 			e.to_root(word);
@@ -372,9 +370,8 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Suffix<CharT>&>>
 {
-	auto& aff = aff_data;
-	auto& dic = dic_data;
-	auto& affixes = aff.get_structures<CharT>().suffixes;
+        auto& dic = words;
+        auto& affixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
 		auto affix = word.substr(word.size() - aff_len);
@@ -382,14 +379,14 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
 		for (auto& e : boost::make_iterator_range(entries)) {
 			if ((m == FULL_WORD ||
 			     (aff_len == 0 && m == AT_COMPOUND_END)) &&
-			    e.cont_flags.exists(aff.compound_onlyin_flag))
+			    e.cont_flags.exists(compound_onlyin_flag))
 				continue;
 			if (m == AT_COMPOUND_BEGIN &&
-			    !e.cont_flags.exists(aff.compound_permit_flag))
+			    !e.cont_flags.exists(compound_permit_flag))
 				continue;
-			if (e.cont_flags.exists(aff.need_affix_flag))
+			if (e.cont_flags.exists(need_affix_flag))
 				continue;
-			if (e.cont_flags.exists(aff.circumfix_flag))
+			if (e.cont_flags.exists(circumfix_flag))
 				continue;
 
 			e.to_root(word);
@@ -406,7 +403,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
 			if (!word_flags->exists(e.flag))
 				continue;
 			if (m != FULL_WORD &&
-			    word_flags->exists(aff.compound_onlyin_flag))
+			    word_flags->exists(compound_onlyin_flag))
 				continue;
 			// needflag check here if needed
 			return {{word, *word_flags, e}};
@@ -419,7 +416,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
 				if (!word_flags.exists(e.flag))
 					continue;
 				if (m != FULL_WORD &&
-				    word_flags.exists(aff.compound_onlyin_flag))
+				    word_flags.exists(compound_onlyin_flag))
 					continue;
 				// needflag check here if needed
 				// TODO ends up with word_flags dangling ref

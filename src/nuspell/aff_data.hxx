@@ -16,8 +16,8 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HUNSPELL_AFF_MANAGER_HXX
-#define HUNSPELL_AFF_MANAGER_HXX
+#ifndef NUSPELL_AFF_DATA_HXX
+#define NUSPELL_AFF_DATA_HXX
 
 #include <iosfwd>
 #include <string>
@@ -204,8 +204,14 @@ struct Aff_Data {
 	bool checksharps;
 
 	// methods
-	auto parse(istream& in) -> bool;
-	auto parse_dic(std::istream& in, const Aff_Data& aff) -> bool;
+	auto parse_aff(istream& in) -> bool;
+	auto parse_dic(std::istream& in) -> bool;
+	auto parse(istream& aff, istream& dic)
+	{
+		auto a = parse_aff(aff);
+		auto b = parse_dic(dic);
+		return a && b;
+	}
 	void log(const string& affpath);
 
 	auto decode_flags(istream& in, size_t line_num = 0) const -> u16string;
@@ -227,4 +233,4 @@ void parse_morhological_fields(std::istream& in,
                                std::vector<std::string>& vecOut);
 }
 
-#endif
+#endif // NUSPELL_AFF_DATA_HXX

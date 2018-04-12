@@ -438,7 +438,7 @@ auto get_locale_name(string lang, string enc, const string& filename) -> string
  * @param in input stream to parse from.
  * @return The boolean indication reacing the end of stream after parsing.
  */
-auto Aff_Data::parse(istream& in) -> bool
+auto Aff_Data::parse_aff(istream& in) -> bool
 {
 	unordered_map<string, string*> command_strings = {
 	    {"LANG", &language_code},
@@ -719,7 +719,7 @@ auto Aff_Data::parse(istream& in) -> bool
  * @param aff affix data to retrive locale and flag settings from.
  * @return The boolean indication reacing the end of stream after parsing.
  */
-auto Aff_Data::parse_dic(istream& in, const Aff_Data& aff) -> bool
+auto Aff_Data::parse_dic(istream& in) -> bool
 {
 	size_t line_number = 1;
 	size_t approximate_size;
@@ -735,7 +735,7 @@ auto Aff_Data::parse_dic(istream& in, const Aff_Data& aff) -> bool
 	if (!getline(in, line)) {
 		return false;
 	}
-	if (aff.encoding.is_utf8() && !validate_utf8(line)) {
+	if (encoding.is_utf8() && !validate_utf8(line)) {
 		cerr << "Invalid utf in dic file" << endl;
 	}
 	ss.str(line);
@@ -763,23 +763,23 @@ auto Aff_Data::parse_dic(istream& in, const Aff_Data& aff) -> bool
 		flags.clear();
 		morphs.clear();
 
-		if (aff.encoding.is_utf8() && !validate_utf8(line)) {
+		if (encoding.is_utf8() && !validate_utf8(line)) {
 			cerr << "Invalid utf in dic file" << endl;
 		}
 		if (line.find('/') != line.npos) {
 			// slash found, word untill slash
 			getline(ss, word, '/');
-			if (aff.flag_aliases.empty()) {
-				flags = aff.decode_flags(ss);
+			if (flag_aliases.empty()) {
+				flags = decode_flags(ss);
 			}
 			else {
 				size_t flag_alias_idx;
 				ss >> flag_alias_idx;
 				if (ss.fail() ||
-				    flag_alias_idx > aff.flag_aliases.size()) {
+				    flag_alias_idx > flag_aliases.size()) {
 					continue;
 				}
-				flags = aff.flag_aliases[flag_alias_idx - 1];
+				flags = flag_aliases[flag_alias_idx - 1];
 			}
 		}
 		else if (line.find('\t') != line.npos) {
