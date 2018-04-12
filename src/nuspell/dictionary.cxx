@@ -20,6 +20,7 @@
 #include "string_utils.hxx"
 
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 
 #include <boost/algorithm/string/trim.hpp>
@@ -341,23 +342,19 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT> word)
 				continue;
 
 			e.to_root(word);
-			if (!e.check_condition(word)) {
-				e.to_derived(word);
-				continue;
-			}
-			auto word_flags = dic.lookup(word);
-			if (!word_flags) {
-				e.to_derived(word);
-				continue;
-			}
-			if (!word_flags->exists(e.flag)) {
-				e.to_derived(word);
-				continue;
-			}
-			// needflag check here if needed
+			auto unrooter = [&](auto* rt) { e.to_derived(*rt); };
+			auto unroot_at_end_of_iteration =
+			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
+				&word, unrooter};
 
-			// auto word2 = word;
-			// e.to_derived(word); // revert word as it was passed
+			if (!e.check_condition(word))
+				continue;
+			auto word_flags = dic.lookup(word);
+			if (!word_flags)
+				continue;
+			if (!word_flags->exists(e.flag))
+				continue;
+			// needflag check here if needed
 			return {{word, *word_flags, e}};
 		}
 	}
@@ -390,28 +387,22 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word)
 				continue;
 
 			e.to_root(word);
-			if (!e.check_condition(word)) {
-				e.to_derived(word);
-				continue;
-			}
-			auto word_flags = dic.lookup(word);
-			if (!word_flags) {
-				e.to_derived(word);
-				continue;
-			}
-			if (!word_flags->exists(e.flag)) {
-				e.to_derived(word);
-				continue;
-			}
-			if (m != FULL_WORD &&
-			    word_flags->exists(aff.compound_onlyin_flag)) {
-				e.to_derived(word);
-				continue;
-			}
-			// needflag check here if needed
+			auto unrooter = [&](auto* rt) { e.to_derived(*rt); };
+			auto unroot_at_end_of_iteration =
+			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
+				&word, unrooter};
 
-			// auto word2 = word;
-			// e.to_derived(word); // revert word as it was passed
+			if (!e.check_condition(word))
+				continue;
+			auto word_flags = dic.lookup(word);
+			if (!word_flags)
+				continue;
+			if (!word_flags->exists(e.flag))
+				continue;
+			if (m != FULL_WORD &&
+			    word_flags->exists(aff.compound_onlyin_flag))
+				continue;
+			// needflag check here if needed
 			return {{word, *word_flags, e}};
 		}
 	}
