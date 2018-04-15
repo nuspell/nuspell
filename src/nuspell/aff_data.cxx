@@ -513,15 +513,11 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	auto command = string();
 	size_t line_num = 0;
 	auto ss = istringstream();
-
-	boost::locale::generator locale_generator;
-	// auto loc = locale_generator("en_US.us-ascii");
 	auto loc = locale::classic();
 	// while parsing, the streams must have plain ascii locale without
 	// any special number separator otherwise istream >> int might fail
 	// due to thousands separator.
-	// "C" locale can be used assuming it is US-ASCII,
-	// but also boost en_US.us-ascii will do, avoiding any assumptions
+	// "C" locale can be used assuming it is US-ASCII
 	in.imbue(loc);
 	ss.imbue(loc);
 
@@ -656,6 +652,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	}
 
 	// now fill data structures from temporary data
+	boost::locale::generator locale_generator;
 	locale_aff = locale_generator(get_locale_name(language_code, encoding));
 	install_ctype_facets_inplace(locale_aff);
 	if (encoding.is_utf8()) {
@@ -727,8 +724,6 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	string line;
 
 	// locale must be without thousands separator.
-	// boost::locale::generator locale_generator;
-	// auto loc = locale_generator("en_US.us-ascii");
 	auto loc = locale::classic();
 	in.imbue(loc);
 	ss.imbue(loc);

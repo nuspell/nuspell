@@ -121,8 +121,7 @@ class Dictionary : protected Aff_Data {
 
       public:
 	Dictionary()
-	    : // we explicity do value init so content is zeroed
-	      Aff_Data()
+	    : Aff_Data() // we explicity do value init so content is zeroed
 	{
 	}
 	explicit Dictionary(const string& dict_file_path) : Aff_Data()
