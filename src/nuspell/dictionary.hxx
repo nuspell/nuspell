@@ -92,8 +92,15 @@ class Dictionary : protected Aff_Data {
 	 * @param s derived word with affixes
 	 * @return if found, root word + suffix + prefix
 	 */
-	template <class CharT>
-	auto strip_prefix_then_suffix(std::basic_string<CharT> s)
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_prefix_then_suffix(std::basic_string<CharT> s) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	                   const Suffix<CharT>&, const Prefix<CharT>&>>;
+
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
+	                          std::basic_string<CharT>& s) const
 	    -> boost::optional<
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Suffix<CharT>&, const Prefix<CharT>&>>;
@@ -107,17 +114,23 @@ class Dictionary : protected Aff_Data {
 	 * @param s derived word with prefix and suffix
 	 * @return if found, root word + prefix + suffix
 	 */
-	template <class CharT>
+	template <Affixing_Mode m = FULL_WORD, class CharT>
 	auto strip_suffix_then_prefix(std::basic_string<CharT> s)
 	    -> boost::optional<
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Prefix<CharT>&, const Suffix<CharT>&>>;
 
-	template <class CharT>
+	template <Affixing_Mode m = FULL_WORD, class CharT>
 	auto strip_suffix_then_suffix(std::basic_string<CharT> s)
 	    -> boost::optional<
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Suffix<CharT>&, const Suffix<CharT>&>>;
+
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_prefix_then_prefix(std::basic_string<CharT> s)
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	                   const Prefix<CharT>&, const Prefix<CharT>&>>;
 
       public:
 	Dictionary()

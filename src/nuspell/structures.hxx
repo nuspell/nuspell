@@ -201,12 +201,12 @@ class String_Set {
 		return *this;
 	}
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wc++1z-compat"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++1z-compat"
 	// observers:
 	key_compare key_comp() const { return traits_type::lt; }
 	value_compare value_comp() const { return key_comp(); };
-#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
 
 	// set operations:
       private:
