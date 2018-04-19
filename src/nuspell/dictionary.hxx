@@ -128,7 +128,14 @@ class Dictionary : protected Aff_Data {
 	                   const Prefix<CharT>&, const Suffix<CharT>&>>;
 
 	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_suffix_then_suffix(std::basic_string<CharT>& s)
+	auto strip_suffix_then_suffix(std::basic_string<CharT>& s) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	                   const Suffix<CharT>&, const Suffix<CharT>&>>;
+
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
+	                          std::basic_string<CharT>& s) const
 	    -> boost::optional<
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Suffix<CharT>&, const Suffix<CharT>&>>;
