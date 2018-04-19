@@ -288,14 +288,13 @@ auto Dictionary::spell_sharps(std::basic_string<CharT> base, size_t pos,
 }
 
 template <class CharT>
-auto Dictionary::checkword(std::basic_string<CharT> s) -> const Flag_Set*
+auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
 {
 	{
 		auto ret = words.lookup(s);
 		if (ret)
 			return ret;
 	}
-
 	{
 		auto ret2 = strip_prefix_only(s);
 		if (ret2)
@@ -320,7 +319,7 @@ auto Dictionary::checkword(std::basic_string<CharT> s) -> const Flag_Set*
 }
 
 template <Affixing_Mode m, class CharT>
-auto Dictionary::strip_prefix_only(std::basic_string<CharT> word) const
+auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&>>
 {
@@ -365,7 +364,7 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT> word) const
 }
 
 template <Affixing_Mode m, class CharT>
-auto Dictionary::strip_suffix_only(std::basic_string<CharT> word) const
+auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Suffix<CharT>&>>
 {
@@ -414,7 +413,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word) const
 }
 
 template <Affixing_Mode m, class CharT>
-auto Dictionary::strip_prefix_then_suffix(std::basic_string<CharT> word) const
+auto Dictionary::strip_prefix_then_suffix(std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Suffix<CharT>&, const Prefix<CharT>&>>
 {
@@ -505,7 +504,7 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 }
 
 template <Affixing_Mode m, class CharT>
-auto Dictionary::strip_suffix_then_prefix(std::basic_string<CharT> word)
+auto Dictionary::strip_suffix_then_prefix(std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&, const Suffix<CharT>&>>
 {
@@ -544,7 +543,7 @@ auto Dictionary::strip_suffix_then_prefix(std::basic_string<CharT> word)
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
-                                      std::basic_string<CharT>& word)
+                                      std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&, const Suffix<CharT>&>>
 {
