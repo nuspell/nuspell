@@ -36,6 +36,13 @@ enum Spell_Result {
 	COMPOUND_GOOD_WORD /**< compound word is spelled correctly */
 };
 
+enum Affixing_Mode {
+	FULL_WORD,
+	AT_COMPOUND_BEGIN,
+	AT_COMPOUND_END,
+	AT_COMPOUND_MIDDLE
+};
+
 class Dictionary : protected Aff_Data {
       private:
 	template <class CharT>
@@ -53,13 +60,6 @@ class Dictionary : protected Aff_Data {
 	                  size_t n = 0, size_t rep = 0) -> const Flag_Set*;
 	template <class CharT>
 	auto checkword(std::basic_string<CharT> s) -> const Flag_Set*;
-
-	enum Affixing_Mode {
-		FULL_WORD,
-		AT_COMPOUND_BEGIN,
-		AT_COMPOUND_END,
-		AT_COMPOUND_MIDDLE
-	};
 
 	/**
 	 * @brief strip_prefix_only
@@ -116,6 +116,13 @@ class Dictionary : protected Aff_Data {
 	 */
 	template <Affixing_Mode m = FULL_WORD, class CharT>
 	auto strip_suffix_then_prefix(std::basic_string<CharT> s)
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
+	                   const Prefix<CharT>&, const Suffix<CharT>&>>;
+
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_sfx_then_pfx_2(const Suffix<CharT>& se,
+	                          std::basic_string<CharT>& s)
 	    -> boost::optional<
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Prefix<CharT>&, const Suffix<CharT>&>>;

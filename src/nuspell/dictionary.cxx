@@ -311,10 +311,15 @@ auto Dictionary::checkword(std::basic_string<CharT> s) -> const Flag_Set*
 		if (ret4)
 			return &get<1>(*ret4);
 	}
+	{
+		auto ret5 = strip_suffix_then_prefix(s);
+		if (ret5)
+			return &get<1>(*ret5);
+	}
 	return nullptr;
 }
 
-template <Dictionary::Affixing_Mode m, class CharT>
+template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_prefix_only(std::basic_string<CharT> word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&>>
@@ -359,7 +364,7 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT> word) const
 	return {};
 }
 
-template <Dictionary::Affixing_Mode m, class CharT>
+template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_suffix_only(std::basic_string<CharT> word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Suffix<CharT>&>>
@@ -408,7 +413,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT> word) const
 	return {};
 }
 
-template <Dictionary::Affixing_Mode m, class CharT>
+template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_prefix_then_suffix(std::basic_string<CharT> word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Suffix<CharT>&, const Prefix<CharT>&>>
@@ -446,7 +451,7 @@ auto Dictionary::strip_prefix_then_suffix(std::basic_string<CharT> word) const
 	return {};
 }
 
-template <Dictionary::Affixing_Mode m, class CharT>
+template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
                                       std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
@@ -467,7 +472,6 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 			if (m == AT_COMPOUND_BEGIN &&
 			    !se.cont_flags.exists(compound_permit_flag))
 				continue;
-
 			if (pe.cont_flags.exists(circumfix_flag) !=
 			    se.cont_flags.exists(circumfix_flag))
 				continue;
@@ -499,4 +503,96 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 	}
 	return {};
 }
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_suffix_then_prefix(std::basic_string<CharT> word)
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
+                                  const Prefix<CharT>&, const Suffix<CharT>&>>
+{
+	auto& affixes = get_structures<CharT>().suffixes;
+
+	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
+		auto sfx = word.substr(word.size() - aff_len);
+		auto entries = affixes.equal_range(sfx);
+		for (auto& se : boost::make_iterator_range(entries)) {
+			if (se.cross_product == false)
+				continue;
+			if (m == FULL_WORD &&
+			    se.cont_flags.exists(compound_onlyin_flag))
+				continue;
+			if (m == AT_COMPOUND_BEGIN &&
+			    !se.cont_flags.exists(compound_permit_flag))
+				continue;
+			if (se.cont_flags.exists(need_affix_flag))
+				continue;
+
+			se.to_root(word);
+			auto unrooter = [&](auto* rt) { se.to_derived(*rt); };
+			auto unroot_at_end_of_iteration =
+			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
+			        &word, unrooter};
+
+			if (!se.check_condition(word))
+				continue;
+			auto ret = strip_sfx_then_pfx_2(se, word);
+			if (ret)
+				return ret;
+		}
+	}
+	return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
+                                      std::basic_string<CharT>& word)
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
+                                  const Prefix<CharT>&, const Suffix<CharT>&>>
+{
+	auto& dic = words;
+	auto& affixes = get_structures<CharT>().prefixes;
+
+	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
+	        auto pfx = word.substr(0, aff_len);
+		auto entries = affixes.equal_range(pfx);
+		for (auto& pe : boost::make_iterator_range(entries)) {
+			if (pe.cross_product == false)
+				continue;
+			if (m == FULL_WORD &&
+			    pe.cont_flags.exists(compound_onlyin_flag))
+				continue;
+			if (m == AT_COMPOUND_END &&
+			    !pe.cont_flags.exists(compound_permit_flag))
+				continue;
+			if (pe.cont_flags.exists(circumfix_flag) !=
+			    se.cont_flags.exists(circumfix_flag))
+				continue;
+
+			pe.to_root(word);
+			auto unrooter = [&](auto* rt) { pe.to_derived(*rt); };
+			auto unroot_at_end_of_iteration =
+			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
+			        &word, unrooter};
+
+			if (!pe.check_condition(word))
+				continue;
+			using boost::make_iterator_range;
+			for (auto& word_entry :
+			     make_iterator_range(dic.equal_range(word))) {
+				auto& word_flags = word_entry.second;
+				if (!pe.cont_flags.exists(se.flag) &&
+				    !word_flags.exists(se.flag))
+					continue;
+				if (!word_flags.exists(pe.flag))
+					continue;
+				if (m != FULL_WORD &&
+				    word_flags.exists(compound_onlyin_flag))
+					continue;
+				// needflag check here if needed
+				return {{word, word_flags, pe, se}};
+			}
+		}
+	}
+	return {};
+}
+
 } // namespace nuspell
