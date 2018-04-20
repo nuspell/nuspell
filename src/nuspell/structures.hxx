@@ -29,6 +29,7 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/range/iterator_range_core.hpp>
+#include <boost/utility/string_view.hpp>
 
 namespace nuspell {
 
@@ -448,15 +449,34 @@ using boost::multi_index::member;
 using boost::multi_index::hashed_non_unique;
 
 template <class CharT>
+struct sv_hash {
+	auto operator()(boost::basic_string_view<CharT> s) const
+	{
+		return boost::hash_range(begin(s), end(s));
+	}
+};
+
+template <class CharT>
+struct sv_eq {
+	auto operator()(boost::basic_string_view<CharT> l,
+	                boost::basic_string_view<CharT> r) const
+	{
+		return l == r;
+	}
+};
+
+template <class CharT>
 using Prefix_Table = multi_index_container<
     Prefix<CharT>, indexed_by<hashed_non_unique<
                        member<Prefix<CharT>, const std::basic_string<CharT>,
-                              &Prefix<CharT>::appending>>>>;
+                              &Prefix<CharT>::appending>,
+                       sv_hash<CharT>, sv_eq<CharT>>>>;
 
 template <class CharT>
 using Suffix_Table = multi_index_container<
     Suffix<CharT>, indexed_by<hashed_non_unique<
                        member<Suffix<CharT>, const std::basic_string<CharT>,
-                              &Suffix<CharT>::appending>>>>;
+                              &Suffix<CharT>::appending>,
+                       sv_hash<CharT>, sv_eq<CharT>>>>;
 }
 #endif // NUSPELL_STRUCTURES_HXX

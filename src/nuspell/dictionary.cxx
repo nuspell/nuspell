@@ -30,6 +30,8 @@ namespace nuspell {
 
 using namespace std;
 using boost::make_iterator_range;
+template <class CharT>
+using str_view = boost::basic_string_view<CharT>;
 
 /** Check spelling for a word.
  *
@@ -333,8 +335,8 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
 	auto& prefixes = get_structures<CharT>().prefixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto affix = word.substr(0, aff_len);
-		auto entries = prefixes.equal_range(affix);
+		auto pfx = str_view<CharT>(word).substr(0, aff_len);
+		auto entries = prefixes.equal_range(pfx);
 		for (auto& e : make_iterator_range(entries)) {
 			if (m == FULL_WORD &&
 			    e.cont_flags.exists(compound_onlyin_flag))
@@ -377,8 +379,8 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 	auto& suffixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto affix = word.substr(word.size() - aff_len);
-		auto entries = suffixes.equal_range(affix);
+		auto sfx = str_view<CharT>(word).substr(word.size() - aff_len);
+		auto entries = suffixes.equal_range(sfx);
 		for (auto& e : make_iterator_range(entries)) {
 			if ((m == FULL_WORD ||
 			     (aff_len == 0 && m == AT_COMPOUND_END)) &&
@@ -424,7 +426,7 @@ auto Dictionary::strip_prefix_then_suffix(std::basic_string<CharT>& word) const
 	auto& prefixes = get_structures<CharT>().prefixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto pfx = word.substr(0, aff_len);
+		auto pfx = str_view<CharT>(word).substr(0, aff_len);
 		auto entries = prefixes.equal_range(pfx);
 		for (auto& pe : make_iterator_range(entries)) {
 			if (pe.cross_product == false)
@@ -464,7 +466,7 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 	auto& suffixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto sfx = word.substr(word.size() - aff_len);
+		auto sfx = str_view<CharT>(word).substr(word.size() - aff_len);
 		auto entries = suffixes.equal_range(sfx);
 		for (auto& se : make_iterator_range(entries)) {
 			if (se.cross_product == false)
@@ -514,7 +516,7 @@ auto Dictionary::strip_suffix_then_prefix(std::basic_string<CharT>& word) const
 	auto& suffixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto sfx = word.substr(word.size() - aff_len);
+		auto sfx = str_view<CharT>(word).substr(word.size() - aff_len);
 		auto entries = suffixes.equal_range(sfx);
 		for (auto& se : make_iterator_range(entries)) {
 			if (se.cross_product == false)
@@ -555,7 +557,7 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 	auto& prefixes = get_structures<CharT>().prefixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto pfx = word.substr(0, aff_len);
+		auto pfx = str_view<CharT>(word).substr(0, aff_len);
 		auto entries = prefixes.equal_range(pfx);
 		for (auto& pe : make_iterator_range(entries)) {
 			if (pe.cross_product == false)
@@ -605,7 +607,7 @@ auto Dictionary::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
 	auto& suffixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto sfx1 = word.substr(0, aff_len);
+		auto sfx1 = str_view<CharT>(word).substr(0, aff_len);
 		auto entries = suffixes.equal_range(sfx1);
 		for (auto& se1 : make_iterator_range(entries)) {
 			if (m == FULL_WORD &&
@@ -646,7 +648,7 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 	auto& suffixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto sfx2 = word.substr(0, aff_len);
+		auto sfx2 = str_view<CharT>(word).substr(0, aff_len);
 		auto entries = suffixes.equal_range(sfx2);
 		for (auto& se2 : make_iterator_range(entries)) {
 			if (!se2.cont_flags.exists(se1.flag))
