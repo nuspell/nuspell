@@ -905,7 +905,7 @@ nextline:
             std::string root;
             if (check(pMS, &d, token, &info, &root)) {
               if (!terse_mode) {
-                if (verbose_mode)
+		if (verbose_mode || omit_suggestion)
                   fprintf(stdout, "* %s\n", token.c_str());
                 else
                   fprintf(stdout, "*\n");
@@ -922,9 +922,9 @@ nextline:
               } else {
                 char_offset = byte_offset;
               }
-	      if (omit_suggestion) { fprintf(stdout, "# %s %d", token.c_str(), char_offset); } else { std::vector<std::string> wlst =
-                pMS[d]->suggest(chenc(token, io_enc, dic_enc[d]));
-              if (wlst.empty()) {
+	      std::vector<std::string> wlst;
+	      if (!omit_suggestion) { wlst = pMS[d]->suggest(chenc(token, io_enc, dic_enc[d])); }
+	      if (wlst.empty()) {
                 fprintf(stdout, "# %s %d", token.c_str(), char_offset);
               } else {
                 fprintf(stdout, "& %s %u %d: ", token.c_str(), static_cast<unsigned int>(wlst.size()), char_offset);
@@ -932,7 +932,7 @@ nextline:
               }
               for (size_t j = 1; j < wlst.size(); ++j) {
                   fprintf(stdout, ", %s", chenc(wlst[j], dic_enc[d], io_enc).c_str());
-	      } }
+	      }
               fprintf(stdout, "\n");
               fflush(stdout);
             }
@@ -961,9 +961,9 @@ nextline:
               } else {
                 char_offset = byte_offset;
               }
-              std::vector<std::string> wlst =
-                pMS[d]->suggest(chenc(token, io_enc, dic_enc[d]));
-              if (wlst.empty()) {
+	      std::vector<std::string> wlst;
+	      if (!omit_suggestion) { wlst = pMS[d]->suggest(chenc(token, io_enc, dic_enc[d])); }
+	      if (wlst.empty()) {
                 fprintf(stdout, "# %s %d", chenc(token, io_enc, ui_enc).c_str(),
                         char_offset);
               } else {
