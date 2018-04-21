@@ -20,7 +20,6 @@
 #include "string_utils.hxx"
 
 #include <iostream>
-#include <memory>
 #include <stdexcept>
 
 #include <boost/algorithm/string/trim.hpp>
@@ -331,6 +330,21 @@ auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
 	return nullptr;
 }
 
+template <class CharT, template <class> class AffixT>
+class To_Root_Unroot_RAII {
+      private:
+	basic_string<CharT>& word;
+	const AffixT<CharT>& affix;
+
+      public:
+	To_Root_Unroot_RAII(basic_string<CharT>& w, const AffixT<CharT>& a)
+	    : word{w}, affix{a}
+	{
+		affix.to_root(word);
+	}
+	~To_Root_Unroot_RAII() { affix.to_derived(word); }
+};
+
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
@@ -353,13 +367,7 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
 				continue;
 			if (e.cont_flags.exists(circumfix_flag))
 				continue;
-
-			e.to_root(word);
-			auto unrooter = [&](auto* rt) { e.to_derived(*rt); };
-			auto unroot_at_end_of_iteration =
-			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
-			        &word, unrooter};
-
+			To_Root_Unroot_RAII<CharT, Prefix> xxx(word, e);
 			if (!e.check_condition(word))
 				continue;
 			for (auto& word_entry :
@@ -398,13 +406,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 				continue;
 			if (e.cont_flags.exists(circumfix_flag))
 				continue;
-
-			e.to_root(word);
-			auto unrooter = [&](auto* rt) { e.to_derived(*rt); };
-			auto unroot_at_end_of_iteration =
-			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
-			        &word, unrooter};
-
+			To_Root_Unroot_RAII<CharT, Suffix> xxx(word, e);
 			if (!e.check_condition(word))
 				continue;
 			for (auto& word_entry :
@@ -444,13 +446,7 @@ auto Dictionary::strip_prefix_then_suffix(std::basic_string<CharT>& word) const
 				continue;
 			if (pe.cont_flags.exists(need_affix_flag))
 				continue;
-
-			pe.to_root(word);
-			auto unrooter = [&](auto* rt) { pe.to_derived(*rt); };
-			auto unroot_at_end_of_iteration =
-			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
-			        &word, unrooter};
-
+			To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe);
 			if (!pe.check_condition(word))
 				continue;
 			auto ret = strip_pfx_then_sfx_2<m>(pe, word);
@@ -485,13 +481,7 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 			if (pe.cont_flags.exists(circumfix_flag) !=
 			    se.cont_flags.exists(circumfix_flag))
 				continue;
-
-			se.to_root(word);
-			auto unrooter = [&](auto* rt) { se.to_derived(*rt); };
-			auto unroot_at_end_of_iteration =
-			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
-			        &word, unrooter};
-
+			To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se);
 			if (!se.check_condition(word))
 				continue;
 			for (auto& word_entry :
@@ -534,13 +524,7 @@ auto Dictionary::strip_suffix_then_prefix(std::basic_string<CharT>& word) const
 				continue;
 			if (se.cont_flags.exists(need_affix_flag))
 				continue;
-
-			se.to_root(word);
-			auto unrooter = [&](auto* rt) { se.to_derived(*rt); };
-			auto unroot_at_end_of_iteration =
-			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
-			        &word, unrooter};
-
+			To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se);
 			if (!se.check_condition(word))
 				continue;
 			auto ret = strip_sfx_then_pfx_2<m>(se, word);
@@ -575,13 +559,7 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 			if (pe.cont_flags.exists(circumfix_flag) !=
 			    se.cont_flags.exists(circumfix_flag))
 				continue;
-
-			pe.to_root(word);
-			auto unrooter = [&](auto* rt) { pe.to_derived(*rt); };
-			auto unroot_at_end_of_iteration =
-			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
-			        &word, unrooter};
-
+			To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe);
 			if (!pe.check_condition(word))
 				continue;
 			for (auto& word_entry :
@@ -624,13 +602,7 @@ auto Dictionary::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
 				continue;
 			if (se1.cont_flags.exists(circumfix_flag))
 				continue;
-
-			se1.to_root(word);
-			auto unrooter = [&](auto* rt) { se1.to_derived(*rt); };
-			auto unroot_at_end_of_iteration =
-			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
-			        &word, unrooter};
-
+			To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
 			if (!se1.check_condition(word))
 				continue;
 			auto ret = strip_sfx_then_sfx_2(se1, word);
@@ -665,13 +637,7 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 			//	continue;
 			if (se2.cont_flags.exists(circumfix_flag))
 				continue;
-
-			se2.to_root(word);
-			auto unrooter = [&](auto* rt) { se2.to_derived(*rt); };
-			auto unroot_at_end_of_iteration =
-			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
-			        &word, unrooter};
-
+			To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
 			if (!se2.check_condition(word))
 				continue;
 			for (auto& word_entry :
@@ -695,10 +661,10 @@ auto Dictionary::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&, const Prefix<CharT>&>>
 {
-        auto& prefixes = get_structures<CharT>().prefixes;
+	auto& prefixes = get_structures<CharT>().prefixes;
 
-        for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-	        auto pfx1 = str_view<CharT>(word).substr(0, aff_len);
+	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
+		auto pfx1 = str_view<CharT>(word).substr(0, aff_len);
 		auto entries = prefixes.equal_range(pfx1);
 		for (auto& pe1 : make_iterator_range(entries)) {
 			if (m == FULL_WORD &&
@@ -711,21 +677,15 @@ auto Dictionary::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
 				continue;
 			if (pe1.cont_flags.exists(circumfix_flag))
 				continue;
-
-			pe1.to_root(word);
-			auto unrooter = [&](auto* rt) { pe1.to_derived(*rt); };
-			auto unroot_at_end_of_iteration =
-			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
-				&word, unrooter};
-
+			To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
 			if (!pe1.check_condition(word))
 				continue;
 			auto ret = strip_pfx_then_pfx_2(pe1, word);
 			if (ret)
 				return ret;
 		}
-        }
-        return {};
+	}
+	return {};
 }
 
 template <Affixing_Mode m, class CharT>
@@ -734,11 +694,11 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&, const Prefix<CharT>&>>
 {
-        auto& dic = words;
-        auto& prefixes = get_structures<CharT>().prefixes;
+	auto& dic = words;
+	auto& prefixes = get_structures<CharT>().prefixes;
 
-        for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-	        auto pfx = str_view<CharT>(word).substr(0, aff_len);
+	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
+		auto pfx = str_view<CharT>(word).substr(0, aff_len);
 		auto entries = prefixes.equal_range(pfx);
 		for (auto& pe2 : make_iterator_range(entries)) {
 			if (!pe2.cont_flags.exists(pe1.flag))
@@ -751,13 +711,7 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 			//	continue;
 			if (pe2.cont_flags.exists(circumfix_flag))
 				continue;
-
-			pe2.to_root(word);
-			auto unrooter = [&](auto* rt) { pe2.to_derived(*rt); };
-			auto unroot_at_end_of_iteration =
-			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
-				&word, unrooter};
-
+			To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe2);
 			if (!pe2.check_condition(word))
 				continue;
 			for (auto& word_entry :
@@ -772,8 +726,8 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 				return {{word, word_flags, pe2, pe1}};
 			}
 		}
-        }
-        return {};
+	}
+	return {};
 }
 
 } // namespace nuspell
