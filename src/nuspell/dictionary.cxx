@@ -346,6 +346,51 @@ class To_Root_Unroot_RAII {
 };
 
 template <Affixing_Mode m, class CharT>
+auto Dictionary::affix_NOT_valid(const Prefix<CharT>& e) const
+{
+	if (m == FULL_WORD && e.cont_flags.exists(compound_onlyin_flag))
+		return true;
+	if (m == AT_COMPOUND_END && !e.cont_flags.exists(compound_permit_flag))
+		return true;
+	return false;
+}
+template <Affixing_Mode m, class CharT>
+auto Dictionary::affix_NOT_valid(const Suffix<CharT>& e) const
+{
+	if (m == FULL_WORD && e.cont_flags.exists(compound_onlyin_flag))
+		return true;
+	if (m == AT_COMPOUND_BEGIN &&
+	    !e.cont_flags.exists(compound_permit_flag))
+		return true;
+	return false;
+}
+template <Affixing_Mode m, class AffixT>
+auto Dictionary::outer_affix_NOT_valid(const AffixT& e) const
+{
+	if (affix_NOT_valid<m>(e))
+		return true;
+	if (e.cont_flags.exists(need_affix_flag))
+		return true;
+	return false;
+}
+
+template <class CharT>
+auto prefix(const basic_string<CharT>& word, size_t len)
+{
+	return str_view<CharT>(word).substr(0, len);
+}
+template <class CharT>
+auto prefix(basic_string<CharT>&& word, size_t len) = delete;
+
+template <class CharT>
+auto suffix(const basic_string<CharT>& word, size_t len)
+{
+	return str_view<CharT>(word).substr(word.size() - len);
+}
+template <class CharT>
+auto suffix(basic_string<CharT>&& word, size_t len) = delete;
+
+template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&>>
@@ -354,16 +399,10 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
 	auto& prefixes = get_structures<CharT>().prefixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto pfx = str_view<CharT>(word).substr(0, aff_len);
+		auto pfx = prefix(word, aff_len);
 		auto entries = prefixes.equal_range(pfx);
 		for (auto& e : make_iterator_range(entries)) {
-			if (m == FULL_WORD &&
-			    e.cont_flags.exists(compound_onlyin_flag))
-				continue;
-			if (m == AT_COMPOUND_END &&
-			    !e.cont_flags.exists(compound_permit_flag))
-				continue;
-			if (e.cont_flags.exists(need_affix_flag))
+			if (outer_affix_NOT_valid<m>(e))
 				continue;
 			if (e.cont_flags.exists(circumfix_flag))
 				continue;
@@ -392,17 +431,13 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 	auto& suffixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto sfx = str_view<CharT>(word).substr(word.size() - aff_len);
+		auto sfx = suffix(word, aff_len);
 		auto entries = suffixes.equal_range(sfx);
 		for (auto& e : make_iterator_range(entries)) {
-			if ((m == FULL_WORD ||
-			     (aff_len == 0 && m == AT_COMPOUND_END)) &&
+			if (outer_affix_NOT_valid<m>(e))
+				continue;
+			if ((aff_len == 0 && m == AT_COMPOUND_END) &&
 			    e.cont_flags.exists(compound_onlyin_flag))
-				continue;
-			if (m == AT_COMPOUND_BEGIN &&
-			    !e.cont_flags.exists(compound_permit_flag))
-				continue;
-			if (e.cont_flags.exists(need_affix_flag))
 				continue;
 			if (e.cont_flags.exists(circumfix_flag))
 				continue;
@@ -433,18 +468,12 @@ auto Dictionary::strip_prefix_then_suffix(std::basic_string<CharT>& word) const
 	auto& prefixes = get_structures<CharT>().prefixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto pfx = str_view<CharT>(word).substr(0, aff_len);
+		auto pfx = prefix(word, aff_len);
 		auto entries = prefixes.equal_range(pfx);
 		for (auto& pe : make_iterator_range(entries)) {
 			if (pe.cross_product == false)
 				continue;
-			if (m == FULL_WORD &&
-			    pe.cont_flags.exists(compound_onlyin_flag))
-				continue;
-			if (m == AT_COMPOUND_END &&
-			    !pe.cont_flags.exists(compound_permit_flag))
-				continue;
-			if (pe.cont_flags.exists(need_affix_flag))
+			if (outer_affix_NOT_valid<m>(pe))
 				continue;
 			To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe);
 			if (!pe.check_condition(word))
@@ -467,16 +496,12 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 	auto& suffixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto sfx = str_view<CharT>(word).substr(word.size() - aff_len);
+		auto sfx = suffix(word, aff_len);
 		auto entries = suffixes.equal_range(sfx);
 		for (auto& se : make_iterator_range(entries)) {
 			if (se.cross_product == false)
 				continue;
-			if (m == FULL_WORD &&
-			    se.cont_flags.exists(compound_onlyin_flag))
-				continue;
-			if (m == AT_COMPOUND_BEGIN &&
-			    !se.cont_flags.exists(compound_permit_flag))
+			if (affix_NOT_valid<m>(se))
 				continue;
 			if (pe.cont_flags.exists(circumfix_flag) !=
 			    se.cont_flags.exists(circumfix_flag))
@@ -511,18 +536,12 @@ auto Dictionary::strip_suffix_then_prefix(std::basic_string<CharT>& word) const
 	auto& suffixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto sfx = str_view<CharT>(word).substr(word.size() - aff_len);
+		auto sfx = suffix(word, aff_len);
 		auto entries = suffixes.equal_range(sfx);
 		for (auto& se : make_iterator_range(entries)) {
 			if (se.cross_product == false)
 				continue;
-			if (m == FULL_WORD &&
-			    se.cont_flags.exists(compound_onlyin_flag))
-				continue;
-			if (m == AT_COMPOUND_BEGIN &&
-			    !se.cont_flags.exists(compound_permit_flag))
-				continue;
-			if (se.cont_flags.exists(need_affix_flag))
+			if (outer_affix_NOT_valid<m>(se))
 				continue;
 			To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se);
 			if (!se.check_condition(word))
@@ -545,16 +564,12 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 	auto& prefixes = get_structures<CharT>().prefixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto pfx = str_view<CharT>(word).substr(0, aff_len);
+		auto pfx = prefix(word, aff_len);
 		auto entries = prefixes.equal_range(pfx);
 		for (auto& pe : make_iterator_range(entries)) {
 			if (pe.cross_product == false)
 				continue;
-			if (m == FULL_WORD &&
-			    pe.cont_flags.exists(compound_onlyin_flag))
-				continue;
-			if (m == AT_COMPOUND_END &&
-			    !pe.cont_flags.exists(compound_permit_flag))
+			if (affix_NOT_valid<m>(pe))
 				continue;
 			if (pe.cont_flags.exists(circumfix_flag) !=
 			    se.cont_flags.exists(circumfix_flag))
@@ -589,23 +604,17 @@ auto Dictionary::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
 	auto& suffixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto sfx1 = str_view<CharT>(word).substr(0, aff_len);
+		auto sfx1 = suffix(word, aff_len);
 		auto entries = suffixes.equal_range(sfx1);
 		for (auto& se1 : make_iterator_range(entries)) {
-			if (m == FULL_WORD &&
-			    se1.cont_flags.exists(compound_onlyin_flag))
-				continue;
-			if (m == AT_COMPOUND_BEGIN &&
-			    !se1.cont_flags.exists(compound_permit_flag))
-				continue;
-			if (se1.cont_flags.exists(need_affix_flag))
+			if (outer_affix_NOT_valid<m>(se1))
 				continue;
 			if (se1.cont_flags.exists(circumfix_flag))
 				continue;
 			To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
 			if (!se1.check_condition(word))
 				continue;
-			auto ret = strip_sfx_then_sfx_2(se1, word);
+			auto ret = strip_sfx_then_sfx_2<FULL_WORD>(se1, word);
 			if (ret)
 				return ret;
 		}
@@ -624,17 +633,13 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 	auto& suffixes = get_structures<CharT>().suffixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto sfx2 = str_view<CharT>(word).substr(0, aff_len);
+		auto sfx2 = suffix(word, aff_len);
 		auto entries = suffixes.equal_range(sfx2);
 		for (auto& se2 : make_iterator_range(entries)) {
 			if (!se2.cont_flags.exists(se1.flag))
 				continue;
-			if (m == FULL_WORD &&
-			    se2.cont_flags.exists(compound_onlyin_flag))
+			if (affix_NOT_valid<m>(se2))
 				continue;
-			// if (m == AT_COMPOUND_BEGIN &&
-			//    !se2.cont_flags.exists(compound_permit_flag))
-			//	continue;
 			if (se2.cont_flags.exists(circumfix_flag))
 				continue;
 			To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
@@ -664,23 +669,17 @@ auto Dictionary::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
 	auto& prefixes = get_structures<CharT>().prefixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto pfx1 = str_view<CharT>(word).substr(0, aff_len);
+		auto pfx1 = prefix(word, aff_len);
 		auto entries = prefixes.equal_range(pfx1);
 		for (auto& pe1 : make_iterator_range(entries)) {
-			if (m == FULL_WORD &&
-			    pe1.cont_flags.exists(compound_onlyin_flag))
-				continue;
-			if (m == AT_COMPOUND_END &&
-			    !pe1.cont_flags.exists(compound_permit_flag))
-				continue;
-			if (pe1.cont_flags.exists(need_affix_flag))
+			if (outer_affix_NOT_valid<m>(pe1))
 				continue;
 			if (pe1.cont_flags.exists(circumfix_flag))
 				continue;
 			To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
 			if (!pe1.check_condition(word))
 				continue;
-			auto ret = strip_pfx_then_pfx_2(pe1, word);
+			auto ret = strip_pfx_then_pfx_2<FULL_WORD>(pe1, word);
 			if (ret)
 				return ret;
 		}
@@ -698,17 +697,13 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 	auto& prefixes = get_structures<CharT>().prefixes;
 
 	for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
-		auto pfx = str_view<CharT>(word).substr(0, aff_len);
+		auto pfx = prefix(word, aff_len);
 		auto entries = prefixes.equal_range(pfx);
 		for (auto& pe2 : make_iterator_range(entries)) {
 			if (!pe2.cont_flags.exists(pe1.flag))
 				continue;
-			if (m == FULL_WORD &&
-			    pe2.cont_flags.exists(compound_onlyin_flag))
+			if (affix_NOT_valid<m>(pe2))
 				continue;
-			// if (m == AT_COMPOUND_END &&
-			//    !pe2.cont_flags.exists(compound_permit_flag))
-			//	continue;
 			if (pe2.cont_flags.exists(circumfix_flag))
 				continue;
 			To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe2);

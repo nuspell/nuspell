@@ -61,6 +61,13 @@ class Dictionary : protected Aff_Data {
 	template <class CharT>
 	auto checkword(std::basic_string<CharT>& s) const -> const Flag_Set*;
 
+	template <Affixing_Mode m, class CharT>
+	auto affix_NOT_valid(const Prefix<CharT>& a) const;
+	template <Affixing_Mode m, class CharT>
+	auto affix_NOT_valid(const Suffix<CharT>& a) const;
+	template <Affixing_Mode m, class AffixT>
+	auto outer_affix_NOT_valid(const AffixT& a) const;
+
 	/**
 	 * @brief strip_prefix_only
 	 * @param s derived word with affixes
@@ -98,7 +105,7 @@ class Dictionary : protected Aff_Data {
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Suffix<CharT>&, const Prefix<CharT>&>>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
+	template <Affixing_Mode m, class CharT>
 	auto strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 	                          std::basic_string<CharT>& s) const
 	    -> boost::optional<
@@ -120,7 +127,7 @@ class Dictionary : protected Aff_Data {
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Prefix<CharT>&, const Suffix<CharT>&>>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
+	template <Affixing_Mode m, class CharT>
 	auto strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 	                          std::basic_string<CharT>& s) const
 	    -> boost::optional<
@@ -133,7 +140,7 @@ class Dictionary : protected Aff_Data {
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Suffix<CharT>&, const Suffix<CharT>&>>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
+	template <Affixing_Mode m, class CharT>
 	auto strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 	                          std::basic_string<CharT>& s) const
 	    -> boost::optional<
@@ -146,7 +153,7 @@ class Dictionary : protected Aff_Data {
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Prefix<CharT>&, const Prefix<CharT>&>>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
+	template <Affixing_Mode m, class CharT>
 	auto strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 	                          std::basic_string<CharT>& s) const
 	    -> boost::optional<
