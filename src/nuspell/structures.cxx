@@ -175,7 +175,8 @@ Prefix<CharT>::Prefix(char16_t flag, bool cross_product, const StrT& strip,
                       StrT condition)
     : flag{flag},
       cross_product{cross_product}, stripping{strip}, appending{append},
-      cont_flags{cont_flags}, condition{condition.insert(0, 1, '^')}
+      cont_flags{cont_flags}, condition{condition.insert(0, 1, '^'),
+                                        regex_constants::basic}
 {
 }
 
@@ -270,7 +271,9 @@ Suffix<CharT>::Suffix(char16_t flag, bool cross_product, const StrT& strip,
                       const StrT& append, const Flag_Set& cont_flags,
                       StrT condition)
     : flag{flag}, cross_product{cross_product}, stripping{strip},
-      appending{append}, cont_flags{cont_flags}, condition{condition += '$'}
+      appending{append}, cont_flags{cont_flags}, condition{
+                                                     condition += '$',
+                                                     regex_constants::basic}
 {
 }
 

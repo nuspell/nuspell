@@ -318,10 +318,15 @@ auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
 		if (ret5)
 			return &get<1>(*ret5);
 	}
-	{
+	if (complex_prefixes == false) {
 		auto ret6 = strip_suffix_then_suffix(s);
 		if (ret6)
 			return &get<1>(*ret6);
+	}
+	else {
+		auto ret7 = strip_prefix_then_prefix(s);
+		if (ret7)
+			return &get<1>(*ret7);
 	}
 	return nullptr;
 }
@@ -552,7 +557,6 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
                                   const Prefix<CharT>&, const Suffix<CharT>&>>
 {
-
 	auto& dic = words;
 	auto& prefixes = get_structures<CharT>().prefixes;
 
@@ -613,7 +617,7 @@ auto Dictionary::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
 			if (m == FULL_WORD &&
 			    se1.cont_flags.exists(compound_onlyin_flag))
 				continue;
-			if (m == AT_COMPOUND_END &&
+			if (m == AT_COMPOUND_BEGIN &&
 			    !se1.cont_flags.exists(compound_permit_flag))
 				continue;
 			if (se1.cont_flags.exists(need_affix_flag))
@@ -656,7 +660,7 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 			if (m == FULL_WORD &&
 			    se2.cont_flags.exists(compound_onlyin_flag))
 				continue;
-			// if (m == AT_COMPOUND_END &&
+			// if (m == AT_COMPOUND_BEGIN &&
 			//    !se2.cont_flags.exists(compound_permit_flag))
 			//	continue;
 			if (se2.cont_flags.exists(circumfix_flag))
@@ -684,6 +688,92 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 		}
 	}
 	return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
+                                  const Prefix<CharT>&, const Prefix<CharT>&>>
+{
+        auto& prefixes = get_structures<CharT>().prefixes;
+
+        for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
+	        auto pfx1 = str_view<CharT>(word).substr(0, aff_len);
+		auto entries = prefixes.equal_range(pfx1);
+		for (auto& pe1 : make_iterator_range(entries)) {
+			if (m == FULL_WORD &&
+			    pe1.cont_flags.exists(compound_onlyin_flag))
+				continue;
+			if (m == AT_COMPOUND_END &&
+			    !pe1.cont_flags.exists(compound_permit_flag))
+				continue;
+			if (pe1.cont_flags.exists(need_affix_flag))
+				continue;
+			if (pe1.cont_flags.exists(circumfix_flag))
+				continue;
+
+			pe1.to_root(word);
+			auto unrooter = [&](auto* rt) { pe1.to_derived(*rt); };
+			auto unroot_at_end_of_iteration =
+			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
+				&word, unrooter};
+
+			if (!pe1.check_condition(word))
+				continue;
+			auto ret = strip_pfx_then_pfx_2(pe1, word);
+			if (ret)
+				return ret;
+		}
+        }
+        return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
+                                      std::basic_string<CharT>& word) const
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&,
+                                  const Prefix<CharT>&, const Prefix<CharT>&>>
+{
+        auto& dic = words;
+        auto& prefixes = get_structures<CharT>().prefixes;
+
+        for (size_t aff_len = 0; aff_len <= word.size(); ++aff_len) {
+	        auto pfx = str_view<CharT>(word).substr(0, aff_len);
+		auto entries = prefixes.equal_range(pfx);
+		for (auto& pe2 : make_iterator_range(entries)) {
+			if (!pe2.cont_flags.exists(pe1.flag))
+				continue;
+			if (m == FULL_WORD &&
+			    pe2.cont_flags.exists(compound_onlyin_flag))
+				continue;
+			// if (m == AT_COMPOUND_END &&
+			//    !pe2.cont_flags.exists(compound_permit_flag))
+			//	continue;
+			if (pe2.cont_flags.exists(circumfix_flag))
+				continue;
+
+			pe2.to_root(word);
+			auto unrooter = [&](auto* rt) { pe2.to_derived(*rt); };
+			auto unroot_at_end_of_iteration =
+			    unique_ptr<basic_string<CharT>, decltype(unrooter)>{
+				&word, unrooter};
+
+			if (!pe2.check_condition(word))
+				continue;
+			for (auto& word_entry :
+			     make_iterator_range(dic.equal_range(word))) {
+				auto& word_flags = word_entry.second;
+				if (!word_flags.exists(pe2.flag))
+					continue;
+				// if (m != FULL_WORD &&
+				//    word_flags.exists(compound_onlyin_flag))
+				//	continue;
+				// needflag check here if needed
+				return {{word, word_flags, pe2, pe1}};
+			}
+		}
+        }
+        return {};
 }
 
 } // namespace nuspell
