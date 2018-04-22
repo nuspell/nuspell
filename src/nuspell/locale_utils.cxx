@@ -313,24 +313,27 @@ auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring
 		if (err == cvt.ok || err == cvt.noconv) {
 			break;
 		}
-		if (out_ptr == out_last) {
+		else if (err == cvt.partial && out_ptr == out_last) {
+			// no space in output buf
 			auto idx = out_ptr - &out[0];
 			out.resize(out.size() * 2);
 			out_ptr = &out[idx];
 			out_last = &out[out.size()];
 		}
-		if (err == cvt.partial) {
-			if (in_ptr == in_last) {
-				*out_ptr++ = L'\uFFFD';
-				break;
-			}
+		else if (err == cvt.partial && out_ptr != out_last) {
+			// incomplete sequence at the end
+			*out_ptr++ = L'\uFFFD';
+			break;
 		}
 		else if (err == cvt.error) {
+			if (out_ptr == out_last) {
+				auto idx = out_ptr - &out[0];
+				out.resize(out.size() * 2);
+				out_ptr = &out[idx];
+				out_last = &out[out.size()];
+			}
 			in_ptr++;
 			*out_ptr++ = L'\uFFFD';
-		}
-		else {
-			break; // should never happend
 		}
 	}
 	out.erase(out_ptr - &out[0]);
@@ -353,18 +356,28 @@ auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 		if (err == cvt.ok || err == cvt.noconv) {
 			break;
 		}
-		if (i == 0) {
-			*out_ptr++ = '?';
-			break;
-		}
-		if (err == cvt.partial || out_ptr == out_last) {
+		else if (err == cvt.partial && i != 0) {
+			// probably no space in output buf
 			auto idx = out_ptr - &out[0];
 			out.resize(out.size() * 2);
 			out_ptr = &out[idx];
 			out_last = &out[out.size()];
 			--i;
 		}
-		if (err == cvt.error) {
+		else if (err == cvt.partial && i == 0) {
+			// size is big enough after 2 resizes,
+			// incomplete sequence at the end
+			*out_ptr++ = '?';
+			break;
+		}
+		else if (err == cvt.error) {
+			if (out_ptr == out_last) {
+				auto idx = out_ptr - &out[0];
+				out.resize(out.size() * 2);
+				out_ptr = &out[idx];
+				out_last = &out[out.size()];
+				--i;
+			}
 			in_ptr++;
 			*out_ptr++ = '?';
 		}
