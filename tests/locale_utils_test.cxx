@@ -81,6 +81,30 @@ TEST_CASE("method u32_to_ucs2_skip_non_bmp", "[locale_utils]")
 	CHECK(u" ABC" == u32_to_ucs2_skip_non_bmp(U"\U0010FFFF AB\U00010000C"));
 }
 
+TEST_CASE("to_wide", "[locale_utils]")
+{
+	auto in = u8"\U0010FFFF ß"s;
+	boost::locale::generator g;
+	auto loc = g("en_US.UTF-8");
+	CHECK(L"\U0010FFFF ß" == to_wide(in, loc));
+
+	in = "abcd\xDF";
+	loc = g("en_US.ISO-8859-1");
+	CHECK(L"abcdß" == to_wide(in, loc));
+}
+
+TEST_CASE("to_narrow", "[locale_utils]")
+{
+	auto in = L"\U0010FFFF ß"s;
+	boost::locale::generator g;
+	auto loc = g("en_US.UTF-8");
+	CHECK(u8"\U0010FFFF ß" == to_narrow(in, loc));
+
+	in = L"abcdß";
+	loc = g("en_US.ISO-8859-1");
+	CHECK("abcd\xDF" == to_narrow(in, loc));
+}
+
 TEST_CASE("boost locale has icu", "[locale_utils]")
 {
 	using lbm = boost::locale::localization_backend_manager;

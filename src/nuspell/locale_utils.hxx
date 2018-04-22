@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Dimitrij Mijoski
+/* Copyright 2016-2018 Dimitrij Mijoski
  *
  * This file is part of Nuspell.
  *
@@ -70,7 +70,7 @@ auto is_all_bmp(const std::u32string& s) -> bool;
 auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string;
 
 auto to_wide(const std::string& in, const std::locale& inloc) -> std::wstring;
-auto to_singlebyte(const std::wstring& in, const std::locale& outloc)
+auto to_narrow(const std::wstring& in, const std::locale& outloc)
     -> std::string;
 
 auto install_ctype_facets_inplace(std::locale& boost_loc) -> void;
@@ -78,10 +78,7 @@ auto install_ctype_facets_inplace(std::locale& boost_loc) -> void;
 // put template function definitions bellow the declarations above
 // otherwise doxygen has bugs when generating call graphs
 
-// TODO implement icu_ctype facet.
-
-template <class FromCharT,
-          class = std::enable_if_t<!std::is_same<FromCharT, char>::value>>
+template <class FromCharT>
 auto to_dict_encoding(const std::basic_string<FromCharT>& from)
 {
 	using namespace boost::locale::conv;
@@ -116,7 +113,7 @@ template <class ToCharT,
           class = std::enable_if_t<std::is_same<ToCharT, char>::value>>
 auto from_dict_to_wide_encoding(std::string&& from)
 {
-	return from;
+	return std::move(from);
 }
 
 struct Locale_Input {
@@ -143,7 +140,7 @@ auto inline Locale_Input::cvt_for_byte_dict(const std::string& in,
 			return in;
 		}
 	}
-	return to_singlebyte(to_wide(in, inloc), dicloc);
+	return to_narrow(to_wide(in, inloc), dicloc);
 }
 
 auto inline Locale_Input::cvt_for_u8_dict(const std::string& in,
@@ -166,7 +163,7 @@ struct Unicode_Input {
 	                              const std::locale& dicloc)
 	{
 		using namespace boost::locale::conv;
-		return to_singlebyte(utf_to_utf<wchar_t>(in), dicloc);
+		return to_narrow(utf_to_utf<wchar_t>(in), dicloc);
 	}
 
 	auto static cvt_for_u8_dict(const std::basic_string<CharT>& in)

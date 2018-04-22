@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Dimitrij Mijoski
+/* Copyright 2016-2018 Dimitrij Mijoski
  *
  * This file is part of Nuspell.
  *
@@ -337,8 +337,7 @@ auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring
 	return out;
 }
 
-auto to_singlebyte(const std::wstring& in, const std::locale& loc)
-    -> std::string
+auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 {
 	using namespace std;
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
@@ -348,30 +347,26 @@ auto to_singlebyte(const std::wstring& in, const std::locale& loc)
 	auto in_last = in.c_str() + in.size();
 	auto out_ptr = &out[0];
 	auto out_last = &out[out.size()];
-	for (;;) {
+	for (size_t i = 2;;) {
 		auto err = cvt.out(state, in_ptr, in_last, in_ptr, out_ptr,
 		                   out_last, out_ptr);
 		if (err == cvt.ok || err == cvt.noconv) {
 			break;
 		}
-		if (out_ptr == out_last) {
+		if (i == 0) {
+			*out_ptr++ = '?';
+			break;
+		}
+		if (err == cvt.partial || out_ptr == out_last) {
 			auto idx = out_ptr - &out[0];
 			out.resize(out.size() * 2);
 			out_ptr = &out[idx];
 			out_last = &out[out.size()];
+			--i;
 		}
-		if (err == cvt.partial) {
-			if (in_ptr == in_last) {
-				*out_ptr++ = '?';
-				break;
-			}
-		}
-		else if (err == cvt.error) {
+		if (err == cvt.error) {
 			in_ptr++;
 			*out_ptr++ = '?';
-		}
-		else {
-			break; // should never happend
 		}
 	}
 	out.erase(out_ptr - &out[0]);
