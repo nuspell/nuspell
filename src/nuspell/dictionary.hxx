@@ -160,6 +160,28 @@ class Dictionary : protected Aff_Data {
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&,
 	                   const Prefix<CharT>&, const Prefix<CharT>&>>;
 
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_prefix_then_2_suffixes(std::basic_string<CharT>& s) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+
+	template <Affixing_Mode m, class CharT>
+	auto strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
+	                       const Suffix<CharT>& se1,
+	                       std::basic_string<CharT>& s) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_suffix_prefix_suffix(std::basic_string<CharT>& s) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_2_suffixes_then_prefix(std::basic_string<CharT>& s) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+
       public:
 	Dictionary()
 	    : Aff_Data() // we explicity do value init so content is zeroed

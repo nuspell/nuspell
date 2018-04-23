@@ -327,6 +327,11 @@ auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
 		if (ret7)
 			return &get<1>(*ret7);
 	}
+	{
+		auto ret8 = strip_prefix_then_2_suffixes(s);
+		if (ret8)
+			return &get<1>(*ret8);
+	}
 	return nullptr;
 }
 
@@ -390,8 +395,14 @@ auto suffix(const basic_string<CharT>& word, size_t len)
 template <class CharT>
 auto suffix(basic_string<CharT>&& word, size_t len) = delete;
 
+/**
+ * @brief Iterator of prefix entres that match a word.
+ *
+ * Iterates all prefix entries where he .appending member is prefix of a given
+ * word.
+ */
 template <class CharT>
-class Prefix_Of_Word_Iter {
+class Prefix_Iter {
 	const Prefix_Table<CharT>& tbl;
 	const basic_string<CharT>& word;
 	size_t len;
@@ -402,8 +413,8 @@ class Prefix_Of_Word_Iter {
 	bool valid;
 
       public:
-	Prefix_Of_Word_Iter(const Prefix_Table<CharT>& tbl,
-	                    const basic_string<CharT>& word)
+	Prefix_Iter(const Prefix_Table<CharT>& tbl,
+	            const basic_string<CharT>& word)
 	    : tbl(tbl), word(word)
 	{
 		for (len = 0; len <= word.size(); ++len) {
@@ -435,8 +446,14 @@ class Prefix_Of_Word_Iter {
 	auto& operator*() { return *a; }
 };
 
+/**
+ * @brief Iterator of suffix entres that match a word.
+ *
+ * Iterates all suffix entries where he .appending member is suffix of a given
+ * word.
+ */
 template <class CharT>
-class Suffix_Of_Word_Iter {
+class Suffix_Iter {
 	const Suffix_Table<CharT>& tbl;
 	const basic_string<CharT>& word;
 	size_t len;
@@ -447,8 +464,8 @@ class Suffix_Of_Word_Iter {
 	bool valid;
 
       public:
-	Suffix_Of_Word_Iter(const Suffix_Table<CharT>& tbl,
-	                    const basic_string<CharT>& word)
+	Suffix_Iter(const Suffix_Table<CharT>& tbl,
+	            const basic_string<CharT>& word)
 	    : tbl(tbl), word(word)
 	{
 		for (len = 0; len <= word.size(); ++len) {
@@ -489,7 +506,7 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
 	auto& dic = words;
 	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Of_Word_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& e = *it;
 		if (outer_affix_NOT_valid<m>(e))
 			continue;
@@ -518,7 +535,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 	auto& dic = words;
 	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Of_Word_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& e = *it;
 		if (outer_affix_NOT_valid<m>(e))
 			continue;
@@ -552,7 +569,7 @@ auto Dictionary::strip_prefix_then_suffix(std::basic_string<CharT>& word) const
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Of_Word_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& pe = *it;
 		if (pe.cross_product == false)
 			continue;
@@ -577,7 +594,7 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 	auto& dic = words;
 	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Of_Word_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se = *it;
 		if (se.cross_product == false)
 			continue;
@@ -615,7 +632,7 @@ auto Dictionary::strip_suffix_then_prefix(std::basic_string<CharT>& word) const
 {
 	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Of_Word_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se = *it;
 		if (se.cross_product == false)
 			continue;
@@ -640,7 +657,7 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 	auto& dic = words;
 	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Of_Word_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& pe = *it;
 		if (pe.cross_product == false)
 			continue;
@@ -677,7 +694,7 @@ auto Dictionary::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
 {
 	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Of_Word_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se1 = *it;
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
@@ -703,7 +720,7 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 	auto& dic = words;
 	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Of_Word_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se2 = *it;
 		if (!se2.cont_flags.exists(se1.flag))
 			continue;
@@ -736,7 +753,7 @@ auto Dictionary::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Of_Word_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& pe1 = *it;
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
@@ -761,7 +778,7 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 	auto& dic = words;
 	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Of_Word_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& pe2 = *it;
 		if (!pe2.cont_flags.exists(pe1.flag))
 			continue;
@@ -784,6 +801,82 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 			return {{word, word_flags, pe2, pe1}};
 		}
 	}
+	return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_prefix_then_2_suffixes(
+    std::basic_string<CharT>& word) const
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
+{
+	auto& prefixes = get_structures<CharT>().prefixes;
+	auto& suffixes = get_structures<CharT>().suffixes;
+
+	for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
+		auto& pe1 = *i1;
+		if (pe1.cross_product == false)
+			continue;
+		if (outer_affix_NOT_valid<m>(pe1))
+			continue;
+		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
+		if (!pe1.check_condition(word))
+			continue;
+		for (auto i2 = Suffix_Iter<CharT>(suffixes, word); i2; ++i2) {
+			auto& se1 = *i2;
+			if (se1.cross_product == false)
+				continue;
+			if (affix_NOT_valid<m>(se1))
+				continue;
+			if (pe1.cont_flags.exists(circumfix_flag) !=
+			    se1.cont_flags.exists(circumfix_flag))
+				continue;
+			To_Root_Unroot_RAII<CharT, Suffix> yyy(word, se1);
+			if (!se1.check_condition(word))
+				continue;
+			auto ret = strip_pfx_2_sfx_3<FULL_WORD>(pe1, se1, word);
+			if (ret)
+				return ret;
+		}
+	}
+	return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
+                                   const Suffix<CharT>& se1,
+                                   std::basic_string<CharT>& word) const
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
+{
+	auto& dic = words;
+	auto& suffixes = get_structures<CharT>().suffixes;
+
+	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+		auto& se2 = *it;
+		if (!se2.cont_flags.exists(se1.flag))
+			continue;
+		if (affix_NOT_valid<m>(se2))
+			continue;
+		if (se2.cont_flags.exists(circumfix_flag))
+			continue;
+		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
+		if (!se2.check_condition(word))
+			continue;
+		for (auto& word_entry :
+		     make_iterator_range(dic.equal_range(word))) {
+			auto& word_flags = word_entry.second;
+			if (!se1.cont_flags.exists(pe1.flag) &&
+			    !word_flags.exists(pe1.flag))
+				continue;
+			if (!word_flags.exists(se2.flag))
+				continue;
+			// if (m != FULL_WORD &&
+			//    word_flags.exists(compound_onlyin_flag))
+			//	continue;
+			// needflag check here if needed
+			return {{word, word_flags}};
+		}
+	}
+
 	return {};
 }
 
