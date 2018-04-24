@@ -67,6 +67,8 @@ class Dictionary : protected Aff_Data {
 	auto affix_NOT_valid(const Suffix<CharT>& a) const;
 	template <Affixing_Mode m, class AffixT>
 	auto outer_affix_NOT_valid(const AffixT& a) const;
+	template <class AffixT>
+	auto is_circumfix(const AffixT& a) const;
 
 	/**
 	 * @brief strip_prefix_only

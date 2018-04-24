@@ -388,6 +388,23 @@ auto Dictionary::outer_affix_NOT_valid(const AffixT& e) const
 		return true;
 	return false;
 }
+template <class AffixT>
+auto Dictionary::is_circumfix(const AffixT& a) const
+{
+	return a.cont_flags.exists(circumfix_flag);
+}
+
+template <class AffixInner, class AffixOuter>
+auto cross_valid_inner_outer(const AffixInner& inner, const AffixOuter& outer)
+{
+	return inner.cont_flags.exists(outer.flag);
+}
+
+template <class Affix>
+auto cross_valid_inner_outer(const Flag_Set& word_flags, const Affix& afx)
+{
+	return word_flags.exists(afx.flag);
+}
 
 template <class CharT>
 auto prefix(const basic_string<CharT>& word, size_t len)
@@ -520,7 +537,7 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
 		auto& e = *it;
 		if (outer_affix_NOT_valid<m>(e))
 			continue;
-		if (e.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(e))
 			continue;
 		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, e);
 		if (!e.check_condition(word))
@@ -528,7 +545,7 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
 		for (auto& word_entry :
 		     make_iterator_range(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
-			if (!word_flags.exists(e.flag))
+			if (!cross_valid_inner_outer(word_flags, e))
 				continue;
 			// needflag check here if needed
 			return {{word, word_flags, e}};
@@ -552,7 +569,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 		if ((it.aff_len() == 0 && m == AT_COMPOUND_END) &&
 		    e.cont_flags.exists(compound_onlyin_flag))
 			continue;
-		if (e.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(e))
 			continue;
 		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, e);
 		if (!e.check_condition(word))
@@ -560,7 +577,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 		for (auto& word_entry :
 		     make_iterator_range(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
-			if (!word_flags.exists(e.flag))
+			if (!cross_valid_inner_outer(word_flags, e))
 				continue;
 			if (m != FULL_WORD &&
 			    word_flags.exists(compound_onlyin_flag))
@@ -610,8 +627,7 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 			continue;
 		if (affix_NOT_valid<m>(se))
 			continue;
-		if (pe.cont_flags.exists(circumfix_flag) !=
-		    se.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(pe) != is_circumfix(se))
 			continue;
 		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se);
 		if (!se.check_condition(word))
@@ -619,10 +635,10 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 		for (auto& word_entry :
 		     make_iterator_range(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
-			if (!se.cont_flags.exists(pe.flag) &&
-			    !word_flags.exists(pe.flag))
+			if (!cross_valid_inner_outer(se, pe) &&
+			    !cross_valid_inner_outer(word_flags, pe))
 				continue;
-			if (!word_flags.exists(se.flag))
+			if (!cross_valid_inner_outer(word_flags, se))
 				continue;
 			if (m != FULL_WORD &&
 			    word_flags.exists(compound_onlyin_flag))
@@ -673,8 +689,7 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 			continue;
 		if (affix_NOT_valid<m>(pe))
 			continue;
-		if (pe.cont_flags.exists(circumfix_flag) !=
-		    se.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(pe) != is_circumfix(se))
 			continue;
 		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe);
 		if (!pe.check_condition(word))
@@ -682,10 +697,10 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 		for (auto& word_entry :
 		     make_iterator_range(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
-			if (!pe.cont_flags.exists(se.flag) &&
-			    !word_flags.exists(se.flag))
+			if (!cross_valid_inner_outer(pe, se) &&
+			    !cross_valid_inner_outer(word_flags, se))
 				continue;
-			if (!word_flags.exists(pe.flag))
+			if (!cross_valid_inner_outer(word_flags, pe))
 				continue;
 			if (m != FULL_WORD &&
 			    word_flags.exists(compound_onlyin_flag))
@@ -708,7 +723,7 @@ auto Dictionary::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
 		auto& se1 = *it;
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
-		if (se1.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(se1))
 			continue;
 		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
 		if (!se1.check_condition(word))
@@ -732,11 +747,11 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 
 	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se2 = *it;
-		if (!se2.cont_flags.exists(se1.flag))
+		if (!cross_valid_inner_outer(se2, se1))
 			continue;
 		if (affix_NOT_valid<m>(se2))
 			continue;
-		if (se2.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(se2))
 			continue;
 		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
 		if (!se2.check_condition(word))
@@ -744,7 +759,7 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 		for (auto& word_entry :
 		     make_iterator_range(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
-			if (!word_flags.exists(se2.flag))
+			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
 			// if (m != FULL_WORD &&
 			//    word_flags.exists(compound_onlyin_flag))
@@ -767,7 +782,7 @@ auto Dictionary::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
 		auto& pe1 = *it;
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
-		if (pe1.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(pe1))
 			continue;
 		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
 		if (!pe1.check_condition(word))
@@ -790,11 +805,11 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 
 	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& pe2 = *it;
-		if (!pe2.cont_flags.exists(pe1.flag))
+		if (!cross_valid_inner_outer(pe2, pe1))
 			continue;
 		if (affix_NOT_valid<m>(pe2))
 			continue;
-		if (pe2.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(pe2))
 			continue;
 		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe2);
 		if (!pe2.check_condition(word))
@@ -802,7 +817,7 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 		for (auto& word_entry :
 		     make_iterator_range(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
-			if (!word_flags.exists(pe2.flag))
+			if (!cross_valid_inner_outer(word_flags, pe2))
 				continue;
 			// if (m != FULL_WORD &&
 			//    word_flags.exists(compound_onlyin_flag))
@@ -837,8 +852,7 @@ auto Dictionary::strip_prefix_then_2_suffixes(
 				continue;
 			if (affix_NOT_valid<m>(se1))
 				continue;
-			if (pe1.cont_flags.exists(circumfix_flag) !=
-			    se1.cont_flags.exists(circumfix_flag))
+			if (is_circumfix(pe1) != is_circumfix(se1))
 				continue;
 			To_Root_Unroot_RAII<CharT, Suffix> yyy(word, se1);
 			if (!se1.check_condition(word))
@@ -862,11 +876,11 @@ auto Dictionary::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
 
 	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se2 = *it;
-		if (!se2.cont_flags.exists(se1.flag))
+		if (!cross_valid_inner_outer(se2, se1))
 			continue;
 		if (affix_NOT_valid<m>(se2))
 			continue;
-		if (se2.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(se2))
 			continue;
 		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
 		if (!se2.check_condition(word))
@@ -874,10 +888,10 @@ auto Dictionary::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
 		for (auto& word_entry :
 		     make_iterator_range(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
-			if (!se1.cont_flags.exists(pe1.flag) &&
-			    !word_flags.exists(pe1.flag))
+			if (!cross_valid_inner_outer(se1, pe1) &&
+			    !cross_valid_inner_outer(word_flags, pe1))
 				continue;
-			if (!word_flags.exists(se2.flag))
+			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
 			// if (m != FULL_WORD &&
 			//    word_flags.exists(compound_onlyin_flag))
@@ -935,17 +949,15 @@ auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
 
 	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se2 = *it;
-		if (!se2.cont_flags.exists(se1.flag) &&
-		    !pe1.cont_flags.exists(se1.flag))
+		if (!cross_valid_inner_outer(se2, se1) &&
+		    !cross_valid_inner_outer(pe1, se1))
 			continue;
 		if (affix_NOT_valid<m>(se2))
 			continue;
-		auto circ1ok = (pe1.cont_flags.exists(circumfix_flag) ==
-		                se1.cont_flags.exists(circumfix_flag)) &&
-		               !se2.cont_flags.exists(circumfix_flag);
-		auto circ2ok = (pe1.cont_flags.exists(circumfix_flag) ==
-		                se2.cont_flags.exists(circumfix_flag)) &&
-		               !se1.cont_flags.exists(circumfix_flag);
+		auto circ1ok = (is_circumfix(pe1) == is_circumfix(se1)) &&
+		               !is_circumfix(se2);
+		auto circ2ok = (is_circumfix(pe1) == is_circumfix(se2)) &&
+		               !is_circumfix(se1);
 		if (!circ1ok && !circ2ok)
 			continue;
 		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
@@ -954,10 +966,10 @@ auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
 		for (auto& word_entry :
 		     make_iterator_range(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
-			if (!se1.cont_flags.exists(pe1.flag) &&
-			    !word_flags.exists(pe1.flag))
+			if (!cross_valid_inner_outer(se1, pe1) &&
+			    !cross_valid_inner_outer(word_flags, pe1))
 				continue;
-			if (!word_flags.exists(se2.flag))
+			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
 			// if (m != FULL_WORD &&
 			//    word_flags.exists(compound_onlyin_flag))
@@ -981,7 +993,7 @@ auto Dictionary::strip_2_suffixes_then_prefix(
 		auto& se1 = *i1;
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
-		if (se1.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(se1))
 			continue;
 		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
 		if (!se1.check_condition(word))
@@ -1014,13 +1026,12 @@ auto Dictionary::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
 
 	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& pe1 = *it;
-		if (!se2.cont_flags.exists(se1.flag) &&
-		    !pe1.cont_flags.exists(se1.flag))
+		if (!cross_valid_inner_outer(se2, se1) &&
+		    !cross_valid_inner_outer(pe1, se1))
 			continue;
 		if (affix_NOT_valid<m>(pe1))
 			continue;
-		if (se2.cont_flags.exists(circumfix_flag) !=
-		    pe1.cont_flags.exists(circumfix_flag))
+		if (is_circumfix(se2) != is_circumfix(pe1))
 			continue;
 		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
 		if (!pe1.check_condition(word))
@@ -1028,10 +1039,10 @@ auto Dictionary::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
 		for (auto& word_entry :
 		     make_iterator_range(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
-			if (!pe1.cont_flags.exists(se2.flag) &&
-			    !word_flags.exists(se2.flag))
+			if (!cross_valid_inner_outer(pe1, se2) &&
+			    !cross_valid_inner_outer(word_flags, se2))
 				continue;
-			if (!word_flags.exists(pe1.flag))
+			if (!cross_valid_inner_outer(word_flags, pe1))
 				continue;
 			// if (m != FULL_WORD &&
 			//    word_flags.exists(compound_onlyin_flag))
