@@ -164,10 +164,10 @@ auto Dictionary::spell_casing(std::basic_string<CharT> s) -> Spell_Result
 	}
 	if (res) {
 		// handle forbidden words
-		if (res->exists(forbiddenword_flag)) {
+		if (res->contains(forbiddenword_flag)) {
 			return BAD_WORD;
 		}
-		if (forbid_warn && res->exists(warn_flag)) {
+		if (forbid_warn && res->contains(warn_flag)) {
 			return BAD_WORD;
 		}
 		return GOOD_WORD;
@@ -227,7 +227,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
 	// if not returned earlier
 	auto t = boost::locale::to_title(s, loc);
 	res = spell_casing_title(t);
-	if (res && res->exists(keepcase_flag))
+	if (res && res->contains(keepcase_flag))
 		res = nullptr;
 	return res;
 }
@@ -242,7 +242,7 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
 	auto res = checkword<CharT>(s);
 
 	// handle forbidden words
-	if (res && res->exists(forbiddenword_flag)) {
+	if (res && res->contains(forbiddenword_flag)) {
 		res = nullptr;
 	}
 
@@ -256,7 +256,7 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
 	res = checkword<CharT>(t);
 
 	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
-	if (res && res->exists(keepcase_flag) &&
+	if (res && res->contains(keepcase_flag) &&
 	    !(checksharps &&
 	      (t.find(static_cast<CharT>(223)) != std::string::npos))) {
 		res = nullptr;
@@ -363,19 +363,20 @@ class To_Root_Unroot_RAII {
 template <Affixing_Mode m, class CharT>
 auto Dictionary::affix_NOT_valid(const Prefix<CharT>& e) const
 {
-	if (m == FULL_WORD && e.cont_flags.exists(compound_onlyin_flag))
+	if (m == FULL_WORD && e.cont_flags.contains(compound_onlyin_flag))
 		return true;
-	if (m == AT_COMPOUND_END && !e.cont_flags.exists(compound_permit_flag))
+	if (m == AT_COMPOUND_END &&
+	    !e.cont_flags.contains(compound_permit_flag))
 		return true;
 	return false;
 }
 template <Affixing_Mode m, class CharT>
 auto Dictionary::affix_NOT_valid(const Suffix<CharT>& e) const
 {
-	if (m == FULL_WORD && e.cont_flags.exists(compound_onlyin_flag))
+	if (m == FULL_WORD && e.cont_flags.contains(compound_onlyin_flag))
 		return true;
 	if (m == AT_COMPOUND_BEGIN &&
-	    !e.cont_flags.exists(compound_permit_flag))
+	    !e.cont_flags.contains(compound_permit_flag))
 		return true;
 	return false;
 }
@@ -384,26 +385,26 @@ auto Dictionary::outer_affix_NOT_valid(const AffixT& e) const
 {
 	if (affix_NOT_valid<m>(e))
 		return true;
-	if (e.cont_flags.exists(need_affix_flag))
+	if (e.cont_flags.contains(need_affix_flag))
 		return true;
 	return false;
 }
 template <class AffixT>
 auto Dictionary::is_circumfix(const AffixT& a) const
 {
-	return a.cont_flags.exists(circumfix_flag);
+	return a.cont_flags.contains(circumfix_flag);
 }
 
 template <class AffixInner, class AffixOuter>
 auto cross_valid_inner_outer(const AffixInner& inner, const AffixOuter& outer)
 {
-	return inner.cont_flags.exists(outer.flag);
+	return inner.cont_flags.contains(outer.flag);
 }
 
 template <class Affix>
 auto cross_valid_inner_outer(const Flag_Set& word_flags, const Affix& afx)
 {
-	return word_flags.exists(afx.flag);
+	return word_flags.contains(afx.flag);
 }
 
 template <class CharT>
@@ -567,7 +568,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 		if (outer_affix_NOT_valid<m>(e))
 			continue;
 		if ((it.aff_len() == 0 && m == AT_COMPOUND_END) &&
-		    e.cont_flags.exists(compound_onlyin_flag))
+		    e.cont_flags.contains(compound_onlyin_flag))
 			continue;
 		if (is_circumfix(e))
 			continue;
@@ -580,7 +581,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 			if (!cross_valid_inner_outer(word_flags, e))
 				continue;
 			if (m != FULL_WORD &&
-			    word_flags.exists(compound_onlyin_flag))
+			    word_flags.contains(compound_onlyin_flag))
 				continue;
 			// needflag check here if needed
 			return {{word, word_flags, e}};
@@ -641,7 +642,7 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 			if (!cross_valid_inner_outer(word_flags, se))
 				continue;
 			if (m != FULL_WORD &&
-			    word_flags.exists(compound_onlyin_flag))
+			    word_flags.contains(compound_onlyin_flag))
 				continue;
 			// needflag check here if needed
 			return {{word, word_flags, se, pe}};
@@ -703,7 +704,7 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 			if (!cross_valid_inner_outer(word_flags, pe))
 				continue;
 			if (m != FULL_WORD &&
-			    word_flags.exists(compound_onlyin_flag))
+			    word_flags.contains(compound_onlyin_flag))
 				continue;
 			// needflag check here if needed
 			return {{word, word_flags, pe, se}};
@@ -762,7 +763,7 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
 			// if (m != FULL_WORD &&
-			//    word_flags.exists(compound_onlyin_flag))
+			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
 			return {{word, word_flags, se2, se1}};
@@ -820,7 +821,7 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 			if (!cross_valid_inner_outer(word_flags, pe2))
 				continue;
 			// if (m != FULL_WORD &&
-			//    word_flags.exists(compound_onlyin_flag))
+			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
 			return {{word, word_flags, pe2, pe1}};
@@ -894,7 +895,7 @@ auto Dictionary::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
 			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
 			// if (m != FULL_WORD &&
-			//    word_flags.exists(compound_onlyin_flag))
+			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
 			return {{word, word_flags}};
@@ -972,7 +973,7 @@ auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
 			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
 			// if (m != FULL_WORD &&
-			//    word_flags.exists(compound_onlyin_flag))
+			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
 			return {{word, word_flags}};
@@ -1045,7 +1046,7 @@ auto Dictionary::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
 			if (!cross_valid_inner_outer(word_flags, pe1))
 				continue;
 			// if (m != FULL_WORD &&
-			//    word_flags.exists(compound_onlyin_flag))
+			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
 			return {{word, word_flags}};

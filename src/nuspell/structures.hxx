@@ -257,7 +257,7 @@ class String_Set {
 	}
 
 	// non standard set operations:
-	bool exists(const key_type& x) const { return count(x); }
+	bool contains(const key_type& x) const { return count(x); }
 
 	// compare
 	bool operator<(const String_Set& rhs) const { return d < rhs.d; }
