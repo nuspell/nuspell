@@ -188,6 +188,13 @@ class Dictionary : protected Aff_Data {
 	    -> boost::optional<
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
 
+	template <Affixing_Mode m, class CharT>
+	auto strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
+	                       const Suffix<CharT>& se2,
+	                       std::basic_string<CharT>& word) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+
       public:
 	Dictionary()
 	    : Aff_Data() // we explicity do value init so content is zeroed

@@ -337,6 +337,11 @@ auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
 		if (ret9)
 			return &get<1>(*ret9);
 	}
+	{
+		auto ret10 = strip_2_suffixes_then_prefix(s);
+		if (ret10)
+			return &get<1>(*ret10);
+	}
 	return nullptr;
 }
 
@@ -953,6 +958,80 @@ auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
 			    !word_flags.exists(pe1.flag))
 				continue;
 			if (!word_flags.exists(se2.flag))
+				continue;
+			// if (m != FULL_WORD &&
+			//    word_flags.exists(compound_onlyin_flag))
+			//	continue;
+			// needflag check here if needed
+			return {{word, word_flags}};
+		}
+	}
+
+	return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_2_suffixes_then_prefix(
+    std::basic_string<CharT>& word) const
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
+{
+	auto& suffixes = get_structures<CharT>().suffixes;
+
+	for (auto i1 = Suffix_Iter<CharT>(suffixes, word); i1; ++i1) {
+		auto& se1 = *i1;
+		if (outer_affix_NOT_valid<m>(se1))
+			continue;
+		if (se1.cont_flags.exists(circumfix_flag))
+			continue;
+		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
+		if (!se1.check_condition(word))
+			continue;
+		for (auto i2 = Suffix_Iter<CharT>(suffixes, word); i2; ++i2) {
+			auto& se2 = *i2;
+			if (se2.cross_product == false)
+				continue;
+			if (affix_NOT_valid<m>(se2))
+				continue;
+			To_Root_Unroot_RAII<CharT, Suffix> yyy(word, se2);
+			if (!se2.check_condition(word))
+				continue;
+			auto ret = strip_2_sfx_pfx_3<FULL_WORD>(se1, se2, word);
+			if (ret)
+				return ret;
+		}
+	}
+	return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
+                                   const Suffix<CharT>& se2,
+                                   std::basic_string<CharT>& word) const
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
+{
+	auto& dic = words;
+	auto& prefixes = get_structures<CharT>().prefixes;
+
+	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+		auto& pe1 = *it;
+		if (!se2.cont_flags.exists(se1.flag) &&
+		    !pe1.cont_flags.exists(se1.flag))
+			continue;
+		if (affix_NOT_valid<m>(pe1))
+			continue;
+		if (se2.cont_flags.exists(circumfix_flag) !=
+		    pe1.cont_flags.exists(circumfix_flag))
+			continue;
+		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
+		if (!pe1.check_condition(word))
+			continue;
+		for (auto& word_entry :
+		     make_iterator_range(dic.equal_range(word))) {
+			auto& word_flags = word_entry.second;
+			if (!pe1.cont_flags.exists(se2.flag) &&
+			    !word_flags.exists(se2.flag))
+				continue;
+			if (!word_flags.exists(pe1.flag))
 				continue;
 			// if (m != FULL_WORD &&
 			//    word_flags.exists(compound_onlyin_flag))
