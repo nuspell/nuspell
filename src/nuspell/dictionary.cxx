@@ -332,6 +332,11 @@ auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
 		if (ret8)
 			return &get<1>(*ret8);
 	}
+	{
+		auto ret9 = strip_suffix_prefix_suffix(s);
+		if (ret9)
+			return &get<1>(*ret9);
+	}
 	return nullptr;
 }
 
@@ -857,6 +862,86 @@ auto Dictionary::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
 		if (affix_NOT_valid<m>(se2))
 			continue;
 		if (se2.cont_flags.exists(circumfix_flag))
+			continue;
+		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
+		if (!se2.check_condition(word))
+			continue;
+		for (auto& word_entry :
+		     make_iterator_range(dic.equal_range(word))) {
+			auto& word_flags = word_entry.second;
+			if (!se1.cont_flags.exists(pe1.flag) &&
+			    !word_flags.exists(pe1.flag))
+				continue;
+			if (!word_flags.exists(se2.flag))
+				continue;
+			// if (m != FULL_WORD &&
+			//    word_flags.exists(compound_onlyin_flag))
+			//	continue;
+			// needflag check here if needed
+			return {{word, word_flags}};
+		}
+	}
+
+	return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_suffix_prefix_suffix(
+    std::basic_string<CharT>& word) const
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
+{
+	auto& prefixes = get_structures<CharT>().prefixes;
+	auto& suffixes = get_structures<CharT>().suffixes;
+
+	for (auto i1 = Suffix_Iter<CharT>(suffixes, word); i1; ++i1) {
+		auto& se1 = *i1;
+		if (se1.cross_product == false)
+			continue;
+		if (outer_affix_NOT_valid<m>(se1))
+			continue;
+		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
+		if (!se1.check_condition(word))
+			continue;
+		for (auto i2 = Prefix_Iter<CharT>(prefixes, word); i2; ++i2) {
+			auto& pe1 = *i2;
+			if (pe1.cross_product == false)
+				continue;
+			if (affix_NOT_valid<m>(pe1))
+				continue;
+			To_Root_Unroot_RAII<CharT, Prefix> yyy(word, pe1);
+			if (!pe1.check_condition(word))
+				continue;
+			auto ret = strip_s_p_s_3<FULL_WORD>(se1, pe1, word);
+			if (ret)
+				return ret;
+		}
+	}
+	return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
+                               const Prefix<CharT>& pe1,
+                               std::basic_string<CharT>& word) const
+    -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
+{
+	auto& dic = words;
+	auto& suffixes = get_structures<CharT>().suffixes;
+
+	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+		auto& se2 = *it;
+		if (!se2.cont_flags.exists(se1.flag) &&
+		    !pe1.cont_flags.exists(se1.flag))
+			continue;
+		if (affix_NOT_valid<m>(se2))
+			continue;
+		auto circ1ok = (pe1.cont_flags.exists(circumfix_flag) ==
+		                se1.cont_flags.exists(circumfix_flag)) &&
+		               !se2.cont_flags.exists(circumfix_flag);
+		auto circ2ok = (pe1.cont_flags.exists(circumfix_flag) ==
+		                se2.cont_flags.exists(circumfix_flag)) &&
+		               !se1.cont_flags.exists(circumfix_flag);
+		if (!circ1ok && !circ2ok)
 			continue;
 		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
 		if (!se2.check_condition(word))
