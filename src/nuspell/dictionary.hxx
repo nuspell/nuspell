@@ -197,6 +197,40 @@ class Dictionary : protected Aff_Data {
 	    -> boost::optional<
 	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
 
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_suffix_then_2_prefixes(std::basic_string<CharT>& s) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+
+	template <Affixing_Mode m, class CharT>
+	auto strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
+	                       const Prefix<CharT>& pe1,
+	                       std::basic_string<CharT>& s) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_prefix_suffix_prefix(std::basic_string<CharT>& word) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+
+	template <Affixing_Mode m, class CharT>
+	auto strip_p_s_p_3(const Prefix<CharT>& pe1, const Suffix<CharT>& se1,
+	                   std::basic_string<CharT>& word) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_2_prefixes_then_suffix(std::basic_string<CharT>& word) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+	template <Affixing_Mode m, class CharT>
+	auto strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
+	                       const Prefix<CharT>& pe2,
+	                       std::basic_string<CharT>& word) const
+	    -> boost::optional<
+	        std::tuple<std::basic_string<CharT>, const Flag_Set&>>;
+
       public:
 	Dictionary()
 	    : Aff_Data() // we explicity do value init so content is zeroed
