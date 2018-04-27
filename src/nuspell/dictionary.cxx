@@ -186,7 +186,10 @@ template <class CharT>
 auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
     -> const Flag_Set*
 {
+	using boost::locale::to_title;
+	using boost::locale::to_lower;
 	auto& loc = locale_aff;
+
 	auto res = checkword(s);
 	if (res)
 		return res;
@@ -194,42 +197,43 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
 	// handling of prefixes separated by apostrophe for Catalan, French and
 	// Italian, e.g. SANT'ELIA -> Sant'+Elia
 	auto apos = s.find('\'');
-	if (apos != std::string::npos) {
-		if (apos == s.size() - 1) {
-			// apostrophe is at end of word
-			auto t = boost::locale::to_title(s, loc);
-			res = checkword(t);
-		}
-		else {
-			// apostophe is at beginning of word or diving the word
-			auto part1 =
-			    boost::locale::to_title(s.substr(0, apos + 1), loc);
-			auto part2 =
-			    boost::locale::to_title(s.substr(apos + 1), loc);
-			auto t = part1 + part2;
-			res = checkword(t);
-		}
+	if (apos != s.npos && apos != s.size() - 1) {
+		// apostophe is at beginning of word or diving the word
+		auto part1 = s.substr(0, apos + 1);
+		auto part2 = s.substr(apos + 1);
+		part1 = to_lower(part1, loc);
+		part2 = to_title(part2, loc);
+		auto t = part1 + part2;
+		res = checkword(t);
+		if (res)
+			return res;
+		part1 = to_title(part1);
+		t = part1 + part2;
+		res = checkword(t);
 		if (res)
 			return res;
 	}
 
 	// handle German sharp s
-	if (checksharps && s.find(LITERAL(CharT, "SS")) != std::string::npos) {
-		auto t = boost::locale::to_lower(s, loc);
+	if (checksharps && s.find(LITERAL(CharT, "SS")) != s.npos) {
+		auto t = to_lower(s, loc);
 		res = spell_sharps(t);
 		if (!res)
-			t = boost::locale::to_title(s, loc);
+			t = to_title(s, loc);
 		res = spell_sharps(t);
 		if (res)
 			return res;
 	}
+	auto t = to_title(s, loc);
+	res = checkword(t);
+	if (res && !res->contains(keepcase_flag))
+		return res;
 
-	// if not returned earlier
-	auto t = boost::locale::to_title(s, loc);
-	res = spell_casing_title(t);
-	if (res && res->contains(keepcase_flag))
-		res = nullptr;
-	return res;
+	t = to_lower(s, loc);
+	res = checkword(t);
+	if (res && !res->contains(keepcase_flag))
+		return res;
+	return nullptr;
 }
 
 template <class CharT>
@@ -241,15 +245,11 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
 	// check title case
 	auto res = checkword<CharT>(s);
 
-	// handle forbidden words
-	if (res && res->contains(forbiddenword_flag)) {
-		res = nullptr;
-	}
-
-	// return result
-	if (res) {
+	// forbid bad capitalization
+	if (res && res->contains(forbiddenword_flag))
+		return nullptr;
+	if (res)
 		return res;
-	}
 
 	// attempt checking lower case spelling
 	auto t = boost::locale::to_lower(s, loc);
@@ -257,11 +257,9 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
 
 	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
 	if (res && res->contains(keepcase_flag) &&
-	    !(checksharps &&
-	      (t.find(static_cast<CharT>(223)) != std::string::npos))) {
+	    !(checksharps && (t.find(static_cast<CharT>(223)) != t.npos))) {
 		res = nullptr;
 	}
-
 	return res;
 }
 
@@ -1069,11 +1067,11 @@ auto Dictionary::strip_suffix_then_2_prefixes(
     std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
 {
-        auto& prefixes = get_structures<CharT>().prefixes;
-        auto& suffixes = get_structures<CharT>().suffixes;
+	auto& prefixes = get_structures<CharT>().prefixes;
+	auto& suffixes = get_structures<CharT>().suffixes;
 
-        for (auto i1 = Suffix_Iter<CharT>(suffixes, word); i1; ++i1) {
-	        auto& se1 = *i1;
+	for (auto i1 = Suffix_Iter<CharT>(suffixes, word); i1; ++i1) {
+		auto& se1 = *i1;
 		if (se1.cross_product == false)
 			continue;
 		if (outer_affix_NOT_valid<m>(se1))
@@ -1096,8 +1094,8 @@ auto Dictionary::strip_suffix_then_2_prefixes(
 			if (ret)
 				return ret;
 		}
-        }
-        return {};
+	}
+	return {};
 }
 
 template <Affixing_Mode m, class CharT>
@@ -1106,11 +1104,11 @@ auto Dictionary::strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
                                    std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
 {
-        auto& dic = words;
-        auto& prefixes = get_structures<CharT>().prefixes;
+	auto& dic = words;
+	auto& prefixes = get_structures<CharT>().prefixes;
 
-        for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
-	        auto& pe2 = *it;
+	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+		auto& pe2 = *it;
 		if (!cross_valid_inner_outer(pe2, pe1))
 			continue;
 		if (affix_NOT_valid<m>(pe2))
@@ -1130,9 +1128,9 @@ auto Dictionary::strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
 				continue;
 			return {{word, word_flags}};
 		}
-        }
+	}
 
-        return {};
+	return {};
 }
 
 template <Affixing_Mode m, class CharT>
@@ -1140,11 +1138,11 @@ auto Dictionary::strip_prefix_suffix_prefix(
     std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
 {
-        auto& prefixes = get_structures<CharT>().prefixes;
-        auto& suffixes = get_structures<CharT>().suffixes;
+	auto& prefixes = get_structures<CharT>().prefixes;
+	auto& suffixes = get_structures<CharT>().suffixes;
 
-        for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
-	        auto& pe1 = *i1;
+	for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
+		auto& pe1 = *i1;
 		if (pe1.cross_product == false)
 			continue;
 		if (outer_affix_NOT_valid<m>(pe1))
@@ -1165,8 +1163,8 @@ auto Dictionary::strip_prefix_suffix_prefix(
 			if (ret)
 				return ret;
 		}
-        }
-        return {};
+	}
+	return {};
 }
 
 template <Affixing_Mode m, class CharT>
@@ -1175,11 +1173,11 @@ auto Dictionary::strip_p_s_p_3(const Prefix<CharT>& pe1,
                                std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
 {
-        auto& dic = words;
-        auto& prefixes = get_structures<CharT>().prefixes;
+	auto& dic = words;
+	auto& prefixes = get_structures<CharT>().prefixes;
 
-        for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
-	        auto& pe2 = *it;
+	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+		auto& pe2 = *it;
 		if (!cross_valid_inner_outer(pe2, pe1) &&
 		    !cross_valid_inner_outer(se1, pe1))
 			continue;
@@ -1204,9 +1202,9 @@ auto Dictionary::strip_p_s_p_3(const Prefix<CharT>& pe1,
 				continue;
 			return {{word, word_flags}};
 		}
-        }
+	}
 
-        return {};
+	return {};
 }
 
 template <Affixing_Mode m, class CharT>
@@ -1214,10 +1212,10 @@ auto Dictionary::strip_2_prefixes_then_suffix(
     std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
 {
-        auto& prefixes = get_structures<CharT>().prefixes;
+	auto& prefixes = get_structures<CharT>().prefixes;
 
-        for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
-	        auto& pe1 = *i1;
+	for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
+		auto& pe1 = *i1;
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
 		if (is_circumfix(pe1))
@@ -1238,8 +1236,8 @@ auto Dictionary::strip_2_prefixes_then_suffix(
 			if (ret)
 				return ret;
 		}
-        }
-        return {};
+	}
+	return {};
 }
 
 template <Affixing_Mode m, class CharT>
@@ -1248,11 +1246,11 @@ auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
                                    std::basic_string<CharT>& word) const
     -> boost::optional<std::tuple<std::basic_string<CharT>, const Flag_Set&>>
 {
-        auto& dic = words;
-        auto& suffixes = get_structures<CharT>().suffixes;
+	auto& dic = words;
+	auto& suffixes = get_structures<CharT>().suffixes;
 
-        for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
-	        auto& se1 = *it;
+	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+		auto& se1 = *it;
 		if (!cross_valid_inner_outer(pe2, pe1) &&
 		    !cross_valid_inner_outer(se1, pe1))
 			continue;
@@ -1274,9 +1272,9 @@ auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 			// needflag check here if needed
 			return {{word, word_flags}};
 		}
-        }
+	}
 
-        return {};
+	return {};
 }
 
 } // namespace nuspell
