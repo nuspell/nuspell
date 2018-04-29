@@ -31,6 +31,8 @@ using namespace std;
 using boost::make_iterator_range;
 template <class CharT>
 using str_view = boost::basic_string_view<CharT>;
+using boost::locale::to_title;
+using boost::locale::to_lower;
 
 /** Check spelling for a word.
  *
@@ -44,7 +46,7 @@ auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 	auto& d = get_structures<CharT>();
 
 	// allow words under maximum length
-	size_t MAXWORDLENGTH = 100; // TODO refactor to more global
+	size_t MAXWORDLENGTH = 180;
 	if (s.size() >= MAXWORDLENGTH)
 		return BAD_WORD;
 
@@ -60,12 +62,14 @@ auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 	if (s.empty())
 		return GOOD_WORD;
 
-	// omit numbers containing, except those with double separators
+	// accept number
 	if (is_number(s))
 		return GOOD_WORD;
 
 	// handle break patterns
+	auto copy = s;
 	auto ret = spell_break<CharT>(s);
+	assert(s == copy);
 	if (!ret && abbreviation) {
 		s += '.';
 		ret = spell_break<CharT>(s);
@@ -84,7 +88,7 @@ template auto Dictionary::spell_priv(const wstring s) -> Spell_Result;
  * @return The spelling result.
  */
 template <class CharT>
-auto Dictionary::spell_break(std::basic_string<CharT> s) -> Spell_Result
+auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
 {
 	// check spelling accoring to case
 	auto res = spell_casing<CharT>(s);
@@ -133,14 +137,8 @@ auto Dictionary::spell_break(std::basic_string<CharT> s) -> Spell_Result
 	return BAD_WORD;
 }
 
-/**
- * Calls appropriate spell cehck method accoring to the word's casing.
- *
- * @param s string to check spelling for.
- * @return The spelling result.
- */
 template <class CharT>
-auto Dictionary::spell_casing(std::basic_string<CharT> s) -> Spell_Result
+auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 {
 	auto casing_type = classify_casing(s);
 	const Flag_Set* res = nullptr;
@@ -157,10 +155,6 @@ auto Dictionary::spell_casing(std::basic_string<CharT> s) -> Spell_Result
 	case Casing::INIT_CAPITAL:
 		res = spell_casing_title(s);
 		break;
-	default:
-		throw logic_error(
-		    "Fatal error, bad casing type, should never execute");
-		break;
 	}
 	if (res) {
 		// handle forbidden words
@@ -175,19 +169,10 @@ auto Dictionary::spell_casing(std::basic_string<CharT> s) -> Spell_Result
 	return BAD_WORD;
 }
 
-/**
- * Checks spelling for word in upper case. Note that additionally, when at the
- * end no result has been found, that spell_casing_title is called.
- *
- * @param s string to check spelling for.
- * @return The spelling result.
- */
 template <class CharT>
-auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
+auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
     -> const Flag_Set*
 {
-	using boost::locale::to_title;
-	using boost::locale::to_lower;
 	auto& loc = locale_aff;
 
 	auto res = checkword(s);
@@ -237,7 +222,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT> s)
 }
 
 template <class CharT>
-auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
+auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
     -> const Flag_Set*
 {
 	auto& loc = locale_aff;
@@ -252,7 +237,7 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
 		return res;
 
 	// attempt checking lower case spelling
-	auto t = boost::locale::to_lower(s, loc);
+	auto t = to_lower(s, loc);
 	res = checkword<CharT>(t);
 
 	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
@@ -264,7 +249,7 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT> s)
 }
 
 template <class CharT>
-auto Dictionary::spell_sharps(std::basic_string<CharT> base, size_t pos,
+auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t pos,
                               size_t n, size_t rep) -> const Flag_Set*
 {
 	const size_t MAX_SHARPS = 5;
@@ -273,10 +258,10 @@ auto Dictionary::spell_sharps(std::basic_string<CharT> base, size_t pos,
 		base[pos] = static_cast<CharT>(223); // ß
 		base.erase(pos + 1, 1);
 		auto res = spell_sharps(base, pos + 2, n + 1, rep + 1);
-		if (res)
-			return res;
 		base[pos] = 's';
 		base.insert(pos + 1, 1, 's');
+		if (res)
+			return res;
 		res = spell_sharps(base, pos + 2, n + 1, rep);
 		if (res)
 			return res;

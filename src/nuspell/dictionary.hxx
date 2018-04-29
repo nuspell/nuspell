@@ -48,15 +48,15 @@ class Dictionary : protected Aff_Data {
 	template <class CharT>
 	auto spell_priv(std::basic_string<CharT> s) -> Spell_Result;
 	template <class CharT>
-	auto spell_break(std::basic_string<CharT> s) -> Spell_Result;
+	auto spell_break(std::basic_string<CharT>& s) -> Spell_Result;
 	template <class CharT>
-	auto spell_casing(std::basic_string<CharT> s) -> Spell_Result;
+	auto spell_casing(std::basic_string<CharT>& s) -> Spell_Result;
 	template <class CharT>
-	auto spell_casing_upper(std::basic_string<CharT> s) -> const Flag_Set*;
+	auto spell_casing_upper(std::basic_string<CharT>& s) -> const Flag_Set*;
 	template <class CharT>
-	auto spell_casing_title(std::basic_string<CharT> s) -> const Flag_Set*;
+	auto spell_casing_title(std::basic_string<CharT>& s) -> const Flag_Set*;
 	template <class CharT>
-	auto spell_sharps(std::basic_string<CharT> base, size_t n_pos = 0,
+	auto spell_sharps(std::basic_string<CharT>& base, size_t n_pos = 0,
 	                  size_t n = 0, size_t rep = 0) -> const Flag_Set*;
 	template <class CharT>
 	auto checkword(std::basic_string<CharT>& s) const -> const Flag_Set*;
