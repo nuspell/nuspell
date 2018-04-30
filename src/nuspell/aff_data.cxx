@@ -794,11 +794,45 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		if (word.empty()) {
 			continue;
 		}
-		parse_morhological_fields(ss, morphs);
-		words[word] += flags;
-		if (morphs.size()) {
-			// auto& vec = morph_data[word];
-			// vec.insert(vec.end(), morphs.begin(), morphs.end());
+		// parse_morhological_fields(ss, morphs);
+
+		auto casing = classify_casing(word);
+		const char16_t HIDDEN_HOMONYM_FLAG = -1;
+		switch (casing) {
+		case Casing::ALL_CAPITAL: {
+			// check for hidden homonym
+			auto hom = words.equal_range(word);
+			auto h = find_if(hom.first, hom.second, [&](auto& w) {
+				return w.second.contains(HIDDEN_HOMONYM_FLAG);
+			});
+
+			if (h != hom.second) {
+				// replace if found
+				h->second = flags;
+			}
+			else {
+				words.emplace(word, flags);
+			}
+		} break;
+		case Casing::PASCAL:
+		case Casing::CAMEL: {
+			words.emplace(word, flags);
+
+			// add the hidden homonym directly in uppercase
+			auto up = boost::locale::to_upper(word, locale_aff);
+			auto hom = words.equal_range(up);
+			auto h = find_if(hom.first, hom.second, [&](auto& w) {
+				return w.second.contains(HIDDEN_HOMONYM_FLAG);
+			});
+			if (h == hom.second) {
+				flags += HIDDEN_HOMONYM_FLAG;
+				words.emplace(up, flags);
+			}
+
+		} break;
+		default:
+			words.emplace(word, flags);
+			break;
 		}
 	}
 	return in.eof(); // success if we reached eof
@@ -822,39 +856,6 @@ auto Dic_Data::equal_range(const std::wstring& word) const
     -> std::pair<const_iterator, const_iterator>
 {
 	return equal_range(boost::locale::conv::utf_to_utf<char>(word));
-}
-
-/**
- * Looks up a word in the unordered map words.
- *
- * @param word string to look up.
- * @return The flag set belonging to the word found or a null pointer when
- * nothing has been found.
- */
-auto Dic_Data::lookup(const string& word) -> Flag_Set*
-{
-	auto kv = find(word);
-	if (kv != end())
-		return &kv->second;
-	return nullptr;
-}
-
-auto Dic_Data::lookup(const string& word) const -> const Flag_Set*
-{
-	auto kv = find(word);
-	if (kv != end())
-		return &kv->second;
-	return nullptr;
-}
-
-auto Dic_Data::lookup(const wstring& word) -> Flag_Set*
-{
-	return lookup(boost::locale::conv::utf_to_utf<char>(word));
-}
-
-auto Dic_Data::lookup(const wstring& word) const -> const Flag_Set*
-{
-	return lookup(boost::locale::conv::utf_to_utf<char>(word));
 }
 
 void Aff_Data::log(const string& affpath)
@@ -951,7 +952,8 @@ void Aff_Data::log(const string& affpath)
 		// std::setw(3)
 		// <<
 		// std::setfill('0')
-		// later			 << i - suffixes.begin() <<
+		// later			 << i - suffixes.begin()
+		// <<
 		// ".cross()/cross_product\t"
 		// later			 << i->cross_product <<
 		// "\n";
@@ -1123,7 +1125,8 @@ void Aff_Data::log(const string& affpath)
 	log_file << "needaffix/need_affix_flag\t" << need_affix_flag << "\n";
 	log_file << "substandard/substandard_flag\t" << substandard_flag
 	         << "\n";
-	// deprecated? log_file << "wordchars/wordchars\t\"" << wordchars <<
+	// deprecated? log_file << "wordchars/wordchars\t\"" <<
+	// wordchars <<
 	// "\"" << "\n";
 	log_file << "checksharps/checksharps\t" << checksharps << "\n";
 

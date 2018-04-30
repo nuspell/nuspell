@@ -88,7 +88,7 @@ struct Compound_Check_Pattern {
 	string replacement;
 };
 
-using Dic_Data_Base = std::unordered_map<std::string, Flag_Set>;
+using Dic_Data_Base = std::unordered_multimap<std::string, Flag_Set>;
 /**
  * @brief Map between words and word_flags.
  *
@@ -108,11 +108,6 @@ class Dic_Data : public Dic_Data_Base {
 	    -> std::pair<iterator, iterator>;
 	auto equal_range(const std::wstring& word) const
 	    -> std::pair<const_iterator, const_iterator>;
-
-	auto lookup(const std::string& word) -> Flag_Set*;
-	auto lookup(const std::string& word) const -> const Flag_Set*;
-	auto lookup(const std::wstring& word) -> Flag_Set*;
-	auto lookup(const std::wstring& word) const -> const Flag_Set*;
 };
 
 struct Aff_Data {

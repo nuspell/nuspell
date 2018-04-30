@@ -275,10 +275,14 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t pos,
 template <class CharT>
 auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
 {
-	{
-		auto ret = words.lookup(s);
-		if (ret)
-			return ret;
+
+	for (auto& we : make_iterator_range(words.equal_range(s))) {
+		auto& word_flags = we.second;
+		if (word_flags.contains(need_affix_flag))
+			continue;
+		if (word_flags.contains(compound_onlyin_flag))
+			continue;
+		return &word_flags;
 	}
 	{
 		auto ret2 = strip_prefix_only(s);
