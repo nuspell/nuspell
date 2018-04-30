@@ -34,7 +34,7 @@ TEST_CASE("class dictionary", "[dictionary]")
 	// (Probably move this info to the wiki and/or README.)
 	//
 	// This type of test is maybe better suited via the cmd-line tool
-	auto dictionary = Dictionary("v1cmdline/base");
+	auto dictionary = Dictionary::load_from_aff_dic("v1cmdline/base");
 
 	SECTION("method spell")
 	{

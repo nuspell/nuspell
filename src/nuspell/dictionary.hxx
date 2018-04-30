@@ -236,14 +236,30 @@ class Dictionary : protected Aff_Data {
 	    : Aff_Data() // we explicity do value init so content is zeroed
 	{
 	}
-	explicit Dictionary(const string& dict_file_path) : Aff_Data()
+
+	auto load_aff_dic(std::istream& aff, std::istream& dic)
 	{
-		std::ifstream aff_file(dict_file_path + ".aff");
-		std::ifstream dic_file(dict_file_path + ".dic");
-		parse(aff_file, dic_file);
-		// Set to false to disable logging.
-		if (true)
-			log(dict_file_path + ".aff");
+		return parse(aff, dic);
+	}
+	bool load_aff_dic(const string& file_path_without_extension)
+	{
+		auto& path = file_path_without_extension;
+		std::ifstream aff_file(path + ".aff");
+		std::ifstream dic_file(path + ".dic");
+		return load_aff_dic(aff_file, dic_file);
+	}
+
+	auto static load_from_aff_dic(const string& file_path_without_extension)
+	{
+		auto ret = Dictionary();
+		ret.load_aff_dic(file_path_without_extension);
+		return ret;
+	}
+	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
+	{
+		auto ret = Dictionary();
+		ret.load_aff_dic(aff, dic);
+		return ret;
 	}
 
 	auto spell_dict_encoding(const std::string& word) -> Spell_Result;

@@ -488,7 +488,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
-	nuspell::Dictionary dic(filename);
+	auto dic = Dictionary::load_from_aff_dic(filename);
 	auto loop_function = normal_loop;
 	switch (args.mode) {
 	case DEFAULT_MODE:
