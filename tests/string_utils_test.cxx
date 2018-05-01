@@ -138,13 +138,13 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK("DİYARBAKIR"s == to_upper("Diyarbakır"s, l));
 
 	l = g("el_GR.UTF-8");
-	CHECK("ΕΛΛΆΔΑ"s == to_upper("ελλάδα"s, l));
-	CHECK("ΕΛΛΆΔΑ"s == to_upper("Ελλάδα"s, l));
-	CHECK("ΕΛΛΆΔΑ"s == to_upper("ΕΛΛΆΔΑ"s, l));
-	CHECK("ΣΊΓΜΑ"s == to_upper("Σίγμα"s, l));
-	CHECK("ΣΊΓΜΑ"s == to_upper("σίγμα"s, l));
+	CHECK("ΕΛΛΑΔΑ"s == to_upper("ελλάδα"s, l)); // was ΕΛΛΆΔΑ up to 201804
+	CHECK("ΕΛΛΑΔΑ"s == to_upper("Ελλάδα"s, l)); // was ΕΛΛΆΔΑ up to 201804
+	CHECK("ΕΛΛΑΔΑ"s == to_upper("ΕΛΛΆΔΑ"s, l)); // was ΕΛΛΆΔΑ up to 201804
+	CHECK("ΣΙΓΜΑ"s == to_upper("Σίγμα"s, l)); // was ΣΊΓΜΑ up to 201804
+	CHECK("ΣΙΓΜΑ"s == to_upper("σίγμα"s, l)); // was ΣΊΓΜΑ up to 201804
 	// Use of ς where σ is expected, should convert to upper case Σ.
-	CHECK("ΣΊΓΜΑ"s == to_upper("ςίγμα"s, l));
+	CHECK("ΣΙΓΜΑ"s == to_upper("ςίγμα"s, l)); // was ΣΊΓΜΑ up to 201804
 
 	l = g("de_DE.UTF-8");
 	// Note that lower case ü is not converted to upper case Ü.
@@ -155,6 +155,8 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK("GRÜẞEN"s == to_upper("GRÜẞEN"s, l));
 
 	l = g("nl_NL.UTF-8");
+	CHECK("ÉÉN"s == to_upper("één"s, l));
+	CHECK("ÉÉN"s == to_upper("Één"s, l));
 	CHECK("IJSSELMEER"s == to_upper("ijsselmeer"s, l));
 	CHECK("IJSSELMEER"s == to_upper("IJsselmeer"s, l));
 	CHECK("IJSSELMEER"s == to_upper("IJSSELMEER"s, l));
@@ -227,6 +229,8 @@ TEST_CASE("method to_lower", "[string_utils]")
 	CHECK("grüßen"s == to_lower("GRÜẞEN"s, l));
 
 	l = g("nl_NL.UTF-8");
+	CHECK("één"s == to_lower("Één"s, l));
+	CHECK("één"s == to_lower("ÉÉN"s, l));
 	CHECK("ijsselmeer"s == to_lower("ijsselmeer"s, l));
 	CHECK("ijsselmeer"s == to_lower("IJsselmeer"s, l));
 	CHECK("ijsselmeer"s == to_lower("IJSSELMEER"s, l));
@@ -307,6 +311,8 @@ TEST_CASE("method to_title", "[string_utils]")
 	CHECK("Grüßen"s == to_title("GRÜẞEN"s, l));
 
 	l = g("nl_NL.UTF-8");
+	CHECK("Één"s == to_title("één"s, l));
+	CHECK("Één"s == to_title("ÉÉN"s, l));
 	CHECK("IJsselmeer"s == to_title("ijsselmeer"s, l));
 	CHECK("IJsselmeer"s == to_title("Ijsselmeer"s, l));
 	CHECK("IJsselmeer"s == to_title("iJsselmeer"s, l));
