@@ -97,7 +97,7 @@ auto find_match(const typename Substr_Replacer<CharT>::Table_Pairs& t,
 	}
 	return last_match;
 }
-}
+} // namespace
 
 template <class CharT>
 auto Substr_Replacer<CharT>::replace(StrT& s) const -> StrT&
@@ -351,4 +351,4 @@ template class Prefix<char>;
 template class Prefix<wchar_t>;
 template class Suffix<char>;
 template class Suffix<wchar_t>;
-}
+} // namespace nuspell

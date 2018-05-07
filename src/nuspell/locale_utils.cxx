@@ -94,7 +94,7 @@ auto update_cp_with_continuation_byte(char32_t& cp, unsigned char c)
 {
 	cp = (cp << 6) | (c & 0b00111111);
 }
-}
+} // namespace
 
 template <class InpIter, class OutIter>
 auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
@@ -711,5 +711,5 @@ auto install_ctype_facets_inplace(std::locale& boost_loc) -> void
 	boost_loc = locale(boost_loc, new icu_ctype_char(enc));
 	boost_loc = locale(boost_loc, new icu_ctype_wide(enc));
 }
-}
-}
+} // namespace encoding
+} // namespace nuspell

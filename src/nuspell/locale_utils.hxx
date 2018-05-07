@@ -184,6 +184,6 @@ struct Same_As_Dict_Input {
 		return utf_to_utf<wchar_t>(in);
 	}
 };
-}
-}
+} // namespace encoding
+} // namespace nuspell
 #endif // LOCALE_UTILS_HXX

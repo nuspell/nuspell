@@ -37,4 +37,4 @@ auto is_number(const std::basic_string<CharT>& s) -> bool
 }
 template auto is_number<>(const string& s) -> bool;
 template auto is_number<>(const wstring& s) -> bool;
-}
+} // namespace nuspell

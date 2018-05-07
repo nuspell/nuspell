@@ -283,5 +283,5 @@ auto classify_casing(const std::basic_string<CharT>& s,
 
 template <class CharT>
 auto is_number(const std::basic_string<CharT>& s) -> bool;
-}
+} // namespace nuspell
 #endif // NUSPELL_STRING_UTILS_HXX

@@ -46,6 +46,6 @@ class Finder {
 
 	auto get_dictionary(const string& dict) const -> string;
 };
-}
+} // namespace nuspell
 
 #endif // NUSPELL_FINDER_HXX

@@ -31,8 +31,8 @@ using namespace std;
 using boost::make_iterator_range;
 template <class CharT>
 using str_view = boost::basic_string_view<CharT>;
-using boost::locale::to_title;
 using boost::locale::to_lower;
+using boost::locale::to_title;
 
 /** Check spelling for a word.
  *

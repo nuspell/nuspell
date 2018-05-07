@@ -676,4 +676,4 @@ auto Finder::get_dictionary(const string& dict) const -> string
 	}
 	return "";
 }
-}
+} // namespace nuspell

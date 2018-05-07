@@ -284,5 +284,5 @@ class Dictionary : public Aff_Data {
 	auto spell(const std::u16string& word) -> Spell_Result;
 	auto spell(const std::u32string& word) -> Spell_Result;
 };
-}
+} // namespace nuspell
 #endif // NUSPELL_DICTIONARY_HXX

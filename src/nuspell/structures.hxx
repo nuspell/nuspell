@@ -444,9 +444,9 @@ extern template class Suffix<char>;
 extern template class Suffix<wchar_t>;
 
 using boost::multi_index_container;
+using boost::multi_index::hashed_non_unique;
 using boost::multi_index::indexed_by;
 using boost::multi_index::member;
-using boost::multi_index::hashed_non_unique;
 
 template <class CharT>
 struct sv_hash {
@@ -478,5 +478,5 @@ using Suffix_Table = multi_index_container<
                        member<Suffix<CharT>, const std::basic_string<CharT>,
                               &Suffix<CharT>::appending>,
                        sv_hash<CharT>, sv_eq<CharT>>>>;
-}
+} // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX

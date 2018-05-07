@@ -137,15 +137,18 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK_FALSE("İSTANBUL"s == to_upper("Istanbul"s, l));
 	CHECK("DİYARBAKIR"s == to_upper("Diyarbakır"s, l));
 
+#if 0
+	// 201805, currently the following six tests are failing on Travis
 	l = g("el_GR.UTF-8");
-// 201805, currently the following six tests are failing on Travis
-//	CHECK("ΕΛΛΑΔΑ"s == to_upper("ελλάδα"s, l)); // was ΕΛΛΆΔΑ up to 201804
-//	CHECK("ΕΛΛΑΔΑ"s == to_upper("Ελλάδα"s, l)); // was ΕΛΛΆΔΑ up to 201804
-//	CHECK("ΕΛΛΑΔΑ"s == to_upper("ΕΛΛΆΔΑ"s, l)); // was ΕΛΛΆΔΑ up to 201804
-//	CHECK("ΣΙΓΜΑ"s == to_upper("Σίγμα"s, l)); // was ΣΊΓΜΑ up to 201804
-//	CHECK("ΣΙΓΜΑ"s == to_upper("σίγμα"s, l)); // was ΣΊΓΜΑ up to 201804
+	CHECK("ΕΛΛΑΔΑ"s == to_upper("ελλάδα"s, l)); // was ΕΛΛΆΔΑ up to
+	CHECK("ΕΛΛΑΔΑ"s == to_upper("Ελλάδα"s, l)); // was ΕΛΛΆΔΑ up to
+	CHECK("ΕΛΛΑΔΑ"s == to_upper("ΕΛΛΆΔΑ"s, l)); // was ΕΛΛΆΔΑ up to
+	CHECK("ΣΙΓΜΑ"s == to_upper("Σίγμα"s, l));   // was ΣΊΓΜΑ up to
+	CHECK("ΣΙΓΜΑ"s == to_upper("σίγμα"s, l));   // was ΣΊΓΜΑ up to
+
 	// Use of ς where σ is expected, should convert to upper case Σ.
-//	CHECK("ΣΙΓΜΑ"s == to_upper("ςίγμα"s, l)); // was ΣΊΓΜΑ up to 201804
+	CHECK("ΣΙΓΜΑ"s == to_upper("ςίγμα"s, l)); // was ΣΊΓΜΑ up to
+#endif
 
 	l = g("de_DE.UTF-8");
 	// Note that lower case ü is not converted to upper case Ü.
