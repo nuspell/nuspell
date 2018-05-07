@@ -108,6 +108,5 @@ AC_CONFIG_FILES([
 	tests/Makefile
 	tests/suggestiontest/Makefile
 	tests/v1cmdline/Makefile
-	tests/nuspell/Makefile
 ])
 AC_OUTPUT
