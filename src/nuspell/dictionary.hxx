@@ -43,8 +43,8 @@ enum Affixing_Mode {
 	AT_COMPOUND_MIDDLE
 };
 
-class Dictionary : protected Aff_Data {
-      private:
+class Dictionary : public Aff_Data {
+      public:
 	template <class CharT>
 	auto spell_priv(std::basic_string<CharT> s) -> Spell_Result;
 	template <class CharT>
@@ -237,28 +237,25 @@ class Dictionary : protected Aff_Data {
 	{
 	}
 
-	auto load_aff_dic(std::istream& aff, std::istream& dic)
-	{
-		return parse(aff, dic);
-	}
-	bool load_aff_dic(const string& file_path_without_extension)
+	using Aff_Data::parse_aff_dic;
+	bool parse_aff_dic(const string& file_path_without_extension)
 	{
 		auto& path = file_path_without_extension;
 		std::ifstream aff_file(path + ".aff");
 		std::ifstream dic_file(path + ".dic");
-		return load_aff_dic(aff_file, dic_file);
+		return parse_aff_dic(aff_file, dic_file);
 	}
 
 	auto static load_from_aff_dic(const string& file_path_without_extension)
 	{
 		auto ret = Dictionary();
-		ret.load_aff_dic(file_path_without_extension);
+		ret.parse_aff_dic(file_path_without_extension);
 		return ret;
 	}
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
 		auto ret = Dictionary();
-		ret.load_aff_dic(aff, dic);
+		ret.parse_aff_dic(aff, dic);
 		return ret;
 	}
 

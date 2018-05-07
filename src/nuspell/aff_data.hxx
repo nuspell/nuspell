@@ -40,6 +40,7 @@ class Encoding {
 
 	Encoding() = default;
 	Encoding(const std::string& e);
+	auto operator=(const std::string& e) -> Encoding&;
 	auto empty() const -> bool { return name.empty(); }
 	operator const std::string&() const { return name; }
 	auto value() const -> const std::string& { return name; }
@@ -192,12 +193,12 @@ struct Aff_Data {
 
 	// methods
 	auto parse_aff(istream& in) -> bool;
-	auto parse_dic(std::istream& in) -> bool;
-	auto parse(istream& aff, istream& dic)
+	auto parse_dic(istream& in) -> bool;
+	auto parse_aff_dic(std::istream& aff, std::istream& dic)
 	{
-		auto a = parse_aff(aff);
-		auto b = parse_dic(dic);
-		return a && b;
+		if (parse_aff(aff))
+			return parse_dic(dic);
+		return false;
 	}
 	void log(const string& affpath);
 	auto decode_flags(istream& in, size_t line_num = 0) const -> u16string;
@@ -221,6 +222,6 @@ auto inline Aff_Data::get_structures<wchar_t>() const
 }
 void parse_morhological_fields(std::istream& in,
                                std::vector<std::string>& vecOut);
-}
+} // namespace nuspell
 
 #endif // NUSPELL_AFF_DATA_HXX

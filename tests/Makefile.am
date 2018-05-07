@@ -1,4 +1,4 @@
-SUBDIRS = . nuspell suggestiontest v1cmdline
+SUBDIRS = . suggestiontest v1cmdline
 
 AM_CPPFLAGS = -I../src/nuspell $(BOOST_CPPFLAGS) $(CODE_COVERAGE_CPPFLAGS)
 AM_CXXFLAGS = -std=c++14 $(CODE_COVERAGE_CXXFLAGS)
@@ -34,7 +34,6 @@ string_utils_test.cxx \
 structures_test.cxx \
 dictionary_test.cxx \
 aff_data_test.cxx \
-finder_test.cxx \
 catch_main.cxx
 
 nodist_ch_catch_SOURCES = catch.hpp catch_reporter_tap.hpp

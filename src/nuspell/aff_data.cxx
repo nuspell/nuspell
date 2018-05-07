@@ -80,6 +80,14 @@ Encoding::Encoding(const std::string& e) : name(e)
 	if (name == "UTF8")
 		name = "UTF-8";
 }
+auto Encoding::operator=(const std::string& e) -> Encoding&
+{
+	name = e;
+	boost::algorithm::to_upper(name, locale::classic());
+	if (name == "UTF8")
+		name = "UTF-8";
+	return *this;
+}
 
 void reset_failbit_istream(std::istream& in)
 {
@@ -1132,4 +1140,4 @@ void Aff_Data::log(const string& affpath)
 
 	log_file << "END" << std::endl;
 }
-}
+} // namespace nuspell

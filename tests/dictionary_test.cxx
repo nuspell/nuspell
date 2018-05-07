@@ -21,30 +21,29 @@
 #include <iostream>
 
 #include "../src/nuspell/dictionary.hxx"
+#include <boost/locale.hpp>
 
 using namespace std;
 using namespace std::literals::string_literals;
 using namespace nuspell;
 
-TEST_CASE("class dictionary", "[dictionary]")
+TEST_CASE("simple", "[dictionary]")
 {
-	// To run especially this test in the IDE:
-	// set executable ch.catch
-	// and set working directory to %{buildDir}/tests
-	// (Probably move this info to the wiki and/or README.)
-	//
-	// This type of test is maybe better suited via the cmd-line tool
-	auto dictionary = Dictionary::load_from_aff_dic("v1cmdline/base");
+	boost::locale::generator gen;
+	auto d = Dictionary();
+	d.encoding = "UTF-8";
+	d.locale_aff = gen(get_locale_name("", d.encoding));
 
-	SECTION("method spell")
-	{
-		// correct word without affixes
-		// CHECK(GOOD_WORD == dictionary.spell("sawyer"));
-		// correct word with unused prefix U
-		// CHECK(GOOD_WORD == dictionary.spell("created"));
-		// correct word with used suffix D
-		// CHECK(GOOD_WORD == dictionary.spell("looked"));
-		// incorrect word with used suffix D
-		// CHECK(BAD_WORD == dictionary.spell("loooked"));
-	}
+	auto words = {"table", "chair", "book", "fóóáár", "áárfóóĳ"};
+	for (auto& x : words)
+		d.words.insert({x, {}});
+
+	auto good = {L"table", L"chair", L"book", L"fóóáár", L"áárfóóĳ"};
+	for (auto& g : good)
+		CHECK(d.spell_priv<wchar_t>(g) == GOOD_WORD);
+
+	auto wrong = {L"tabel", L"chiar",    L"boko", L"xyyz",  L"fooxy",
+	              L"xyfoo", L"fooxybar", L"ééőő", L"fóóéé", L"őőáár"};
+	for (auto& w : wrong)
+		CHECK(d.spell_priv<wchar_t>(w) == BAD_WORD);
 }
