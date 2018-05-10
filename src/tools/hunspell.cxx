@@ -905,10 +905,10 @@ nextline:
             std::string root;
             if (check(pMS, &d, token, &info, &root)) {
               if (!terse_mode) {
-		if (verbose_mode || omit_suggestion)
+		if (verbose_mode)
                   fprintf(stdout, "* %s\n", token.c_str());
                 else
-                  fprintf(stdout, "*\n");
+                  if (omit_suggestion && info & SPELL_COMPOUND) { fprintf(stdout, "-\n"); } else if (omit_suggestion && !root.empty() ) { fprintf(stdout, "+\n"); } else {fprintf(stdout, "*\n"); }
               }
               fflush(stdout);
             } else {
