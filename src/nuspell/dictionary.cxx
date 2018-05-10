@@ -192,7 +192,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
 		res = checkword(t);
 		if (res)
 			return res;
-		part1 = to_title(part1);
+		part1 = to_title(part1, loc);
 		t = part1 + part2;
 		res = checkword(t);
 		if (res)
