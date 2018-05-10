@@ -808,7 +808,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		}
 		// parse_morhological_fields(ss, morphs);
 
-		auto casing = classify_casing(word);
+		auto casing = classify_casing(word, locale_aff);
 		const char16_t HIDDEN_HOMONYM_FLAG = -1;
 		switch (casing) {
 		case Casing::ALL_CAPITAL: {

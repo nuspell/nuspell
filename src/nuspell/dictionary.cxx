@@ -140,7 +140,7 @@ auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
 template <class CharT>
 auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 {
-	auto casing_type = classify_casing(s);
+	auto casing_type = classify_casing(s, locale_aff);
 	const Flag_Set* res = nullptr;
 
 	switch (casing_type) {
