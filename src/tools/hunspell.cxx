@@ -908,7 +908,7 @@ nextline:
 		if (verbose_mode)
                   fprintf(stdout, "* %s\n", token.c_str());
                 else
-                  if (omit_suggestion && info & SPELL_COMPOUND) { fprintf(stdout, "-\n"); } else if (omit_suggestion && !root.empty() ) { fprintf(stdout, "+\n"); } else {fprintf(stdout, "*\n"); }
+                  if (omit_suggestion && info & SPELL_COMPOUND) { fprintf(stdout, "- %s\n", token.c_str()); } else if (omit_suggestion && !root.empty() ) { fprintf(stdout, "+ %s\n", token.c_str()); } else if (omit_suggestion) { fprintf(stdout, "* %s\n", token.c_str()); } else {fprintf(stdout, "*\n"); }
               }
               fflush(stdout);
             } else {
