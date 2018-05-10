@@ -360,12 +360,15 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 			elem.appending = "";
 		in >> elem.condition;
 		if (in.fail()) {
-			vec.pop_back();
+			//			vec.pop_back();
+			cerr << "Nuspell warning: missing condition for "
+			     << command.substr(0, 3) << "\n"
+			     << "Nuspell warning in line " << line_num << endl;
+			elem.appending = ".";
 		}
-		else {
-			parse_morhological_fields(in,
-			                          elem.morphological_fields);
-		}
+		//		else {
+		parse_morhological_fields(in, elem.morphological_fields);
+		//		}
 		dat->second.second--;
 	}
 	else {
@@ -648,8 +651,9 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			compound_syllable_num = decode_flags(ss, line_num);
 		}
 		if (ss.fail()) {
-			cerr << "Nuspell error: could no parse affix file line "
-			     << line_num << ": " << line << endl;
+			cerr
+			    << "Nuspell error: could not parse affix file line "
+			    << line_num << ": " << line << endl;
 		}
 	}
 	// default BREAK definition
