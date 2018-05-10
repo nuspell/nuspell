@@ -353,22 +353,22 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 		in >> elem.stripping;
 		if (elem.stripping == "0")
 			elem.stripping = "";
-		if (read_to_slash_or_space(in, elem.appending)) {
+		if (read_to_slash_or_space(in, elem.appending))
 			elem.new_flags = decode_flags(in, line_num, t, enc);
-		}
 		if (elem.appending == "0")
 			elem.appending = "";
-		in >> elem.condition;
 		if (in.fail()) {
-			//			vec.pop_back();
-			cerr << "Nuspell warning: missing condition for "
-			     << command.substr(0, 3) << "\n"
-			     << "Nuspell warning in line " << line_num << endl;
-			elem.appending = ".";
+			vec.pop_back();
+			return;
 		}
-		//		else {
-		parse_morhological_fields(in, elem.morphological_fields);
-		//		}
+		in >> elem.condition;
+		if (elem.condition.empty())
+			elem.condition = '.';
+		if (in.fail())
+			reset_failbit_istream(in);
+		else
+			parse_morhological_fields(in,
+			                          elem.morphological_fields);
 		dat->second.second--;
 	}
 	else {
