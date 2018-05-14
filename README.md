@@ -12,10 +12,10 @@ NOTICE: Nuspell is currently under development. For contributing see
 [version 2
 specification](https://github.com/hunspell/hunspell/wiki/Version-2-Specification).
 
-Nuspell is a spell checker and morphological analyzer library and
+Nuspell is a spell checker library and
 program designed for languages with rich morphology and complex word
 compounding or character encoding. Nuspell interfaces: Ispell pipe
-interface, C++ class and C functions. Nuspell is a pure C++
+interface and C++ API. Nuspell is a pure C++
 reimplementation of Hunspell.
 
 Main features of Nuspell spell checker and morphological analyzer:
@@ -29,8 +29,7 @@ Main features of Nuspell spell checker and morphological analyzer:
     Azeri and Turkish dotted i, or German sharp s)
   - Handle conditional affixes, circumfixes, fogemorphemes, forbidden
     words, pseudoroots and homonyms.
-  - Free software. Versions 1.x are licenced under LGPL, GPL, MPL
-    tri-license. Version 2 is licenced only under GNU LGPL.
+  - Free software. Licenced under GNU LGPL.
 
 # Dependencies
 
@@ -49,8 +48,8 @@ Runtime dependencies:
 
 Recommended tools for developers:
 
-``` 
-vim qtcreator clang-format cppcheck gdb libtool-bin doxygen plantuml 
+```
+qtcreator clang-format gdb vim cppcheck doxygen plantuml
 ```
 
 # Compiling on GNU/Linux and Unixes
@@ -132,7 +131,7 @@ For debugging we need to create a debug build and then we need to start
 
     ./configure CXXFLAGS='-g -O0 -Wall -Wextra'
     make
-    ./libtool --mode=execute gdb src/tools/nuspell
+    gdb src/nuspell/nuspell
 
 You can also pass the `CXXFLAGS` directly to `make` without calling
 `./configure`, but we don't recommend this way during long development
@@ -180,6 +179,9 @@ is usually installed automatically when installing Doxygen.
 
 # Usage
 
+The main executable is located in `src/nuspell`.
+
+<!--
 The src/tools directory contains ten executables after compiling.
 
   - The main executable:
@@ -202,6 +204,7 @@ The src/tools directory contains ten executables after compiling.
         from vocabularies (it needs an affix file, too).
       - unmunch (DEPRECATED, use wordforms): list all recognized words
         of a MySpell dictionary
+-->
 
 After compiling and installing (see INSTALL) you can run the Nuspell
 spell checker (compiled with user interface) with a Nuspell, Hunspell or
