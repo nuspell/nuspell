@@ -773,9 +773,21 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		if (encoding.is_utf8() && !validate_utf8(line)) {
 			cerr << "Invalid utf in dic file" << endl;
 		}
-		if (line.find('/') != line.npos) {
-			// slash found, word untill slash
-			getline(ss, word, '/');
+		size_t slash_pos = 0;
+		for (;;) {
+			slash_pos = line.find('/', slash_pos);
+			if (slash_pos == line.npos)
+				break;
+			if (slash_pos == 0)
+				break;
+			if (line[slash_pos - 1] != '\\')
+				break;
+			++slash_pos;
+		}
+		if (slash_pos != line.npos) {
+			// slash found, word until slash
+			word.assign(line, 0, slash_pos);
+			ss.ignore(slash_pos + 1);
 			if (flag_aliases.empty()) {
 				flags = decode_flags(ss);
 			}
