@@ -137,6 +137,12 @@ auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
 	return BAD_WORD;
 }
 
+/**
+ * Checks spelling according to casing of the provided word.
+ *
+ * @param s string to check spelling for.
+ * @return The spelling result.
+ */
 template <class CharT>
 auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 {
@@ -169,6 +175,12 @@ auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 	return BAD_WORD;
 }
 
+/**
+ * Checks spelling for a word which is in all upper case.
+ *
+ * @param s string to check spelling for.
+ * @return The flags of the corresponding dictionary word.
+ */
 template <class CharT>
 auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
     -> const Flag_Set*
@@ -179,11 +191,11 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
 	if (res)
 		return res;
 
-	// handling of prefixes separated by apostrophe for Catalan, French and
+	// handle prefixes separated by apostrophe for Catalan, French and
 	// Italian, e.g. SANT'ELIA -> Sant'+Elia
 	auto apos = s.find('\'');
 	if (apos != s.npos && apos != s.size() - 1) {
-		// apostophe is at beginning of word or diving the word
+		// apostophe is at beginning of word or dividing the word
 		auto part1 = s.substr(0, apos + 1);
 		auto part2 = s.substr(apos + 1);
 		part1 = to_lower(part1, loc);
@@ -199,7 +211,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
 			return res;
 	}
 
-	// handle German sharp s
+	// handle sharp s for German
 	if (checksharps && s.find(LITERAL(CharT, "SS")) != s.npos) {
 		auto t = to_lower(s, loc);
 		res = spell_sharps(t);
@@ -221,6 +233,12 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
 	return nullptr;
 }
 
+/**
+ * Checks spelling for a word which is in title casing.
+ *
+ * @param s string to check spelling for.
+ * @return The flags of the corresponding dictionary word.
+ */
 template <class CharT>
 auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
     -> const Flag_Set*
@@ -248,6 +266,20 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
 	return res;
 }
 
+/**
+ * Checks recursively spelling starting on a word in title or lower case which
+ * originate from a word in upper case containing the letters 'SS'. The
+ * technique used is use recursion for checking all permutations of minimal one
+ * replacement of 'ss' with sharp s 'ß'. Maximum recursion depth is limited with
+ * a hardcoded value.
+ *
+ * @param base string to check spelling for where zero or more occurences of
+ * 'ss' have been replaced by sharp s 'ß'.
+ * @param pos position in the string to start next find and replacement.
+ * @param n counter for the recursion depth.
+ * @param rep counter for the number of replacements done.
+ * @return The flags of the corresponding dictionary word.
+ */
 template <class CharT>
 auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t pos,
                               size_t n, size_t rep) -> const Flag_Set*
@@ -272,6 +304,14 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t pos,
 	return nullptr;
 }
 
+/**
+ * Checks spelling for various unaffixed versions of the provided word.
+ * Unaffixing is done by ombinations of zero or more unsuffixing and unprefixing
+ * operations.
+ *
+ * @param s string to check spelling for.
+ * @return The flags of the corresponding dictionary word.
+ */
 template <class CharT>
 auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
 {
