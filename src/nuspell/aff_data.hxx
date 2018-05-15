@@ -155,7 +155,7 @@ struct Aff_Data {
 
 	// compounding options
 	vector<string> break_patterns;
-	vector<string> compound_rules;
+	vector<u16string> compound_rules;
 	short compound_minimum;
 	char16_t compound_flag;
 	char16_t compound_begin_flag;

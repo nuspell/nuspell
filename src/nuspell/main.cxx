@@ -369,31 +369,6 @@ auto correct_line_loop(istream& in, ostream& out, Dictionary& dic)
 	}
 }
 
-auto diagnose_dic_and_aff(Aff_Data& aff, Dic_Data& dic)
-{
-	cout << aff.encoding.value() << '\n';
-	cout << aff.try_chars << '\n';
-	for (auto& a : aff.compound_rules) {
-		cout << a << '\n';
-	}
-	for (auto& a : aff.suffixes) {
-		cout << (char)a.flag << ' ' << (a.cross_product ? 'Y' : 'N')
-		     << ' ' << a.stripping << ' ' << a.appending
-		     << (a.new_flags.data().size() ? "/ " : " ") << a.condition;
-		cout << '\n';
-	}
-	for (auto& wd : dic) {
-		cout << wd.first;
-		if (wd.second.size()) {
-			cout << '/';
-			for (auto& flag : wd.second) {
-				cout << flag << ',';
-			}
-		}
-		cout << '\n';
-	}
-}
-
 namespace std {
 ostream& operator<<(ostream& out, const locale& loc)
 {

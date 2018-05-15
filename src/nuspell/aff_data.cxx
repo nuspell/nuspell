@@ -157,17 +157,12 @@ auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
 	}
 }
 
-// Expects that there are flags in the stream.
-// If there are no flags in the stream (eg, stream is at eof)
-// or if the format of the flags is incorrect the stream failbit will be set.
 /**
  * Decodes flags.
  *
- * @param in input stream to read from.
- * @param line_num
- * @param t
- * @param enc
- * @return return
+ * Expects that there are flags in the stream.
+ * If there are no flags in the stream (eg, stream is at eof)
+ * or if the format of the flags is incorrect the stream failbit will be set.
  */
 auto decode_flags(istream& in, size_t line_num, Flag_Type t,
                   const Encoding& enc) -> u16string
@@ -420,6 +415,53 @@ auto parse_morhological_fields(istream& in, vector<string>& vecOut) -> void
 	reset_failbit_istream(in);
 }
 
+auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
+                         const Encoding& enc, u16string& ret)
+{
+	switch (t) {
+	case FLAG_SINGLE_CHAR:
+	case FLAG_UTF8:
+		ret = decode_flags(in, line_num, t, enc);
+		break;
+	case FLAG_DOUBLE_CHAR: {
+		auto r = regex(R"(\((..)\)([?*]?))");
+		auto str = string();
+		in >> str;
+		auto it = sregex_iterator(str.begin(), str.end(), r);
+		auto last = sregex_iterator();
+		for (; it != last; ++it) {
+			auto& m = *it;
+			auto i = m[1].first;
+			char16_t c1 = static_cast<unsigned char>(*i);
+			char16_t c2 = static_cast<unsigned char>(*(i + 1));
+			ret.push_back((c1 << 8) | c2);
+
+			if (m[2].length() != 0)
+				ret.push_back(*m[2].first);
+		}
+		break;
+	}
+	case FLAG_NUMBER: {
+		auto r = regex(R"(\(([0-9]+)\)([?*]?))");
+		auto str = string();
+		in >> str;
+		auto it = sregex_iterator(str.begin(), str.end(), r);
+		auto last = sregex_iterator();
+		for (; it != last; ++it) {
+			auto& m = *it;
+			size_t number_pos = m.position(1);
+			auto fl = strtoul(str.data() + number_pos, nullptr, 10);
+			if (fl <= char16_t(-1))
+				ret.push_back(fl);
+
+			if (m[2].length() != 0)
+				ret.push_back(*m[2].first);
+		}
+		break;
+	}
+	}
+}
+
 auto Aff_Data::decode_flags(istream& in, size_t line_num) const -> u16string
 {
 	return nuspell::decode_flags(in, line_num, flag_type, encoding);
@@ -479,9 +521,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	    {"CHECKSHARPS", &checksharps}};
 
 	unordered_map<string, vector<string>*> command_vec_str = {
-	    {"BREAK", &break_patterns},  // maybe add error handling as v1 has
-	    {"MAP", &map_related_chars}, // maybe add special parsing code
-	    {"COMPOUNDRULE", &compound_rules}};
+	    {"BREAK", &break_patterns}, {"MAP", &map_related_chars}};
 
 	unordered_map<string, short*> command_shorts = {
 	    {"MAXCPDSUGS", &max_compound_suggestions},
@@ -643,6 +683,15 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			};
 			parse_vector_of_T(ss, line_num, command,
 			                  cmd_with_vec_cnt, vec, func);
+		}
+		else if (command == "COMPOUNDRULE") {
+			auto func = [&](istream& in, u16string& rule) {
+				parse_compound_rule(in, line_num, flag_type,
+				                    encoding, rule);
+			};
+			parse_vector_of_T(ss, line_num, command,
+			                  cmd_with_vec_cnt, compound_rules,
+			                  func);
 		}
 		else if (command == "COMPOUNDSYLLABLE") {
 			ss >> compound_syllable_max >> compound_syllable_vowels;
