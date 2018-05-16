@@ -462,17 +462,6 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 	}
 }
 
-auto Aff_Data::decode_flags(istream& in, size_t line_num) const -> u16string
-{
-	return nuspell::decode_flags(in, line_num, flag_type, encoding);
-}
-
-auto Aff_Data::decode_single_flag(istream& in, size_t line_num) const
-    -> char16_t
-{
-	return nuspell::decode_single_flag(in, line_num, flag_type, encoding);
-}
-
 auto get_locale_name(string lang, string enc, const string& filename) -> string
 {
 	if (enc.empty())
@@ -485,6 +474,14 @@ auto get_locale_name(string lang, string enc, const string& filename) -> string
 	return lang + "." + enc;
 }
 
+auto Aff_Data::set_encoding_and_language(const string& enc, const string& lang)
+    -> void
+{
+	boost::locale::generator locale_generator;
+	locale_aff = locale_generator(get_locale_name(lang, enc));
+	install_ctype_facets_inplace(locale_aff);
+}
+
 /**
  * Parses an input stream offering affix information.
  *
@@ -493,6 +490,15 @@ auto get_locale_name(string lang, string enc, const string& filename) -> string
  */
 auto Aff_Data::parse_aff(istream& in) -> bool
 {
+	Encoding encoding;
+	string language_code;
+	string ignore_chars;
+	vector<Affix> prefixes;
+	vector<Affix> suffixes;
+	vector<string> break_patterns;
+	vector<pair<string, string>> input_conversion;
+	vector<pair<string, string>> output_conversion;
+
 	unordered_map<string, string*> command_strings = {
 	    {"LANG", &language_code},
 	    {"IGNORE", &ignore_chars},
@@ -615,8 +621,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			ss >> *command_shorts[command];
 		}
 		else if (command_flag.count(command)) {
-			*command_flag[command] =
-			    decode_single_flag(ss, line_num);
+			*command_flag[command] = decode_single_flag(
+			    ss, line_num, flag_type, encoding);
 		}
 		else if (command_vec_str.count(command)) {
 			auto& vec = *command_vec_str[command];
@@ -652,7 +658,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		else if (command == "AF") {
 			auto& vec = flag_aliases;
 			auto func = [&](istream& inn, Flag_Set& p) {
-				p = decode_flags(inn, line_num);
+				p = decode_flags(inn, line_num, flag_type,
+				                 encoding);
 			};
 			parse_vector_of_T(ss, line_num, command,
 			                  cmd_with_vec_cnt, vec, func);
@@ -668,12 +675,12 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			auto func = [&](istream& in,
 			                Compound_Check_Pattern& p) {
 				if (read_to_slash_or_space(in, p.end_chars)) {
-					p.end_flag =
-					    decode_single_flag(in, line_num);
+					p.end_flag = decode_single_flag(
+					    in, line_num, flag_type, encoding);
 				}
 				if (read_to_slash_or_space(in, p.begin_chars)) {
-					p.begin_flag =
-					    decode_single_flag(in, line_num);
+					p.begin_flag = decode_single_flag(
+					    in, line_num, flag_type, encoding);
 				}
 				if (in.fail()) {
 					return;
@@ -697,7 +704,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			ss >> compound_syllable_max >> compound_syllable_vowels;
 		}
 		else if (command == "SYLLABLENUM") {
-			compound_syllable_num = decode_flags(ss, line_num);
+			compound_syllable_num =
+			    decode_flags(ss, line_num, flag_type, encoding);
 		}
 		if (ss.fail()) {
 			cerr
@@ -713,9 +721,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	}
 
 	// now fill data structures from temporary data
-	boost::locale::generator locale_generator;
-	locale_aff = locale_generator(get_locale_name(language_code, encoding));
-	install_ctype_facets_inplace(locale_aff);
+	set_encoding_and_language(encoding, language_code);
 	if (encoding.is_utf8()) {
 		using namespace boost::locale::conv;
 		auto u_to_u_pair = [](auto& x) {
@@ -791,6 +797,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	if (!getline(in, line)) {
 		return false;
 	}
+	auto encoding =
+	    Encoding(use_facet<boost::locale::info>(locale_aff).encoding());
 	if (encoding.is_utf8() && !validate_utf8(line)) {
 		cerr << "Invalid utf in dic file" << endl;
 	}
@@ -838,7 +846,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			word.assign(line, 0, slash_pos);
 			ss.ignore(slash_pos + 1);
 			if (flag_aliases.empty()) {
-				flags = decode_flags(ss);
+				flags = decode_flags(ss, line_number, flag_type,
+				                     encoding);
 			}
 			else {
 				size_t flag_alias_idx;
@@ -971,15 +980,15 @@ void Aff_Data::log(const string& affpath)
 	log_file << "\n";
 	log_file << "complexprefixes/complex_prefixes\t" << complex_prefixes
 	         << "\n";
-	log_file << "lang/language_code\t\"" << language_code << "\""
-	         << "\n";
-	log_file << "ignorechars/ignore_chars\t\"" << ignore_chars << "\""
-	         << "\n";
+	// log_file << "lang/language_code\t\"" << language_code << "\""
+	//         << "\n";
+	// log_file << "ignorechars/ignore_chars\t\"" << ignore_chars << "\""
+	//         << "\n";
 	// TODO flag_aliases
 	// TODO morphological_aliases
 
 	// TODO locale_aff
-
+#if 0
 	for (std::vector<Affix>::const_iterator i = prefixes.begin();
 	     i != prefixes.end(); ++i) {
 		if (flag_type == FLAG_SINGLE_CHAR)
@@ -1046,7 +1055,7 @@ void Aff_Data::log(const string& affpath)
 		         << i->stripping << "\""
 		         << "\n";
 	}
-
+#endif
 	log_file << "\n"
 	         << "SUGGESTION OPTIONS"
 	         << "\n"
@@ -1099,6 +1108,7 @@ void Aff_Data::log(const string& affpath)
 	log_file << "\n"
 	         << "COMPOUNDING OPTIONS"
 	         << "\n";
+#if 0
 	for (std::vector<std::string>::const_iterator i =
 	         break_patterns.begin();
 	     i != break_patterns.end(); ++i) {
@@ -1107,6 +1117,7 @@ void Aff_Data::log(const string& affpath)
 		         << "\t\"" << *i << "\""
 		         << "\n";
 	}
+#endif
 	// TODO compound_rules
 	log_file << "cpdmin/compound_minimum\t" << compound_minimum << "\n";
 	log_file << "compoundflag/compound_flag\t" << compound_flag << "\n";
@@ -1177,6 +1188,7 @@ void Aff_Data::log(const string& affpath)
 	         << "\n";
 	log_file << "fullstrip/fullstrip\t" << fullstrip << "\n";
 	log_file << "keepcase/keepcase_flag\t" << keepcase_flag << "\n";
+#if 0
 	for (std::vector<pair<string, string>>::const_iterator i =
 	         input_conversion.begin();
 	     i != input_conversion.end(); ++i) {
@@ -1195,6 +1207,7 @@ void Aff_Data::log(const string& affpath)
 		         << i->first << "\"\t\"" << i->second << "\""
 		         << "\n";
 	}
+#endif
 	log_file << "needaffix/need_affix_flag\t" << need_affix_flag << "\n";
 	log_file << "substandard/substandard_flag\t" << substandard_flag
 	         << "\n";

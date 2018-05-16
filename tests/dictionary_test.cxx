@@ -31,8 +31,7 @@ TEST_CASE("simple", "[dictionary]")
 {
 	boost::locale::generator gen;
 	auto d = Dictionary();
-	d.encoding = "UTF-8";
-	d.locale_aff = gen(get_locale_name("", d.encoding));
+	d.set_encoding_and_language("UTF-8");
 
 	auto words = {"table", "chair", "book", "fóóáár", "áárfóóĳ"};
 	for (auto& x : words)

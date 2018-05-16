@@ -125,17 +125,11 @@ struct Aff_Data {
 	Dic_Data words;
 	Aff_Structures<char> structures;
 	Aff_Structures<wchar_t> wide_structures;
-	Encoding encoding;
 	Flag_Type flag_type;
 	bool complex_prefixes;
-	string language_code;
-	string ignore_chars;
 	vector<Flag_Set> flag_aliases;
 	vector<vector<string>> morphological_aliases;
 	std::locale locale_aff;
-
-	vector<Affix> prefixes;
-	vector<Affix> suffixes;
 
 	// suggestion options
 	string keyboard_layout;
@@ -154,7 +148,6 @@ struct Aff_Data {
 	bool forbid_warn;
 
 	// compounding options
-	vector<string> break_patterns;
 	vector<u16string> compound_rules;
 	short compound_minimum;
 	char16_t compound_flag;
@@ -184,14 +177,14 @@ struct Aff_Data {
 	char16_t forbiddenword_flag;
 	bool fullstrip;
 	char16_t keepcase_flag;
-	vector<pair<string, string>> input_conversion;
-	vector<pair<string, string>> output_conversion;
 	char16_t need_affix_flag;
 	char16_t substandard_flag;
 	string wordchars; // deprecated?
 	bool checksharps;
 
 	// methods
+	auto set_encoding_and_language(const string& enc,
+	                               const string& lang = "") -> void;
 	auto parse_aff(istream& in) -> bool;
 	auto parse_dic(istream& in) -> bool;
 	auto parse_aff_dic(std::istream& aff, std::istream& dic)
@@ -201,9 +194,6 @@ struct Aff_Data {
 		return false;
 	}
 	void log(const string& affpath);
-	auto decode_flags(istream& in, size_t line_num = 0) const -> u16string;
-	auto decode_single_flag(istream& in, size_t line_num = 0) const
-	    -> char16_t;
 	template <class CharT>
 	auto get_structures() const -> const Aff_Structures<CharT>&;
 };
