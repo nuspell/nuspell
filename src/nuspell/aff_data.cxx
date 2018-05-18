@@ -726,7 +726,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		using namespace boost::locale::conv;
 		auto u_to_u_pair = [](auto& x) {
 			return make_pair(utf_to_utf<wchar_t>(x.first),
-			                 utf_to_utf<wchar_t>(x.first));
+			                 utf_to_utf<wchar_t>(x.second));
 		};
 		auto iconv =
 		    boost::adaptors::transform(input_conversion, u_to_u_pair);
