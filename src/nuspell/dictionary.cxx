@@ -269,9 +269,9 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
 /**
  * Checks recursively spelling starting on a word in title or lower case which
  * originate from a word in upper case containing the letters 'SS'. The
- * technique used is use recursion for checking all permutations of minimal one
- * replacement of 'ss' with sharp s 'ß'. Maximum recursion depth is limited with
- * a hardcoded value.
+ * technique used is use recursion for checking all variations with repetitions
+ * of minimal one replacement of 'ss' with sharp s 'ß'. Maximum recursion depth
+ * is limited with a hardcoded value.
  *
  * @param base string to check spelling for where zero or more occurences of
  * 'ss' have been replaced by sharp s 'ß'.
@@ -286,10 +286,10 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t pos,
 {
 	const size_t MAX_SHARPS = 5;
 	pos = base.find(LITERAL(CharT, "ss"), pos);
-	if (pos != std::string::npos && (n < MAX_SHARPS)) {
+	if (pos != std::string::npos && n < MAX_SHARPS) {
 		base[pos] = static_cast<CharT>(223); // ß
 		base.erase(pos + 1, 1);
-		auto res = spell_sharps(base, pos + 2, n + 1, rep + 1);
+		auto res = spell_sharps(base, pos + 1, n + 1, rep + 1);
 		base[pos] = 's';
 		base.insert(pos + 1, 1, 's');
 		if (res)
@@ -306,8 +306,8 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t pos,
 
 /**
  * Checks spelling for various unaffixed versions of the provided word.
- * Unaffixing is done by ombinations of zero or more unsuffixing and unprefixing
- * operations.
+ * Unaffixing is done by combinations of zero or more unsuffixing and
+ * unprefixing operations.
  *
  * @param s string to check spelling for.
  * @return The flags of the corresponding dictionary word.
