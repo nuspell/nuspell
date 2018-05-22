@@ -3,13 +3,12 @@
 override PACKAGE_STRING = Hunspell v1 tests
 
 TEST_EXTENSIONS = .dic
-AM_TESTS_ENVIRONMENT = export HUNSPELL=$(top_builddir)/src/tools/hunspell; \
+AM_TESTS_ENVIRONMENT = export HUNSPELL=$(top_builddir)/src/nuspell/nuspell; \
                        export ANALYZE=$(top_builddir)/src/tools/analyze; \
                        export LIBTOOL=$(top_builddir)/libtool;
 DIC_LOG_COMPILER = $(top_srcdir)/tests/test.sh
 
-#remove the NO_ to enable theese tests
-NO_TESTS =	\
+TESTS =	\
 affixes.dic \
 condition.dic \
 condition_utf.dic \
@@ -55,7 +54,7 @@ zeroaffix.dic \
 utf8.dic \
 utf8_bom.dic \
 utf8_bom2.dic \
-utf8_nonbmp.test \
+utf8_nonbmp.dic \
 compoundflag.dic \
 compoundrule.dic \
 compoundrule2.dic \
@@ -126,9 +125,66 @@ nepali.dic \
 hu.dic \
 warn.dic
 
+XFAIL_TESTS = \
+2970240.dic \
+2970242.dic \
+2999225.dic \
+alias.dic \
+alias2.dic \
+allcaps.dic \
+allcaps2.dic \
+allcaps_utf.dic \
+base_utf.dic \
+break.dic \
+checkcompoundcase2.dic \
+checkcompoundcaseutf.dic \
+checkcompounddup.dic \
+checkcompoundpattern.dic \
+checkcompoundpattern2.dic \
+checkcompoundpattern3.dic \
+checkcompoundpattern4.dic \
+checkcompoundrep.dic \
+checkcompoundtriple.dic \
+compoundaffix.dic \
+compoundaffix2.dic \
+compoundaffix3.dic \
+compoundflag.dic \
+compoundrule.dic \
+compoundrule2.dic \
+compoundrule3.dic \
+compoundrule4.dic \
+compoundrule5.dic \
+compoundrule6.dic \
+compoundrule7.dic \
+compoundrule8.dic \
+fogemorpheme.dic \
+forceucase.dic \
+germancompounding.dic \
+germancompoundingold.dic \
+hu.dic \
+ignore.dic \
+ignoreutf.dic \
+needaffix.dic \
+needaffix2.dic \
+needaffix4.dic \
+nepali.dic \
+nosuggest.dic \
+onlyincompound.dic \
+onlyincompound2.dic \
+opentaal_cpdpat.dic \
+opentaal_cpdpat2.dic \
+opentaal_forbiddenword1.dic \
+opentaal_forbiddenword2.dic \
+opentaal_keepcase.dic \
+simplifiedtriple.dic \
+sug.dic \
+utf8_bom.dic \
+utf8_bom2.dic \
+utfcompound.dic
+
 clean-local:
 	-rm -rf testSubDir
-        
+
 EXTRA_DIST = \
 affixes.aff \
 affixes.dic \
@@ -591,6 +647,4 @@ hu.dic \
 hu.good \
 warn.aff \
 warn.dic \
-warn.good \
-\
-utf8_nonbmp.test
+warn.good
