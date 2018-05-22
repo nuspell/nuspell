@@ -82,10 +82,10 @@ struct Affix {
 struct Compound_Check_Pattern {
 	using string = std::string;
 
-	string end_chars;
-	char16_t end_flag;
-	string begin_chars;
-	char16_t begin_flag;
+	string first_word_end;
+	char16_t first_word_flag;
+	string second_word_begin;
+	char16_t second_word_flag;
 	string replacement;
 };
 

@@ -682,12 +682,14 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			auto& vec = compound_check_patterns;
 			auto func = [&](istream& in,
 			                Compound_Check_Pattern& p) {
-				if (read_to_slash_or_space(in, p.end_chars)) {
-					p.end_flag = decode_single_flag(
+				if (read_to_slash_or_space(in,
+				                           p.first_word_end)) {
+					p.first_word_flag = decode_single_flag(
 					    in, line_num, flag_type, encoding);
 				}
-				if (read_to_slash_or_space(in, p.begin_chars)) {
-					p.begin_flag = decode_single_flag(
+				if (read_to_slash_or_space(
+				        in, p.second_word_begin)) {
+					p.second_word_flag = decode_single_flag(
 					    in, line_num, flag_type, encoding);
 				}
 				if (in.fail()) {
@@ -1157,26 +1159,6 @@ void Aff_Data::log(const string& affpath)
 	         << compound_check_triple << "\n";
 	log_file << "simplifiedtriple/compound_simplified_triple\t"
 	         << compound_simplified_triple << "\n";
-	for (std::vector<Compound_Check_Pattern>::const_iterator i =
-	         compound_check_patterns.begin();
-	     i != compound_check_patterns.end(); ++i) {
-		log_file << "checkcpdtable/compound_check_patterns_"
-		         << std::setw(3) << std::setfill('0')
-		         << i - compound_check_patterns.begin() << "\t\""
-		         << i->end_chars << "\""
-		         << "\n";
-		log_file << "checkcpdtable/compound_check_patterns_"
-		         << std::setw(3) << std::setfill('0')
-		         << i - compound_check_patterns.begin() << "\t\""
-		         << i->begin_chars << "\""
-		         << "\n";
-		log_file << "checkcpdtable/compound_check_patterns_"
-		         << std::setw(3) << std::setfill('0')
-		         << i - compound_check_patterns.begin() << "\t\""
-		         << i->replacement << "\""
-		         << "\n";
-		// TODO cond and cond2
-	}
 	log_file << "forceucase/compound_force_uppercase\t"
 	         << compound_force_uppercase << "\n";
 	log_file << "cpdmaxsyllable/compound_syllable_max\t"
