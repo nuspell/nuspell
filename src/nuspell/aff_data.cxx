@@ -498,6 +498,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<string> break_patterns;
 	vector<pair<string, string>> input_conversion;
 	vector<pair<string, string>> output_conversion;
+	bool break_exists = false;
 
 	unordered_map<string, string*> command_strings = {
 	    {"LANG", &language_code},
@@ -527,7 +528,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	    {"CHECKSHARPS", &checksharps}};
 
 	unordered_map<string, vector<string>*> command_vec_str = {
-	    {"BREAK", &break_patterns}, {"MAP", &map_related_chars}};
+	    {"MAP", &map_related_chars}};
 
 	unordered_map<string, short*> command_shorts = {
 	    {"MAXCPDSUGS", &max_compound_suggestions},
@@ -670,6 +671,13 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			                  cmd_with_vec_cnt, vec,
 			                  parse_morhological_fields);
 		}
+		else if (command == "BREAK") {
+			auto& vec = break_patterns;
+			auto func = [&](istream& in, string& p) { in >> p; };
+			parse_vector_of_T(ss, line_num, command,
+			                  cmd_with_vec_cnt, vec, func);
+			break_exists = true;
+		}
 		else if (command == "CHECKCOMPOUNDPATTERN") {
 			auto& vec = compound_check_patterns;
 			auto func = [&](istream& in,
@@ -714,7 +722,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		}
 	}
 	// default BREAK definition
-	if (!break_patterns.size()) {
+	if (!break_exists) {
 		break_patterns.push_back("-");
 		break_patterns.push_back("^-");
 		break_patterns.push_back("-$");
