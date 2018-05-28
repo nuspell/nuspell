@@ -135,7 +135,6 @@ allcaps.dic \
 allcaps2.dic \
 allcaps_utf.dic \
 base_utf.dic \
-break.dic \
 checkcompoundcase2.dic \
 checkcompoundcaseutf.dic \
 checkcompounddup.dic \
@@ -177,7 +176,6 @@ opentaal_forbiddenword1.dic \
 opentaal_forbiddenword2.dic \
 opentaal_keepcase.dic \
 simplifiedtriple.dic \
-sug.dic \
 utf8_bom.dic \
 utf8_bom2.dic \
 utfcompound.dic

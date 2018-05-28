@@ -88,12 +88,23 @@ template auto Dictionary::spell_priv(const wstring s) -> Spell_Result;
  * @return The spelling result.
  */
 template <class CharT>
-auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
+auto Dictionary::spell_break(std::basic_string<CharT>& s, size_t depth)
+    -> Spell_Result
 {
 	// check spelling accoring to case
 	auto res = spell_casing<CharT>(s);
-	if (res)
-		return res;
+	if (res) {
+		// handle forbidden words
+		if (res->contains(forbiddenword_flag)) {
+			return BAD_WORD;
+		}
+		if (forbid_warn && res->contains(warn_flag)) {
+			return BAD_WORD;
+		}
+		return GOOD_WORD;
+	}
+	if (depth == 9)
+		return BAD_WORD;
 
 	auto& break_table = get_structures<CharT>().break_table;
 
@@ -125,10 +136,10 @@ auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
 		if (i > 0 && i < s.size() - pat.size()) {
 			auto part1 = s.substr(0, i);
 			auto part2 = s.substr(i + pat.size());
-			auto res1 = spell_break<CharT>(part1);
+			auto res1 = spell_break<CharT>(part1, depth + 1);
 			if (!res1)
 				continue;
-			auto res2 = spell_break<CharT>(part2);
+			auto res2 = spell_break<CharT>(part2, depth + 1);
 			if (res2)
 				return res2;
 		}
@@ -144,7 +155,7 @@ auto Dictionary::spell_break(std::basic_string<CharT>& s) -> Spell_Result
  * @return The spelling result.
  */
 template <class CharT>
-auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
+auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> const Flag_Set*
 {
 	auto casing_type = classify_casing(s, locale_aff);
 	const Flag_Set* res = nullptr;
@@ -162,17 +173,7 @@ auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> Spell_Result
 		res = spell_casing_title(s);
 		break;
 	}
-	if (res) {
-		// handle forbidden words
-		if (res->contains(forbiddenword_flag)) {
-			return BAD_WORD;
-		}
-		if (forbid_warn && res->contains(warn_flag)) {
-			return BAD_WORD;
-		}
-		return GOOD_WORD;
-	}
-	return BAD_WORD;
+	return res;
 }
 
 /**
