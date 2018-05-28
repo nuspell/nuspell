@@ -482,6 +482,18 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 	}
 }
 
+auto strip_bom(istream& in)
+{
+	string bom(3, '\0');
+	in.read(&bom[0], 3);
+	if (in.gcount() != 3 || bom != "\xEF\xBB\xBF") {
+		for (int i = in.gcount() - 1; i >= 0; --i) {
+			in.putback(bom[i]);
+		}
+		reset_failbit_istream(in);
+	}
+}
+
 auto get_locale_name(string lang, string enc, const string& filename) -> string
 {
 	if (enc.empty())
@@ -519,6 +531,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<pair<string, string>> input_conversion;
 	vector<pair<string, string>> output_conversion;
 	bool break_exists = false;
+
+	flag_type = FLAG_SINGLE_CHAR;
 
 	unordered_map<string, string*> command_strings = {
 	    {"LANG", &language_code},
@@ -598,8 +612,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	// "C" locale can be used assuming it is US-ASCII
 	in.imbue(loc);
 	ss.imbue(loc);
-
-	flag_type = FLAG_SINGLE_CHAR;
+	strip_bom(in);
 	while (getline(in, line)) {
 		line_num++;
 
@@ -824,6 +837,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	auto loc = locale::classic();
 	in.imbue(loc);
 	ss.imbue(loc);
+	strip_bom(in);
 	if (!getline(in, line)) {
 		return false;
 	}

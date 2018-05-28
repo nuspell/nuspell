@@ -174,8 +174,6 @@ opentaal_forbiddenword1.dic \
 opentaal_forbiddenword2.dic \
 opentaal_keepcase.dic \
 simplifiedtriple.dic \
-utf8_bom.dic \
-utf8_bom2.dic \
 utfcompound.dic
 
 clean-local:
