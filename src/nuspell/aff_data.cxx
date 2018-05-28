@@ -191,13 +191,13 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			// This error will be triggered in Hungarian.
 			// Version 1 passed this, it just read a
 			// single byte even if the stream utf-8.
-			// Hungarian dictionary explited this
+			// Hungarian dictionary exploited this
 			// bug/feature, resulting it's file to be
 			// mixed utf-8 and latin2.
 			// In v2 this will eventually work, with
 			// a warning.
 		}
-		ret = latin1_to_ucs2(s);
+		latin1_to_ucs2(s, ret);
 		break;
 	case FLAG_DOUBLE_CHAR: {
 		in >> s;
@@ -272,7 +272,7 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			        "skipping non-BMP\n"
 			     << "Nuspell warning in line " << line_num << endl;
 		}
-		ret = u32_to_ucs2_skip_non_bmp(u32flags);
+		u32_to_ucs2_skip_non_bmp(u32flags, ret);
 		break;
 	}
 	}
@@ -288,14 +288,32 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
  * @param enc encoding of the stream.
  * @return The value of the first decoded flag or 0 when no flag was decoded.
  */
-auto decode_single_flag(istream& in, size_t line_num, Flag_Type t, Encoding enc)
-    -> char16_t
+auto decode_single_flag(istream& in, size_t line_num, Flag_Type t,
+                        const Encoding& enc) -> char16_t
 {
 	auto flags = decode_flags(in, line_num, t, enc);
 	if (flags.size()) {
 		return flags.front();
 	}
 	return 0;
+}
+
+auto decode_flags_possible_alias(istream& in, size_t line_num, Flag_Type t,
+                                 const Encoding& enc,
+                                 const vector<Flag_Set>& flag_aliases)
+    -> u16string
+{
+	if (flag_aliases.empty()) {
+		return decode_flags(in, line_num, t, enc);
+	}
+	else {
+		size_t i;
+		if (in >> i && 0 < i && i <= flag_aliases.size())
+			return flag_aliases[i - 1];
+		else
+			cerr << "Nuspell error: invalid flag alias index\n";
+	}
+	return {};
 }
 
 /**
@@ -310,7 +328,8 @@ auto decode_single_flag(istream& in, size_t line_num, Flag_Type t, Encoding enc)
  * @param[in,out] cmd_affix.
  */
 auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
-                 Encoding enc, vector<Affix>& vec,
+                 const Encoding& enc, const vector<Flag_Set>& flag_aliases,
+                 vector<Affix>& vec,
                  unordered_map<string, pair<bool, int>>& cmd_affix) -> void
 {
 	char16_t f = decode_single_flag(in, line_num, t, enc);
@@ -349,7 +368,8 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 		if (elem.stripping == "0")
 			elem.stripping = "";
 		if (read_to_slash_or_space(in, elem.appending))
-			elem.new_flags = decode_flags(in, line_num, t, enc);
+			elem.new_flags = decode_flags_possible_alias(
+			    in, line_num, t, enc, flag_aliases);
 		if (elem.appending == "0")
 			elem.appending = "";
 		if (in.fail()) {
@@ -486,7 +506,7 @@ auto Aff_Data::set_encoding_and_language(const string& enc, const string& lang)
  * Parses an input stream offering affix information.
  *
  * @param in input stream to parse from.
- * @return The boolean indication reacing the end of stream after parsing.
+ * @return true on success.
  */
 auto Aff_Data::parse_aff(istream& in) -> bool
 {
@@ -602,7 +622,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		if (command == "PFX" || command == "SFX") {
 			auto& vec = command[0] == 'P' ? prefixes : suffixes;
 			parse_affix(ss, line_num, command, flag_type, encoding,
-			            vec, cmd_affix);
+			            flag_aliases, vec, cmd_affix);
 		}
 		else if (command_strings.count(command)) {
 			auto& str = *command_strings[command];
@@ -791,7 +811,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
  *
  * @param in input stream to read from.
  * @param aff affix data to retrive locale and flag settings from.
- * @return The boolean indication reacing the end of stream after parsing.
+ * @return true on success.
  */
 auto Aff_Data::parse_dic(istream& in) -> bool
 {
@@ -855,19 +875,10 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			// slash found, word until slash
 			word.assign(line, 0, slash_pos);
 			ss.ignore(slash_pos + 1);
-			if (flag_aliases.empty()) {
-				flags = decode_flags(ss, line_number, flag_type,
-				                     encoding);
-			}
-			else {
-				size_t flag_alias_idx;
-				ss >> flag_alias_idx;
-				if (ss.fail() ||
-				    flag_alias_idx > flag_aliases.size()) {
-					continue;
-				}
-				flags = flag_aliases[flag_alias_idx - 1];
-			}
+			flags = decode_flags_possible_alias(
+			    ss, line_number, flag_type, encoding, flag_aliases);
+			if (ss.fail())
+				continue;
 		}
 		else if (line.find('\t') != line.npos) {
 			// Tab found, word until tab. No flags.

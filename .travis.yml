@@ -48,7 +48,6 @@ before_script:
 script: autoreconf -i && ./configure && make -j 4 && make check -j 4
 
 after_failure:
-- cat tests/hun2/test-suite.log
 - cat tests/v1cmdline/test-suite.log
 - cat tests/test-suite.log
 

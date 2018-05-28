@@ -64,10 +64,13 @@ auto is_ascii(char c) -> bool;
 auto is_all_ascii(const std::string& s) -> bool;
 
 auto latin1_to_ucs2(const std::string& s) -> std::u16string;
+auto latin1_to_ucs2(const std::string& s, std::u16string& out) -> void;
 
 auto is_bmp(char32_t c) -> bool;
 auto is_all_bmp(const std::u32string& s) -> bool;
 auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string;
+auto u32_to_ucs2_skip_non_bmp(const std::u32string& s, std::u16string& out)
+    -> void;
 
 auto to_wide(const std::string& in, const std::locale& inloc) -> std::wstring;
 auto to_narrow(const std::wstring& in, const std::locale& outloc)

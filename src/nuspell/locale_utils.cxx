@@ -276,9 +276,14 @@ auto widen_latin1(char c) -> CharT
 
 auto latin1_to_ucs2(const std::string& s) -> std::u16string
 {
-	u16string ret(s.size(), 0);
-	transform(s.begin(), s.end(), ret.begin(), widen_latin1<char16_t>);
+	u16string ret;
+	latin1_to_ucs2(s, ret);
 	return ret;
+}
+auto latin1_to_ucs2(const std::string& s, std::u16string& out) -> void
+{
+	out.resize(s.size());
+	transform(s.begin(), s.end(), out.begin(), widen_latin1<char16_t>);
 }
 
 auto is_bmp(char32_t c) -> bool { return c <= 0xFFFF; }
@@ -290,11 +295,16 @@ auto is_all_bmp(const std::u32string& s) -> bool
 
 auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string
 {
-	u16string ret(s.size(), 0);
-	auto i = ret.begin();
-	i = copy_if(s.begin(), s.end(), i, is_bmp);
-	ret.erase(i, ret.end());
+	u16string ret;
+	u32_to_ucs2_skip_non_bmp(s, ret);
 	return ret;
+}
+auto u32_to_ucs2_skip_non_bmp(const std::u32string& s, std::u16string& out)
+    -> void
+{
+	out.resize(s.size());
+	auto i = copy_if(s.begin(), s.end(), out.begin(), is_bmp);
+	out.erase(i, out.end());
 }
 
 auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring

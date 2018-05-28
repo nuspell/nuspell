@@ -129,8 +129,6 @@ XFAIL_TESTS = \
 2970240.dic \
 2970242.dic \
 2999225.dic \
-alias.dic \
-alias2.dic \
 allcaps.dic \
 allcaps2.dic \
 allcaps_utf.dic \
