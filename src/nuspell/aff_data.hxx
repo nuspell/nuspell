@@ -128,7 +128,6 @@ struct Aff_Data {
 	Flag_Type flag_type;
 	bool complex_prefixes;
 	vector<Flag_Set> flag_aliases;
-	vector<vector<string>> morphological_aliases;
 	std::locale locale_aff;
 
 	// suggestion options
@@ -210,8 +209,6 @@ auto inline Aff_Data::get_structures<wchar_t>() const
 {
 	return wide_structures;
 }
-void parse_morhological_fields(std::istream& in,
-                               std::vector<std::string>& vecOut);
 } // namespace nuspell
 
 #endif // NUSPELL_AFF_DATA_HXX

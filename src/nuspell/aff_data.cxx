@@ -114,6 +114,7 @@ bool read_to_slash_or_space(std::istream& in, std::string& out)
 /**
  * Parses vector of class T from an input stream.
  *
+ * @param in input stream to decode from.
  * @param line_num
  * @param command
  * @param[in,out] counts
@@ -317,6 +318,25 @@ auto decode_flags_possible_alias(istream& in, size_t line_num, Flag_Type t,
 }
 
 /**
+ * Parses morhological fields.
+ *
+ * @param in input stream to parse from.
+ * @param[in,out] vecOut
+ */
+auto parse_morhological_fields(istream& in, vector<string>& vecOut) -> void
+{
+	if (!in.good()) {
+		return;
+	}
+
+	std::string morph;
+	while (in >> morph) {
+		vecOut.push_back(morph);
+	}
+	reset_failbit_istream(in);
+}
+
+/**
  * Parses an affix from an input stream.
  *
  * @param in input stream to parse from.
@@ -324,6 +344,7 @@ auto decode_flags_possible_alias(istream& in, size_t line_num, Flag_Type t,
  * @param[in,out] command
  * @param t
  * @param enc
+ * @param flag_aliases
  * @param[in,out] vec
  * @param[in,out] cmd_affix.
  */
@@ -398,7 +419,7 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
  *
  * @param in input stream to parse from.
  * @param line_num
- * @param[in,out] flag_type
+ * @param[out] flag_type
  */
 auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
 {
@@ -414,25 +435,6 @@ auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
 		flag_type = FLAG_UTF8;
 	else
 		cerr << "Nuspell error: unknown FLAG type" << endl;
-}
-
-/**
- * Parses morhological fields.
- *
- * @param in input stream to parse from.
- * @param[in,out] vecOut
- */
-auto parse_morhological_fields(istream& in, vector<string>& vecOut) -> void
-{
-	if (!in.good()) {
-		return;
-	}
-
-	std::string morph;
-	while (in >> morph) {
-		vecOut.push_back(morph);
-	}
-	reset_failbit_istream(in);
 }
 
 auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
@@ -530,6 +532,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<string> break_patterns;
 	vector<pair<string, string>> input_conversion;
 	vector<pair<string, string>> output_conversion;
+	vector<vector<string>> morphological_aliases;
 	bool break_exists = false;
 
 	flag_type = FLAG_SINGLE_CHAR;
