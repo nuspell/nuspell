@@ -3,6 +3,7 @@ cd src/nuspell
 cd ../../tests
 ./clang-format.sh
 cd ..
+make clean
 make
 if [ $? -eq 0 ]; then
 	make check

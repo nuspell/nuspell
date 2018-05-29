@@ -32,7 +32,6 @@
 #include <vector>
 
 namespace nuspell {
-
 #define LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
 
 template <class CharT>
@@ -284,6 +283,7 @@ auto classify_casing(const std::basic_string<CharT>& s,
 /**
  * Tests if word is a number.
  */
+#define DEV_IS_NUMBER_REGEX 0
 template <class CharT>
 auto is_number(const std::basic_string<CharT>& s) -> bool
 {

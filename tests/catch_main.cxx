@@ -16,6 +16,56 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
-#include "catch_reporter_tap.hpp"
+#include "string_utils.hxx"
+
+namespace nuspell {
+
+using namespace std;
+
+namespace {
+template <class CharT>
+
+/**
+ * Tests with a regular expression if word is a number.
+ */
+auto is_number_regex = basic_regex<CharT>(LITERAL(CharT, R"(-?\d([,.-]?\d)*)"));
+}
+
+/**
+ * Tests if word is a number.
+ *
+ * Allow numbers with dots ".", dashes "-" and commas ",", but forbid double
+ * separators such as "..", "--" and ".,".
+ */
+template <class CharT>
+auto is_number(const std::basic_string<CharT>& s) -> bool
+{
+#if DEV_IS_NUMBER_REGEX
+	return std::regex_match(s, is_number_regex<CharT>);
+#else
+	// see also strings_utils_test.cpp
+	enum { NBEGIN, NNUM, NSEP };
+	int nstate = NBEGIN;
+	size_t i;
+
+	for (i = 0; (i < s.size()); i++) {
+		if ((s[i] <= '9') && (s[i] >= '0')) {
+			nstate = NNUM;
+		}
+		else if ((s[i] == ',') || (s[i] == '.') || (s[i] == '-')) {
+			if ((nstate == NSEP) || (i == 0))
+				break;
+			nstate = NSEP;
+		}
+		else
+			break;
+	}
+	if ((i == s.size()) && (nstate == NNUM))
+		return true;
+
+	return false;
+#endif
+}
+template auto is_number<>(const string& s) -> bool;
+template auto is_number<>(const wstring& s) -> bool;
+} // namespace nuspell

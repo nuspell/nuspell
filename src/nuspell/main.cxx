@@ -92,7 +92,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	int c;
 	// The program can run in various modes depending on the
 	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:DGLlhv";
+	const char* shortopts = ":d:i:DGLUlhv";
 	const struct option longopts[] = {
 	    {"version", 0, 0, 'v'},
 	    {"help", 0, 0, 'h'},
@@ -151,6 +151,13 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 				mode = ERROR_MODE;
 
 			break;
+		case 'U':
+			// Discuss wheter to extend most modes with _NOSUG or to
+			// store in a boolean variable. This option should speed
+			// up bulk checking when there is no interest in
+			// suggestions or near-miss.
+
+			break;
 		case 'h':
 			if (mode == DEFAULT_MODE)
 				mode = HELP_MODE;
@@ -198,7 +205,7 @@ auto print_help(const string& program_name) -> void
 	o << "Usage:\n"
 	     "\n";
 	o << p << " [-d dict_NAME] [-i enc] [file_name]...\n";
-	o << p << " -l|-G [-L] [-d dict_NAME] [-i enc] [file_name]...\n";
+	o << p << " -l|-G [-L] [-U] [-d dict_NAME] [-i enc] [file_name]...\n";
 	o << p << " -D|-h|--help|-v|--version\n";
 	o << "\n"
 	     "Check spelling of each FILE. Without FILE, check standard "
@@ -211,6 +218,7 @@ auto print_help(const string& program_name) -> void
 	     "  -l            print only misspelled words or lines\n"
 	     "  -G            print only correct words or lines\n"
 	     "  -L            lines mode\n"
+	     "  -U            do not attempt suggest, increases performance\n"
 	     "  -h, --help    display this help and exit\n"
 	     "  -v, --version print version number and exit\n"
 	     "\n";
