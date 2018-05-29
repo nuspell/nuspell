@@ -10,7 +10,7 @@ aff_data.cxx     aff_data.hxx     \
 dictionary.cxx   dictionary.hxx   \
 finder.cxx       finder.hxx       \
 locale_utils.cxx locale_utils.hxx \
-string_utils.cxx string_utils.hxx \
+                 string_utils.hxx \
 structures.cxx   structures.hxx
 
 pkginclude_HEADERS=\

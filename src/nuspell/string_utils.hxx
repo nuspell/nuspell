@@ -281,7 +281,33 @@ auto classify_casing(const std::basic_string<CharT>& s,
 		return Casing::CAMEL;
 }
 
+/**
+ * Tests if word is a number.
+ */
 template <class CharT>
-auto is_number(const std::basic_string<CharT>& s) -> bool;
+auto is_number(const std::basic_string<CharT>& s) -> bool
+{
+	if (s.empty())
+		return false;
+
+	size_t i = 0;
+	if (s[0] == '-')
+		++i;
+	for (; i != s.size();) {
+		auto next =
+		    s.find_first_not_of(LITERAL(CharT, "0123456789"), i);
+		if (next == i)
+			return false;
+		if (next == s.npos)
+			return true;
+		i = next;
+		auto c = s[i];
+		if (c == '.' || c == ',' || c == '-')
+			++i;
+		else
+			return false;
+	}
+	return false;
+}
 } // namespace nuspell
 #endif // NUSPELL_STRING_UTILS_HXX
