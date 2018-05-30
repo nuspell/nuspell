@@ -27,7 +27,6 @@
 #include <algorithm>
 #include <iterator>
 #include <locale>
-#include <regex>
 #include <string>
 #include <vector>
 

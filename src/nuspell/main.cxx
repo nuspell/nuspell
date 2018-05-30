@@ -50,7 +50,12 @@ using namespace std;
 using namespace nuspell;
 
 enum Mode {
-	DEFAULT_MODE /**< mode printing correct and misspelled words */,
+	DEFAULT_MODE /**< mode printing correct and misspelled words with
+	                suggestions */
+	,
+	NO_SUGGEST_MODE /**< mode printing correct and misspelled words without
+	                   suggestions */
+	,
 	MISSPELLED_WORDS_MODE /**< mode printing only misspelled words */,
 	MISSPELLED_LINES_MODE /**< mode printing only misspelled lines */,
 	CORRECT_WORDS_MODE /**< mode printing only correct words */,
@@ -152,10 +157,10 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 
 			break;
 		case 'U':
-			// Discuss wheter to extend most modes with _NOSUG or to
-			// store in a boolean variable. This option should speed
-			// up bulk checking when there is no interest in
-			// suggestions or near-miss.
+			if (mode == DEFAULT_MODE)
+				mode = NO_SUGGEST_MODE;
+			else
+				mode = ERROR_MODE;
 
 			break;
 		case 'h':
@@ -218,7 +223,7 @@ auto print_help(const string& program_name) -> void
 	     "  -l            print only misspelled words or lines\n"
 	     "  -G            print only correct words or lines\n"
 	     "  -L            lines mode\n"
-	     "  -U            do not attempt suggest, increases performance\n"
+	     "  -U            do not suggest, increases performance\n"
 	     "  -h, --help    display this help and exit\n"
 	     "  -v, --version print version number and exit\n"
 	     "\n";
@@ -274,7 +279,21 @@ auto list_dictionaries(Finder& f) -> void
 	else {
 		cout << "Available dictionaries:\n";
 		for (auto& d : f.get_all_dictionaries()) {
-			cout << d.first << '\t' << d.second << '\n';
+			cout << d.first;
+			// The longest basenames of .dic and .aff files are
+			// "ca_ES-valencia" with 14 characters and "de_DE_frami"
+			// with 11 characters. Most basenames are 2 or 5
+			// characters long, such as "fr" and "en_US". This
+			// variation in length proves a challenge in aligning
+			// the output with tab characters. Hence, a minimal
+			// typical columns width of 16 characters is used with
+			// always including minimally 1 space character as
+			// separater. This specific width has been chosen to
+			// allow plenty of space and to support tab width
+			// preferences of 2, 4 and 8.
+			for (size_t i = d.first.size(); i < 15; ++i)
+				cout << ' ';
+			cout << ' ' << d.second << '\n';
 		}
 	}
 }
@@ -399,8 +418,8 @@ int main(int argc, char* argv[])
 
 	auto args = Args_t(argc, argv);
 	if (args.mode == ERROR_MODE) {
-		cerr << "Invalid arguments, try '" << args.program_name
-		     << " --help' for more information\n";
+		cerr << "Invalid (combination of) arguments, try '"
+		     << args.program_name << " --help' for more information\n";
 		return 1;
 	}
 	boost::locale::generator gen;
@@ -478,6 +497,10 @@ int main(int argc, char* argv[])
 	switch (args.mode) {
 	case DEFAULT_MODE:
 		// loop_function = normal_loop;
+		break;
+	case NO_SUGGEST_MODE:
+		// This will differ from normal loop once suggestion has been
+		// implemented. loop_function = normal_loop;
 		break;
 	case MISSPELLED_WORDS_MODE:
 		loop_function = misspelled_word_loop;

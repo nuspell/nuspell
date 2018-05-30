@@ -446,6 +446,9 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 		ret = decode_flags(in, line_num, t, enc);
 		break;
 	case FLAG_DOUBLE_CHAR: {
+		// Following could be replaced by non-library implementation,
+		// reducing size of binary when no regex methods are called at
+		// all.
 		auto r = regex(R"(\((..)\)([?*]?))");
 		auto str = string();
 		in >> str;
@@ -464,6 +467,9 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 		break;
 	}
 	case FLAG_NUMBER: {
+		// Following could be replaced by non-library implementation,
+		// reducing size of binary when no regex methods are called at
+		// all.
 		auto r = regex(R"(\(([0-9]+)\)([?*]?))");
 		auto str = string();
 		in >> str;
@@ -862,6 +868,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	vector<string> morphs;
 	u16string flags;
 
+	// Following could be replaced by non-library implementation, reducing
+	// size of binary when no regex methods are called at all.
 	regex morph_field(R"(\s+[a-z][a-z]:)");
 	smatch mf_match;
 

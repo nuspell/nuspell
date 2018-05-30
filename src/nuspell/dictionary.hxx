@@ -30,7 +30,7 @@
 namespace nuspell {
 
 enum Spell_Result {
-	BAD_WORD /**< word is spelled incorrectly */,
+	BAD_WORD /**< spelling of word is unknown */,
 	GOOD_WORD /**< word is spelled correctly */,
 	AFFIXED_GOOD_WORD /**< affixed word is spelled correctly */,
 	COMPOUND_GOOD_WORD /**< compound word is spelled correctly */
@@ -237,12 +237,20 @@ class Dictionary : public Aff_Data {
 	{
 		auto ret = Dictionary();
 		ret.parse_aff_dic(file_path_without_extension);
+		// If return == false, this is not processed at the moment. An
+		// error "Dictionary not found" should be reported one level
+		// higher; Reason is usually that the file does not exist, which
+		// is incorrectly not reported now.
 		return ret;
 	}
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
 		auto ret = Dictionary();
 		ret.parse_aff_dic(aff, dic);
+		// If return == false, this is not processed at the moment. An
+		// error "Dictionary not found" should be reported one level
+		// higher; Reason is usually that the file does not exist, which
+		// is incorrectly not reported now.
 		return ret;
 	}
 

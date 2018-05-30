@@ -430,8 +430,9 @@ auto get_char_mask(UChar32 cp)
 		ret |= ctype_base::blank;
 	}
 
-	// don't uncoment this
-	// if (u_isalnum(cp)) {
+	// Do not uncomment the following, because it will cause a bug. Its
+	// functionality is mostly already covered by the code above. if
+	// (u_isalnum(cp)) {
 	//	ret |= ctype_base::alnum;
 	//}
 	// if (u_isgraph(cp)) {
