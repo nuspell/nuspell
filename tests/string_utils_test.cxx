@@ -403,28 +403,18 @@ TEST_CASE("method is_number", "[string_utils]")
 	CHECK(false == is_number("1--1"s));
 
 	CHECK(true == is_number("1,1111"s));
-#if DEV_IS_NUMBER_REGEX
 	CHECK(true == is_number("-1,1111"s));
-#endif
 	CHECK(true == is_number("1,1111.00"s));
-#if DEV_IS_NUMBER_REGEX
 	CHECK(true == is_number("-1,1111.00"s));
-#endif
 	CHECK(true == is_number("1.1111"s));
-#if DEV_IS_NUMBER_REGEX
 	CHECK(true == is_number("-1.1111"s));
-#endif
 	CHECK(true == is_number("1.1111,00"s));
-#if DEV_IS_NUMBER_REGEX
 	CHECK(true == is_number("-1.1111,00"s));
-#endif
 
 	// below needs extra review
 
 	CHECK(true == is_number("1"s));
-#if DEV_IS_NUMBER_REGEX
 	CHECK(true == is_number("-1"s));
-#endif
 	CHECK(false == is_number("1-"s));
 
 	CHECK(false == is_number("1."s));
@@ -436,15 +426,11 @@ TEST_CASE("method is_number", "[string_utils]")
 	CHECK(false == is_number("1,-"s));
 
 	CHECK(true == is_number("1.1"s));
-#if DEV_IS_NUMBER_REGEX
 	CHECK(true == is_number("-1.1"s));
-#endif
 	CHECK(false == is_number("1.1-"s));
 
 	CHECK(true == is_number("1,1"s));
-#if DEV_IS_NUMBER_REGEX
 	CHECK(true == is_number("-1,1"s));
-#endif
 	CHECK(false == is_number("1,1-"s));
 
 	CHECK(false == is_number(".1"s));
