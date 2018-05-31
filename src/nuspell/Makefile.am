@@ -7,6 +7,7 @@ LIBADD      = $(BOOST_LOCALE_LIBS) $(CODE_COVERAGE_LIBS) $(ICU_LIBS)
 
 libnuspell_a_SOURCES=\
 aff_data.cxx     aff_data.hxx     \
+condition.cxx    condition.hxx    \
 dictionary.cxx   dictionary.hxx   \
 finder.cxx       finder.hxx       \
 locale_utils.cxx locale_utils.hxx \
@@ -15,6 +16,7 @@ structures.cxx   structures.hxx
 
 pkginclude_HEADERS=\
 aff_data.hxx     \
+condition.hxx    \
 dictionary.hxx   \
 finder.hxx       \
 locale_utils.hxx \
