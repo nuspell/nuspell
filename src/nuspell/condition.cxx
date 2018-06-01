@@ -150,9 +150,6 @@ auto Condition<CharT>::match(const StrT& s, size_t pos, size_t len) const
 	return true;
 }
 
-template class Condition<char>;
-template class Condition<wchar_t>;
-
 template <class CharT>
 auto Condition<CharT>::match_prefix(const StrT& s) const -> bool
 {
@@ -166,4 +163,7 @@ auto Condition<CharT>::match_suffix(const StrT& s) const -> bool
 		return false;
 	return match(s, s.size() - length, length);
 }
+
+template class Condition<char>;
+template class Condition<wchar_t>;
 } // namespace nuspell
