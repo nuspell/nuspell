@@ -1,4 +1,4 @@
-/* Copyright 2018 Sander van Geloven
+/* Copyright 2018 Dimitrij Mijoski and Sander van Geloven
  *
  * This file is part of Nuspell.
  *
@@ -20,8 +20,17 @@
 #define NUSPELL_CONDITION_HXX
 
 #include <string>
+#include <tuple>
+#include <vector>
 
 namespace nuspell {
+
+enum Condition_Type {
+	NORMAL /**< normal character */,
+	DOT /**< wildcard character */,
+	ANY_OF /**< set of possible characters */,
+	NONE_OF /**< set of excluding characters */
+};
 
 /**
  * A class providing implementation for limited regular expression matching.
@@ -30,13 +39,19 @@ template <class CharT>
 class Condition {
       public:
 	using StrT = std::basic_string<CharT>;
+	template <class T, class U, class V>
+	using tuple = std::tuple<T, U, V>;
+	template <class T>
+	using vector = std::vector<T>;
 
       private:
-	const StrT c;
+	const StrT cond;
+	vector<tuple<size_t, size_t, Condition_Type>> spans; // pos, len, type
+	size_t length;
 
       public:
-	Condition(const StrT& cond);
-	auto match(const StrT& s) const -> bool;
+	Condition(const StrT& condition);
+	auto match(const StrT& s, const size_t& pos = 0, const size_t& len) const -> bool; // could not use "len = npos"
 };
 } // namespace nuspell
 #endif // NUSPELL_CONDITION_HXX

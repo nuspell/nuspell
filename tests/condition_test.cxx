@@ -1,4 +1,4 @@
-/* Copyright 2018 Sander van Geloven
+/* Copyright 2018 Dimitrij Mijoski and Sander van Geloven
  *
  * This file is part of Nuspell.
  *
@@ -115,11 +115,17 @@ TEST_CASE("method match begin and end with UTF-8 character <char>",
 TEST_CASE("method match selections with UTF-16 character <char16_t>",
           "[condition]")
 {
-	auto c1 = Condition<char16_t>(u"[]");
-	// TODO Catch exception on construction or on matchon undefined or
-	// error?
+	auto c1 = Condition<char16_t>(u"[a]");
+	CHECK(false == c1.match(u""));
+	CHECK(true == c1.match(u"a"));
+	CHECK(false == c1.match(u"b"));
+	CHECK(true == c1.match(u"aa"));
+	CHECK(true == c1.match(u"ab"));
+	CHECK(true == c1.match(u"ba"));
+	CHECK(true == c1.match(u"bab"));
+	CHECK(true == c1.match(u"aba"));
 
-	auto c2 = Condition<char16_t>(u"[a]");
+	auto c2 = Condition<char16_t>(u"[aa]");
 	CHECK(false == c2.match(u""));
 	CHECK(true == c2.match(u"a"));
 	CHECK(false == c2.match(u"b"));
@@ -129,28 +135,54 @@ TEST_CASE("method match selections with UTF-16 character <char16_t>",
 	CHECK(true == c2.match(u"bab"));
 	CHECK(true == c2.match(u"aba"));
 
-	auto c3 = Condition<char16_t>(u"[aa]");
+	auto c3 = Condition<char16_t>(u"[ab]");
 	CHECK(false == c3.match(u""));
 	CHECK(true == c3.match(u"a"));
-	CHECK(false == c3.match(u"b"));
+	CHECK(true == c3.match(u"b"));
 	CHECK(true == c3.match(u"aa"));
 	CHECK(true == c3.match(u"ab"));
 	CHECK(true == c3.match(u"ba"));
 	CHECK(true == c3.match(u"bab"));
 	CHECK(true == c3.match(u"aba"));
-
-	auto c4 = Condition<char16_t>(u"[ab]");
-	CHECK(false == c4.match(u""));
-	CHECK(true == c4.match(u"a"));
-	CHECK(true == c4.match(u"b"));
-	CHECK(true == c4.match(u"aa"));
-	CHECK(true == c4.match(u"ab"));
-	CHECK(true == c4.match(u"ba"));
-	CHECK(true == c4.match(u"bab"));
-	CHECK(true == c4.match(u"aba"));
 }
 
-TEST_CASE("method match exceptions with standard character <char>",
+TEST_CASE("method match selections with runtime exceptions", "[condition]")
+{
+	auto cond1 = u"]";
+	try {
+		auto c1 = Condition<char16_t>(cond1);
+	} catch (const std::invalid_argument& e) {
+		CHECK("Cannot construct Condition without opening bracket for condition " + cond1 == e.what());
+	}
+	auto cond2 = u"ab]";
+	try {
+		auto c2 = Condition<char16_t>(cond2);
+	} catch (const std::invalid_argument& e) {
+		CHECK("Cannot construct Condition without opening bracket for condition " + cond2 == e.what());
+	}
+	auto cond3 = u"[ab";
+	try {
+		auto c3 = Condition<char16_t>(cond3);
+	} catch (const std::invalid_argument& e) {
+		CHECK("Cannot construct Condition without closing bracket for condition " + cond3 == e.what());
+	}
+	auto cond4 = u"[";
+	try {
+		auto c4 = Condition<char16_t>(cond4);
+	} catch (const std::invalid_argument& e) {
+		CHECK("Cannot construct Condition without closing bracket for condition " + cond4 == e.what());
+	}
+	auto cond5 = u"[]";
+	try {
+		auto c5 = Condition<char16_t>(cond5);
+	} catch (const std::invalid_argument& e) {
+		CHECK("Cannot construct Condition with empty brackets for condition " + cond5 == e.what());
+	}
+}
+
+#if 0
+// Need to discuss this, related to optimization of .e.g. [abb] and [^abb] into [ab] and [^ab].
+TEST_CASE("method match exceptions with runtime exceptions",
           "[condition]")
 {
 	auto c1 = Condition<char>("[^]");
@@ -166,7 +198,10 @@ TEST_CASE("method match exceptions with standard character <char>",
 	auto c4 = Condition<char>("[^ab]");
 	// TODO
 }
+#endif
 
+#if 0
+// Might leave this out as hyphen doesn't have a special meaning.
 TEST_CASE("method match hyphens with standard character <char>", "[condition]")
 {
 	auto c1 = Condition<char>("-");
@@ -196,19 +231,66 @@ TEST_CASE("method match hyphens with standard character <char>", "[condition]")
 	auto c9 = Condition<char>("[b-a]");
 	// TODO
 }
+#endif
 
-// TEST_CASE("method match diacritics", "[condition]")
-//{
-//	auto c = Condition("áåĳßøæ");
-// TODO
-//
-//	c = Condition("[áéiíóőuúüűy-àùø]"); // found two times in affix files
-// TODO
-//
-// https://github.com/hunspell/nuspell/commit/b48bc2c916902c92afb20f243c4317414106d33e#diff-3c7b410b0f2a9f3e6e8f7011693dc65b
-// https://github.com/hunspell/nuspell/commit/7541f31a900117a62d551de607f4c71467149597#diff-3c7b410b0f2a9f3e6e8f7011693dc65b
-// https://github.com/hunspell/nuspell/commit/9fc57dcdb61e0a3d6a98f95bcaf1302632aa9f0d#diff-3c7b410b0f2a9f3e6e8f7011693dc65b
-// https://github.com/hunspell/nuspell/commit/628a0c1ce67cad525ceff0d8d9e6006c4d331676#diff-3c7b410b0f2a9f3e6e8f7011693dc65b
-//}
+TEST_CASE("method match diacritics and ligatues", "[condition]")
+{
+	auto c1 = Condition<char>(u8"áåĳßøæ");
+	CHECK(true == c1.match(u8"áåĳßøæ"));
+	CHECK(false == c1.match(u8"ñ"));
+}
 
-TEST_CASE("method match combinations", "[condition]") {}
+TEST_CASE("method match real-life combinations", "[condition]") {
+	// found 2 times in affix files
+	c1 = Condition<char>(u8"[áéiíóőuúüűy-àùø]");
+	CHECK(true == c1.match(u8"á"));
+	CHECK(true == c1.match(u8"é"));
+	CHECK(true == c1.match(u8"i"));
+	CHECK(true == c1.match(u8"í"));
+	CHECK(true == c1.match(u8"ó"));
+	CHECK(true == c1.match(u8"ő"));
+	CHECK(true == c1.match(u8"u"));
+	CHECK(true == c1.match(u8"ú"));
+	CHECK(true == c1.match(u8"ü"));
+	CHECK(true == c1.match(u8"ű"));
+	CHECK(true == c1.match(u8"y"));
+	CHECK(true == c1.match(u8"-"));
+	CHECK(true == c1.match(u8"à"));
+	CHECK(true == c1.match(u8"ù"));
+	CHECK(true == c1.match(u8"ø"));
+	CHECK(false == c1.match(u8"ñ"));
+
+	// found 850 times in affix files
+	c2 = Condition<char>(u8"[cghjmsxyvzbdfklnprt-]");
+	CHECK(true == c2.match(u8"b"));
+	CHECK(true == c2.match(u8"i"));
+	CHECK(false == c2.match(u8"ñ"));
+
+	// found 744 times in affix files
+	c3 = Condition<char>(u8"[áéiíóőuúüűy-àùø]");
+	CHECK(true == c3.match(u8"ő"));
+	CHECK(true == c3.match(u8"-"));
+	CHECK(false == c3.match(u8"ñ"));
+
+	// found 8 times in affix files
+	c4 = Condition<char>(u8"[^-]");
+	CHECK(true == c4.match(u8"a"));
+	CHECK(true == c4.match(u8"b"));
+	CHECK(false == c4.match(u8"-"));
+
+	// found 4 times in affix files
+	c5 = Condition<char>(u8"[^cts]Z-");
+	CHECK(true == c5.match(u8"aZ-"));
+	CHECK(false == c5.match(u8"cZ-"));
+	CHECK(false == c5.match(u8"Z-"));
+
+	// found 2 times in affix files
+	// TODO Question: identiecal to [6cug][^-] ? What is valid and what not?
+	c6 = Condition<char>(u8"[^cug^-]er");
+
+	// found 74 times in affix files
+	auto c7 = Condition<char>(u8"[^дж]ерти");
+	CHECK(true == c7.match(u8"рерти"));
+	CHECK(false == c7.match(u8"ерти"));
+	CHECK(false == c7.match(u8"дерти"));
+}
