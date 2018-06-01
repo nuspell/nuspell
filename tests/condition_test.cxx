@@ -37,115 +37,84 @@ TEST_CASE("method match characters with standard character <char>",
 	auto c2 = Condition<char>("a");
 	CHECK(false == c2.match(""));
 	CHECK(true == c2.match("a"));
+	CHECK(false == c2.match("aa"));
+	CHECK(false == c2.match("ab"));
+	CHECK(false == c2.match("aba"));
 	CHECK(false == c2.match("b"));
-	CHECK(true == c2.match("aa"));
-	CHECK(true == c2.match("ab"));
-	CHECK(true == c2.match("ba"));
-	CHECK(true == c2.match("bab"));
-	CHECK(true == c2.match("aba"));
+	CHECK(false == c2.match("ba"));
+	CHECK(false == c2.match("bab"));
+
+	CHECK(false == c2.match_prefix(""));
+	CHECK(true == c2.match_prefix("a"));
+	CHECK(true == c2.match_prefix("aa"));
+	CHECK(true == c2.match_prefix("ab"));
+	CHECK(true == c2.match_prefix("aba"));
+	CHECK(false == c2.match_prefix("b"));
+	CHECK(false == c2.match_prefix("ba"));
+	CHECK(false == c2.match_prefix("bab"));
+
+	CHECK(false == c2.match_suffix(""));
+	CHECK(true == c2.match_suffix("a"));
+	CHECK(true == c2.match_suffix("aa"));
+	CHECK(false == c2.match_suffix("ab"));
+	CHECK(true == c2.match_suffix("aba"));
+	CHECK(false == c2.match_suffix("b"));
+	CHECK(true == c2.match_suffix("ba"));
+	CHECK(false == c2.match_suffix("bab"));
 
 	auto c3 = Condition<char>("ba");
 	CHECK(false == c3.match(""));
 	CHECK(false == c3.match("b"));
+	CHECK(true == c3.match("ba"));
+	CHECK(false == c3.match("bab"));
 	CHECK(false == c3.match("a"));
 	CHECK(false == c3.match("aa"));
 	CHECK(false == c3.match("ab"));
-	CHECK(true == c3.match("ba"));
-	CHECK(true == c3.match("bab"));
-	CHECK(true == c3.match("aba"));
+	CHECK(false == c3.match("aba"));
+
+	CHECK(false == c3.match_prefix(""));
+	CHECK(false == c3.match_prefix("b"));
+	CHECK(true == c3.match_prefix("ba"));
+	CHECK(true == c3.match_prefix("bab"));
+	CHECK(false == c3.match_prefix("a"));
+	CHECK(false == c3.match_prefix("aa"));
+	CHECK(false == c3.match_prefix("ab"));
+	CHECK(false == c3.match_prefix("aba"));
+
+	CHECK(false == c3.match_suffix(""));
+	CHECK(false == c3.match_suffix("b"));
+	CHECK(true == c3.match_suffix("ba"));
+	CHECK(false == c3.match_suffix("bab"));
+	CHECK(false == c3.match_suffix("a"));
+	CHECK(false == c3.match_suffix("aa"));
+	CHECK(false == c3.match_suffix("ab"));
+	CHECK(true == c3.match_suffix("aba"));
 }
 
 TEST_CASE("method match wildcards with wide character <wchar_t>", "[condition]")
 {
 	auto c1 = Condition<wchar_t>(L".");
-	CHECK(false == c1.match(L""));
-	CHECK(true == c1.match(L"a"));
-	CHECK(true == c1.match(L"b"));
-	CHECK(true == c1.match(L"aa"));
-	CHECK(true == c1.match(L"ab"));
-	CHECK(true == c1.match(L"ba"));
-	CHECK(true == c1.match(L"bab"));
-	CHECK(true == c1.match(L"aba"));
+	CHECK(false == c1.match_prefix(L""));
+	CHECK(true == c1.match_prefix(L"a"));
+	CHECK(true == c1.match_prefix(L"b"));
+	CHECK(true == c1.match_prefix(L"aa"));
+	CHECK(true == c1.match_prefix(L"ab"));
+	CHECK(true == c1.match_prefix(L"ba"));
+	CHECK(true == c1.match_prefix(L"bab"));
+	CHECK(true == c1.match_prefix(L"aba"));
 
 	auto c2 = Condition<wchar_t>(L"..");
-	CHECK(false == c2.match(L""));
-	CHECK(false == c2.match(L"a"));
-	CHECK(false == c2.match(L"b"));
-	CHECK(true == c2.match(L"aa"));
-	CHECK(true == c2.match(L"ab"));
-	CHECK(true == c2.match(L"ba"));
-	CHECK(true == c2.match(L"bab"));
-	CHECK(true == c2.match(L"aba"));
+	CHECK(false == c2.match_prefix(L""));
+	CHECK(false == c2.match_prefix(L"a"));
+	CHECK(false == c2.match_prefix(L"b"));
+	CHECK(true == c2.match_prefix(L"aa"));
+	CHECK(true == c2.match_prefix(L"ab"));
+	CHECK(true == c2.match_prefix(L"ba"));
+	CHECK(true == c2.match_prefix(L"bab"));
+	CHECK(true == c2.match_prefix(L"aba"));
 }
 
-TEST_CASE("method match begin and end with UTF-8 character <char>",
-          "[condition]")
-{
-	auto c1 = Condition<char>(u8"^a");
-	CHECK(false == c1.match(u8""));
-	CHECK(true == c1.match(u8"a"));
-	CHECK(false == c1.match(u8"b"));
-	CHECK(true == c1.match(u8"aa"));
-	CHECK(true == c1.match(u8"ab"));
-	CHECK(false == c1.match(u8"ba"));
-	CHECK(false == c1.match(u8"bab"));
-	CHECK(true == c1.match(u8"aba"));
-
-	auto c2 = Condition<char>(u8"a$");
-	CHECK(false == c2.match(u8""));
-	CHECK(true == c2.match(u8"a"));
-	CHECK(false == c2.match(u8"b"));
-	CHECK(true == c2.match(u8"aa"));
-	CHECK(false == c2.match(u8"ab"));
-	CHECK(true == c2.match(u8"ba"));
-	CHECK(false == c2.match(u8"bab"));
-	CHECK(true == c2.match(u8"aba"));
-
-	auto c3 = Condition<char>(u8"^a$");
-	CHECK(false == c3.match(u8""));
-	CHECK(true == c3.match(u8"a"));
-	CHECK(false == c3.match(u8"b"));
-	CHECK(false == c3.match(u8"aa"));
-	CHECK(false == c3.match(u8"ab"));
-	CHECK(false == c3.match(u8"ba"));
-	CHECK(false == c3.match(u8"bab"));
-	CHECK(false == c3.match(u8"aba"));
-}
-
-TEST_CASE("method match selections with UTF-16 character <char16_t>",
-          "[condition]")
-{
-	auto c1 = Condition<char16_t>(u"[a]");
-	CHECK(false == c1.match(u""));
-	CHECK(true == c1.match(u"a"));
-	CHECK(false == c1.match(u"b"));
-	CHECK(true == c1.match(u"aa"));
-	CHECK(true == c1.match(u"ab"));
-	CHECK(true == c1.match(u"ba"));
-	CHECK(true == c1.match(u"bab"));
-	CHECK(true == c1.match(u"aba"));
-
-	auto c2 = Condition<char16_t>(u"[aa]");
-	CHECK(false == c2.match(u""));
-	CHECK(true == c2.match(u"a"));
-	CHECK(false == c2.match(u"b"));
-	CHECK(true == c2.match(u"aa"));
-	CHECK(true == c2.match(u"ab"));
-	CHECK(true == c2.match(u"ba"));
-	CHECK(true == c2.match(u"bab"));
-	CHECK(true == c2.match(u"aba"));
-
-	auto c3 = Condition<char16_t>(u"[ab]");
-	CHECK(false == c3.match(u""));
-	CHECK(true == c3.match(u"a"));
-	CHECK(true == c3.match(u"b"));
-	CHECK(true == c3.match(u"aa"));
-	CHECK(true == c3.match(u"ab"));
-	CHECK(true == c3.match(u"ba"));
-	CHECK(true == c3.match(u"bab"));
-	CHECK(true == c3.match(u"aba"));
-}
-
+#if 0
 TEST_CASE("method match selections with runtime exceptions", "[condition]")
 {
 	auto cond1 = u"]";
@@ -179,7 +148,7 @@ TEST_CASE("method match selections with runtime exceptions", "[condition]")
 		CHECK("Cannot construct Condition with empty brackets for condition " + cond5 == e.what());
 	}
 }
-
+#endif
 #if 0
 // Need to discuss this, related to optimization of .e.g. [abb] and [^abb] into [ab] and [^ab].
 TEST_CASE("method match exceptions with runtime exceptions",
@@ -235,62 +204,63 @@ TEST_CASE("method match hyphens with standard character <char>", "[condition]")
 
 TEST_CASE("method match diacritics and ligatues", "[condition]")
 {
-	auto c1 = Condition<char>(u8"áåĳßøæ");
-	CHECK(true == c1.match(u8"áåĳßøæ"));
-	CHECK(false == c1.match(u8"ñ"));
+	auto c1 = Condition<wchar_t>(L"áåĳßøæ");
+	CHECK(true == c1.match(L"áåĳßøæ"));
+	CHECK(false == c1.match(L"ñ"));
 }
 
-TEST_CASE("method match real-life combinations", "[condition]") {
+TEST_CASE("method match real-life combinations", "[condition]")
+{
 	// found 2 times in affix files
-	c1 = Condition<char>(u8"[áéiíóőuúüűy-àùø]");
-	CHECK(true == c1.match(u8"á"));
-	CHECK(true == c1.match(u8"é"));
-	CHECK(true == c1.match(u8"i"));
-	CHECK(true == c1.match(u8"í"));
-	CHECK(true == c1.match(u8"ó"));
-	CHECK(true == c1.match(u8"ő"));
-	CHECK(true == c1.match(u8"u"));
-	CHECK(true == c1.match(u8"ú"));
-	CHECK(true == c1.match(u8"ü"));
-	CHECK(true == c1.match(u8"ű"));
-	CHECK(true == c1.match(u8"y"));
-	CHECK(true == c1.match(u8"-"));
-	CHECK(true == c1.match(u8"à"));
-	CHECK(true == c1.match(u8"ù"));
-	CHECK(true == c1.match(u8"ø"));
-	CHECK(false == c1.match(u8"ñ"));
+	auto c1 = Condition<wchar_t>(L"[áéiíóőuúüűy-àùø]");
+	CHECK(true == c1.match(L"á"));
+	CHECK(true == c1.match(L"é"));
+	CHECK(true == c1.match(L"i"));
+	CHECK(true == c1.match(L"í"));
+	CHECK(true == c1.match(L"ó"));
+	CHECK(true == c1.match(L"ő"));
+	CHECK(true == c1.match(L"u"));
+	CHECK(true == c1.match(L"ú"));
+	CHECK(true == c1.match(L"ü"));
+	CHECK(true == c1.match(L"ű"));
+	CHECK(true == c1.match(L"y"));
+	CHECK(true == c1.match(L"-"));
+	CHECK(true == c1.match(L"à"));
+	CHECK(true == c1.match(L"ù"));
+	CHECK(true == c1.match(L"ø"));
+	CHECK(false == c1.match(L"ñ"));
 
 	// found 850 times in affix files
-	c2 = Condition<char>(u8"[cghjmsxyvzbdfklnprt-]");
-	CHECK(true == c2.match(u8"b"));
-	CHECK(true == c2.match(u8"i"));
-	CHECK(false == c2.match(u8"ñ"));
+	auto c2 = Condition<wchar_t>(L"[cghjmsxyvzbdfklnprt-]");
+	CHECK(true == c2.match(L"b"));
+	CHECK(true == c2.match(L"i"));
+	CHECK(false == c2.match(L"ñ"));
 
 	// found 744 times in affix files
-	c3 = Condition<char>(u8"[áéiíóőuúüűy-àùø]");
-	CHECK(true == c3.match(u8"ő"));
-	CHECK(true == c3.match(u8"-"));
-	CHECK(false == c3.match(u8"ñ"));
+	auto c3 = Condition<wchar_t>(L"[áéiíóőuúüűy-àùø]");
+	CHECK(true == c3.match(L"ő"));
+	CHECK(true == c3.match(L"-"));
+	CHECK(false == c3.match(L"ñ"));
 
 	// found 8 times in affix files
-	c4 = Condition<char>(u8"[^-]");
-	CHECK(true == c4.match(u8"a"));
-	CHECK(true == c4.match(u8"b"));
-	CHECK(false == c4.match(u8"-"));
+	auto c4 = Condition<wchar_t>(L"[^-]");
+	CHECK(true == c4.match(L"a"));
+	CHECK(true == c4.match(L"b"));
+	CHECK(false == c4.match(L"-"));
 
 	// found 4 times in affix files
-	c5 = Condition<char>(u8"[^cts]Z-");
-	CHECK(true == c5.match(u8"aZ-"));
-	CHECK(false == c5.match(u8"cZ-"));
-	CHECK(false == c5.match(u8"Z-"));
+	auto c5 = Condition<wchar_t>(L"[^cts]Z-");
+	CHECK(true == c5.match(L"aZ-"));
+	CHECK(false == c5.match(L"cZ-"));
+	CHECK(false == c5.match(L"Z-"));
 
 	// found 2 times in affix files
 	// TODO Question: identiecal to [6cug][^-] ? What is valid and what not?
-	c6 = Condition<char>(u8"[^cug^-]er");
+	auto c6 = Condition<wchar_t>(L"[^cug^-]er");
 
 	// found 74 times in affix files
-	auto c7 = Condition<char>(u8"[^дж]ерти");
-	CHECK(true == c7.match(u8"рерти"));
-	CHECK(false == c7.match(u8"ерти"));
-	CHECK(false == c7.match(u8"дерти"));
+	auto c7 = Condition<wchar_t>(L"[^дж]ерти");
+	CHECK(true == c7.match(L"рерти"));
+	CHECK(false == c7.match(L"ерти"));
+	CHECK(false == c7.match(L"дерти"));
 }

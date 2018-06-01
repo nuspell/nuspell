@@ -32,7 +32,6 @@ template <class CharT>
 class Condition {
       public:
 	enum Condition_Type {
-		UNDEFINED /**< undefined character */,
 		NORMAL /**< normal character */,
 		DOT /**< wildcard character */,
 		ANY_OF /**< set of possible characters */,
@@ -51,7 +50,8 @@ class Condition {
 
       public:
 	Condition(const StrT& condition);
-	auto match(const StrT& s, const size_t pos = 0, const size_t len = StrT::npos) const -> bool;
+	auto match(const StrT& s, size_t pos = 0, size_t len = StrT::npos) const
+	    -> bool;
 	auto match_prefix(const StrT& s) const -> bool;
 	auto match_suffix(const StrT& s) const -> bool;
 };

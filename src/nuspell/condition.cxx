@@ -17,6 +17,9 @@
  */
 
 #include "condition.hxx"
+#include "string_utils.hxx"
+
+#include <stdexcept>
 
 namespace nuspell {
 
@@ -24,18 +27,17 @@ using namespace std;
 
 /** Constructs a Condition object.
  *
- * @param condition string containing simplifed regular expression to construct this
- * Condition object for.
+ * @param condition string containing simplifed regular expression to construct
+ * this Condition object for.
  */
 template <class CharT>
 Condition<CharT>::Condition(const StrT& condition) : cond(condition), length(0)
 {
-//	spans = vector<tuple<size_t, size_t, Condition_Type>>();
-	// TODO Throw exception when condition has empty selections "[]" or empty
-	// exceptions "[^]".
+	//	spans = vector<tuple<size_t, size_t, Condition_Type>>();
+	// TODO Throw exception when condition has empty selections "[]" or
+	// empty exceptions "[^]".
 
 	size_t i = 0;
-	Condition_Type type = UNDEFINED;
 	for (; i != cond.size();) {
 		size_t j = cond.find_first_of(LITERAL(CharT, "[]."), i);
 		if (i != j) {
@@ -52,35 +54,44 @@ Condition<CharT>::Condition(const StrT& condition) : cond(condition), length(0)
 			continue;
 		}
 		if (cond[i] == ']') {
-			auto what = string("Cannot construct Condition without opening bracket for condition ") + cond;
+			auto what = string("Cannot construct Condition without "
+			                   "opening bracket for condition ");
 			throw invalid_argument(what);
 		}
 		if (cond[i] == '[') {
 			++i;
 			if (i == cond.size()) {
-				auto what = string("Cannot construct Condition without closing bracket for condition ") + cond;
+				auto what =
+				    string("Cannot construct Condition without "
+				           "closing bracket for condition ");
 				throw invalid_argument(what);
 			}
+			Condition_Type type;
 			if (cond[i] == '^') {
 				type = NONE_OF;
 				++i;
-			} else {
+			}
+			else {
 				type = ANY_OF;
 			}
 			j = cond.find(']', i);
 			if (j == i) {
-				auto what = string("Cannot construct Condition with empty brackets for condition ") + cond;
+				auto what =
+				    string("Cannot construct Condition with "
+				           "empty brackets for condition ");
 				throw invalid_argument(what);
 			}
-			if ( j == cond.npos) {
-				auto what = string("Cannot construct Condition without closing bracket for condition ") + cond;
+			if (j == cond.npos) {
+				auto what =
+				    string("Cannot construct Condition without "
+				           "closing bracket for condition ");
 				throw invalid_argument(what);
 			}
 			spans.emplace_back(i, j - i, type);
 			i = j + 1;
 		}
 	}
-	for (auto&x : spans) {
+	for (auto& x : spans) {
 		size_t x_len = get<1>(x);
 		length += x_len;
 	}
@@ -90,16 +101,16 @@ Condition<CharT>::Condition(const StrT& condition) : cond(condition), length(0)
  *
  * @param s string to check if it matches the condition.
  * @param pos start position for string, default is 0.
- * @param len length of string counting from the start position. Question: correct?
+ * @param len length of string counting from the start position. Question:
+ * correct?
  * @return The valueof true when string matched condition.
  */
 template <class CharT>
-auto Condition<CharT>::match(const StrT& s, const size_t pos, const size_t len) const -> bool
+auto Condition<CharT>::match(const StrT& s, size_t pos, size_t len) const
+    -> bool
 {
 	if (pos > s.size()) {
-		//Question: should we calculate more precise what length of condition is?
-		auto what = string("Cannot match Condition when start position ") + string(pos) + " for string " + s + " is greater than length of condition " + cond;
-		throw length_error(what);
+		throw out_of_range("pos out of bounds on s");
 	}
 	if (s.size() - pos < len)
 		len = s.size() - pos;
@@ -107,12 +118,13 @@ auto Condition<CharT>::match(const StrT& s, const size_t pos, const size_t len) 
 		return false;
 
 	size_t i = pos;
-	for (auto&x : spans) {
-		size_t x_pos = get<0>(x); // can this also be x->pos and x-> len ?
+	for (auto& x : spans) {
+		size_t x_pos =
+		    get<0>(x); // can this also be x->pos and x-> len ?
 		size_t x_len = get<1>(x);
 		Condition_Type x_type = get<2>(x);
 
-		switch(x_type) {
+		switch (x_type) {
 		case NORMAL:
 			if (s.compare(i, x_len, cond, x_pos, x_len) == 0)
 				i += x_len;
@@ -123,13 +135,16 @@ auto Condition<CharT>::match(const StrT& s, const size_t pos, const size_t len) 
 			++i;
 			break;
 		case ANY_OF:
-			if (cond.find(s[i], x_pos, x_len) != s.npos)
+
+			if (StrT::traits_type::find(cond.data() + x_pos, x_len,
+			                            s[i]) != nullptr)
 				++i;
 			else
 				return false;
 			break;
 		case NONE_OF:
-			if (cond.find(s[i], x_pos, x_len) != s.npos)
+			if (StrT::traits_type::find(cond.data() + x_pos, x_len,
+			                            s[i]) != nullptr)
 				return false;
 			else
 				++i;
@@ -141,20 +156,18 @@ auto Condition<CharT>::match(const StrT& s, const size_t pos, const size_t len) 
 
 template class Condition<char>;
 template class Condition<wchar_t>;
-template class Condition<char16_t>;
 
 template <class CharT>
 auto Condition<CharT>::match_prefix(const StrT& s) const -> bool
 {
-	return match(s, 0, );
+	return match(s, 0, length);
 }
 
 template <class CharT>
-auto Condition<CharT>::match(const StrT& s) const -> bool
+auto Condition<CharT>::match_suffix(const StrT& s) const -> bool
 {
-	if (s.size() >= 0000)
-		return match(s, s.size(), );
-	else
+	if (length > s.size())
 		return false;
+	return match(s, s.size() - length, length);
 }
 } // namespace nuspell
