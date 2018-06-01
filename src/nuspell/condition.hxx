@@ -25,19 +25,19 @@
 
 namespace nuspell {
 
-enum Condition_Type {
-	NORMAL /**< normal character */,
-	DOT /**< wildcard character */,
-	ANY_OF /**< set of possible characters */,
-	NONE_OF /**< set of excluding characters */
-};
-
 /**
  * A class providing implementation for limited regular expression matching.
  */
 template <class CharT>
 class Condition {
       public:
+	enum Condition_Type {
+		UNDEFINED /**< undefined character */,
+		NORMAL /**< normal character */,
+		DOT /**< wildcard character */,
+		ANY_OF /**< set of possible characters */,
+		NONE_OF /**< set of excluding characters */
+	};
 	using StrT = std::basic_string<CharT>;
 	template <class T, class U, class V>
 	using tuple = std::tuple<T, U, V>;
@@ -51,7 +51,9 @@ class Condition {
 
       public:
 	Condition(const StrT& condition);
-	auto match(const StrT& s, const size_t& pos = 0, const size_t& len) const -> bool; // could not use "len = npos"
+	auto match(const StrT& s, const size_t pos = 0, const size_t len = StrT::npos) const -> bool;
+	auto match_prefix(const StrT& s) const -> bool;
+	auto match_suffix(const StrT& s) const -> bool;
 };
 } // namespace nuspell
 #endif // NUSPELL_CONDITION_HXX

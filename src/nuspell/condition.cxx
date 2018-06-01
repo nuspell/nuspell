@@ -30,35 +30,36 @@ using namespace std;
 template <class CharT>
 Condition<CharT>::Condition(const StrT& condition) : cond(condition), length(0)
 {
-	spans = vector<tuple<size_t, size_t, Condition_Type>>();
+//	spans = vector<tuple<size_t, size_t, Condition_Type>>();
 	// TODO Throw exception when condition has empty selections "[]" or empty
 	// exceptions "[^]".
 
 	size_t i = 0;
+	Condition_Type type = UNDEFINED;
 	for (; i != cond.size();) {
-		size_t j = cond.find_any_of(LITERAL(CharT, "[]."), i);
+		size_t j = cond.find_first_of(LITERAL(CharT, "[]."), i);
 		if (i != j) {
 			if (j == cond.npos) {
-				spans.push_back(i, cond.size() - i, NORMAL);
+				spans.emplace_back(i, cond.size() - i, NORMAL);
 				break;
 			}
-			spans.push_back(i, j - i, NORMAL);
+			spans.emplace_back(i, j - i, NORMAL);
 			i = j;
 		}
 		if (cond[i] == '.') {
-			spans.push_back(i, 1, DOT);
+			spans.emplace_back(i, 1, DOT);
 			++i;
 			continue;
 		}
 		if (cond[i] == ']') {
-			auto what = std::string("Cannot construct Condition without opening bracket for condition ") + cond;
-			throw std::invalid_argument(what);
+			auto what = string("Cannot construct Condition without opening bracket for condition ") + cond;
+			throw invalid_argument(what);
 		}
 		if (cond[i] == '[') {
 			++i;
 			if (i == cond.size()) {
-				auto what = std::string("Cannot construct Condition without closing bracket for condition ") + cond;
-				throw std::invalid_argument(what);
+				auto what = string("Cannot construct Condition without closing bracket for condition ") + cond;
+				throw invalid_argument(what);
 			}
 			if (cond[i] == '^') {
 				type = NONE_OF;
@@ -68,19 +69,19 @@ Condition<CharT>::Condition(const StrT& condition) : cond(condition), length(0)
 			}
 			j = cond.find(']', i);
 			if (j == i) {
-				auto what = std::String("Cannot construct Condition with empty brackets for condition ") + cond;
-				throw std::invalid_argument(what);
+				auto what = string("Cannot construct Condition with empty brackets for condition ") + cond;
+				throw invalid_argument(what);
 			}
 			if ( j == cond.npos) {
-				auto what = std::String("Cannot construct Condition without closing bracket for condition ") + cond;
-				throw std::invalid_argument(what);
+				auto what = string("Cannot construct Condition without closing bracket for condition ") + cond;
+				throw invalid_argument(what);
 			}
-			spans.push_back(i, j - i, type);
+			spans.emplace_back(i, j - i, type);
 			i = j + 1;
 		}
 	}
-	for (std::vector<tuple<size_t, size_t, Condition_Type>>::const_iterator x = spans.begin(); x != spans.end(); ++x) {
-		size_t x_len = std::get<1>(x);
+	for (auto&x : spans) {
+		size_t x_len = get<1>(x);
 		length += x_len;
 	}
 }
@@ -93,12 +94,12 @@ Condition<CharT>::Condition(const StrT& condition) : cond(condition), length(0)
  * @return The valueof true when string matched condition.
  */
 template <class CharT>
-auto Condition<CharT>::match(const StrT& s, const size_t& pos, const size_t& len) const -> bool
+auto Condition<CharT>::match(const StrT& s, const size_t pos, const size_t len) const -> bool
 {
-	if (pos >= s.size()) {
+	if (pos > s.size()) {
 		//Question: should we calculate more precise what length of condition is?
-		auto what = std::string("Cannot match Condition when start position ") + pos + " for string " + s + " is greater than length of condition " + cond;
-		throw std::length_error(what);
+		auto what = string("Cannot match Condition when start position ") + string(pos) + " for string " + s + " is greater than length of condition " + cond;
+		throw length_error(what);
 	}
 	if (s.size() - pos < len)
 		len = s.size() - pos;
@@ -106,16 +107,15 @@ auto Condition<CharT>::match(const StrT& s, const size_t& pos, const size_t& len
 		return false;
 
 	size_t i = pos;
+	for (auto&x : spans) {
+		size_t x_pos = get<0>(x); // can this also be x->pos and x-> len ?
+		size_t x_len = get<1>(x);
+		Condition_Type x_type = get<2>(x);
 
-	for (std::vector<tuple<size_t, size_t, Condition_Type>>::const_iterator x = spans.begin(); x != spans.end(); ++x) {
-		size_t x_pos = std::get<0>(x);
-		size_t x_len = std::get<1>(x);
-		Condition_Type x_type = std::get<2>(x);
-
-		switch(x_type) { // [2] is type
+		switch(x_type) {
 		case NORMAL:
 			if (s.compare(i, x_len, cond, x_pos, x_len) == 0)
-				i += x.len;
+				i += x_len;
 			else
 				return false;
 			break;
@@ -142,4 +142,19 @@ auto Condition<CharT>::match(const StrT& s, const size_t& pos, const size_t& len
 template class Condition<char>;
 template class Condition<wchar_t>;
 template class Condition<char16_t>;
+
+template <class CharT>
+auto Condition<CharT>::match_prefix(const StrT& s) const -> bool
+{
+	return match(s, 0, );
+}
+
+template <class CharT>
+auto Condition<CharT>::match(const StrT& s) const -> bool
+{
+	if (s.size() >= 0000)
+		return match(s, s.size(), );
+	else
+		return false;
+}
 } // namespace nuspell
