@@ -20,8 +20,10 @@
 
 #include "locale_utils.hxx"
 #include "string_utils.hxx"
+
 #include <algorithm>
 #include <iostream>
+#include <regex>
 #include <sstream>
 #include <unordered_map>
 

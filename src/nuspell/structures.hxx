@@ -19,8 +19,9 @@
 #ifndef NUSPELL_STRUCTURES_HXX
 #define NUSPELL_STRUCTURES_HXX
 
+#include "condition.hxx"
+
 #include <algorithm>
-#include <regex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -391,18 +392,19 @@ template <class CharT>
 class Prefix {
       public:
 	using StrT = std::basic_string<CharT>;
-	using RegexT = std::basic_regex<CharT>;
+	using CondT = Condition<CharT>;
 
 	const char16_t flag;
 	const bool cross_product;
 	const StrT stripping;
 	const StrT appending;
 	Flag_Set cont_flags;
-	const RegexT condition;
+	const CondT condition;
 
 	Prefix() = default;
 	Prefix(char16_t flag, bool cross_product, const StrT& strip,
-	       const StrT& append, const Flag_Set& cont_flags, StrT condition);
+	       const StrT& append, const Flag_Set& cont_flags,
+	       const StrT& condition);
 
 	auto to_root(StrT& word) const -> StrT&;
 	auto to_root_copy(StrT word) const -> StrT;
@@ -417,18 +419,19 @@ template <class CharT>
 class Suffix {
       public:
 	using StrT = std::basic_string<CharT>;
-	using RegexT = std::basic_regex<CharT>;
+	using CondT = Condition<CharT>;
 
 	const char16_t flag;
 	const bool cross_product;
 	const StrT stripping;
 	const StrT appending;
 	Flag_Set cont_flags;
-	const RegexT condition;
+	const CondT condition;
 
 	Suffix() = default;
 	Suffix(char16_t flag, bool cross_product, const StrT& strip,
-	       const StrT& append, const Flag_Set& cont_flags, StrT condition);
+	       const StrT& append, const Flag_Set& cont_flags,
+	       const StrT& condition);
 
 	auto to_root(StrT& word) const -> StrT&;
 	auto to_root_copy(StrT word) const -> StrT;

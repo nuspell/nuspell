@@ -172,11 +172,9 @@ template class Break_Table<wchar_t>;
 template <class CharT>
 Prefix<CharT>::Prefix(char16_t flag, bool cross_product, const StrT& strip,
                       const StrT& append, const Flag_Set& cont_flags,
-                      StrT condition)
-    : flag{flag},
-      cross_product{cross_product}, stripping{strip}, appending{append},
-      cont_flags{cont_flags}, condition{condition.insert(0, 1, '^'),
-                                        regex_constants::basic}
+                      const StrT& condition)
+    : flag{flag}, cross_product{cross_product}, stripping{strip},
+      appending{append}, cont_flags{cont_flags}, condition{condition}
 {
 }
 
@@ -249,7 +247,7 @@ auto Prefix<CharT>::to_derived_copy(StrT word) const -> StrT
 template <class CharT>
 auto Prefix<CharT>::check_condition(const StrT& word) const -> bool
 {
-	return regex_search(word, condition);
+	return condition.match_prefix(word);
 }
 
 /**
@@ -269,11 +267,9 @@ auto Prefix<CharT>::check_condition(const StrT& word) const -> bool
 template <class CharT>
 Suffix<CharT>::Suffix(char16_t flag, bool cross_product, const StrT& strip,
                       const StrT& append, const Flag_Set& cont_flags,
-                      StrT condition)
+                      const StrT& condition)
     : flag{flag}, cross_product{cross_product}, stripping{strip},
-      appending{append}, cont_flags{cont_flags}, condition{
-                                                     condition += '$',
-                                                     regex_constants::basic}
+      appending{append}, cont_flags{cont_flags}, condition{condition}
 {
 }
 
@@ -344,7 +340,7 @@ auto Suffix<CharT>::to_derived_copy(StrT word) const -> StrT
 template <class CharT>
 auto Suffix<CharT>::check_condition(const StrT& word) const -> bool
 {
-	return regex_search(word, condition);
+	return condition.match_suffix(word);
 }
 
 template class Prefix<char>;

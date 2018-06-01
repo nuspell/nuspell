@@ -138,6 +138,7 @@ TEST_CASE("class Suffix", "[structures]")
 	SECTION("method check_condition")
 	{
 		CHECK(true == sfx_tests.check_condition("wry"s));
+		CHECK(false == sfx_tests.check_condition("ey"s));
 		CHECK(false == sfx_tests.check_condition("wries"s));
 	}
 }
