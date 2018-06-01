@@ -46,7 +46,7 @@ class Condition {
       private:
 	const StrT cond;
 	vector<tuple<size_t, size_t, Condition_Type>> spans; // pos, len, type
-	size_t length;
+	size_t length = 0;
 
       public:
 	Condition(const StrT& condition);

@@ -31,25 +31,24 @@ using namespace std;
  * this Condition object for.
  */
 template <class CharT>
-Condition<CharT>::Condition(const StrT& condition) : cond(condition), length(0)
+Condition<CharT>::Condition(const StrT& condition) : cond(condition)
 {
-	//	spans = vector<tuple<size_t, size_t, Condition_Type>>();
-	// TODO Throw exception when condition has empty selections "[]" or
-	// empty exceptions "[^]".
-
 	size_t i = 0;
 	for (; i != cond.size();) {
 		size_t j = cond.find_first_of(LITERAL(CharT, "[]."), i);
 		if (i != j) {
 			if (j == cond.npos) {
 				spans.emplace_back(i, cond.size() - i, NORMAL);
+				length += cond.size() - i;
 				break;
 			}
 			spans.emplace_back(i, j - i, NORMAL);
+			length += j - i;
 			i = j;
 		}
 		if (cond[i] == '.') {
 			spans.emplace_back(i, 1, DOT);
+			++length;
 			++i;
 			continue;
 		}
@@ -88,12 +87,9 @@ Condition<CharT>::Condition(const StrT& condition) : cond(condition), length(0)
 				throw invalid_argument(what);
 			}
 			spans.emplace_back(i, j - i, type);
+			++length;
 			i = j + 1;
 		}
-	}
-	for (auto& x : spans) {
-		size_t x_len = get<1>(x);
-		length += x_len;
 	}
 }
 

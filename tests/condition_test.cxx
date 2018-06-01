@@ -233,7 +233,7 @@ TEST_CASE("method match real-life combinations", "[condition]")
 	// found 850 times in affix files
 	auto c2 = Condition<wchar_t>(L"[cghjmsxyvzbdfklnprt-]");
 	CHECK(true == c2.match(L"b"));
-	CHECK(true == c2.match(L"i"));
+	CHECK(false == c2.match(L"i"));
 	CHECK(false == c2.match(L"ñ"));
 
 	// found 744 times in affix files
@@ -261,6 +261,14 @@ TEST_CASE("method match real-life combinations", "[condition]")
 	// found 74 times in affix files
 	auto c7 = Condition<wchar_t>(L"[^дж]ерти");
 	CHECK(true == c7.match(L"рерти"));
+	CHECK(true == c7.match_prefix(L"рерти123"));
+	CHECK(true == c7.match_suffix(L"123рерти"));
+
 	CHECK(false == c7.match(L"ерти"));
+
 	CHECK(false == c7.match(L"дерти"));
+	CHECK(false == c7.match_prefix(L"дерти123"));
+	CHECK(false == c7.match_suffix(L"123дерти"));
+
+	CHECK(false == c7.match(L"жерти"));
 }

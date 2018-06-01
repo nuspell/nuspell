@@ -1,4 +1,4 @@
 #!/bin/sh
 T="$1"
 shift
-"$T" -r tap "$@"
+"$T" -s -r tap "$@"
