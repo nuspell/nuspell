@@ -114,93 +114,83 @@ TEST_CASE("method match wildcards with wide character <wchar_t>", "[condition]")
 	CHECK(true == c2.match_prefix(L"aba"));
 }
 
-#if 0
 TEST_CASE("method match selections with runtime exceptions", "[condition]")
 {
-	auto cond1 = u"]";
-	try {
-		auto c1 = Condition<char16_t>(cond1);
-	} catch (const std::invalid_argument& e) {
-		CHECK("Cannot construct Condition without opening bracket for condition " + cond1 == e.what());
-	}
-	auto cond2 = u"ab]";
-	try {
-		auto c2 = Condition<char16_t>(cond2);
-	} catch (const std::invalid_argument& e) {
-		CHECK("Cannot construct Condition without opening bracket for condition " + cond2 == e.what());
-	}
-	auto cond3 = u"[ab";
-	try {
-		auto c3 = Condition<char16_t>(cond3);
-	} catch (const std::invalid_argument& e) {
-		CHECK("Cannot construct Condition without closing bracket for condition " + cond3 == e.what());
-	}
-	auto cond4 = u"[";
-	try {
-		auto c4 = Condition<char16_t>(cond4);
-	} catch (const std::invalid_argument& e) {
-		CHECK("Cannot construct Condition without closing bracket for condition " + cond4 == e.what());
-	}
-	auto cond5 = u"[]";
-	try {
-		auto c5 = Condition<char16_t>(cond5);
-	} catch (const std::invalid_argument& e) {
-		CHECK("Cannot construct Condition with empty brackets for condition " + cond5 == e.what());
-	}
+	auto cond1 = L"]";
+	CHECK_THROWS_AS([&](){
+		auto c1 = Condition<wchar_t>(cond1);
+	}(), std::invalid_argument);
+	CHECK_THROWS_WITH([&](){
+		auto c1 = Condition<wchar_t>(cond1);
+	}(), "Closing bracket has no matching opening bracket.");
+
+	auto cond2 = L"ab]";
+	CHECK_THROWS_AS([&](){
+		auto c2 = Condition<wchar_t>(cond2);
+	}(), std::invalid_argument);
+	CHECK_THROWS_WITH([&](){
+		auto c2 = Condition<wchar_t>(cond2);
+	}(), "Closing bracket has no matching opening bracket.");
+
+	auto cond3 = L"[ab";
+	CHECK_THROWS_AS([&](){
+		auto c3 = Condition<wchar_t>(cond3);
+	}(), std::invalid_argument);
+	CHECK_THROWS_WITH([&](){
+		auto c3 = Condition<wchar_t>(cond3);
+	}(), "Opening bracket has no matching closing bracket.");
+
+	auto cond4 = L"[";
+	CHECK_THROWS_AS([&](){
+		auto c4 = Condition<wchar_t>(cond4);
+	}(), std::invalid_argument);
+	CHECK_THROWS_WITH([&](){
+		auto c4 = Condition<wchar_t>(cond4);
+	}(), "Opening bracket has no matching closing bracket.");
+
+	auto cond5 = L"[]";
+	CHECK_THROWS_AS([&](){
+		auto c5 = Condition<wchar_t>(cond5);
+	}(), std::invalid_argument);
+	CHECK_THROWS_WITH([&](){
+		auto c5 = Condition<wchar_t>(cond5);
+	}(), "Empty bracket expression.");
+
+	auto cond6 = L"[^]";
+	CHECK_THROWS_AS([&](){
+		auto c6 = Condition<wchar_t>(cond6);
+	}(), std::invalid_argument);
+	CHECK_THROWS_WITH([&](){
+		auto c6 = Condition<wchar_t>(cond6);
+	}(), "Empty bracket expression.");
 }
-#endif
-#if 0
-// Need to discuss this, related to optimization of .e.g. [abb] and [^abb] into [ab] and [^ab].
-TEST_CASE("method match exceptions with runtime exceptions",
-          "[condition]")
+
+TEST_CASE("method match selections with standard character <char>", "[condition]")
 {
-	auto c1 = Condition<char>("[^]");
-	// TODO Catch exception on construction or on matchon undefined or
-	// error?
+	auto c1 = Condition<char>("[ab]");
+	CHECK(true == c1.match("a"));
+	CHECK(true == c1.match("b"));
+	CHECK(false == c1.match("c"));
 
-	auto c2 = Condition<char>("[^a]");
-	// TODO
+	auto c2 = Condition<char>("[^ab]");
+	CHECK(false == c2.match("a"));
+	CHECK(false == c2.match("b"));
+	CHECK(true == c2.match("c"));
 
-	auto c3 = Condition<char>("[^aa]");
-	// TODO
+	// not default regex behaviour for hyphen
+	auto c3 = Condition<char>("[a-c]");
+	CHECK(true == c3.match("a"));
+	CHECK(true == c3.match("-"));
+	CHECK(true == c3.match("c"));
+	CHECK(false == c3.match("b"));
 
-	auto c4 = Condition<char>("[^ab]");
-	// TODO
+	// not default regex behaviour for hyphen
+	auto c4 = Condition<char>("[^a-c]");
+	CHECK(false == c4.match("a"));
+	CHECK(false == c4.match("-"));
+	CHECK(false == c4.match("c"));
+	CHECK(true == c4.match("b"));
 }
-#endif
-
-#if 0
-// Might leave this out as hyphen doesn't have a special meaning.
-TEST_CASE("method match hyphens with standard character <char>", "[condition]")
-{
-	auto c1 = Condition<char>("-");
-	// TODO
-
-	auto c2 = Condition<char>("-a");
-	// TODO
-
-	auto c3 = Condition<char>("a-");
-	// TODO
-
-	auto c4 = Condition<char>("-$");
-	// TODO
-
-	auto c5 = Condition<char>("^-");
-	// TODO
-
-	auto c6 = Condition<char>("[a-]");
-	// TODO
-
-	auto c7 = Condition<char>("[-a]");
-	// TODO
-
-	auto c8 = Condition<char>("[a-b]");
-	// TODO
-
-	auto c9 = Condition<char>("[b-a]");
-	// TODO
-}
-#endif
 
 TEST_CASE("method match diacritics and ligatues", "[condition]")
 {
@@ -232,8 +222,8 @@ TEST_CASE("method match real-life combinations", "[condition]")
 
 	// found 850 times in affix files
 	auto c2 = Condition<wchar_t>(L"[cghjmsxyvzbdfklnprt-]");
-	CHECK(true == c2.match(L"b"));
-	CHECK(false == c2.match(L"i"));
+	CHECK(true == c2.match(L"c"));
+	CHECK(true == c2.match(L"-"));
 	CHECK(false == c2.match(L"ñ"));
 
 	// found 744 times in affix files

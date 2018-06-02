@@ -283,7 +283,8 @@ auto classify_casing(const std::basic_string<CharT>& s,
  * Tests if word is a number.
  *
  * Allow numbers with dots ".", dashes "-" and commas ",", but forbids double
- * separators such as "..", "--" and ".,".
+ * separators such as "..", "--" and ".,".  This results in increase of
+ * performance over an implementation with <regex> use.
  */
 template <class CharT>
 auto is_number(const std::basic_string<CharT>& s) -> bool

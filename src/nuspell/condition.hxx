@@ -27,6 +27,9 @@ namespace nuspell {
 
 /**
  * A class providing implementation for limited regular expression matching.
+ *
+ * This results in increase of performance over an implementation with <regex>
+ * use.
  */
 template <class CharT>
 class Condition {
