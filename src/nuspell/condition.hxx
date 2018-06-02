@@ -31,7 +31,7 @@ namespace nuspell {
 template <class CharT>
 class Condition {
       public:
-	enum Condition_Type {
+	enum Span_Type {
 		NORMAL /**< normal character */,
 		DOT /**< wildcard character */,
 		ANY_OF /**< set of possible characters */,
@@ -45,10 +45,11 @@ class Condition {
 
       private:
 	const StrT cond;
-	vector<tuple<size_t, size_t, Condition_Type>> spans; // pos, len, type
+	vector<tuple<size_t, size_t, Span_Type>> spans; // pos, len, type
 	size_t length = 0;
 
       public:
+	Condition() = default;
 	Condition(const StrT& condition);
 	auto match(const StrT& s, size_t pos = 0, size_t len = StrT::npos) const
 	    -> bool;

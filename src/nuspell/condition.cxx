@@ -53,19 +53,18 @@ Condition<CharT>::Condition(const StrT& condition) : cond(condition)
 			continue;
 		}
 		if (cond[i] == ']') {
-			auto what = string("Cannot construct Condition without "
-			                   "opening bracket for condition ");
+			auto what =
+			    "Closing bracket has no matching opening bracket.";
 			throw invalid_argument(what);
 		}
 		if (cond[i] == '[') {
 			++i;
 			if (i == cond.size()) {
-				auto what =
-				    string("Cannot construct Condition without "
-				           "closing bracket for condition ");
+				auto what = "Opening bracket has no matching "
+				            "closing bracket.";
 				throw invalid_argument(what);
 			}
-			Condition_Type type;
+			Span_Type type;
 			if (cond[i] == '^') {
 				type = NONE_OF;
 				++i;
@@ -75,15 +74,12 @@ Condition<CharT>::Condition(const StrT& condition) : cond(condition)
 			}
 			j = cond.find(']', i);
 			if (j == i) {
-				auto what =
-				    string("Cannot construct Condition with "
-				           "empty brackets for condition ");
+				auto what = "Empty bracket expression.";
 				throw invalid_argument(what);
 			}
 			if (j == cond.npos) {
-				auto what =
-				    string("Cannot construct Condition without "
-				           "closing bracket for condition ");
+				auto what = "Opening bracket has no matching "
+				            "closing bracket.";
 				throw invalid_argument(what);
 			}
 			spans.emplace_back(i, j - i, type);
@@ -97,8 +93,7 @@ Condition<CharT>::Condition(const StrT& condition) : cond(condition)
  *
  * @param s string to check if it matches the condition.
  * @param pos start position for string, default is 0.
- * @param len length of string counting from the start position. Question:
- * correct?
+ * @param len length of string counting from the start position.
  * @return The valueof true when string matched condition.
  */
 template <class CharT>
@@ -115,14 +110,14 @@ auto Condition<CharT>::match(const StrT& s, size_t pos, size_t len) const
 
 	size_t i = pos;
 	for (auto& x : spans) {
-		size_t x_pos =
-		    get<0>(x); // can this also be x->pos and x-> len ?
-		size_t x_len = get<1>(x);
-		Condition_Type x_type = get<2>(x);
+		auto x_pos = get<0>(x);
+		auto x_len = get<1>(x);
+		auto x_type = get<2>(x);
 
+		using tr = typename StrT::traits_type;
 		switch (x_type) {
 		case NORMAL:
-			if (s.compare(i, x_len, cond, x_pos, x_len) == 0)
+			if (tr::compare(&s[i], &cond[x_pos], x_len) == 0)
 				i += x_len;
 			else
 				return false;
@@ -131,16 +126,13 @@ auto Condition<CharT>::match(const StrT& s, size_t pos, size_t len) const
 			++i;
 			break;
 		case ANY_OF:
-
-			if (StrT::traits_type::find(cond.data() + x_pos, x_len,
-			                            s[i]) != nullptr)
+			if (tr::find(cond.data() + x_pos, x_len, s[i]))
 				++i;
 			else
 				return false;
 			break;
 		case NONE_OF:
-			if (StrT::traits_type::find(cond.data() + x_pos, x_len,
-			                            s[i]) != nullptr)
+			if (tr::find(cond.data() + x_pos, x_len, s[i]))
 				return false;
 			else
 				++i;
