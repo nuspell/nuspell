@@ -16,6 +16,11 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file dictionary.cxx
+ * Dictionary spelling.
+ */
+
 #include "dictionary.hxx"
 #include "string_utils.hxx"
 

@@ -16,6 +16,11 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file structures.hxx
+ * Data structures.
+ */
+
 #ifndef NUSPELL_STRUCTURES_HXX
 #define NUSPELL_STRUCTURES_HXX
 

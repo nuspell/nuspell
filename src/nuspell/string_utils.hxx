@@ -16,9 +16,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 /**
  * @file string_utils.hxx
- * @brief String algorithms.
+ * String algorithms.
  */
 
 #ifndef NUSPELL_STRING_UTILS_HXX

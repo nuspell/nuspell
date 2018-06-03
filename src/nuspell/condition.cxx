@@ -16,6 +16,11 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file condition.cxx
+ * Condition matching.
+ */
+
 #include "condition.hxx"
 #include "string_utils.hxx"
 
@@ -25,7 +30,8 @@ namespace nuspell {
 
 using namespace std;
 
-/** Constructs a Condition object.
+/**
+ * Constructs a Condition object.
  *
  * @param condition string containing simplifed regular expression to construct
  * this Condition object for.
@@ -89,7 +95,8 @@ Condition<CharT>::Condition(const StrT& condition) : cond(condition)
 	}
 }
 
-/** Checks if provided string matched the condition.
+/**
+ * Checks if provided string matched the condition.
  *
  * @param s string to check if it matches the condition.
  * @param pos start position for string, default is 0.

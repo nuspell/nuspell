@@ -18,7 +18,7 @@
 
 /**
  * @file locale_utils.hxx
- * Encoding transformations. see namespace nuspell::encoding
+ * Encoding transformations. See namespace nuspell::encoding
  */
 
 #ifndef LOCALE_UTILS_HXX

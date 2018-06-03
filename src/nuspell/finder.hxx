@@ -16,6 +16,11 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file finder.hxx
+ * Finding dictionaries.
+ */
+
 #ifndef NUSPELL_FINDER_HXX
 #define NUSPELL_FINDER_HXX
 #include <string>

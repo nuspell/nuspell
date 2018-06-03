@@ -16,6 +16,11 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file dictionary.hxx
+ * Dictionary spelling.
+ */
+
 #ifndef NUSPELL_DICTIONARY_HXX
 #define NUSPELL_DICTIONARY_HXX
 
@@ -236,21 +241,15 @@ class Dictionary : public Aff_Data {
 	auto static load_from_aff_dic(const string& file_path_without_extension)
 	{
 		auto ret = Dictionary();
-		ret.parse_aff_dic(file_path_without_extension);
-		// If return == false, this is not processed at the moment. An
-		// error "Dictionary not found" should be reported one level
-		// higher; Reason is usually that the file does not exist, which
-		// is incorrectly not reported now.
+		if (!ret.parse_aff_dic(file_path_without_extension))
+			throw std::ios_base::failure("File not found.");
 		return ret;
 	}
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
 		auto ret = Dictionary();
-		ret.parse_aff_dic(aff, dic);
-		// If return == false, this is not processed at the moment. An
-		// error "Dictionary not found" should be reported one level
-		// higher; Reason is usually that the file does not exist, which
-		// is incorrectly not reported now.
+		if (!ret.parse_aff_dic(aff, dic))
+			throw std::ios_base::failure("File not found.");
 		return ret;
 	}
 

@@ -16,6 +16,11 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file locale_utils.cxx
+ * Encoding transformations. See namespace nuspell::encoding
+ */
+
 #include "locale_utils.hxx"
 
 #include <algorithm>

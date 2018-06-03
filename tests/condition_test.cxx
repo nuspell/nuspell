@@ -117,55 +117,44 @@ TEST_CASE("method match wildcards with wide character <wchar_t>", "[condition]")
 TEST_CASE("method match selections with runtime exceptions", "[condition]")
 {
 	auto cond1 = L"]";
-	CHECK_THROWS_AS([&](){
-		auto c1 = Condition<wchar_t>(cond1);
-	}(), std::invalid_argument);
-	CHECK_THROWS_WITH([&](){
-		auto c1 = Condition<wchar_t>(cond1);
-	}(), "Closing bracket has no matching opening bracket.");
+	CHECK_THROWS_AS([&]() { auto c1 = Condition<wchar_t>(cond1); }(),
+	                std::invalid_argument);
+	CHECK_THROWS_WITH([&]() { auto c1 = Condition<wchar_t>(cond1); }(),
+	                  "Closing bracket has no matching opening bracket.");
 
 	auto cond2 = L"ab]";
-	CHECK_THROWS_AS([&](){
-		auto c2 = Condition<wchar_t>(cond2);
-	}(), std::invalid_argument);
-	CHECK_THROWS_WITH([&](){
-		auto c2 = Condition<wchar_t>(cond2);
-	}(), "Closing bracket has no matching opening bracket.");
+	CHECK_THROWS_AS([&]() { auto c2 = Condition<wchar_t>(cond2); }(),
+	                std::invalid_argument);
+	CHECK_THROWS_WITH([&]() { auto c2 = Condition<wchar_t>(cond2); }(),
+	                  "Closing bracket has no matching opening bracket.");
 
 	auto cond3 = L"[ab";
-	CHECK_THROWS_AS([&](){
-		auto c3 = Condition<wchar_t>(cond3);
-	}(), std::invalid_argument);
-	CHECK_THROWS_WITH([&](){
-		auto c3 = Condition<wchar_t>(cond3);
-	}(), "Opening bracket has no matching closing bracket.");
+	CHECK_THROWS_AS([&]() { auto c3 = Condition<wchar_t>(cond3); }(),
+	                std::invalid_argument);
+	CHECK_THROWS_WITH([&]() { auto c3 = Condition<wchar_t>(cond3); }(),
+	                  "Opening bracket has no matching closing bracket.");
 
 	auto cond4 = L"[";
-	CHECK_THROWS_AS([&](){
-		auto c4 = Condition<wchar_t>(cond4);
-	}(), std::invalid_argument);
-	CHECK_THROWS_WITH([&](){
-		auto c4 = Condition<wchar_t>(cond4);
-	}(), "Opening bracket has no matching closing bracket.");
+	CHECK_THROWS_AS([&]() { auto c4 = Condition<wchar_t>(cond4); }(),
+	                std::invalid_argument);
+	CHECK_THROWS_WITH([&]() { auto c4 = Condition<wchar_t>(cond4); }(),
+	                  "Opening bracket has no matching closing bracket.");
 
 	auto cond5 = L"[]";
-	CHECK_THROWS_AS([&](){
-		auto c5 = Condition<wchar_t>(cond5);
-	}(), std::invalid_argument);
-	CHECK_THROWS_WITH([&](){
-		auto c5 = Condition<wchar_t>(cond5);
-	}(), "Empty bracket expression.");
+	CHECK_THROWS_AS([&]() { auto c5 = Condition<wchar_t>(cond5); }(),
+	                std::invalid_argument);
+	CHECK_THROWS_WITH([&]() { auto c5 = Condition<wchar_t>(cond5); }(),
+	                  "Empty bracket expression.");
 
 	auto cond6 = L"[^]";
-	CHECK_THROWS_AS([&](){
-		auto c6 = Condition<wchar_t>(cond6);
-	}(), std::invalid_argument);
-	CHECK_THROWS_WITH([&](){
-		auto c6 = Condition<wchar_t>(cond6);
-	}(), "Empty bracket expression.");
+	CHECK_THROWS_AS([&]() { auto c6 = Condition<wchar_t>(cond6); }(),
+	                std::invalid_argument);
+	CHECK_THROWS_WITH([&]() { auto c6 = Condition<wchar_t>(cond6); }(),
+	                  "Empty bracket expression.");
 }
 
-TEST_CASE("method match selections with standard character <char>", "[condition]")
+TEST_CASE("method match selections with standard character <char>",
+          "[condition]")
 {
 	auto c1 = Condition<char>("[ab]");
 	CHECK(true == c1.match("a"));
@@ -236,6 +225,7 @@ TEST_CASE("method match real-life combinations", "[condition]")
 	auto c4 = Condition<wchar_t>(L"[^-]");
 	CHECK(true == c4.match(L"a"));
 	CHECK(true == c4.match(L"b"));
+	CHECK(true == c4.match(L"^"));
 	CHECK(false == c4.match(L"-"));
 
 	// found 4 times in affix files
@@ -245,8 +235,9 @@ TEST_CASE("method match real-life combinations", "[condition]")
 	CHECK(false == c5.match(L"Z-"));
 
 	// found 2 times in affix files
-	// TODO Question: identiecal to [6cug][^-] ? What is valid and what not?
 	auto c6 = Condition<wchar_t>(L"[^cug^-]er");
+	CHECK(false == c6.match(L"^er"));
+	CHECK(true == c6.match(L"_er"));
 
 	// found 74 times in affix files
 	auto c7 = Condition<wchar_t>(L"[^дж]ерти");

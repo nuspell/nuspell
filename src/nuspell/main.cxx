@@ -16,6 +16,11 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file main.cxx
+ * Command line spell checking.
+ */
+
 #include "dictionary.hxx"
 #include "finder.hxx"
 #include "string_utils.hxx"
@@ -50,21 +55,21 @@ using namespace std;
 using namespace nuspell;
 
 enum Mode {
-	DEFAULT_MODE /**< mode printing correct and misspelled words with
+	DEFAULT_MODE /**< printing correct and misspelled words with
 	                suggestions */
 	,
-	NO_SUGGEST_MODE /**< mode printing correct and misspelled words without
+	NO_SUGGEST_MODE /**< printing correct and misspelled words without
 	                   suggestions */
 	,
-	MISSPELLED_WORDS_MODE /**< mode printing only misspelled words */,
-	MISSPELLED_LINES_MODE /**< mode printing only misspelled lines */,
-	CORRECT_WORDS_MODE /**< mode printing only correct words */,
-	CORRECT_LINES_MODE /**< mode printing only correct lines */,
-	LINES_MODE /**< mode where correctness is based on entire line */,
-	LIST_DICTIONARIES_MODE /**< more printing available dictionaries */,
-	HELP_MODE /**< mode printing help information */,
-	VERSION_MODE /**< mode printing version information */,
-	ERROR_MODE /**< mode where the arguments used caused an error */
+	MISSPELLED_WORDS_MODE /**< printing only misspelled words */,
+	MISSPELLED_LINES_MODE /**< printing only misspelled lines */,
+	CORRECT_WORDS_MODE /**< printing only correct words */,
+	CORRECT_LINES_MODE /**< printing only correct lines */,
+	LINES_MODE /**< where correctness is based on entire line */,
+	LIST_DICTIONARIES_MODE /**< printing available dictionaries */,
+	HELP_MODE /**< printing help information */,
+	VERSION_MODE /**< printing version information */,
+	ERROR_MODE /**< where the arguments used caused an error */
 };
 
 struct Args_t {
@@ -413,7 +418,7 @@ ostream& operator<<(ostream& out, const locale& loc)
 
 int main(int argc, char* argv[])
 {
-	// may spedup io. after this, don't use C printf, scanf etc.
+	// May speed up I/O. After this, don't use C printf, scanf etc.
 	ios_base::sync_with_stdio(false);
 
 	auto args = Args_t(argc, argv);
@@ -483,16 +488,23 @@ int main(int argc, char* argv[])
 		}
 	}
 	auto filename = f.get_dictionary(args.dictionary);
-	if (filename.empty()) {
-		if (args.dictionary.empty())
-			cerr << "No dictionary provided\n";
-		else
-			cerr << "Dictionary " << args.dictionary
-			     << " not found\n";
+	auto dic = Dictionary();
+	try {
+		if (filename.empty()) {
+			if (args.dictionary.empty())
+				cerr << "No dictionary provided\n";
+			else
+				throw std::ios_base::failure("File not found.");
+			return 1;
+		}
+		clog << "INFO: Pointed dictionary " << filename
+		     << ".{dic,aff}\n";
+		dic = Dictionary::load_from_aff_dic(filename);
+	}
+	catch (const std::ios_base::failure& e) {
+		cerr << "Dictionary " << args.dictionary << " was not found\n";
 		return 1;
 	}
-	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
-	auto dic = Dictionary::load_from_aff_dic(filename);
 	auto loop_function = normal_loop;
 	switch (args.mode) {
 	case DEFAULT_MODE:

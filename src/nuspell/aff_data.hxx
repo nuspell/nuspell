@@ -16,6 +16,11 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file aff_data.hxx
+ * Affixing data structures.
+ */
+
 #ifndef NUSPELL_AFF_DATA_HXX
 #define NUSPELL_AFF_DATA_HXX
 

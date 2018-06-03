@@ -16,6 +16,11 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file structures.cxx
+ * Data structures.
+ */
+
 #include "structures.hxx"
 
 #include <boost/utility/string_view.hpp>

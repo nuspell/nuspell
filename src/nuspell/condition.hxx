@@ -16,6 +16,11 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file condition.hxx
+ * Condition matching.
+ */
+
 #ifndef NUSPELL_CONDITION_HXX
 #define NUSPELL_CONDITION_HXX
 
