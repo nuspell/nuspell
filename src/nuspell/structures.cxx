@@ -23,12 +23,9 @@
 
 #include "structures.hxx"
 
-#include <boost/utility/string_view.hpp>
-
 namespace nuspell {
 
 using namespace std;
-using boost::basic_string_view;
 
 template class String_Set<char>;
 template class String_Set<wchar_t>;
@@ -54,7 +51,7 @@ template <class CharT>
 struct Comparer_Str_Rep {
 
 	using StrT = basic_string<CharT>;
-	using StrViewT = basic_string_view<CharT>;
+	using StrViewT = my_string_view<CharT>;
 
 	auto static cmp_prefix_of(const StrT& p, StrViewT of)
 	{
@@ -77,7 +74,7 @@ struct Comparer_Str_Rep {
 
 template <class CharT>
 auto find_match(const typename Substr_Replacer<CharT>::Table_Pairs& t,
-                basic_string_view<CharT> s)
+                my_string_view<CharT> s)
 {
 	Comparer_Str_Rep<CharT> csr;
 	auto it = begin(t);
@@ -111,7 +108,7 @@ auto Substr_Replacer<CharT>::replace(StrT& s) const -> StrT&
 	if (table.empty())
 		return s;
 	for (size_t i = 0; i < s.size(); /*no increment here*/) {
-		auto substr = basic_string_view<CharT>(&s[i], s.size() - i);
+		auto substr = my_string_view<CharT>(&s[i], s.size() - i);
 		auto it = find_match(table, substr);
 		if (it != end(table)) {
 			auto& match = *it;

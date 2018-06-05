@@ -35,7 +35,15 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/range/iterator_range_core.hpp>
+
+#ifdef __has_include
+#if __has_include(<experimental/string_view>)
+#define NUSPELL_HAVE_STD_STRING_VIEW 1
+#include <experimental/string_view>
+#else
 #include <boost/utility/string_view.hpp>
+#endif
+#endif
 
 namespace nuspell {
 
@@ -456,6 +464,14 @@ using boost::multi_index::hashed_non_unique;
 using boost::multi_index::indexed_by;
 using boost::multi_index::member;
 
+#ifdef NUSPELL_HAVE_STD_STRING_VIEW
+template <class CharT>
+using my_string_view = std::experimental::basic_string_view<CharT>;
+template <class CharT>
+using sv_hash = std::hash<my_string_view<CharT>>;
+#else
+template <class CharT>
+using my_string_view = boost::basic_string_view<CharT>;
 template <class CharT>
 struct sv_hash {
 	auto operator()(boost::basic_string_view<CharT> s) const
@@ -463,11 +479,11 @@ struct sv_hash {
 		return boost::hash_range(begin(s), end(s));
 	}
 };
+#endif
 
 template <class CharT>
 struct sv_eq {
-	auto operator()(boost::basic_string_view<CharT> l,
-	                boost::basic_string_view<CharT> r) const
+	auto operator()(my_string_view<CharT> l, my_string_view<CharT> r) const
 	{
 		return l == r;
 	}

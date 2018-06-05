@@ -34,8 +34,6 @@ namespace nuspell {
 
 using namespace std;
 using boost::make_iterator_range;
-template <class CharT>
-using str_view = boost::basic_string_view<CharT>;
 using boost::locale::to_lower;
 using boost::locale::to_title;
 
@@ -451,7 +449,7 @@ auto cross_valid_inner_outer(const Flag_Set& word_flags, const Affix& afx)
 template <class CharT>
 auto prefix(const basic_string<CharT>& word, size_t len)
 {
-	return str_view<CharT>(word).substr(0, len);
+	return my_string_view<CharT>(word).substr(0, len);
 }
 template <class CharT>
 auto prefix(basic_string<CharT>&& word, size_t len) = delete;
@@ -459,7 +457,7 @@ auto prefix(basic_string<CharT>&& word, size_t len) = delete;
 template <class CharT>
 auto suffix(const basic_string<CharT>& word, size_t len)
 {
-	return str_view<CharT>(word).substr(word.size() - len);
+	return my_string_view<CharT>(word).substr(word.size() - len);
 }
 template <class CharT>
 auto suffix(basic_string<CharT>&& word, size_t len) = delete;
@@ -475,7 +473,7 @@ class Prefix_Iter {
 	const Prefix_Table<CharT>& tbl;
 	const basic_string<CharT>& word;
 	size_t len;
-	str_view<CharT> pfx;
+	my_string_view<CharT> pfx;
 	using iter = typename Prefix_Table<CharT>::iterator;
 	iter a;
 	iter b;
@@ -526,7 +524,7 @@ class Suffix_Iter {
 	const Suffix_Table<CharT>& tbl;
 	const basic_string<CharT>& word;
 	size_t len;
-	str_view<CharT> pfx;
+	my_string_view<CharT> pfx;
 	using iter = typename Suffix_Table<CharT>::iterator;
 	iter a;
 	iter b;

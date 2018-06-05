@@ -264,7 +264,7 @@ auto print_version() -> void
  *
  * @param f a finder for search paths and located dictionary.
  */
-auto list_dictionaries(Finder& f) -> void
+auto list_dictionaries(const Finder& f) -> void
 {
 	if (f.get_all_paths().empty()) {
 		cout << "No search paths available" << '\n';
