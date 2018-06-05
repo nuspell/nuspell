@@ -488,21 +488,22 @@ int main(int argc, char* argv[])
 		}
 	}
 	auto filename = f.get_dictionary(args.dictionary);
+	if (filename.empty()) {
+		if (args.dictionary.empty())
+			cerr << "No dictionary provided\n";
+		else
+			cerr << "Dictionary " << args.dictionary
+			     << " not found\n";
+
+		return 1;
+	}
+	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
 	auto dic = Dictionary();
 	try {
-		if (filename.empty()) {
-			if (args.dictionary.empty())
-				cerr << "No dictionary provided\n";
-			else
-				throw std::ios_base::failure("File not found.");
-			return 1;
-		}
-		clog << "INFO: Pointed dictionary " << filename
-		     << ".{dic,aff}\n";
 		dic = Dictionary::load_from_aff_dic(filename);
 	}
 	catch (const std::ios_base::failure& e) {
-		cerr << "Dictionary " << args.dictionary << " was not found\n";
+		cerr << e.what() << '\n';
 		return 1;
 	}
 	auto loop_function = normal_loop;

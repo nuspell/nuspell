@@ -238,19 +238,23 @@ class Dictionary : public Aff_Data {
 		return parse_aff_dic(aff_file, dic_file);
 	}
 
-	auto static load_from_aff_dic(const string& file_path_without_extension)
-	{
-		auto ret = Dictionary();
-		if (!ret.parse_aff_dic(file_path_without_extension))
-			throw std::ios_base::failure("File not found.");
-		return ret;
-	}
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
 		auto ret = Dictionary();
 		if (!ret.parse_aff_dic(aff, dic))
-			throw std::ios_base::failure("File not found.");
+			throw std::ios_base::failure("Error parsing.");
 		return ret;
+	}
+	auto static load_from_aff_dic(const string& file_path_without_extension)
+	{
+		auto& path = file_path_without_extension;
+		std::ifstream aff_file(path + ".aff");
+		if (aff_file.fail())
+			throw std::ios_base::failure("Aff file not found.");
+		std::ifstream dic_file(path + ".dic");
+		if (dic_file.fail())
+			throw std::ios_base::failure("Dic file not found.");
+		return load_from_aff_dic(aff_file, dic_file);
 	}
 
 	auto spell_dict_encoding(const std::string& word) -> Spell_Result;
