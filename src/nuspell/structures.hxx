@@ -39,10 +39,13 @@
 #ifdef __has_include
 #if __has_include(<experimental/string_view>)
 #define NUSPELL_HAVE_STD_STRING_VIEW 1
+#endif
+#endif
+
+#ifdef NUSPELL_HAVE_STD_STRING_VIEW
 #include <experimental/string_view>
 #else
 #include <boost/utility/string_view.hpp>
-#endif
 #endif
 
 namespace nuspell {
