@@ -836,6 +836,34 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 }
 
 /**
+ * @brief Scans @p line for morphological field [a-z][a-z]:
+ * @param line
+ *
+ * @returns the end of the word before the morph field, or npos
+ */
+auto dic_find_end_of_word_heuristics(const string& line)
+{
+	if (line.size() < 4)
+		return line.npos;
+	size_t a = 0;
+	for (;;) {
+		a = line.find(' ', a);
+		if (a == line.npos)
+			break;
+		auto b = line.find_first_not_of(' ', a);
+		if (b == line.npos)
+			break;
+		if (b > line.size() - 3)
+			break;
+		if (line[b] >= 'a' && line[b] <= 'z' && line[b + 1] >= 'a' &&
+		    line[b + 1] <= 'z' && line[b + 2] == ':')
+			return a;
+		a = b;
+	}
+	return line.npos;
+}
+
+/**
  * Parses an input stream offering dictionary information.
  *
  * @param in input stream to read from.
@@ -875,11 +903,6 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	vector<string> morphs;
 	u16string flags;
 
-	// Following could be replaced by non-library implementation, reducing
-	// size of binary when no regex methods are called at all.
-	regex morph_field(R"(\s+[a-z][a-z]:)");
-	smatch mf_match;
-
 	while (getline(in, line)) {
 		line_number++;
 		ss.str(line);
@@ -917,14 +940,10 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			// After tab follow morphological fields
 			getline(ss, word, '\t');
 		}
-		else if (regex_search(line, mf_match, morph_field)) {
-			word = mf_match.prefix();
-			ss.ignore(mf_match.position());
-		}
 		else {
-			// No slash or tab or morph field "aa:".
-			// Treat word until end.
-			getline(ss, word);
+			auto end = dic_find_end_of_word_heuristics(line);
+			word.assign(line, 0, end);
+			ss.ignore(end);
 		}
 		if (word.empty()) {
 			continue;
