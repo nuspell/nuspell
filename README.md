@@ -58,8 +58,8 @@ We first need to download the dependencies. Some may already be preinstalled.
 
 For Ubuntu:
 
-    sudo apt install autoconf automake libtool libboost-locale-dev \
-                     libboost-system-dev
+    sudo apt install g++ autoconf automake libtool pkg-config \
+                     libboost-locale-dev libboost-system-dev libicu-dev
 
 Then run the following commands:
 
