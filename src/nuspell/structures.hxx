@@ -38,11 +38,21 @@
 
 #ifdef __has_include
 #if __has_include(<experimental/string_view>)
+#if !defined(_LIBCPP_VERSION) || _LIBCPP_VERSION < 7000
 #include <experimental/string_view>
+#if defined(__cpp_lib_experimental_string_view) || defined(_LIBCPP_VERSION)
+#define NUSPELL_STR_VIEW_NS std::experimental
+#endif
+#endif
 #endif
 #endif
 
-#ifndef __cpp_lib_experimental_string_view
+#if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 7000
+#include <string_view>
+#define NUSPELL_STR_VIEW_NS std
+#endif
+
+#ifndef NUSPELL_STR_VIEW_NS
 #include <boost/utility/string_view.hpp>
 #endif
 
@@ -465,9 +475,9 @@ using boost::multi_index::hashed_non_unique;
 using boost::multi_index::indexed_by;
 using boost::multi_index::member;
 
-#ifdef __cpp_lib_experimental_string_view
+#ifdef NUSPELL_STR_VIEW_NS
 template <class CharT>
-using my_string_view = std::experimental::basic_string_view<CharT>;
+using my_string_view = NUSPELL_STR_VIEW_NS::basic_string_view<CharT>;
 template <class CharT>
 using sv_hash = std::hash<my_string_view<CharT>>;
 #else
