@@ -89,13 +89,19 @@ In Ubuntu, the packages are:
 
 # Compiling on OSX and macOS
 
-On macOS for compiler always use `clang` and not `g++` because Homebrew
-dependencies are build with that.
+1. Install Apple's Command-line tools
+2. Install Homebrew package manager
+3. Install dependencies
 
-    brew install autoconf automake libtool
-    brew install boost --with-icu4c
+```
+brew install autoconf automake libtool pkg-config
+brew install boost --with-icu4c
+```
 
 Then run the standard trio: autoreconf, configure, make. See above.
+
+If you want to build with GCC instead of Clang, you need to pull GCC with
+Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
 
 # Compiling on Windows
 
