@@ -27,7 +27,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <boost/algorithm/string/trim.hpp>
 #include <boost/locale.hpp>
 
 namespace nuspell {
@@ -45,7 +44,6 @@ using boost::locale::to_title;
 template <class CharT>
 auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 {
-	auto& loc = locale_aff;
 	auto& d = get_structures<CharT>();
 
 	// allow words under maximum length
@@ -56,14 +54,19 @@ auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 	// do input conversion (iconv)
 	d.input_substr_replacer.replace(s);
 
-	// clean word from whitespaces and periods
-	boost::trim(s, loc);
+	// triming whitespace should be part of tokenization, not here
+	// boost::trim(s, locale_aff);
 	if (s.empty())
 		return GOOD_WORD;
 	bool abbreviation = s.back() == '.';
-	boost::trim_right_if(s, [](auto c) { return c == '.'; });
-	if (s.empty())
-		return GOOD_WORD;
+	if (abbreviation) {
+		// trim trailing periods
+		auto i = s.find_last_not_of('.');
+		// if i == npos, i + 1 == 0, so no need for extra if.
+		s.erase(i + 1);
+		if (s.empty())
+			return GOOD_WORD;
+	}
 
 	// accept number
 	if (is_number(s))

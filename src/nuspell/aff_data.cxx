@@ -35,7 +35,7 @@
 #include <fstream> // Only here for logging.
 #include <iomanip> // Only here for logging.
 
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/locale.hpp>
 #include <boost/range/adaptors.hpp>
 

@@ -18,7 +18,6 @@
 
 #include "catch.hpp"
 
-#include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
 #include <iostream>
 
@@ -196,10 +195,6 @@ TEST_CASE("method to_upper", "[string_utils]")
 	CHECK("ĲSSELMEER"s == to_upper("ĳsselmeer"s, l));
 	CHECK("ĲSSELMEER"s == to_upper("Ĳsselmeer"s, l));
 	CHECK("ĲSSELMEER"s == to_upper("ĲSSELMEER"s, l));
-
-	using boost::algorithm::is_upper;
-	CHECK("a"s ==
-	      trim_copy_if("AaA"s, is_upper(std::locale("en_US.UTF-8"))));
 }
 
 TEST_CASE("method to_lower", "[string_utils]")
@@ -270,10 +265,6 @@ TEST_CASE("method to_lower", "[string_utils]")
 	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
 	CHECK("ĳsselmeer"s == to_lower("ĲSSELMEER"s, l));
 	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
-
-	using boost::algorithm::is_lower;
-	CHECK("A"s ==
-	      trim_copy_if("aAa"s, is_lower(std::locale("en_US.UTF-8"))));
 }
 
 TEST_CASE("method to_title", "[string_utils]")
