@@ -622,23 +622,21 @@ auto search_path_for_dicts(const string& dir, OutIt out) -> OutIt
 		if (sz < 4) {
 			continue;
 		}
-		if (file_name.find(".dic", sz - 4) != file_name.npos) {
+		if (file_name.compare(sz - 4, 4, ".dic") == 0) {
 			dics.insert(file_name);
-			file_name.resize(sz - 4);
-			file_name += ".aff";
+			file_name.replace(sz - 4, 4, ".aff");
 			if (dics.count(file_name)) {
-				file_name.resize(sz - 4);
+				file_name.erase(sz - 4);
 				auto full_path = dir + DIRSEP + file_name;
 				*out = make_pair(file_name, full_path);
 				out++;
 			}
 		}
-		else if (file_name.find(".aff", sz - 4) != file_name.npos) {
+		else if (file_name.compare(sz - 4, 4, ".aff") == 0) {
 			dics.insert(file_name);
-			file_name.resize(sz - 4);
-			file_name += ".dic";
+			file_name.replace(sz - 4, 4, ".dic");
 			if (dics.count(file_name)) {
-				file_name.resize(sz - 4);
+				file_name.erase(sz - 4);
 				auto full_path = dir + DIRSEP + file_name;
 				*out = make_pair(file_name, full_path);
 				out++;
