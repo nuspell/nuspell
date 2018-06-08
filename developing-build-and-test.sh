@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 cd src/nuspell
 ./clang-format.sh
 cd ../../tests
