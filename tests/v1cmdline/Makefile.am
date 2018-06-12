@@ -1,7 +1,5 @@
 ## Process this file with automake to create Makefile.in
 
-override PACKAGE_STRING = Hunspell v1 tests
-
 TEST_EXTENSIONS = .dic
 AM_TESTS_ENVIRONMENT = export HUNSPELL=$(top_builddir)/src/nuspell/nuspell; \
                        export ANALYZE=$(top_builddir)/src/tools/analyze; \

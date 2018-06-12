@@ -36,7 +36,7 @@
 #include <intrin.h>
 #endif
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(__FreeBSD__)
 #if !defined(__STDC_ISO_10646__) || defined(__STDC_MB_MIGHT_NEQ_WC__)
 #error "Platform has poor Unicode support. wchar_t must be Unicode."
 #endif

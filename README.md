@@ -94,7 +94,7 @@ In Ubuntu, the packages are:
 3. Install dependencies
 
 ```
-brew install autoconf automake libtool pkg-config
+brew install autoconf automake libtool pkg-config wget
 brew install boost --with-icu4c
 ```
 
@@ -102,15 +102,6 @@ Then run the standard trio of autoreconf, configure and make. See above.
 
 If you want to build with GCC instead of Clang, you need to pull GCC with
 Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
-
-# Building on FreeBSD, NetBSD, OpenBSD and BSD variants
-
-Install the required development packages with
-
-    sudo pkg install -y bash autoconf automake libtool libiconv icu gcc wget \
-                        boost-libs
-
-Then run the standard trio of autoreconf, configure and make. See above.
 
 # Building on Windows
 
@@ -130,6 +121,14 @@ above.
 Download the above mentioned dependencies with Cygwin package manager.
 Then compile the same way as on Linux. Cygwin builds depend on
 Cygwin1.dll.
+
+# Building on FreeBSD (experimental)
+
+Install the required development packages with
+
+    pkg install autoconf automake libtool pkgconf icu boost-libs wget
+
+Then run the standard trio of autoreconf, configure and make. See above.
 
 # Debugging
 
