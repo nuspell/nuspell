@@ -27,6 +27,8 @@
 #include <locale>
 #include <string>
 #include <type_traits>
+#include <boost/locale/encoding_utf.hpp>
+#include <boost/locale/info.hpp>
 
 #include <boost/locale/encoding_utf.hpp>
 #include <boost/locale/info.hpp>
