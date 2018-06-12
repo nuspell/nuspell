@@ -27,6 +27,8 @@ AM_ICONV
 BOOST_REQUIRE([1.62.0])
 BOOST_LOCALE
 PKG_CHECK_MODULES([ICU], [icu-uc])
+PKG_CHECK_MODULES([CATCH], [catch],,
+	[CATCH_CFLAGS="-I../third_party/catch/single_include"])
 AC_REQUIRE_AUX_FILE([tap-driver.sh])
 
 # Checks for header files.

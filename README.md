@@ -35,7 +35,7 @@ Main features of Nuspell spell checker and morphological analyzer:
 
 Build only dependencies:
 
-    g++ make autoconf automake libtool wget
+    g++ make autoconf automake libtool
 
 Runtime dependencies:
 
@@ -107,7 +107,7 @@ Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
 
 Install the required development packages with
 
-    sudo pkg install -y bash autoconf automake libtool libiconv icu gcc wget \
+    sudo pkg install -y bash autoconf automake libtool libiconv icu gcc \
                         boost-libs
 
 Then run the standard trio of autoreconf, configure and make. See above.
