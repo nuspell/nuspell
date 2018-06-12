@@ -52,7 +52,7 @@ Recommended tools for developers:
 qtcreator clang-format gdb vim cppcheck doxygen plantuml
 ```
 
-# Compiling on GNU/Linux and Unixes
+# Building on GNU/Linux and Unixes
 
 We first need to download the dependencies. Some may already be preinstalled.
 
@@ -87,7 +87,7 @@ In Ubuntu, the packages are:
     libncurses5-dev libreadline-dev
 -->
 
-# Compiling on OSX and macOS
+# Building on OSX and macOS
 
 1. Install Apple's Command-line tools
 2. Install Homebrew package manager
@@ -98,12 +98,21 @@ brew install autoconf automake libtool pkg-config
 brew install boost --with-icu4c
 ```
 
-Then run the standard trio: autoreconf, configure, make. See above.
+Then run the standard trio of autoreconf, configure and make. See above.
 
 If you want to build with GCC instead of Clang, you need to pull GCC with
 Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
 
-# Compiling on Windows
+# Building on FreeBSD, NetBSD, OpenBSD and BSD variants
+
+Install the required development packages with
+
+    sudo pkg install -y bash autoconf automake libtool libiconv icu gcc wget \
+                        boost-libs
+
+Then run the standard trio of autoreconf, configure and make. See above.
+
+# Building on Windows
 
 ## 1\. Compiling with Mingw64 and MSYS2
 
@@ -116,7 +125,7 @@ Download Msys2, update everything and install the following
 Open Mingw-w64 Win64 prompt and compile the same way as on Linux, see
 above.
 
-## 2\. Compiling in Cygwin environment
+## 2\. Building in Cygwin environment
 
 Download the above mentioned dependencies with Cygwin package manager.
 Then compile the same way as on Linux. Cygwin builds depend on
