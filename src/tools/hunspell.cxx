@@ -916,7 +916,7 @@ nextline:
                 if (verbose_mode)
                   fprintf(stdout, "* %s\n", token.c_str());
                 else
-                  if (omit_suggestion && info & SPELL_COMPOUND) { fprintf(stdout, "- %s\n", token.c_str()); } else if (omit_suggestion && !root.empty() ) { fprintf(stdout, "+ %s\n", token.c_str()); } else if (omit_suggestion) { fprintf(stdout, "* %s\n", token.c_str()); } else {fprintf(stdout, "*\n"); }
+		  if (omit_suggestion && info & SPELL_COMPOUND) { fprintf(stdout, "-\t%s\n", token.c_str()); } else if (omit_suggestion && !root.empty() ) { fprintf(stdout, "+\t%s\n", token.c_str()); } else if (omit_suggestion) { fprintf(stdout, "*\t%s\n", token.c_str()); } else {fprintf(stdout, "*\n"); }
               }
               fflush(stdout);
             } else {
@@ -933,7 +933,7 @@ nextline:
           std::vector<std::string> wlst;
           if (!omit_suggestion) { wlst = pMS[d]->suggest(chenc(token, io_enc, dic_enc[d])); }
           if (wlst.empty()) {
-                fprintf(stdout, "# %s %d", token.c_str(), char_offset);
+		if (omit_suggestion) { fprintf(stdout, "#\t%s\t%d", token.c_str(), char_offset); } else { fprintf(stdout, "# %s %d", token.c_str(), char_offset); }
               } else {
                 fprintf(stdout, "& %s %u %d: ", token.c_str(), static_cast<unsigned int>(wlst.size()), char_offset);
                 fprintf(stdout, "%s", chenc(wlst[0], dic_enc[d], io_enc).c_str());
