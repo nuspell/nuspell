@@ -124,9 +124,9 @@ Cygwin1.dll.
 
 # Building on FreeBSD (experimental)
 
-Install the required development packages with
+Install the following required packages
 
-    pkg install autoconf automake libtool pkgconf icu boost-libs wget
+    autoconf automake libtool pkgconf icu boost-libs wget
 
 Then run the standard trio of autoreconf, configure and make. See above.
 

@@ -21,6 +21,7 @@
 #include <iostream>
 
 #include "../src/nuspell/dictionary.hxx"
+#include "../src/nuspell/structures.hxx"
 #include <boost/locale.hpp>
 
 using namespace std;
@@ -45,4 +46,27 @@ TEST_CASE("simple", "[dictionary]")
 	              L"xyfoo", L"fooxybar", L"ééőő", L"fóóéé", L"őőáár"};
 	for (auto& w : wrong)
 		CHECK(d.spell_priv<wchar_t>(w) == BAD_WORD);
+}
+
+TEST_CASE("suffixes", "[dictionary]")
+{
+	boost::locale::generator gen;
+	auto d = Dictionary();
+	d.set_encoding_and_language("UTF-8");
+
+	d.words.emplace("berry", u"T");
+	d.words.emplace("May", u"T");
+	d.words.emplace("vary", u"");
+
+	d.structures.suffixes.emplace(u'T', true, "y"s, "ies"s, Flag_Set(),
+	                              ".[^aeiou]y"s);
+
+	auto good = {"berry", "Berry", "berries", "BERRIES",
+	             "May",   "MAY",   "vary"};
+	for (auto& g : good)
+		CHECK(d.spell_priv<char>(g) == GOOD_WORD);
+
+	auto wrong = {"beRRies", "Maies", "MAIES", "maies", "varies"};
+	for (auto& w : wrong)
+		CHECK(d.spell_priv<char>(w) == BAD_WORD);
 }
