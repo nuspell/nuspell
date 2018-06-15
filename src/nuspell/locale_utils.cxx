@@ -106,8 +106,6 @@ auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
 {
 	constexpr auto REP_CH = U'\uFFFD';
 	char32_t cp;
-	bool min_rep_err;
-	bool surrogate_err;
 	for (auto i = first; i != last; ++i) {
 		unsigned char c = *i;
 		switch (count_leading_ones(c)) {
@@ -118,8 +116,8 @@ auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
 			*out++ = REP_CH;
 			break;
 		case 2:
-			min_rep_err = (c & 0b00011110) == 0;
-			if (unlikely(min_rep_err)) {
+			// min_rep_err
+			if (unlikely((c & 0b00011110) == 0)) {
 				*out++ = REP_CH;
 				break;
 			}
@@ -155,14 +153,12 @@ auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
 				*out++ = REP_CH;
 				break;
 			}
-			min_rep_err = cp == 0 && (c & 0b00100000) == 0;
-			surrogate_err =
-			    cp == 0b00001101 && (c & 0b00100000) != 0;
-			if (unlikely(min_rep_err || surrogate_err)) {
+			update_cp_with_continuation_byte(cp, c);
+			// min_rep_err || surrogate_err
+			if (unlikely(cp <= 0x1f || (cp >> 5) == 0b11011)) {
 				*out++ = REP_CH;
 				break;
 			}
-			update_cp_with_continuation_byte(cp, c);
 
 			// proccesing third byte
 			if (unlikely(++i == last)) {
@@ -195,14 +191,20 @@ auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
 				*out++ = REP_CH;
 				break;
 			}
-			min_rep_err = cp == 0 && (c & 0b00110000) == 0;
-			if (min_rep_err) {
+			update_cp_with_continuation_byte(cp, c);
+
+			// min_rep_err
+			if (unlikely(cp <= 0x0f)) {
 				*out++ = REP_CH;
 				break;
 			}
-			update_cp_with_continuation_byte(cp, c);
+			// cp above 0x10ffff error
 			if (unlikely(cp > 0x10f)) {
-				// cp larger that 0x10FFFF
+				if (cp > 0x13f) {
+					// error was in first byte
+					--i;
+				}
+				// else it was in the second
 				*out++ = REP_CH;
 				break;
 			}
@@ -256,12 +258,13 @@ auto decode_utf8(const std::string& s) -> std::u32string
 
 auto validate_utf8(const std::string& s) -> bool
 {
-	using namespace boost::locale::conv;
-	try {
-		utf_to_utf<char32_t>(s, stop);
-	}
-	catch (const conversion_error& e) {
-		return false;
+	using namespace boost::locale::utf;
+	auto first = begin(s);
+	auto last = end(s);
+	while (first != last) {
+		auto cp = utf_traits<char>::decode(first, last);
+		if (unlikely(cp == incomplete || cp == illegal))
+			return false;
 	}
 	return true;
 }
