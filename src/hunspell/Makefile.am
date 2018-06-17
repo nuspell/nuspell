@@ -15,4 +15,7 @@ libhunspell_include_HEADERS=hunspell.hxx hunspell.h hunvisapi.h \
 
 # libhunspell_a_LDFLAGS=-no-undefined -version-info 0:1:0
 
-AM_CXXFLAGS= -std=c++14 $(CFLAG_VISIBILITY) -DBUILDING_LIBHUNSPELL
+AM_CPPFLAGS = $(CODE_COVERAGE_CPPFLAGS)
+AM_CXXFLAGS = -std=c++14 $(CFLAG_VISIBILITY) -DBUILDING_LIBHUNSPELL \
+              $(CODE_COVERAGE_CXXFLAGS)
+LIBADD      = $(CODE_COVERAGE_LIBS)

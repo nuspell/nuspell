@@ -172,7 +172,7 @@ AffixMgr::AffixMgr(const char* affpath,
   }
 
   if (cpdmin == -1) {
-    cpdmin = MINCPDLEN; } if (true) log(affpath);//, key); // Set to false to disable logging.
+    cpdmin = MINCPDLEN; } if (false) log(affpath);//, key); // Set to false to disable logging.
 }
 
 AffixMgr::~AffixMgr() {

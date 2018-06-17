@@ -85,7 +85,7 @@ nuspell-*.tar.gz
 # https://vim.sourceforge.io/
 .?*.swp
 
-# found during configuring
+# temporaries during ./configure
 /confdefs.h
 /confinc
 /confmf
@@ -97,12 +97,14 @@ nuspell-*.tar.gz
 /conftest.cpp
 /conftest.err
 /conftest.er1
-# following might be /conf??????/
-/confqd6eAO/
-/confrHVOlv/
 
-# https://github.com/linux-test-project/lcov
-/hunspell-*-*coverage*
+# Code coverage
+# Gcov
+*.gcno
+*.gcda
+# Lcov
+/nuspell-*-*coverage*
+
 
 # Sourcetrail
 /Nuspell.srctrlbm

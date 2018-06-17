@@ -5,12 +5,8 @@ testSubDir
 *.svg
 /*_test
 
-# https://gcc.gnu.org/onlinedocs/gcc/Gcov.html
-/*.gcno
-/*.gcda
-
-# https://github.com/catchorg/Catch2
+# testing binaries
 /*.catch
+
+# automatically downloaded
 /catch*.hpp
-/v*.*.*.zip
-/Catch*
