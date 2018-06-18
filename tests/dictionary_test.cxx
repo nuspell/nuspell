@@ -70,3 +70,24 @@ TEST_CASE("suffixes", "[dictionary]")
 	for (auto& w : wrong)
 		CHECK(d.spell_priv<char>(w) == BAD_WORD);
 }
+
+TEST_CASE("break_pattern", "[dictionary]")
+{
+	boost::locale::generator gen;
+	auto d = Dictionary();
+	d.set_encoding_and_language("UTF-8");
+
+	d.words.emplace("user", u"");
+	d.words.emplace("interface", u"");
+
+	d.structures.break_table = {"-"};
+
+	auto good = {"user",           "interface", "user-interface",
+	             "interface-user", "user-user", "interface-interface"};
+	for (auto& g : good)
+		CHECK(d.spell_priv<char>(g) == GOOD_WORD);
+
+	auto wrong = {"user--interface", "user interface", "user - interface"};
+	for (auto& w : wrong)
+		CHECK(d.spell_priv<char>(w) == BAD_WORD);
+}

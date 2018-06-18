@@ -103,6 +103,15 @@ Then run the standard trio of autoreconf, configure and make. See above.
 If you want to build with GCC instead of Clang, you need to pull GCC with
 Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
 
+# Building on BSD
+
+For building on FreeBSD, NetBSD, OpenBSD and other BSD variants, install
+the required development packages with
+
+    sudo pkg install -y bash autoconf automake libtool libiconv icu boost-libs
+
+Then run the standard trio of autoreconf, configure and make. See above.
+
 # Building on Windows
 
 ## 1\. Compiling with Mingw64 and MSYS2
