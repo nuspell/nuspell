@@ -410,6 +410,8 @@ auto Dictionary::affix_NOT_valid(const Prefix<CharT>& e) const
 	if (m == AT_COMPOUND_END &&
 	    !e.cont_flags.contains(compound_permit_flag))
 		return true;
+	if (m != FULL_WORD && e.cont_flags.contains(compound_forbid_flag))
+		return true;
 	return false;
 }
 template <Affixing_Mode m, class CharT>
@@ -419,6 +421,8 @@ auto Dictionary::affix_NOT_valid(const Suffix<CharT>& e) const
 		return true;
 	if (m == AT_COMPOUND_BEGIN &&
 	    !e.cont_flags.contains(compound_permit_flag))
+		return true;
+	if (m != FULL_WORD && e.cont_flags.contains(compound_forbid_flag))
 		return true;
 	return false;
 }
@@ -590,7 +594,29 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(word_flags, e))
 				continue;
-			// needflag check here if needed
+			// badflag check
+			if (m == FULL_WORD &&
+			    word_flags.contains(compound_onlyin_flag))
+				continue;
+			// needflag check
+			if (m == AT_COMPOUND_BEGIN &&
+			    !word_flags.contains(compound_flag) &&
+			    !e.cont_flags.contains(compound_flag) &&
+			    !word_flags.contains(compound_begin_flag) &&
+			    !e.cont_flags.contains(compound_begin_flag))
+				continue;
+			if (m == AT_COMPOUND_MIDDLE &&
+			    !word_flags.contains(compound_flag) &&
+			    !e.cont_flags.contains(compound_flag) &&
+			    !word_flags.contains(compound_middle_flag) &&
+			    !e.cont_flags.contains(compound_middle_flag))
+				continue;
+			if (m == AT_COMPOUND_END &&
+			    !word_flags.contains(compound_flag) &&
+			    !e.cont_flags.contains(compound_flag) &&
+			    !word_flags.contains(compound_last_flag) &&
+			    !e.cont_flags.contains(compound_last_flag))
+				continue;
 			return {{word_entry.first, word_flags, e}};
 		}
 	}
@@ -622,10 +648,29 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(word_flags, e))
 				continue;
-			if (m != FULL_WORD &&
+			// badflag check
+			if (m == FULL_WORD &&
 			    word_flags.contains(compound_onlyin_flag))
 				continue;
-			// needflag check here if needed
+			// needflag check
+			if (m == AT_COMPOUND_BEGIN &&
+			    !word_flags.contains(compound_flag) &&
+			    !e.cont_flags.contains(compound_flag) &&
+			    !word_flags.contains(compound_begin_flag) &&
+			    !e.cont_flags.contains(compound_begin_flag))
+				continue;
+			if (m == AT_COMPOUND_MIDDLE &&
+			    !word_flags.contains(compound_flag) &&
+			    !e.cont_flags.contains(compound_flag) &&
+			    !word_flags.contains(compound_middle_flag) &&
+			    !e.cont_flags.contains(compound_middle_flag))
+				continue;
+			if (m == AT_COMPOUND_END &&
+			    !word_flags.contains(compound_flag) &&
+			    !e.cont_flags.contains(compound_flag) &&
+			    !word_flags.contains(compound_last_flag) &&
+			    !e.cont_flags.contains(compound_last_flag))
+				continue;
 			return {{word_entry.first, word_flags, e}};
 		}
 	}
@@ -683,7 +728,8 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 				continue;
 			if (!cross_valid_inner_outer(word_flags, se))
 				continue;
-			if (m != FULL_WORD &&
+			// badflag check
+			if (m == FULL_WORD &&
 			    word_flags.contains(compound_onlyin_flag))
 				continue;
 			// needflag check here if needed
@@ -745,7 +791,8 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 				continue;
 			if (!cross_valid_inner_outer(word_flags, pe))
 				continue;
-			if (m != FULL_WORD &&
+			// badflag check
+			if (m == FULL_WORD &&
 			    word_flags.contains(compound_onlyin_flag))
 				continue;
 			// needflag check here if needed
@@ -804,7 +851,8 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
-			// if (m != FULL_WORD &&
+			// badflag check
+			// if (m == FULL_WORD &&
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
@@ -862,7 +910,8 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(word_flags, pe2))
 				continue;
-			// if (m != FULL_WORD &&
+			// badflag check
+			// if (m == FULL_WORD &&
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
@@ -935,7 +984,8 @@ auto Dictionary::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
 				continue;
 			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
-			// if (m != FULL_WORD &&
+			// badflag check
+			// if (m == FULL_WORD &&
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
@@ -1012,7 +1062,8 @@ auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
 				continue;
 			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
-			// if (m != FULL_WORD &&
+			// badflag check
+			// if (m == FULL_WORD &&
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
@@ -1084,7 +1135,8 @@ auto Dictionary::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
 				continue;
 			if (!cross_valid_inner_outer(word_flags, pe1))
 				continue;
-			// if (m != FULL_WORD &&
+			// badflag check
+			// if (m == FULL_WORD &&
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
@@ -1158,6 +1210,10 @@ auto Dictionary::strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
 				continue;
 			if (!cross_valid_inner_outer(word_flags, pe2))
 				continue;
+			// badflag check
+			// if (m == FULL_WORD &&
+			//    word_flags.contains(compound_onlyin_flag))
+			//	continue;
 			return {{word_entry.first, word_flags}};
 		}
 	}
@@ -1231,6 +1287,10 @@ auto Dictionary::strip_p_s_p_3(const Prefix<CharT>& pe1,
 				continue;
 			if (!cross_valid_inner_outer(word_flags, pe2))
 				continue;
+			// badflag check
+			// if (m == FULL_WORD &&
+			//    word_flags.contains(compound_onlyin_flag))
+			//	continue;
 			return {{word_entry.first, word_flags}};
 		}
 	}
@@ -1299,7 +1359,10 @@ auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 				continue;
 			if (!cross_valid_inner_outer(word_flags, se1))
 				continue;
-			// needflag check here if needed
+			// badflag check
+			// if (m == FULL_WORD &&
+			//    word_flags.contains(compound_onlyin_flag))
+			//	continue;
 			return {{word_entry.first, word_flags}};
 		}
 	}
