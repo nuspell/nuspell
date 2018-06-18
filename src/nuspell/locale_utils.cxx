@@ -252,7 +252,7 @@ auto decode_utf8(const std::string& s) -> std::u32string
 {
 	u32string ret(s.size(), 0);
 	auto last = decode_utf8(begin(s), end(s), begin(ret));
-	ret.erase(last, ret.end());
+	ret.erase(last, end(ret));
 	return ret;
 }
 
@@ -273,7 +273,7 @@ auto is_ascii(char c) -> bool { return (unsigned char)c <= 127; }
 
 auto is_all_ascii(const std::string& s) -> bool
 {
-	return all_of(s.begin(), s.end(), is_ascii);
+	return all_of(begin(s), end(s), is_ascii);
 }
 
 template <class CharT>
@@ -291,14 +291,14 @@ auto latin1_to_ucs2(const std::string& s) -> std::u16string
 auto latin1_to_ucs2(const std::string& s, std::u16string& out) -> void
 {
 	out.resize(s.size());
-	transform(s.begin(), s.end(), out.begin(), widen_latin1<char16_t>);
+	transform(begin(s), end(s), begin(out), widen_latin1<char16_t>);
 }
 
 auto is_bmp(char32_t c) -> bool { return c <= 0xFFFF; }
 
 auto is_all_bmp(const std::u32string& s) -> bool
 {
-	return all_of(s.begin(), s.end(), is_bmp);
+	return all_of(begin(s), end(s), is_bmp);
 }
 
 auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string
@@ -311,8 +311,8 @@ auto u32_to_ucs2_skip_non_bmp(const std::u32string& s, std::u16string& out)
     -> void
 {
 	out.resize(s.size());
-	auto i = copy_if(s.begin(), s.end(), out.begin(), is_bmp);
-	out.erase(i, out.end());
+	auto i = copy_if(begin(s), end(s), begin(out), is_bmp);
+	out.erase(i, end(out));
 }
 
 auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring

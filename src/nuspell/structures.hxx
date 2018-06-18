@@ -178,7 +178,7 @@ class String_Set {
 	template <class InputIterator>
 	void insert(InputIterator first, InputIterator last)
 	{
-		d.insert(d.end(), first, last);
+		d.insert(end(), first, last);
 		sort_uniq();
 	}
 	void insert(std::initializer_list<value_type> il)

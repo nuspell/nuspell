@@ -34,8 +34,8 @@ template class String_Set<char16_t>;
 template <class CharT>
 void Substr_Replacer<CharT>::sort_uniq()
 {
-	auto first = table.begin();
-	auto last = table.end();
+	auto first = begin(table);
+	auto last = end(table);
 	sort(first, last, [](auto& a, auto& b) { return a.first < b.first; });
 	auto it = unique(first, last,
 	                 [](auto& a, auto& b) { return a.first == b.first; });
@@ -43,7 +43,7 @@ void Substr_Replacer<CharT>::sort_uniq()
 
 	// remove empty key ""
 	if (!table.empty() && table.front().first.empty())
-		table.erase(table.begin());
+		table.erase(begin(table));
 }
 
 namespace {
