@@ -334,56 +334,60 @@ auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
 	{
 		auto ret2 = strip_prefix_only(s);
 		if (ret2)
-			return &get<1>(*ret2);
+			return &get<0>(*ret2).second;
 	}
 	{
 		auto ret3 = strip_suffix_only(s);
 		if (ret3)
-			return &get<1>(*ret3);
+			return &get<0>(*ret3).second;
 	}
 	{
 		auto ret4 = strip_prefix_then_suffix(s);
 		if (ret4)
-			return &get<1>(*ret4);
+			return &get<0>(*ret4).second;
 	}
 	{
 		auto ret5 = strip_suffix_then_prefix(s);
 		if (ret5)
-			return &get<1>(*ret5);
+			return &get<0>(*ret5).second;
 	}
 	if (complex_prefixes == false) {
 		auto ret6 = strip_suffix_then_suffix(s);
 		if (ret6)
-			return &get<1>(*ret6);
+			return &get<0>(*ret6).second;
 
 		auto ret7 = strip_prefix_then_2_suffixes(s);
 		if (ret7)
-			return &get<1>(*ret7);
+			return &get<0>(*ret7).second;
 
 		auto ret8 = strip_suffix_prefix_suffix(s);
 		if (ret8)
-			return &get<1>(*ret8);
+			return &get<0>(*ret8).second;
 
 		auto ret9 = strip_2_suffixes_then_prefix(s);
 		if (ret9)
-			return &get<1>(*ret9);
+			return &get<0>(*ret9).second;
 	}
 	else {
 		auto ret6 = strip_prefix_then_prefix(s);
 		if (ret6)
-			return &get<1>(*ret6);
+			return &get<0>(*ret6).second;
 		auto ret7 = strip_suffix_then_2_prefixes(s);
 		if (ret7)
-			return &get<1>(*ret7);
+			return &get<0>(*ret7).second;
 
 		auto ret8 = strip_prefix_suffix_prefix(s);
 		if (ret8)
-			return &get<1>(*ret8);
+			return &get<0>(*ret8).second;
 
 		auto ret9 = strip_2_prefixes_then_suffix(s);
 		if (ret9)
-			return &get<1>(*ret9);
+			return &get<0>(*ret9).second;
 	}
+	auto ret10 = compound_check(s);
+	if (ret10)
+		return &get<0>(*ret10).second;
+
 	return nullptr;
 }
 
@@ -575,7 +579,7 @@ class Suffix_Iter {
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
     -> boost::optional<
-        std::tuple<const string&, const Flag_Set&, const Prefix<CharT>&>>
+        std::tuple<Dic_Data::const_reference, const Prefix<CharT>&>>
 {
 	auto& dic = words;
 	auto& prefixes = get_structures<CharT>().prefixes;
@@ -617,7 +621,7 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
 			    !word_flags.contains(compound_last_flag) &&
 			    !e.cont_flags.contains(compound_last_flag))
 				continue;
-			return {{word_entry.first, word_flags, e}};
+			return {{word_entry, e}};
 		}
 	}
 	return {};
@@ -626,7 +630,7 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
     -> boost::optional<
-        std::tuple<const string&, const Flag_Set&, const Suffix<CharT>&>>
+        std::tuple<Dic_Data::const_reference, const Suffix<CharT>&>>
 {
 	auto& dic = words;
 	auto& suffixes = get_structures<CharT>().suffixes;
@@ -671,7 +675,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 			    !word_flags.contains(compound_last_flag) &&
 			    !e.cont_flags.contains(compound_last_flag))
 				continue;
-			return {{word_entry.first, word_flags, e}};
+			return {{word_entry, e}};
 		}
 	}
 	return {};
@@ -679,7 +683,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_prefix_then_suffix(std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&,
+    -> boost::optional<std::tuple<Dic_Data::const_reference,
                                   const Suffix<CharT>&, const Prefix<CharT>&>>
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
@@ -703,7 +707,7 @@ auto Dictionary::strip_prefix_then_suffix(std::basic_string<CharT>& word) const
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
                                       std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&,
+    -> boost::optional<std::tuple<Dic_Data::const_reference,
                                   const Suffix<CharT>&, const Prefix<CharT>&>>
 {
 	auto& dic = words;
@@ -733,7 +737,7 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 			    word_flags.contains(compound_onlyin_flag))
 				continue;
 			// needflag check here if needed
-			return {{word_entry.first, word_flags, se, pe}};
+			return {{word_entry, se, pe}};
 		}
 	}
 
@@ -742,7 +746,7 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_suffix_then_prefix(std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&,
+    -> boost::optional<std::tuple<Dic_Data::const_reference,
                                   const Prefix<CharT>&, const Suffix<CharT>&>>
 {
 	auto& suffixes = get_structures<CharT>().suffixes;
@@ -766,7 +770,7 @@ auto Dictionary::strip_suffix_then_prefix(std::basic_string<CharT>& word) const
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
                                       std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&,
+    -> boost::optional<std::tuple<Dic_Data::const_reference,
                                   const Prefix<CharT>&, const Suffix<CharT>&>>
 {
 	auto& dic = words;
@@ -796,7 +800,7 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 			    word_flags.contains(compound_onlyin_flag))
 				continue;
 			// needflag check here if needed
-			return {{word_entry.first, word_flags, pe, se}};
+			return {{word_entry, pe, se}};
 		}
 	}
 	return {};
@@ -804,7 +808,7 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&,
+    -> boost::optional<std::tuple<Dic_Data::const_reference,
                                   const Suffix<CharT>&, const Suffix<CharT>&>>
 {
 	auto& suffixes = get_structures<CharT>().suffixes;
@@ -828,7 +832,7 @@ auto Dictionary::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
                                       std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&,
+    -> boost::optional<std::tuple<Dic_Data::const_reference,
                                   const Suffix<CharT>&, const Suffix<CharT>&>>
 {
 
@@ -856,7 +860,7 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
-			return {{word_entry.first, word_flags, se2, se1}};
+			return {{word_entry, se2, se1}};
 		}
 	}
 	return {};
@@ -864,7 +868,7 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&,
+    -> boost::optional<std::tuple<Dic_Data::const_reference,
                                   const Prefix<CharT>&, const Prefix<CharT>&>>
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
@@ -888,7 +892,7 @@ auto Dictionary::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
                                       std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&,
+    -> boost::optional<std::tuple<Dic_Data::const_reference,
                                   const Prefix<CharT>&, const Prefix<CharT>&>>
 {
 	auto& dic = words;
@@ -915,7 +919,7 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
-			return {{word_entry.first, word_flags, pe2, pe1}};
+			return {{word_entry, pe2, pe1}};
 		}
 	}
 	return {};
@@ -923,7 +927,7 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_prefix_then_2_suffixes(std::basic_string<CharT>& word)
-    const -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    const -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
 	auto& suffixes = get_structures<CharT>().suffixes;
@@ -960,7 +964,7 @@ template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
                                    const Suffix<CharT>& se1,
                                    std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& dic = words;
 	auto& suffixes = get_structures<CharT>().suffixes;
@@ -989,7 +993,7 @@ auto Dictionary::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
-			return {{word_entry.first, word_flags}};
+			return {{word_entry}};
 		}
 	}
 
@@ -998,7 +1002,7 @@ auto Dictionary::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_suffix_prefix_suffix(std::basic_string<CharT>& word)
-    const -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    const -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
 	auto& suffixes = get_structures<CharT>().suffixes;
@@ -1033,7 +1037,7 @@ template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
                                const Prefix<CharT>& pe1,
                                std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& dic = words;
 	auto& suffixes = get_structures<CharT>().suffixes;
@@ -1067,7 +1071,7 @@ auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
-			return {{word_entry.first, word_flags}};
+			return {{word_entry}};
 		}
 	}
 
@@ -1076,7 +1080,7 @@ auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_2_suffixes_then_prefix(std::basic_string<CharT>& word)
-    const -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    const -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& suffixes = get_structures<CharT>().suffixes;
 
@@ -1110,7 +1114,7 @@ template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
                                    const Suffix<CharT>& se2,
                                    std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& dic = words;
 	auto& prefixes = get_structures<CharT>().prefixes;
@@ -1140,7 +1144,7 @@ auto Dictionary::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
 			// needflag check here if needed
-			return {{word_entry.first, word_flags}};
+			return {{word_entry}};
 		}
 	}
 
@@ -1149,7 +1153,7 @@ auto Dictionary::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_suffix_then_2_prefixes(std::basic_string<CharT>& word)
-    const -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    const -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
 	auto& suffixes = get_structures<CharT>().suffixes;
@@ -1186,7 +1190,7 @@ template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
                                    const Prefix<CharT>& pe1,
                                    std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& dic = words;
 	auto& prefixes = get_structures<CharT>().prefixes;
@@ -1214,7 +1218,7 @@ auto Dictionary::strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
 			// if (m == FULL_WORD &&
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
-			return {{word_entry.first, word_flags}};
+			return {{word_entry}};
 		}
 	}
 
@@ -1223,7 +1227,7 @@ auto Dictionary::strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_prefix_suffix_prefix(std::basic_string<CharT>& word)
-    const -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    const -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
 	auto& suffixes = get_structures<CharT>().suffixes;
@@ -1258,7 +1262,7 @@ template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_p_s_p_3(const Prefix<CharT>& pe1,
                                const Suffix<CharT>& se1,
                                std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& dic = words;
 	auto& prefixes = get_structures<CharT>().prefixes;
@@ -1291,7 +1295,7 @@ auto Dictionary::strip_p_s_p_3(const Prefix<CharT>& pe1,
 			// if (m == FULL_WORD &&
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
-			return {{word_entry.first, word_flags}};
+			return {{word_entry}};
 		}
 	}
 
@@ -1300,7 +1304,7 @@ auto Dictionary::strip_p_s_p_3(const Prefix<CharT>& pe1,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_2_prefixes_then_suffix(std::basic_string<CharT>& word)
-    const -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    const -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
 
@@ -1334,7 +1338,7 @@ template <Affixing_Mode m, class CharT>
 auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
                                    const Prefix<CharT>& pe2,
                                    std::basic_string<CharT>& word) const
-    -> boost::optional<std::tuple<const string&, const Flag_Set&>>
+    -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
 	auto& dic = words;
 	auto& suffixes = get_structures<CharT>().suffixes;
@@ -1363,11 +1367,66 @@ auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 			// if (m == FULL_WORD &&
 			//    word_flags.contains(compound_onlyin_flag))
 			//	continue;
-			return {{word_entry.first, word_flags}};
+			return {{word_entry}};
 		}
 	}
 
 	return {};
+}
+
+template <class CharT>
+auto Dictionary::compound_check(std::basic_string<CharT>& word,
+                                size_t num) const
+    -> boost::optional<std::tuple<Dic_Data::const_reference>>
+{
+        size_t min_length = 3;
+        if (word.size() < min_length * 2)
+                return {};
+        auto part_str = basic_string<CharT>();
+        size_t max_length = word.size() - min_length;
+        for (auto i = min_length; i <= max_length; ++i) {
+	        part_str.assign(word, 0, i);
+		auto range1 = words.equal_range(part_str);
+		auto part1_entry =
+		    find_if(range1.first, range1.second, [&](auto& e) {
+			    auto& word_flags = e.second;
+			    if (word_flags.contains(need_affix_flag))
+				    return false;
+			    if (word_flags.contains(compound_flag))
+				    return true;
+			    if (num == 0 &&
+			        word_flags.contains(compound_begin_flag))
+				    return true;
+			    if (num != 0 &&
+			        word_flags.contains(compound_middle_flag))
+				    return true;
+			    return false;
+		    });
+		if (part1_entry == range1.second)
+			return {};
+
+		part_str.assign(word, i, word.npos);
+		auto range2 = words.equal_range(part_str);
+		auto part2_entry =
+		    find_if(range2.first, range2.second, [&](auto& e) {
+			    auto& word_flags = e.second;
+			    if (word_flags.contains(need_affix_flag))
+				    return false;
+			    if (word_flags.contains(compound_flag))
+				    return true;
+			    if (num == 0 &&
+			        word_flags.contains(compound_begin_flag))
+				    return true;
+			    if (num != 0 &&
+			        word_flags.contains(compound_middle_flag))
+				    return true;
+			    return false;
+		    });
+		if (part2_entry == range2.second)
+			return {};
+		return {{*part1_entry}};
+        }
+        return {};
 }
 
 } // namespace nuspell
