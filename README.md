@@ -33,7 +33,7 @@ Main features of Nuspell spell checker and morphological analyzer:
 
 # Dependencies
 
-Build only dependencies:
+Build-only dependencies:
 
     g++ make autoconf automake libtool wget
 
@@ -56,9 +56,9 @@ qtcreator clang-format gdb vim cppcheck doxygen plantuml
 
 We first need to download the dependencies. Some may already be preinstalled.
 
-For Ubuntu:
+For Ubuntu and Debian:
 
-    sudo apt install g++ autoconf automake libtool pkg-config \
+    sudo apt install g++ autoconf automake make libtool pkg-config \
                      libboost-locale-dev libboost-system-dev libicu-dev
 
 Then run the following commands:
@@ -68,6 +68,8 @@ Then run the following commands:
     make
     sudo make install
     sudo ldconfig
+
+For speeding up the build process, see also the -j option of make.
 
 <!-- hunspell v1 stuff
 For dictionary development, use the `--with-warnings` option of
@@ -103,15 +105,6 @@ Then run the standard trio of autoreconf, configure and make. See above.
 If you want to build with GCC instead of Clang, you need to pull GCC with
 Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
 
-# Building on BSD
-
-For building on FreeBSD, NetBSD, OpenBSD and other BSD variants, install
-the required development packages with
-
-    sudo pkg install -y bash autoconf automake libtool libiconv icu boost-libs
-
-Then run the standard trio of autoreconf, configure and make. See above.
-
 # Building on Windows
 
 ## 1\. Compiling with Mingw64 and MSYS2
@@ -135,7 +128,7 @@ Cygwin1.dll.
 
 Install the following required packages
 
-    autoconf automake libtool pkgconf icu boost-libs wget
+    autoconf automake libtool pkgconf icu boost-libs
 
 Then run the standard trio of autoreconf, configure and make. See above.
 
