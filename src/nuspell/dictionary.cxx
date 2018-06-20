@@ -395,7 +395,7 @@ class To_Root_Unroot_RAII {
 
       public:
 	To_Root_Unroot_RAII(basic_string<CharT>& w, const AffixT<CharT>& a)
-	    : word{w}, affix{a}
+	    : word(w), affix(a)
 	{
 		affix.to_root(word);
 	}

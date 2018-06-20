@@ -3,11 +3,12 @@ SUBDIRS = . suggestiontest v1cmdline
 AM_CPPFLAGS = -I../src/nuspell $(BOOST_CPPFLAGS) $(CODE_COVERAGE_CPPFLAGS)
 AM_CXXFLAGS = -std=c++14 $(CODE_COVERAGE_CXXFLAGS)
 AM_LDFLAGS  = $(BOOST_LOCALE_LDFLAGS)
-LDADD = ../src/nuspell/libnuspell.a $(BOOST_LOCALE_LIBS) $(CODE_COVERAGE_LIBS) $(ICU_LIBS)
+LDADD = ../src/nuspell/libnuspell.a $(BOOST_LOCALE_LIBS) $(ICU_LIBS) \
+        $(CODE_COVERAGE_LIBS)
 
 
 BUILT_SOURCES = catch.hpp catch_reporter_tap.hpp
-catch_url = https://raw.githubusercontent.com/catchorg/Catch2/v2.2.2
+catch_url = https://raw.githubusercontent.com/catchorg/Catch2/master
 catch.hpp:
 	wget $(catch_url)/single_include/catch.hpp
 

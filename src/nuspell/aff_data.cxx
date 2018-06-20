@@ -978,7 +978,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			auto h = find_if(hom.first, hom.second, [&](auto& w) {
 				return w.second.contains(HIDDEN_HOMONYM_FLAG);
 			});
-			if (h == hom.second) {
+			if (h == hom.second) { // if not found
 				flags += HIDDEN_HOMONYM_FLAG;
 				words.emplace(up, flags);
 			}

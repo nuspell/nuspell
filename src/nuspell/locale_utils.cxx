@@ -320,7 +320,7 @@ auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring
 	using namespace std;
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
 	auto out = std::wstring(in.size(), L'\0');
-	auto state = mbstate_t{};
+	auto state = mbstate_t();
 	auto in_ptr = in.c_str();
 	auto in_last = in.c_str() + in.size();
 	auto out_ptr = &out[0];
@@ -363,7 +363,7 @@ auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 	using namespace std;
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
 	auto out = std::string(in.size(), '\0');
-	auto state = mbstate_t{};
+	auto state = mbstate_t();
 	auto in_ptr = in.c_str();
 	auto in_last = in.c_str() + in.size();
 	auto out_ptr = &out[0];
@@ -406,7 +406,7 @@ auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 
 auto get_char_mask(UChar32 cp)
 {
-	auto ret = ctype_base::mask{};
+	auto ret = ctype_base::mask();
 	if (u_isspace(cp)) {
 		ret |= ctype_base::space;
 	}
@@ -522,7 +522,7 @@ auto general_category_to_ctype_mask(UCharCategory cat) -> ctype_base::mask
 auto fill_ctype(const string& enc, ctype_base::mask* m, char* upper,
                 char* lower)
 {
-	auto err = UErrorCode{};
+	auto err = UErrorCode::U_ZERO_ERROR;
 	auto cvt = ucnv_open(enc.c_str(), &err);
 	auto out = icu::UnicodeString();
 	for (size_t i = 0; i < 256; ++i) {
@@ -536,20 +536,20 @@ auto fill_ctype(const string& enc, ctype_base::mask* m, char* upper,
 			out.extract(&upper[i], 1, cvt, err);
 			if (U_FAILURE(err)) {
 				upper[i] = i;
-				err = UErrorCode{};
+				err = UErrorCode::U_ZERO_ERROR;
 			}
 			out = u_tolower(cp);
 			out.extract(&lower[i], 1, cvt, err);
 			if (U_FAILURE(err)) {
 				lower[i] = i;
-				err = UErrorCode{};
+				err = UErrorCode::U_ZERO_ERROR;
 			}
 		}
 		else {
-			m[i] = ctype_base::mask{};
+			m[i] = ctype_base::mask();
 			upper[i] = i;
 			lower[i] = i;
-			err = UErrorCode{};
+			err = UErrorCode::U_ZERO_ERROR;
 		}
 	}
 	ucnv_close(cvt);
@@ -595,7 +595,7 @@ class icu_ctype_char final : public std::ctype<char> {
 
 auto fill_ctype_wide(const string& enc, wchar_t* widen)
 {
-	auto err = UErrorCode{};
+	auto err = UErrorCode::U_ZERO_ERROR;
 	auto cvt = ucnv_open(enc.c_str(), &err);
 	auto out = icu::UnicodeString();
 	for (size_t i = 0; i < 256; ++i) {
