@@ -68,7 +68,7 @@
 
 #define DEFAULTDICNAME "default"
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #define LIBDIR "C:\\Hunspell\\"
 #define USEROOODIR { "Application Data\\OpenOffice.org 2\\user\\wordbook" }
@@ -636,7 +636,7 @@ static bool secure_filename(const char* filename) {
 }
 
 char* mymkdtemp(char *templ) {
-#ifdef WIN32
+#ifdef _WIN32
   char *odftmpdir = tmpnam(NULL);
   if (!odftmpdir) {
     return NULL;
@@ -766,7 +766,7 @@ nextline:
             fprintf(stderr, "%s", gettext("error - missing HOME variable\n"));
             continue;
           }
-#ifndef WIN32
+#ifndef _WIN32
           sbuf.append("/");
 #endif
           size_t offset = sbuf.size();
@@ -1350,7 +1350,7 @@ int dialog(TextParser* parser,
             fprintf(stderr, gettext("error - missing HOME variable\n"));
             break;
           }
-#ifndef WIN32
+#ifndef _WIN32
           sbuf.append("/");
 #endif
           size_t offset = sbuf.size();
@@ -1462,7 +1462,7 @@ int dialog(TextParser* parser,
               fprintf(stderr, gettext("error - missing HOME variable\n"));
               continue;
             }
-#ifndef WIN32
+#ifndef _WIN32
             sbuf.append("/");
 #endif
             size_t offset = sbuf.size();
@@ -1710,7 +1710,7 @@ char* exist2(char* dir, int len, const char* name, const char* ext) {
   return NULL;
 }
 
-#if !defined(WIN32) || defined(__MINGW32__)
+#if !defined(_WIN32) || defined(__MINGW32__)
 int listdicpath(char* dir, int len) {
   std::string buf;
   const char* sep = (len == 0) ? "" : DIRSEP;
@@ -1745,7 +1745,7 @@ char* search(char* begin, char* name, const char* ext) {
     if (name) {
       res = exist2(begin, end - begin, name, ext);
     } else {
-#if !defined(WIN32) || defined(__MINGW32__)
+#if !defined(_WIN32) || defined(__MINGW32__)
       listdicpath(begin, end - begin);
 #endif
     }
@@ -2119,14 +2119,14 @@ int main(int argc, char** argv) {
   /* open the private dictionaries */
   if (HOME) {
     buf.assign(HOME);
-#ifndef WIN32
+#ifndef _WIN32
     buf.append("/");
 #endif
     buf.append(DICBASENAME);
     buf.append(basename(dicname, DIRSEPCH));
     load_privdic(buf.c_str(), pMS[0]);
     buf.assign(HOME);
-#ifndef WIN32
+#ifndef _WIN32
     buf.append("/");
 #endif
     if (!privdicname) {
