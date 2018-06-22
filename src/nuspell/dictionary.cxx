@@ -384,7 +384,7 @@ auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
 		if (ret9)
 			return &get<0>(*ret9).second;
 	}
-	auto ret10 = compound_check(s);
+	auto ret10 = check_compound(s);
 	if (ret10)
 		return &get<0>(*ret10).second;
 
@@ -1375,7 +1375,7 @@ auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 }
 
 template <class CharT>
-auto Dictionary::compound_check(std::basic_string<CharT>& word,
+auto Dictionary::check_compound(std::basic_string<CharT>& word,
                                 size_t num) const
     -> boost::optional<std::tuple<Dic_Data::const_reference>>
 {
@@ -1386,47 +1386,60 @@ auto Dictionary::compound_check(std::basic_string<CharT>& word,
         size_t max_length = word.size() - min_length;
         for (auto i = min_length; i <= max_length; ++i) {
 	        part_str.assign(word, 0, i);
-		auto range1 = words.equal_range(part_str);
 		auto part1_entry =
-		    find_if(range1.first, range1.second, [&](auto& e) {
-			    auto& word_flags = e.second;
-			    if (word_flags.contains(need_affix_flag))
-				    return false;
-			    if (word_flags.contains(compound_flag))
-				    return true;
-			    if (num == 0 &&
-			        word_flags.contains(compound_begin_flag))
-				    return true;
-			    if (num != 0 &&
-			        word_flags.contains(compound_middle_flag))
-				    return true;
-			    return false;
-		    });
-		if (part1_entry == range1.second)
+		    check_nonaffixed_word_in_compound(part_str, num);
+		if (!part1_entry) {
+			auto x = strip_prefix_only<AT_COMPOUND_BEGIN>(part_str);
+			if (x)
+				part1_entry = &get<0>(*x);
+		}
+		if (!part1_entry) {
+			auto x = strip_suffix_only<AT_COMPOUND_BEGIN>(part_str);
+			if (x)
+				part1_entry = &get<0>(*x);
+		}
+		if (!part1_entry) {
 			return {};
+		}
 
 		part_str.assign(word, i, word.npos);
-		auto range2 = words.equal_range(part_str);
 		auto part2_entry =
-		    find_if(range2.first, range2.second, [&](auto& e) {
-			    auto& word_flags = e.second;
-			    if (word_flags.contains(need_affix_flag))
-				    return false;
-			    if (word_flags.contains(compound_flag))
-				    return true;
-			    if (num == 0 &&
-			        word_flags.contains(compound_begin_flag))
-				    return true;
-			    if (num != 0 &&
-			        word_flags.contains(compound_middle_flag))
-				    return true;
-			    return false;
-		    });
-		if (part2_entry == range2.second)
+		    check_nonaffixed_word_in_compound(part_str, num);
+		if (!part2_entry) {
+			auto x = strip_prefix_only<AT_COMPOUND_END>(part_str);
+			if (x)
+				part2_entry = &get<0>(*x);
+		}
+		if (!part2_entry) {
+			auto x = strip_suffix_only<AT_COMPOUND_END>(part_str);
+			if (x)
+				part2_entry = &get<0>(*x);
+		}
+		if (!part2_entry) {
 			return {};
+		}
 		return {{*part1_entry}};
         }
         return {};
+}
+
+template <class CharT>
+auto Dictionary::check_nonaffixed_word_in_compound(
+    std::basic_string<CharT>& word, size_t num) const -> Dic_Data::const_pointer
+{
+	auto range = words.equal_range(word);
+	for (auto& we : make_iterator_range(range)) {
+		auto& word_flags = we.second;
+		if (word_flags.contains(need_affix_flag))
+			continue;
+		if (word_flags.contains(compound_flag))
+			return &we;
+		if (num == 0 && word_flags.contains(compound_begin_flag))
+			return &we;
+		if (num != 0 && word_flags.contains(compound_middle_flag))
+			return &we;
+	}
+	return nullptr;
 }
 
 } // namespace nuspell

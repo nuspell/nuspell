@@ -224,8 +224,13 @@ class Dictionary : public Aff_Data {
 	    -> boost::optional<std::tuple<Dic_Data::const_reference>>;
 
 	template <class CharT>
-	auto compound_check(std::basic_string<CharT>& s, size_t num = 0) const
+	auto check_compound(std::basic_string<CharT>& s, size_t num = 0) const
 	    -> boost::optional<std::tuple<Dic_Data::const_reference>>;
+
+	template <class CharT>
+	auto check_nonaffixed_word_in_compound(std::basic_string<CharT>& s,
+	                                       size_t num) const
+	    -> Dic_Data::const_pointer;
 
       public:
 	Dictionary()

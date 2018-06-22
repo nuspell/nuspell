@@ -159,7 +159,6 @@ germancompoundingold.dic \
 hu.dic \
 ignore.dic \
 ignoreutf.dic \
-needaffix.dic \
 nepali.dic \
 onlyincompound.dic \
 onlyincompound2.dic \
