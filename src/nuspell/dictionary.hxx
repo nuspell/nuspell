@@ -225,7 +225,7 @@ class Dictionary : public Aff_Data {
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN, class CharT>
 	auto check_compound(std::basic_string<CharT>& s, size_t num = 0) const
-	    -> boost::optional<std::tuple<Dic_Data::const_reference>>;
+	    -> Dic_Data::const_pointer;
 
 	template <Affixing_Mode m, class CharT>
 	auto check_word_in_compound(std::basic_string<CharT>& s) const

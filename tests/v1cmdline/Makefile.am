@@ -141,7 +141,6 @@ checkcompoundpattern4.dic \
 checkcompoundrep.dic \
 checkcompoundtriple.dic \
 compoundaffix2.dic \
-compoundflag.dic \
 compoundrule.dic \
 compoundrule2.dic \
 compoundrule3.dic \
@@ -162,10 +161,8 @@ onlyincompound2.dic \
 opentaal_cpdpat.dic \
 opentaal_cpdpat2.dic \
 opentaal_forbiddenword1.dic \
-opentaal_forbiddenword2.dic \
 opentaal_keepcase.dic \
-simplifiedtriple.dic \
-utfcompound.dic
+simplifiedtriple.dic
 
 clean-local:
 	-rm -rf testSubDir

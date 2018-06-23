@@ -387,7 +387,7 @@ auto Dictionary::check_word(std::basic_string<CharT>& s) const
 	}
 	auto ret10 = check_compound(s);
 	if (ret10)
-		return &get<0>(*ret10).second;
+		return &ret10->second;
 
 	return nullptr;
 }
@@ -1377,29 +1377,39 @@ auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::check_compound(std::basic_string<CharT>& word,
-                                size_t num) const
-    -> boost::optional<std::tuple<Dic_Data::const_reference>>
+                                size_t num) const -> Dic_Data::const_pointer
 {
-        size_t min_length = 3;
-        if (word.size() < min_length * 2)
-                return {};
-        auto part_str = basic_string<CharT>();
-        size_t max_length = word.size() - min_length;
-        for (auto i = min_length; i <= max_length; ++i) {
-	        part_str.assign(word, 0, i);
+	size_t min_length = 3;
+	if (compound_minimum > 0)
+		min_length = compound_minimum;
+	if (word.size() < min_length * 2)
+		return {};
+	auto part_str = basic_string<CharT>();
+	size_t max_length = word.size() - min_length;
+	for (auto i = min_length; i <= max_length; ++i) {
+		part_str.assign(word, 0, i);
 		auto part1_entry = check_word_in_compound<m>(part_str);
 		if (!part1_entry)
 			continue;
+		// No need to check part1 for forbidenflag here, that is checked
+		// in spell_break.
 
 		part_str.assign(word, i, word.npos);
 		auto part2_entry =
 		    check_word_in_compound<AT_COMPOUND_END>(part_str);
+
+		if (!part2_entry)
+			part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
+			    part_str, num + 1);
 		if (!part2_entry)
 			continue;
 
-		return {{*part1_entry}};
-        }
-        return {};
+		if (part2_entry->second.contains(forbiddenword_flag))
+			return {};
+		else
+			return part1_entry;
+	}
+	return {};
 }
 
 template <Affixing_Mode m, class CharT>
