@@ -170,7 +170,7 @@ auto Dictionary::spell_casing(std::basic_string<CharT>& s) -> const Flag_Set*
 	case Casing::SMALL:
 	case Casing::CAMEL:
 	case Casing::PASCAL:
-		res = checkword(s);
+		res = check_word(s);
 		break;
 	case Casing::ALL_CAPITAL:
 		res = spell_casing_upper(s);
@@ -194,7 +194,7 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
 {
 	auto& loc = locale_aff;
 
-	auto res = checkword(s);
+	auto res = check_word(s);
 	if (res)
 		return res;
 
@@ -208,12 +208,12 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
 		part1 = to_lower(part1, loc);
 		part2 = to_title(part2, loc);
 		auto t = part1 + part2;
-		res = checkword(t);
+		res = check_word(t);
 		if (res)
 			return res;
 		part1 = to_title(part1, loc);
 		t = part1 + part2;
-		res = checkword(t);
+		res = check_word(t);
 		if (res)
 			return res;
 	}
@@ -229,12 +229,12 @@ auto Dictionary::spell_casing_upper(std::basic_string<CharT>& s)
 			return res;
 	}
 	auto t = to_title(s, loc);
-	res = checkword(t);
+	res = check_word(t);
 	if (res && !res->contains(keepcase_flag))
 		return res;
 
 	t = to_lower(s, loc);
-	res = checkword(t);
+	res = check_word(t);
 	if (res && !res->contains(keepcase_flag))
 		return res;
 	return nullptr;
@@ -253,7 +253,7 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
 	auto& loc = locale_aff;
 
 	// check title case
-	auto res = checkword<CharT>(s);
+	auto res = check_word<CharT>(s);
 
 	// forbid bad capitalization
 	if (res && res->contains(forbiddenword_flag))
@@ -263,7 +263,7 @@ auto Dictionary::spell_casing_title(std::basic_string<CharT>& s)
 
 	// attempt checking lower case spelling
 	auto t = to_lower(s, loc);
-	res = checkword<CharT>(t);
+	res = check_word<CharT>(t);
 
 	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
 	if (res && res->contains(keepcase_flag) &&
@@ -306,7 +306,7 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t pos,
 			return res;
 	}
 	else if (rep > 0) {
-		return checkword(base);
+		return check_word(base);
 	}
 	return nullptr;
 }
@@ -320,7 +320,8 @@ auto Dictionary::spell_sharps(std::basic_string<CharT>& base, size_t pos,
  * @return The flags of the corresponding dictionary word.
  */
 template <class CharT>
-auto Dictionary::checkword(std::basic_string<CharT>& s) const -> const Flag_Set*
+auto Dictionary::check_word(std::basic_string<CharT>& s) const
+    -> const Flag_Set*
 {
 
 	for (auto& we : make_iterator_range(words.equal_range(s))) {
@@ -1374,7 +1375,7 @@ auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 	return {};
 }
 
-template <class CharT>
+template <Affixing_Mode m, class CharT>
 auto Dictionary::check_compound(std::basic_string<CharT>& word,
                                 size_t num) const
     -> boost::optional<std::tuple<Dic_Data::const_reference>>
@@ -1386,46 +1387,24 @@ auto Dictionary::check_compound(std::basic_string<CharT>& word,
         size_t max_length = word.size() - min_length;
         for (auto i = min_length; i <= max_length; ++i) {
 	        part_str.assign(word, 0, i);
-		auto part1_entry =
-		    check_nonaffixed_word_in_compound(part_str, num);
-		if (!part1_entry) {
-			auto x = strip_prefix_only<AT_COMPOUND_BEGIN>(part_str);
-			if (x)
-				part1_entry = &get<0>(*x);
-		}
-		if (!part1_entry) {
-			auto x = strip_suffix_only<AT_COMPOUND_BEGIN>(part_str);
-			if (x)
-				part1_entry = &get<0>(*x);
-		}
-		if (!part1_entry) {
-			return {};
-		}
+		auto part1_entry = check_word_in_compound<m>(part_str);
+		if (!part1_entry)
+			continue;
 
 		part_str.assign(word, i, word.npos);
 		auto part2_entry =
-		    check_nonaffixed_word_in_compound(part_str, num);
-		if (!part2_entry) {
-			auto x = strip_prefix_only<AT_COMPOUND_END>(part_str);
-			if (x)
-				part2_entry = &get<0>(*x);
-		}
-		if (!part2_entry) {
-			auto x = strip_suffix_only<AT_COMPOUND_END>(part_str);
-			if (x)
-				part2_entry = &get<0>(*x);
-		}
-		if (!part2_entry) {
-			return {};
-		}
+		    check_word_in_compound<AT_COMPOUND_END>(part_str);
+		if (!part2_entry)
+			continue;
+
 		return {{*part1_entry}};
         }
         return {};
 }
 
-template <class CharT>
-auto Dictionary::check_nonaffixed_word_in_compound(
-    std::basic_string<CharT>& word, size_t num) const -> Dic_Data::const_pointer
+template <Affixing_Mode m, class CharT>
+auto Dictionary::check_word_in_compound(std::basic_string<CharT>& word) const
+    -> Dic_Data::const_pointer
 {
 	auto range = words.equal_range(word);
 	for (auto& we : make_iterator_range(range)) {
@@ -1434,11 +1413,22 @@ auto Dictionary::check_nonaffixed_word_in_compound(
 			continue;
 		if (word_flags.contains(compound_flag))
 			return &we;
-		if (num == 0 && word_flags.contains(compound_begin_flag))
+		if (m == AT_COMPOUND_BEGIN &&
+		    word_flags.contains(compound_begin_flag))
 			return &we;
-		if (num != 0 && word_flags.contains(compound_middle_flag))
+		if (m == AT_COMPOUND_MIDDLE &&
+		    word_flags.contains(compound_middle_flag))
+			return &we;
+		if (m == AT_COMPOUND_END &&
+		    word_flags.contains(compound_last_flag))
 			return &we;
 	}
+	auto x1 = strip_prefix_only<m>(word);
+	if (x1)
+		return &get<0>(*x1);
+	auto x2 = strip_suffix_only<m>(word);
+	if (x2)
+		return &get<0>(*x2);
 	return nullptr;
 }
 

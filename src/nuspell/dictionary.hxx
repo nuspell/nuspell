@@ -65,7 +65,7 @@ class Dictionary : public Aff_Data {
 	auto spell_sharps(std::basic_string<CharT>& base, size_t n_pos = 0,
 	                  size_t n = 0, size_t rep = 0) -> const Flag_Set*;
 	template <class CharT>
-	auto checkword(std::basic_string<CharT>& s) const -> const Flag_Set*;
+	auto check_word(std::basic_string<CharT>& s) const -> const Flag_Set*;
 
 	template <Affixing_Mode m, class CharT>
 	auto affix_NOT_valid(const Prefix<CharT>& a) const;
@@ -223,13 +223,12 @@ class Dictionary : public Aff_Data {
 	                       std::basic_string<CharT>& word) const
 	    -> boost::optional<std::tuple<Dic_Data::const_reference>>;
 
-	template <class CharT>
+	template <Affixing_Mode m = AT_COMPOUND_BEGIN, class CharT>
 	auto check_compound(std::basic_string<CharT>& s, size_t num = 0) const
 	    -> boost::optional<std::tuple<Dic_Data::const_reference>>;
 
-	template <class CharT>
-	auto check_nonaffixed_word_in_compound(std::basic_string<CharT>& s,
-	                                       size_t num) const
+	template <Affixing_Mode m, class CharT>
+	auto check_word_in_compound(std::basic_string<CharT>& s) const
 	    -> Dic_Data::const_pointer;
 
       public:

@@ -140,7 +140,6 @@ checkcompoundpattern3.dic \
 checkcompoundpattern4.dic \
 checkcompoundrep.dic \
 checkcompoundtriple.dic \
-compoundaffix.dic \
 compoundaffix2.dic \
 compoundflag.dic \
 compoundrule.dic \
@@ -151,7 +150,6 @@ compoundrule5.dic \
 compoundrule6.dic \
 compoundrule7.dic \
 compoundrule8.dic \
-fogemorpheme.dic \
 forbiddenword.dic \
 forceucase.dic \
 germancompounding.dic \
@@ -160,7 +158,6 @@ hu.dic \
 ignore.dic \
 ignoreutf.dic \
 nepali.dic \
-onlyincompound.dic \
 onlyincompound2.dic \
 opentaal_cpdpat.dic \
 opentaal_cpdpat2.dic \
