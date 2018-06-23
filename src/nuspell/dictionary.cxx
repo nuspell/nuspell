@@ -458,6 +458,21 @@ auto cross_valid_inner_outer(const Flag_Set& word_flags, const Affix& afx)
 	return word_flags.contains(afx.flag);
 }
 
+template <Affixing_Mode m>
+auto Dictionary::is_valid_inside_compound(const Flag_Set& flags) const
+{
+	if (m == AT_COMPOUND_BEGIN && !flags.contains(compound_flag) &&
+	    !flags.contains(compound_begin_flag))
+		return false;
+	if (m == AT_COMPOUND_MIDDLE && !flags.contains(compound_flag) &&
+	    !flags.contains(compound_middle_flag))
+		return false;
+	if (m == AT_COMPOUND_END && !flags.contains(compound_flag) &&
+	    !flags.contains(compound_last_flag))
+		return false;
+	return true;
+}
+
 template <class CharT>
 auto prefix(const basic_string<CharT>& word, size_t len)
 {
@@ -604,23 +619,8 @@ auto Dictionary::strip_prefix_only(std::basic_string<CharT>& word) const
 			    word_flags.contains(compound_onlyin_flag))
 				continue;
 			// needflag check
-			if (m == AT_COMPOUND_BEGIN &&
-			    !word_flags.contains(compound_flag) &&
-			    !e.cont_flags.contains(compound_flag) &&
-			    !word_flags.contains(compound_begin_flag) &&
-			    !e.cont_flags.contains(compound_begin_flag))
-				continue;
-			if (m == AT_COMPOUND_MIDDLE &&
-			    !word_flags.contains(compound_flag) &&
-			    !e.cont_flags.contains(compound_flag) &&
-			    !word_flags.contains(compound_middle_flag) &&
-			    !e.cont_flags.contains(compound_middle_flag))
-				continue;
-			if (m == AT_COMPOUND_END &&
-			    !word_flags.contains(compound_flag) &&
-			    !e.cont_flags.contains(compound_flag) &&
-			    !word_flags.contains(compound_last_flag) &&
-			    !e.cont_flags.contains(compound_last_flag))
+			if (!is_valid_inside_compound<m>(word_flags) &&
+			    !is_valid_inside_compound<m>(e.cont_flags))
 				continue;
 			return {{word_entry, e}};
 		}
@@ -658,23 +658,8 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 			    word_flags.contains(compound_onlyin_flag))
 				continue;
 			// needflag check
-			if (m == AT_COMPOUND_BEGIN &&
-			    !word_flags.contains(compound_flag) &&
-			    !e.cont_flags.contains(compound_flag) &&
-			    !word_flags.contains(compound_begin_flag) &&
-			    !e.cont_flags.contains(compound_begin_flag))
-				continue;
-			if (m == AT_COMPOUND_MIDDLE &&
-			    !word_flags.contains(compound_flag) &&
-			    !e.cont_flags.contains(compound_flag) &&
-			    !word_flags.contains(compound_middle_flag) &&
-			    !e.cont_flags.contains(compound_middle_flag))
-				continue;
-			if (m == AT_COMPOUND_END &&
-			    !word_flags.contains(compound_flag) &&
-			    !e.cont_flags.contains(compound_flag) &&
-			    !word_flags.contains(compound_last_flag) &&
-			    !e.cont_flags.contains(compound_last_flag))
+			if (!is_valid_inside_compound<m>(word_flags) &&
+			    !is_valid_inside_compound<m>(e.cont_flags))
 				continue;
 			return {{word_entry, e}};
 		}
@@ -737,7 +722,11 @@ auto Dictionary::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 			if (m == FULL_WORD &&
 			    word_flags.contains(compound_onlyin_flag))
 				continue;
-			// needflag check here if needed
+			// needflag check
+			if (!is_valid_inside_compound<m>(word_flags) &&
+			    !is_valid_inside_compound<m>(se.cont_flags) &&
+			    !is_valid_inside_compound<m>(pe.cont_flags))
+				continue;
 			return {{word_entry, se, pe}};
 		}
 	}
@@ -800,7 +789,11 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 			if (m == FULL_WORD &&
 			    word_flags.contains(compound_onlyin_flag))
 				continue;
-			// needflag check here if needed
+			// needflag check
+			if (!is_valid_inside_compound<m>(word_flags) &&
+			    !is_valid_inside_compound<m>(se.cont_flags) &&
+			    !is_valid_inside_compound<m>(pe.cont_flags))
+				continue;
 			return {{word_entry, pe, se}};
 		}
 	}
@@ -1439,6 +1432,12 @@ auto Dictionary::check_word_in_compound(std::basic_string<CharT>& word) const
 	auto x2 = strip_suffix_only<m>(word);
 	if (x2)
 		return &get<0>(*x2);
+	auto x3 = strip_prefix_then_prefix<m>(word);
+	if (x3)
+		return &get<0>(*x3);
+	auto x4 = strip_suffix_then_prefix<m>(word);
+	if (x4)
+		return &get<0>(*x4);
 	return nullptr;
 }
 

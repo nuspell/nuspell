@@ -75,6 +75,8 @@ class Dictionary : public Aff_Data {
 	auto outer_affix_NOT_valid(const AffixT& a) const;
 	template <class AffixT>
 	auto is_circumfix(const AffixT& a) const;
+	template <Affixing_Mode m>
+	auto is_valid_inside_compound(const Flag_Set& flags) const;
 
 	/**
 	 * @brief strip_prefix_only

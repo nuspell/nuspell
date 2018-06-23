@@ -140,7 +140,6 @@ checkcompoundpattern3.dic \
 checkcompoundpattern4.dic \
 checkcompoundrep.dic \
 checkcompoundtriple.dic \
-compoundaffix2.dic \
 compoundrule.dic \
 compoundrule2.dic \
 compoundrule3.dic \
