@@ -35,7 +35,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#include <stdlib.h>
+/*#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -253,4 +253,4 @@ bool Hunzip::getline(std::string& dest) {
   strcpy(line + left, linebuf);
   dest.assign(line);
   return true;
-}
+}*/

@@ -38,7 +38,7 @@
 /* hunzip: file decompression for sorted dictionaries with optional encryption,
  * algorithm: prefix-suffix encoding and 16-bit Huffman encoding */
 
-#ifndef HUNZIP_HXX_
+/*#ifndef HUNZIP_HXX_
 #define HUNZIP_HXX_
 
 #include "hunvisapi.h"
@@ -46,7 +46,7 @@
 #include <stdio.h>
 #include <fstream>
 #include <vector>
-
+*/
 #define BUFSIZE 65536
 #define HZIP_EXTENSION ".hz"
 
@@ -54,7 +54,7 @@
 #define MSG_FORMAT "error: %s: not in hzip format\n"
 #define MSG_MEMORY "error: %s: missing memory\n"
 #define MSG_KEY "error: %s: missing or bad password\n"
-
+/*
 struct bit {
   unsigned char c[2];
   int v[2];
@@ -84,4 +84,4 @@ class LIBHUNSPELL_DLL_EXPORTED Hunzip {
   bool getline(std::string& dest);
 };
 
-#endif
+#endif*/

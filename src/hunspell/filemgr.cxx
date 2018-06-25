@@ -80,22 +80,22 @@ int FileMgr::fail(const char* err, const char* par) {
   return -1;
 }
 
-FileMgr::FileMgr(const char* file, const char* key) : hin(NULL), linenum(0) {
+FileMgr::FileMgr(const char* file, const char* key) : linenum(0) { /* hin(NULL),  */
   in[0] = '\0';
 
   myopen(fin, file, std::ios_base::in);
-  if (!fin.is_open()) {
+  if (!fin.is_open()) /*{
     // check hzipped file
     std::string st(file);
     st.append(HZIP_EXTENSION);
     hin = new Hunzip(st.c_str(), key);
   }
-  if (!fin.is_open() && !hin->is_open())
+  if (!fin.is_open() && !hin->is_open())*/
     fail(MSG_OPEN, file);
 }
 
 FileMgr::~FileMgr() {
-  delete hin;
+/*  delete hin;*/
 }
 
 bool FileMgr::getline(std::string& dest) {
@@ -103,8 +103,8 @@ bool FileMgr::getline(std::string& dest) {
   ++linenum;
   if (fin.is_open()) {
     ret = static_cast<bool>(std::getline(fin, dest));
-  } else if (hin->is_open()) {
-    ret = hin->getline(dest);
+/*  } else if (hin->is_open()) {
+    ret = hin->getline(dest);*/
   }
   if (!ret) {
     --linenum;
