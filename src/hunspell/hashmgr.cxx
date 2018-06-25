@@ -74,7 +74,7 @@
 #include <ctype.h>
 #include <limits>
 #include <sstream>
-#include <iomanip> // Only here for logging. Normally an empty line.
+
 #include "hashmgr.hxx"
 #include "csutil.hxx"
 #include "atypes.hxx"
@@ -108,7 +108,7 @@ HashMgr::HashMgr(const char* tpath, const char* apath, const char* key)
     if (!tableptr) {
       tablesize = 0;
     }
-  } else if (true) this->log(apath, tpath);//, key); // Set to false to disable logging.
+  }
 }
 
 HashMgr::~HashMgr() {
@@ -1190,99 +1190,4 @@ char* HashMgr::get_aliasm(int index) const {
     return aliasm[index - 1];
   HUNSPELL_WARNING(stderr, "error: bad morph. alias index: %d\n", index);
   return NULL;
-}
-
-flag HashMgr::getFlagMode() const { // only for development logging
-	return flag_mode;
-}
-
-void HashMgr::log(const char* tpath, const char* apath) {//}, const char* key) { // only for development logging
-	std::ofstream log_file;
-	auto log_name = std::string(".hm1.log"); // 1: Hunspell, 2: Nuspell
-	log_name.insert(0, tpath);
-	if (log_name.substr(0, 2) == "./")
-		log_name.erase(0, 2);
-	log_name.insert(0, "../nuspell/"); // prevent logging somewhere else
-	log_file.open(log_name, std::ios_base::out);
-	if (!log_file.is_open()) {
-		return;
-	}
-	log_file << "tpath\t" << tpath << std::endl;
-	log_file << "apath\t" << apath << std::endl;
-	log_file << "key\t";
-//	if (key == 0x0)
-//		log_file << "0x0" << std::endl;
-//	else
-//		log_file << key << std::endl;
-	log_file << "AFTER load_config() and load_tables()" << std::endl;
-	log_file << "enc\t\"" << this->enc << "\"" << std::endl;
-//	log_file << "flag_mode\t";
-//	if (this->flag_mode == FLAG_CHAR)
-//		log_file << "FLAG_CHAR " << this->flag_mode << std::endl;
-//	else if (this->flag_mode == FLAG_LONG)
-//		log_file << "FLAG_LONG " << this->flag_mode << std::endl;
-//	else if (this->flag_mode == FLAG_NUM)
-//		log_file << "FLAG_NUM " << this->flag_mode << std::endl;
-//	else if (this->flag_mode == FLAG_UNI)
-//		log_file << "FLAG_UNI " << this->flag_mode << std::endl;
-	log_file << "complexprefixes\t" << this->complexprefixes << std::endl;
-	log_file << "lang\t\"" << this->lang << "\"" << std::endl;
-	log_file << "langnum\t" << this->langnum << std::endl;
-	log_file << "ignorechars\t\"" << this->ignorechars << "\"" << std::endl;
-	//TODO log_file << "ignorechars_utf16\t" << this->ignorechars_utf16 << std::endl;
-	log_file << "utf8\t" << this->utf8 << std::endl;
-	log_file << "aliasflen\t" << this->aliasflen << std::endl;
-	log_file << "numaliasf\t" << this->numaliasf << std::endl;
-	//TODO Is array. log_file << "aliasf\t" << this->aliasf << std::endl;
-	log_file << "numaliasm\t" << this->numaliasm << std::endl;
-	//TODO Is array. log_file << "aliasm\t" << this->aliasm << std::endl;
-	log_file << "forbiddenword\t" << this->forbiddenword << std::endl;
-	log_file << "csconv.ccase\t'";
-	if (this->csconv->ccase == '\0')
-		log_file << "\\0'" << std::endl;
-	else
-		log_file << this->csconv->ccase << "'" << std::endl;
-	log_file << "csconv.clower\t'";
-	if (this->csconv->clower == '\0')
-		log_file << "\\0'" << std::endl;
-	else
-		log_file << this->csconv->clower << "'" << std::endl;
-	log_file << "csconv.cupper\t'";
-	if (this->csconv->cupper == '\0')
-		log_file << "\\0'" << std::endl;
-	else
-		log_file << this->csconv->cupper << "'" << std::endl;
-	log_file << "tablesize\t" << this->tablesize << std::endl;
-	if (tableptr) {
-		int i = 0;
-		for (int j = 0; j < tablesize; j++) {
-			struct hentry* pt = tableptr[j];
-			while (pt) {
-				i++;
-				log_file << "tableptr_" << std::setw(3) << std::setfill('0') << i << ".word\t\"";
-				if (pt->word[0] == '\0')
-					log_file << "\"" << std::endl;
-				else
-					log_file << pt->word << "\"" << std::endl;
-				log_file << "tableptr_" << std::setw(3) << std::setfill('0') << i << ".astr\t\"";
-				if (pt->astr && (!aliasf || TESTAFF(pt->astr, ONLYUPCASEFLAG, pt->alen)))
-					log_file << *(pt->astr) << "\"" << std::endl;
-				else
-					log_file << "\"" << std::endl;
-				log_file << "tableptr_"  << std::setw(3) << std::setfill('0') << i << ".alen\t" << pt->alen << std::endl;
-//TODO				if (pt->blen == '\0')
-//TODO					log_file << "tableptr_" << std::setw(3) << std::setfill('0') << i << ".blen\t'\\0'" << std::endl;
-//TODO				else
-//TODO					log_file << "tableptr_" << std::setw(3) << std::setfill('0') << i << ".blen\t" << pt->blen << std::endl;
-//TODO				if (pt->clen == '\0')
-//TODO					log_file << "tableptr_" << std::setw(3) << std::setfill('0') << i << ".clen\t'\\0'" << std::endl;
-//TODO				else
-//TODO					log_file << "tableptr_" << std::setw(3) << std::setfill('0') << i << ".clen\t" << pt->clen << std::endl;
-				pt = pt->next;
-			}
-		}
-	}
-	else
-		log_file << "tableptr\t" << std::endl;
-	log_file << "END" << std::endl;
 }

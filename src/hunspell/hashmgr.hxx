@@ -118,7 +118,7 @@ class HashMgr {
   int is_aliasf() const;
   int get_aliasf(int index, unsigned short** fvec, FileMgr* af) const;
   int is_aliasm() const;
-  char* get_aliasm(int index) const; flag getFlagMode() const; // getFlagMode is only for development logging
+  char* get_aliasm(int index) const;
 
  private:
   int get_clen_and_captype(const std::string& word, int* captype);
@@ -139,7 +139,7 @@ class HashMgr {
                                   const std::string* dp,
                                   int captype);
   bool parse_aliasm(const std::string& line, FileMgr* af);
-  int remove_forbidden_flag(const std::string& word); void log(const char* tpath, const char* apath);//, const char* key);
+  int remove_forbidden_flag(const std::string& word);
 };
 
 #endif

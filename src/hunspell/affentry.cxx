@@ -243,8 +243,8 @@ struct hentry* PfxEntry::checkword(const char* word,
               !TESTAFF(contclass, pmyMgr->get_needaffix(), contclasslen) &&
               // needflag
               ((!needflag) || TESTAFF(he->astr, needflag, he->alen) ||
-	       (contclass && TESTAFF(contclass, needflag, contclasslen)))) {
-	    pmyMgr->get_log() << "  PfxEntry::checkword(word=" << word << ",needflag="<< needflag << ",*) appnd=" << appnd << ",strip=" << strip << ",c.conds=" << c.conds << ",aflag=" << (char)aflag << ",contclass=" << contclass << " TMPWORD=" << tmpword << " -> <HashEntry word=" << (he ? he->word: "NULL")  << ",astr=" << (he ? (char)*he->astr : ' ') << ">" << std::endl; return he; }
+               (contclass && TESTAFF(contclass, needflag, contclasslen))))
+            return he;
           he = he->next_homonym;  // check homonyms
         } while (he);
       }
@@ -257,8 +257,8 @@ struct hentry* PfxEntry::checkword(const char* word,
       if ((opts & aeXPRODUCT)) {
         he = pmyMgr->suffix_check(tmpword.c_str(), tmpl, aeXPRODUCT, this,
                                   FLAG_NULL, needflag, in_compound);
-	if (he) {
-	  pmyMgr->get_log() << "  PfxEntry::checkword(word=" << word << ",*) appnd=" << appnd << ",strip=" << strip << ",c.conds=" << c.conds << ",opts=" << opts << " TMPWORD=" << tmpword << " -> <HashEntry word=" << (he ? he->word: "NULL")  << ",astr=" << (he ? (char)*he->astr : ' ') << ">" << std::endl; return he; }
+        if (he)
+          return he;
       }
     }
   }
@@ -304,8 +304,8 @@ struct hentry* PfxEntry::check_twosfx(const char* word,
         // hash entry of root word or NULL
         struct hentry* he = pmyMgr->suffix_check_twosfx(tmpword.c_str(), tmpl, aeXPRODUCT, this,
                                                         needflag);
-	if (he) {
-	  pmyMgr->get_log() << "  PfxEntry::check_twosfx(word=" << word << ",in_compound=" << in_compound << ",*) appnd=" << appnd << ",Mgr.fullstrip=" << pmyMgr->get_fullstrip() << "strip=" << strip << ",numconds=" << numconds << ",c.conds=" << c.conds << ",opts=" << opts << " TMPWORD=" << tmpword << " -> <HashEntry word=" << (he ? he->word: "NULL")  << ",astr=" << (he ? (char)*he->astr : ' ') << ">" << std::endl; return he; }
+        if (he)
+          return he;
       }
     }
   }
@@ -678,8 +678,8 @@ struct hentry* SfxEntry::checkword(const char* word,
               // handle required flag
               ((!needflag) ||
                (TESTAFF(he->astr, needflag, he->alen) ||
-		((contclass) && TESTAFF(contclass, needflag, contclasslen))))) {
-	    pmyMgr->get_log() << "  SfxEntry::checkword(word=" << word << ",optflags=" << optflags << ",needflag="<< needflag << ",badflag="<< badflag << ") appnd=" << appnd << ",strip=" << strip << ",c.conds=" << c.conds << ",aflag=" << (char)aflag << ",contclass=" << contclass << " TMPWORD=" << tmpword << " ENDWORD=" << endword << " -> <HashEntry word=" << (he ? he->word: "NULL")  << ",astr=" << (he ? (char)*he->astr : ' ') << ">" << std::endl; return he; }
+                ((contclass) && TESTAFF(contclass, needflag, contclasslen)))))
+            return he;
           he = he->next_homonym;  // check homonyms
         } while (he);
       }
@@ -734,15 +734,15 @@ struct hentry* SfxEntry::check_twosfx(const char* word,
       struct hentry* he;  // hash entry pointer
       if (ppfx) {
         // handle conditional suffix
-	if ((contclass) && TESTAFF(contclass, ep->getFlag(), contclasslen)) {
+        if ((contclass) && TESTAFF(contclass, ep->getFlag(), contclasslen))
           he = pmyMgr->suffix_check(tmpword.c_str(), tmpl, 0, NULL,
-				    (FLAG)aflag, needflag, IN_CPD_NOT); pmyMgr->get_log() << "  SfxEntry::check_twosfx(word=" << word << ",optflags=" << optflags << ",needflag" << needflag << "*) -> <HashEntry word=" << (he ? he->word: "NULL")  << ",astr=" << (he ? (char)*he->astr : ' ') << ">" << std::endl; }
-	else {
+                                    (FLAG)aflag, needflag, IN_CPD_NOT);
+        else
           he = pmyMgr->suffix_check(tmpword.c_str(), tmpl, optflags, ppfx,
-				    (FLAG)aflag, needflag, IN_CPD_NOT); pmyMgr->get_log() << "  SfxEntry::check_twosfx(word=" << word << ",optflags=" << optflags << ",needflag" << needflag << "*) -> <HashEntry word=" << (he ? he->word: "NULL")  << ",astr=" << (he ? (char)*he->astr : ' ') << ">" << std::endl; }
+                                    (FLAG)aflag, needflag, IN_CPD_NOT);
       } else {
         he = pmyMgr->suffix_check(tmpword.c_str(), tmpl, 0, NULL,
-				  (FLAG)aflag, needflag, IN_CPD_NOT); pmyMgr->get_log() << "  SfxEntry::check_twosfx(word=" << word << ",optflags=" << optflags << ",needflag" << needflag << "*) -> <HashEntry word=" << (he ? he->word: "NULL")  << ",astr=" << (he ? (char)*he->astr : ' ') << ">" << std::endl;
+                                  (FLAG)aflag, needflag, IN_CPD_NOT);
       }
       if (he)
         return he;

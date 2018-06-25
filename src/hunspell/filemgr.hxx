@@ -84,7 +84,7 @@ class FileMgr {
 
  protected:
   std::ifstream fin;
-  /*Hunzip* hin;*/
+  Hunzip* hin;
   char in[BUFSIZE + 50];  // input buffer
   int fail(const char* err, const char* par);
   int linenum;
