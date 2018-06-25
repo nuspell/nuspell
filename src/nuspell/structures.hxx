@@ -81,7 +81,7 @@ class String_Set {
 	using traits_type = typename StrT::traits_type;
 
 	using key_type = typename StrT::value_type;
-	using key_compare = decltype((traits_type::lt));
+	using key_compare = decltype(&traits_type::lt);
 	using value_type = typename StrT::value_type;
 	using value_compare = key_compare;
 	using allocator_type = typename StrT::allocator_type;
@@ -166,8 +166,9 @@ class String_Set {
 	// std::pair<iterator, bool> insert(value_type&& x);
 	iterator insert(iterator hint, const value_type& x)
 	{
-		if (hint == end() || x < *hint) {
-			if (hint == begin() || *(hint - 1) < x) {
+		if (hint == end() || traits_type::lt(x, *hint)) {
+			if (hint == begin() ||
+			    traits_type::lt(*(hint - 1), x)) {
 				return d.insert(hint, x);
 			}
 		}
