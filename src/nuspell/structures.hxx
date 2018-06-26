@@ -75,13 +75,19 @@ class String_Set {
 		sort(first, last, t::lt);
 		d.erase(unique(first, last, t::eq), last);
 	}
+	struct Char_Traits_Less_Than {
+		auto operator()(CharT a, CharT b)
+		{
+			return traits_type::lt(a, b);
+		}
+	};
 
       public:
 	using StrT = std::basic_string<CharT>;
 	using traits_type = typename StrT::traits_type;
 
 	using key_type = typename StrT::value_type;
-	using key_compare = decltype(&traits_type::lt);
+	using key_compare = Char_Traits_Less_Than;
 	using value_type = typename StrT::value_type;
 	using value_compare = key_compare;
 	using allocator_type = typename StrT::allocator_type;
@@ -228,12 +234,9 @@ class String_Set {
 		return *this;
 	}
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc++1z-compat"
 	// observers:
-	key_compare key_comp() const { return traits_type::lt; }
+	key_compare key_comp() const { return Char_Traits_Less_Than(); }
 	value_compare value_comp() const { return key_comp(); };
-#pragma GCC diagnostic pop
 
 	// set operations:
       private:
