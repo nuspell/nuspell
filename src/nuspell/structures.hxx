@@ -422,25 +422,46 @@ class Prefix {
 	using StrT = std::basic_string<CharT>;
 	using CondT = Condition<CharT>;
 
-	const char16_t flag;
-	const bool cross_product;
-	const StrT stripping;
-	const StrT appending;
+	char16_t flag = 0;
+	bool cross_product = false;
+	StrT stripping;
+	StrT appending;
 	Flag_Set cont_flags;
-	const CondT condition;
+	CondT condition;
 
 	Prefix() = default;
 	Prefix(char16_t flag, bool cross_product, const StrT& strip,
 	       const StrT& append, const Flag_Set& cont_flags,
-	       const StrT& condition);
+	       const StrT& condition)
+	    : flag(flag), cross_product(cross_product), stripping(strip),
+	      appending(append), cont_flags(cont_flags), condition(condition)
+	{
+	}
 
-	auto to_root(StrT& word) const -> StrT&;
-	auto to_root_copy(StrT word) const -> StrT;
+	auto to_root(StrT& word) const -> StrT&
+	{
+		return word.replace(0, appending.size(), stripping);
+	}
+	auto to_root_copy(StrT word) const -> StrT
+	{
+		to_root(word);
+		return word;
+	}
 
-	auto to_derived(StrT& word) const -> StrT&;
-	auto to_derived_copy(StrT word) const -> StrT;
+	auto to_derived(StrT& word) const -> StrT&
+	{
+		return word.replace(0, stripping.size(), appending);
+	}
+	auto to_derived_copy(StrT word) const -> StrT
+	{
+		to_derived(word);
+		return word;
+	}
 
-	auto check_condition(const StrT& word) const -> bool;
+	auto check_condition(const StrT& word) const -> bool
+	{
+		return condition.match_prefix(word);
+	}
 };
 
 template <class CharT>
@@ -449,25 +470,48 @@ class Suffix {
 	using StrT = std::basic_string<CharT>;
 	using CondT = Condition<CharT>;
 
-	const char16_t flag;
-	const bool cross_product;
-	const StrT stripping;
-	const StrT appending;
+	char16_t flag = 0;
+	bool cross_product = false;
+	StrT stripping;
+	StrT appending;
 	Flag_Set cont_flags;
-	const CondT condition;
+	CondT condition;
 
 	Suffix() = default;
 	Suffix(char16_t flag, bool cross_product, const StrT& strip,
 	       const StrT& append, const Flag_Set& cont_flags,
-	       const StrT& condition);
+	       const StrT& condition)
+	    : flag(flag), cross_product(cross_product), stripping(strip),
+	      appending(append), cont_flags(cont_flags), condition(condition)
+	{
+	}
 
-	auto to_root(StrT& word) const -> StrT&;
-	auto to_root_copy(StrT word) const -> StrT;
+	auto to_root(StrT& word) const -> StrT&
+	{
+		return word.replace(word.size() - appending.size(),
+		                    appending.size(), stripping);
+	}
+	auto to_root_copy(StrT word) const -> StrT
+	{
+		to_root(word);
+		return word;
+	}
 
-	auto to_derived(StrT& word) const -> StrT&;
-	auto to_derived_copy(StrT word) const -> StrT;
+	auto to_derived(StrT& word) const -> StrT&
+	{
+		return word.replace(word.size() - stripping.size(),
+		                    stripping.size(), appending);
+	}
+	auto to_derived_copy(StrT word) const -> StrT
+	{
+		to_derived(word);
+		return word;
+	}
 
-	auto check_condition(const StrT& word) const -> bool;
+	auto check_condition(const StrT& word) const -> bool
+	{
+		return condition.match_suffix(word);
+	}
 };
 extern template class Prefix<char>;
 extern template class Prefix<wchar_t>;
@@ -506,16 +550,16 @@ struct sv_eq {
 
 template <class CharT>
 using Prefix_Table = multi_index_container<
-    Prefix<CharT>, indexed_by<hashed_non_unique<
-                       member<Prefix<CharT>, const std::basic_string<CharT>,
-                              &Prefix<CharT>::appending>,
-                       sv_hash<CharT>, sv_eq<CharT>>>>;
+    Prefix<CharT>,
+    indexed_by<hashed_non_unique<member<Prefix<CharT>, std::basic_string<CharT>,
+                                        &Prefix<CharT>::appending>,
+                                 sv_hash<CharT>, sv_eq<CharT>>>>;
 
 template <class CharT>
 using Suffix_Table = multi_index_container<
-    Suffix<CharT>, indexed_by<hashed_non_unique<
-                       member<Suffix<CharT>, const std::basic_string<CharT>,
-                              &Suffix<CharT>::appending>,
-                       sv_hash<CharT>, sv_eq<CharT>>>>;
+    Suffix<CharT>,
+    indexed_by<hashed_non_unique<member<Suffix<CharT>, std::basic_string<CharT>,
+                                        &Suffix<CharT>::appending>,
+                                 sv_hash<CharT>, sv_eq<CharT>>>>;
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX
