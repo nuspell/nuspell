@@ -236,7 +236,7 @@ class String_Set {
 
 	// observers:
 	key_compare key_comp() const { return Char_Traits_Less_Than(); }
-	value_compare value_comp() const { return key_comp(); };
+	value_compare value_comp() const { return key_comp(); }
 
 	// set operations:
       private:

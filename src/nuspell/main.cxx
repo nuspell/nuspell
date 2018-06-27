@@ -183,13 +183,13 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 
 			break;
 		case ':':
-			cerr << "Option -" << (char)optopt
+			cerr << "Option -" << static_cast<char>(optopt)
 			     << " requires an operand\n";
 			mode = ERROR_MODE;
 			break;
 		case '?':
-			cerr << "Unrecognized option: '-" << (char)optopt << "'"
-			     << '\n';
+			cerr << "Unrecognized option: '-"
+			     << static_cast<char>(optopt) << "'\n";
 			mode = ERROR_MODE;
 			break;
 		}

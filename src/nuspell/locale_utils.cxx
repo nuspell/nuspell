@@ -269,7 +269,7 @@ auto validate_utf8(const std::string& s) -> bool
 	return true;
 }
 
-auto is_ascii(char c) -> bool { return (unsigned char)c <= 127; }
+auto is_ascii(char c) -> bool { return static_cast<unsigned char>(c) <= 127; }
 
 auto is_all_ascii(const std::string& s) -> bool
 {
@@ -279,7 +279,7 @@ auto is_all_ascii(const std::string& s) -> bool
 template <class CharT>
 auto widen_latin1(char c) -> CharT
 {
-	return (unsigned char)c;
+	return static_cast<unsigned char>(c);
 }
 
 auto latin1_to_ucs2(const std::string& s) -> std::u16string
@@ -439,8 +439,8 @@ auto get_char_mask(UChar32 cp)
 	}
 
 	// Do not uncomment the following, because it will cause a bug. Its
-	// functionality is mostly already covered by the code above. if
-	// (u_isalnum(cp)) {
+	// functionality is already covered by the code above.
+	// if (u_isalnum(cp)) {
 	//	ret |= ctype_base::alnum;
 	//}
 	// if (u_isgraph(cp)) {
@@ -494,7 +494,7 @@ auto general_category_to_ctype_mask(UCharCategory cat) -> ctype_base::mask
 		return ctype_base::cntrl; // no print, graph
 	case U_PRIVATE_USE_CHAR:
 		// no print
-		{};
+		return {};
 	case U_SURROGATE:
 		// no print, graph
 		return {};

@@ -107,7 +107,7 @@ bool read_to_slash_or_space(std::istream& in, std::string& out)
 	int c;
 	bool readSomething = false;
 	while ((c = in.get()) != std::istream::traits_type::eof() &&
-	       !isspace((char)c, in.getloc()) && c != '/') {
+	       !isspace<char>(c, in.getloc()) && c != '/') {
 		out.push_back(c);
 		readSomething = true;
 	}
@@ -226,8 +226,8 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			--e;
 		}
 		for (; i != e; i += 2) {
-			char16_t c1 = static_cast<unsigned char>(*i);
-			char16_t c2 = static_cast<unsigned char>(*(i + 1));
+			auto c1 = *i;
+			auto c2 = *(i + 1);
 			ret.push_back((c1 << 8) | c2);
 		}
 		if (i != s.end()) {
@@ -453,9 +453,6 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 		ret = decode_flags(in, line_num, t, enc);
 		break;
 	case FLAG_DOUBLE_CHAR: {
-		// Following could be replaced by non-library implementation,
-		// reducing size of binary when no regex methods are called at
-		// all.
 		auto r = regex(R"(\((..)\)([?*]?))");
 		auto str = string();
 		in >> str;
@@ -464,8 +461,8 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 		for (; it != last; ++it) {
 			auto& m = *it;
 			auto i = m[1].first;
-			char16_t c1 = static_cast<unsigned char>(*i);
-			char16_t c2 = static_cast<unsigned char>(*(i + 1));
+			auto c1 = *i;
+			auto c2 = *(i + 1);
 			ret.push_back((c1 << 8) | c2);
 
 			if (m[2].length() != 0)
@@ -484,7 +481,7 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 		auto last = sregex_iterator();
 		for (; it != last; ++it) {
 			auto& m = *it;
-			size_t number_pos = m.position(1);
+			auto number_pos = m.position(1);
 			auto fl = strtoul(str.data() + number_pos, nullptr, 10);
 			if (fl <= char16_t(-1))
 				ret.push_back(fl);
