@@ -127,33 +127,46 @@ struct Aff_Data {
 	using pair = std::pair<T, U>;
 
 	// data members
+	// word list
 	Dic_Data words;
+
 	Aff_Structures<char> structures;
 	Aff_Structures<wchar_t> wide_structures;
+
+	// general options
+	std::locale locale_aff;
 	Flag_Type flag_type;
 	bool complex_prefixes;
+	bool fullstrip;
+	bool checksharps;
+	bool forbid_warn;
+	char16_t circumfix_flag;
+	char16_t forbiddenword_flag;
+	char16_t keepcase_flag;
+	char16_t need_affix_flag;
+	char16_t substandard_flag;
+	char16_t warn_flag;
+
 	vector<Flag_Set> flag_aliases;
-	std::locale locale_aff;
+	string wordchars; // deprecated?
 
 	// suggestion options
 	string keyboard_layout;
 	string try_chars;
 	char16_t nosuggest_flag;
-	short max_compound_suggestions;
-	short max_ngram_suggestions;
-	short max_diff_factor;
+	unsigned short max_compound_suggestions;
+	unsigned short max_ngram_suggestions;
+	unsigned short max_diff_factor;
 	bool only_max_diff;
 	bool no_split_suggestions;
 	bool suggest_with_dots;
 	vector<pair<string, string>> replacements;
 	vector<string> map_related_chars; // vector<vector<string>>?
 	vector<pair<string, string>> phonetic_replacements;
-	char16_t warn_flag;
-	bool forbid_warn;
 
 	// compounding options
-	vector<u16string> compound_rules;
-	short compound_minimum;
+	unsigned short compound_min_length;
+	unsigned short compound_max_word_count;
 	char16_t compound_flag;
 	char16_t compound_begin_flag;
 	char16_t compound_last_flag;
@@ -161,9 +174,9 @@ struct Aff_Data {
 	char16_t compound_onlyin_flag;
 	char16_t compound_permit_flag;
 	char16_t compound_forbid_flag;
-	bool compound_more_suffixes;
 	char16_t compound_root_flag;
-	short compound_word_max;
+	char16_t compound_force_uppercase;
+	bool compound_more_suffixes;
 	bool compound_check_up;
 	bool compound_check_rep;
 	bool compound_check_case;
@@ -171,20 +184,11 @@ struct Aff_Data {
 	bool compound_simplified_triple;
 
 	vector<Compound_Check_Pattern> compound_check_patterns;
-	char16_t compound_force_uppercase;
-	short compound_syllable_max;
+	vector<u16string> compound_rules;
+
+	unsigned short compound_syllable_max;
 	string compound_syllable_vowels;
 	Flag_Set compound_syllable_num;
-
-	// others
-	char16_t circumfix_flag;
-	char16_t forbiddenword_flag;
-	bool fullstrip;
-	char16_t keepcase_flag;
-	char16_t need_affix_flag;
-	char16_t substandard_flag;
-	string wordchars; // deprecated?
-	bool checksharps;
 
 	// methods
 	auto set_encoding_and_language(const string& enc,

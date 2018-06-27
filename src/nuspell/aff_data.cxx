@@ -580,13 +580,13 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	unordered_map<string, vector<string>*> command_vec_str = {
 	    {"MAP", &map_related_chars}};
 
-	unordered_map<string, short*> command_shorts = {
+	unordered_map<string, unsigned short*> command_shorts = {
 	    {"MAXCPDSUGS", &max_compound_suggestions},
 	    {"MAXNGRAMSUGS", &max_ngram_suggestions},
 	    {"MAXDIFF", &max_diff_factor},
 
-	    {"COMPOUNDMIN", &compound_minimum},
-	    {"COMPOUNDWORDMAX", &compound_word_max}};
+	    {"COMPOUNDMIN", &compound_min_length},
+	    {"COMPOUNDWORDMAX", &compound_max_word_count}};
 
 	unordered_map<string, vector<pair<string, string>>*> command_vec_pair =
 	    {{"REP", &replacements},
@@ -1191,7 +1191,7 @@ void Aff_Data::log(const string& affpath)
 	}
 #endif
 	// TODO compound_rules
-	log_file << "cpdmin/compound_minimum\t" << compound_minimum << "\n";
+	log_file << "cpdmin/compound_minimum\t" << compound_min_length << "\n";
 	log_file << "compoundflag/compound_flag\t" << compound_flag << "\n";
 	log_file << "compoundbegin/compound_begin_flag\t" << compound_begin_flag
 	         << "\n";
@@ -1209,7 +1209,7 @@ void Aff_Data::log(const string& affpath)
 	         << compound_more_suffixes << "\n";
 	log_file << "compoundroot/compound_root_flag\t" << compound_root_flag
 	         << "\n";
-	log_file << "cpdwordmax/compound_word_max\t" << compound_word_max
+	log_file << "cpdwordmax/compound_word_max\t" << compound_max_word_count
 	         << "\n";
 	log_file << "checkcompounddup/compound_check_up\t" << compound_check_up
 	         << "\n";

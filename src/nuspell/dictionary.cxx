@@ -1373,8 +1373,8 @@ auto Dictionary::check_compound(std::basic_string<CharT>& word,
                                 size_t num) const -> Dic_Data::const_pointer
 {
 	size_t min_length = 3;
-	if (compound_minimum > 0)
-		min_length = compound_minimum;
+	if (compound_min_length != 0)
+		min_length = compound_min_length;
 	if (word.size() < min_length * 2)
 		return {};
 	auto part_str = basic_string<CharT>();
