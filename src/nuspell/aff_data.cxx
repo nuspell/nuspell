@@ -189,7 +189,6 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			cerr << "Nuspell error: missing single-character flag "
 			        "in line "
 			     << line_num << endl;
-			exit(0);
 			break;
 		}
 		if (enc.is_utf8() && !is_all_ascii(s)) {
@@ -921,7 +920,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 				break;
 			if (line[slash_pos - 1] != '\\')
 				break;
-			++slash_pos;
+
+			line.erase(slash_pos - 1, 1);
 		}
 		if (slash_pos != line.npos) {
 			// slash found, word until slash
@@ -930,7 +930,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			flags = decode_flags_possible_alias(
 			    ss, line_number, flag_type, encoding, flag_aliases);
 			if (ss.fail())
-				continue;
+				word = line;
 		}
 		else if (line.find('\t') != line.npos) {
 			// Tab found, word until tab. No flags.
