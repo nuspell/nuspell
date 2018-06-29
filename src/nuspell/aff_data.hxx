@@ -68,6 +68,7 @@ struct Aff_Structures {
 	String_Set<CharT> ignored_chars;
 	Prefix_Table<CharT> prefixes;
 	Suffix_Table<CharT> suffixes;
+	std::vector<Compound_Pattern<CharT>> compound_patterns;
 };
 
 struct Affix {
@@ -88,10 +89,10 @@ struct Compound_Check_Pattern {
 	using string = std::string;
 
 	string first_word_end;
-	char16_t first_word_flag;
 	string second_word_begin;
-	char16_t second_word_flag;
 	string replacement;
+	char16_t first_word_flag;
+	char16_t second_word_flag;
 };
 
 using Dic_Data_Base = std::unordered_multimap<std::string, Flag_Set>;
@@ -183,7 +184,6 @@ struct Aff_Data {
 	bool compound_check_triple;
 	bool compound_simplified_triple;
 
-	vector<Compound_Check_Pattern> compound_check_patterns;
 	vector<u16string> compound_rules;
 
 	unsigned short compound_syllable_max;

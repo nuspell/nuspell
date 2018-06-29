@@ -542,6 +542,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<pair<string, string>> input_conversion;
 	vector<pair<string, string>> output_conversion;
 	vector<vector<string>> morphological_aliases;
+	vector<Compound_Check_Pattern> compound_check_patterns;
 	bool break_exists = false;
 
 	flag_type = FLAG_SINGLE_CHAR;
@@ -596,7 +597,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 
 	    {"COMPOUNDFLAG", &compound_flag},
 	    {"COMPOUNDBEGIN", &compound_begin_flag},
-	    {"COMPOUNDLAST", &compound_last_flag},
+	    {"COMPOUNDEND", &compound_last_flag},
 	    {"COMPOUNDMIDDLE", &compound_middle_flag},
 	    {"ONLYINCOMPOUND", &compound_onlyin_flag},
 	    {"COMPOUNDPERMITFLAG", &compound_permit_flag},
@@ -808,6 +809,18 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			    u_to_u(x.appending), x.new_flags,
 			    u_to_u(x.condition));
 		}
+		for (auto& x : compound_check_patterns) {
+			auto forbid_affixed = x.first_word_end == "0";
+			if (forbid_affixed)
+				x.first_word_end.clear();
+			wide_structures.compound_patterns.push_back(
+			    {{u_to_u(x.first_word_end),
+			      u_to_u(x.second_word_begin)},
+			     u_to_u(x.replacement),
+			     x.first_word_flag,
+			     x.second_word_flag,
+			     forbid_affixed});
+		}
 	}
 	else {
 		structures.input_substr_replacer = input_conversion;
@@ -824,6 +837,17 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			structures.suffixes.emplace(x.flag, x.cross_product,
 			                            x.stripping, x.appending,
 			                            x.new_flags, x.condition);
+		}
+		for (auto& x : compound_check_patterns) {
+			auto forbid_affixed = x.first_word_end == "0";
+			if (forbid_affixed)
+				x.first_word_end.clear();
+			structures.compound_patterns.push_back(
+			    {{x.first_word_end, x.second_word_begin},
+			     x.replacement,
+			     x.first_word_flag,
+			     x.second_word_flag,
+			     forbid_affixed});
 		}
 	}
 

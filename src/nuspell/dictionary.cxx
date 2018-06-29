@@ -1358,10 +1358,46 @@ auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 	return {};
 }
 
+template <class CharT>
+auto match_compound_pattern(const Compound_Pattern<CharT>& p,
+                            const basic_string<CharT>& word, size_t i,
+                            Compounding_Result first, Compounding_Result second)
+{
+	if (i < p.begin_end_chars.idx())
+		return false;
+	if (word.compare(i - p.begin_end_chars.idx(),
+	                 p.begin_end_chars.str().size(),
+	                 p.begin_end_chars.str()) != 0)
+		return false;
+	if (p.first_word_flag != 0 &&
+	    !first->second.contains(p.first_word_flag))
+		return false;
+	if (p.second_word_flag != 0 &&
+	    !second->second.contains(p.second_word_flag))
+		return false;
+	if (p.forbid_first_affixed && first.affixed)
+		return false;
+	return true;
+}
+
+template <class CharT>
+auto is_compound_forbidden_by_patterns(
+    const vector<Compound_Pattern<CharT>>& patterns,
+    const basic_string<CharT>& word, size_t i, Compounding_Result first,
+    Compounding_Result second)
+{
+	for (auto& p : patterns) {
+		if (match_compound_pattern(p, word, i, first, second))
+			return true;
+	}
+	return false;
+}
+
 template <Affixing_Mode m, class CharT>
 auto Dictionary::check_compound(std::basic_string<CharT>& word,
-                                size_t num) const -> Dic_Data::const_pointer
+                                size_t num) const -> Compounding_Result
 {
+	auto& compound_patterns = get_structures<CharT>().compound_patterns;
 	size_t min_length = 3;
 	if (compound_min_length != 0)
 		min_length = compound_min_length;
@@ -1387,6 +1423,10 @@ auto Dictionary::check_compound(std::basic_string<CharT>& word,
 		if (!part2_entry)
 			continue;
 
+		if (is_compound_forbidden_by_patterns(
+		        compound_patterns, word, i, part1_entry, part2_entry))
+			continue;
+
 		if (part2_entry->second.contains(forbiddenword_flag))
 			return {};
 		else
@@ -1397,7 +1437,7 @@ auto Dictionary::check_compound(std::basic_string<CharT>& word,
 
 template <Affixing_Mode m, class CharT>
 auto Dictionary::check_word_in_compound(std::basic_string<CharT>& word) const
-    -> Dic_Data::const_pointer
+    -> Compounding_Result
 {
 	auto range = words.equal_range(word);
 	for (auto& we : make_iterator_range(range)) {
@@ -1405,30 +1445,30 @@ auto Dictionary::check_word_in_compound(std::basic_string<CharT>& word) const
 		if (word_flags.contains(need_affix_flag))
 			continue;
 		if (word_flags.contains(compound_flag))
-			return &we;
+			return {&we};
 		if (m == AT_COMPOUND_BEGIN &&
 		    word_flags.contains(compound_begin_flag))
-			return &we;
+			return {&we};
 		if (m == AT_COMPOUND_MIDDLE &&
 		    word_flags.contains(compound_middle_flag))
-			return &we;
+			return {&we};
 		if (m == AT_COMPOUND_END &&
 		    word_flags.contains(compound_last_flag))
-			return &we;
+			return {&we};
 	}
 	auto x1 = strip_prefix_only<m>(word);
 	if (x1)
-		return x1;
+		return {x1, true};
 	auto x2 = strip_suffix_only<m>(word);
 	if (x2)
-		return x2;
+		return {x2, true};
 	auto x3 = strip_prefix_then_suffix<m>(word);
 	if (x3)
-		return x3;
+		return {x3, true};
 	auto x4 = strip_suffix_then_prefix<m>(word);
 	if (x4)
-		return x4;
-	return nullptr;
+		return {x4, true};
+	return {};
 }
 
 } // namespace nuspell

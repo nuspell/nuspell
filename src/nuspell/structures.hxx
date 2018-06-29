@@ -583,7 +583,7 @@ class String_Pair {
 	        std::is_same<std::remove_reference_t<Str2>, StrT>::value>>
 	String_Pair(Str1&& first, Str2&& second)
 	    : i(first.size()) /* must be init before s, before we move
-				 from first */
+	                         from first */
 	      ,
 	      s(std::forward<Str1>(first) + std::forward<Str2>(second))
 
@@ -602,6 +602,16 @@ class String_Pair {
 	}
 	auto& str() const { return s; }
 	auto idx() const { return i; }
+};
+template <class CharT>
+struct Compound_Pattern {
+	using StrT = std::basic_string<CharT>;
+
+	String_Pair<CharT> begin_end_chars;
+	StrT replacement;
+	char16_t first_word_flag = 0;
+	char16_t second_word_flag = 0;
+	bool forbid_first_affixed = false;
 };
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX

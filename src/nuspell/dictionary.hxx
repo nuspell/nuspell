@@ -63,6 +63,14 @@ struct Affixing_Result
 	auto operator-> () const { return std::get<0>(*this); }
 };
 
+struct Compounding_Result {
+	Dic_Data::const_pointer word_entry = {};
+	bool affixed = {};
+	operator Dic_Data::const_pointer() const { return word_entry; }
+	auto& operator*() const { return *word_entry; }
+	auto operator-> () const { return word_entry; }
+};
+
 class Dictionary : public Aff_Data {
       public:
 	template <class CharT>
@@ -224,11 +232,11 @@ class Dictionary : public Aff_Data {
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN, class CharT>
 	auto check_compound(std::basic_string<CharT>& s, size_t num = 0) const
-	    -> Dic_Data::const_pointer;
+	    -> Compounding_Result;
 
 	template <Affixing_Mode m, class CharT>
 	auto check_word_in_compound(std::basic_string<CharT>& s) const
-	    -> Dic_Data::const_pointer;
+	    -> Compounding_Result;
 
       public:
 	Dictionary()

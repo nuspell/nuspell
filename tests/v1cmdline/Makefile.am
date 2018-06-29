@@ -124,8 +124,6 @@ hu.dic \
 warn.dic
 
 XFAIL_TESTS = \
-2970240.dic \
-2970242.dic \
 2999225.dic \
 allcaps.dic \
 allcaps2.dic \
@@ -134,7 +132,6 @@ base_utf.dic \
 checkcompoundcase2.dic \
 checkcompoundcaseutf.dic \
 checkcompounddup.dic \
-checkcompoundpattern.dic \
 checkcompoundpattern2.dic \
 checkcompoundpattern3.dic \
 checkcompoundpattern4.dic \
@@ -151,16 +148,13 @@ compoundrule8.dic \
 forbiddenword.dic \
 forceucase.dic \
 germancompounding.dic \
-germancompoundingold.dic \
 hu.dic \
 ignore.dic \
 ignoreutf.dic \
 nepali.dic \
 onlyincompound2.dic \
-opentaal_cpdpat.dic \
 opentaal_cpdpat2.dic \
 opentaal_forbiddenword1.dic \
-opentaal_keepcase.dic \
 simplifiedtriple.dic
 
 clean-local:
