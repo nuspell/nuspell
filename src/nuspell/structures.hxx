@@ -27,6 +27,7 @@
 #include "condition.hxx"
 
 #include <algorithm>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -561,5 +562,46 @@ using Suffix_Table = multi_index_container<
     indexed_by<hashed_non_unique<member<Suffix<CharT>, std::basic_string<CharT>,
                                         &Suffix<CharT>::appending>,
                                  sv_hash<CharT>, sv_eq<CharT>>>>;
+template <class CharT>
+class String_Pair {
+	using StrT = std::basic_string<CharT>;
+	size_t i = 0;
+	StrT s;
+
+      public:
+	String_Pair() = default;
+	template <class Str1>
+	String_Pair(Str1&& str, size_t i) : i(i), s(std::forward<Str1>(str))
+	{
+		if (i > s.size())
+			throw std::out_of_range("word split too long");
+	}
+	template <
+	    class Str1, class Str2,
+	    class = std::enable_if_t<
+	        std::is_same<std::remove_reference_t<Str1>, StrT>::value &&
+	        std::is_same<std::remove_reference_t<Str2>, StrT>::value>>
+	String_Pair(Str1&& first, Str2&& second)
+	    : i(first.size()) /* must be init before s, before we move
+				 from first */
+	      ,
+	      s(std::forward<Str1>(first) + std::forward<Str2>(second))
+
+	{
+	}
+	auto first() const { return my_string_view<CharT>(s).substr(0, i); }
+	auto second() const { return my_string_view<CharT>(s).substr(i); }
+	auto first(my_string_view<CharT> x)
+	{
+		s.replace(0, i, x.data(), x.size());
+		i = x.size();
+	}
+	auto second(my_string_view<CharT> x)
+	{
+		s.replace(i, s.npos, x.data(), x.size());
+	}
+	auto& str() const { return s; }
+	auto idx() const { return i; }
+};
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX

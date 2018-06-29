@@ -162,3 +162,39 @@ TEST_CASE("class String_Set", "[structures]")
 		CHECK(ss1 != ss3);
 	}
 }
+
+TEST_CASE("class String_Pair", "[structures]")
+{
+	auto x = String_Pair<char>();
+	CHECK(x.str() == "");
+	CHECK(x.idx() == 0);
+	CHECK(x.first() == "");
+	CHECK(x.second() == "");
+
+	x.first("123qwe");
+	CHECK(x.str() == "123qwe");
+	CHECK(x.idx() == 6);
+	CHECK(x.first() == "123qwe");
+	CHECK(x.second() == "");
+
+	x.second("456z");
+	CHECK(x.str() == "123qwe456z");
+	CHECK(x.idx() == 6);
+	CHECK(x.first() == "123qwe");
+	CHECK(x.second() == "456z");
+
+	x = String_Pair<char>("6789"s, "zxcvbnm"s);
+	CHECK(x.str() == "6789zxcvbnm");
+	CHECK(x.idx() == 4);
+	CHECK(x.first() == "6789");
+	CHECK(x.second() == "zxcvbnm");
+
+	x = String_Pair<char>("6789zxcvbnm", 4);
+	CHECK(x.str() == "6789zxcvbnm");
+	CHECK(x.idx() == 4);
+	CHECK(x.first() == "6789");
+	CHECK(x.second() == "zxcvbnm");
+
+	CHECK_NOTHROW(String_Pair<char>("6789"s, 4));
+	CHECK_THROWS_AS(String_Pair<char>("6789", 5), std::out_of_range);
+}
