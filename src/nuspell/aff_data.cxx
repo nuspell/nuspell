@@ -923,14 +923,14 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 
 			line.erase(slash_pos - 1, 1);
 		}
-		if (slash_pos != line.npos) {
+		if (slash_pos != line.npos && slash_pos != 0) {
 			// slash found, word until slash
 			word.assign(line, 0, slash_pos);
 			ss.ignore(slash_pos + 1);
 			flags = decode_flags_possible_alias(
 			    ss, line_number, flag_type, encoding, flag_aliases);
 			if (ss.fail())
-				word = line;
+				continue;
 		}
 		else if (line.find('\t') != line.npos) {
 			// Tab found, word until tab. No flags.
