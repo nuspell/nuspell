@@ -150,7 +150,6 @@ forceucase.dic \
 germancompounding.dic \
 hu.dic \
 nepali.dic \
-onlyincompound2.dic \
 opentaal_cpdpat2.dic \
 opentaal_forbiddenword1.dic \
 simplifiedtriple.dic

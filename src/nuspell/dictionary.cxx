@@ -640,7 +640,7 @@ auto Dictionary::strip_suffix_only(std::basic_string<CharT>& word) const
 		auto& e = *it;
 		if (outer_affix_NOT_valid<m>(e))
 			continue;
-		if ((it.aff_len() == 0 && m == AT_COMPOUND_END) &&
+		if (it.aff_len() != 0 && m == AT_COMPOUND_END &&
 		    e.cont_flags.contains(compound_onlyin_flag))
 			continue;
 		if (is_circumfix(e))
