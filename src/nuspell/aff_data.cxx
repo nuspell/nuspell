@@ -73,7 +73,7 @@
  *	...
  *	}
  *	At the end
- *	affix_table = std::move(affix_table_intermediate);
+ *	affix_table = move(affix_table_intermediate);
  * }
  */
 
@@ -106,7 +106,7 @@ bool read_to_slash_or_space(std::istream& in, std::string& out)
 	in >> std::ws;
 	int c;
 	bool readSomething = false;
-	while ((c = in.get()) != std::istream::traits_type::eof() &&
+	while ((c = in.get()) != istream::traits_type::eof() &&
 	       !isspace<char>(c, in.getloc()) && c != '/') {
 		out.push_back(c);
 		readSomething = true;
@@ -335,7 +335,7 @@ auto parse_morhological_fields(istream& in, vector<string>& vecOut) -> void
 		return;
 	}
 
-	std::string morph;
+	string morph;
 	while (in >> morph) {
 		vecOut.push_back(morph);
 	}
@@ -988,7 +988,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			else {
 				words.emplace(word, flags);
 			}
-		} break;
+			break;
+		}
 		case Casing::PASCAL:
 		case Casing::CAMEL: {
 			words.emplace(word, flags);
@@ -996,15 +997,15 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			// add the hidden homonym directly in uppercase
 			auto up = boost::locale::to_upper(word, locale_aff);
 			auto hom = words.equal_range(up);
-			auto h = find_if(hom.first, hom.second, [&](auto& w) {
+			auto h = none_of(hom.first, hom.second, [&](auto& w) {
 				return w.second.contains(HIDDEN_HOMONYM_FLAG);
 			});
-			if (h == hom.second) { // if not found
+			if (h) { // if not found
 				flags += HIDDEN_HOMONYM_FLAG;
 				words.emplace(up, flags);
 			}
-
-		} break;
+			break;
+		}
 		default:
 			words.emplace(word, flags);
 			break;

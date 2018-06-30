@@ -362,7 +362,7 @@ auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 {
 	using namespace std;
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
-	auto out = std::string(in.size(), '\0');
+	auto out = string(in.size(), '\0');
 	auto state = mbstate_t();
 	auto in_ptr = in.c_str();
 	auto in_last = in.c_str() + in.size();
@@ -658,21 +658,21 @@ class icu_ctype_wide final : public std::ctype<wchar_t> {
 	virtual const char_type* do_is(const char_type* first,
 	                               const char_type* last, mask* vec) const
 	{
-		std::transform(first, last, vec,
-		               [&](auto c) { return get_char_mask(c); });
+		transform(first, last, vec,
+		          [&](auto c) { return get_char_mask(c); });
 		return last;
 	}
 	virtual const char_type* do_scan_is(mask m, const char_type* first,
 	                                    const char_type* last) const
 	{
-		return std::find_if(first, last,
-		                    [&](auto c) { return do_is(m, c); });
+		return find_if(first, last,
+		               [&](auto c) { return do_is(m, c); });
 	}
 	virtual const char_type* do_scan_not(mask m, const char_type* first,
 	                                     const char_type* last) const
 	{
-		return std::find_if_not(first, last,
-		                        [&](auto c) { return do_is(m, c); });
+		return find_if_not(first, last,
+		                   [&](auto c) { return do_is(m, c); });
 	}
 
 	virtual char_type do_toupper(char_type c) const { return u_toupper(c); }
@@ -701,13 +701,12 @@ class icu_ctype_wide final : public std::ctype<wchar_t> {
 	virtual const char* do_widen(const char* low, const char* high,
 	                             char_type* dest) const
 	{
-		std::transform(low, high, dest,
-		               [&](auto c) { return do_widen(c); });
+		transform(low, high, dest, [&](auto c) { return do_widen(c); });
 		return high;
 	}
 	virtual char do_narrow(char_type c, char dfault) const
 	{
-		auto n = std::char_traits<char_type>::find(wd, 256, c);
+		auto n = char_traits<char_type>::find(wd, 256, c);
 		if (n)
 			return n - wd;
 		return dfault;
@@ -716,8 +715,8 @@ class icu_ctype_wide final : public std::ctype<wchar_t> {
 	                                   const char_type* high, char dfault,
 	                                   char* dest) const
 	{
-		std::transform(low, high, dest,
-		               [&](auto c) { return do_narrow(c, dfault); });
+		transform(low, high, dest,
+		          [&](auto c) { return do_narrow(c, dfault); });
 		return high;
 	}
 };

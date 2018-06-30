@@ -1386,11 +1386,9 @@ auto is_compound_forbidden_by_patterns(
     const basic_string<CharT>& word, size_t i, Compounding_Result first,
     Compounding_Result second)
 {
-	for (auto& p : patterns) {
-		if (match_compound_pattern(p, word, i, first, second))
-			return true;
-	}
-	return false;
+	return any_of(begin(patterns), end(patterns), [&](auto& p) {
+		return match_compound_pattern(p, word, i, first, second);
+	});
 }
 
 template <Affixing_Mode m, class CharT>

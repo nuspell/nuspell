@@ -91,7 +91,7 @@ auto to_dict_encoding(const std::basic_string<FromCharT>& from)
 
 inline auto& to_dict_encoding(std::string& from) { return from; }
 inline auto& to_dict_encoding(const std::string& from) { return from; }
-inline auto to_dict_encoding(std::string&& from) { return std::move(from); }
+inline auto to_dict_encoding(std::string&& from) { return move(from); }
 
 template <class ToCharT,
           class = std::enable_if_t<!std::is_same<ToCharT, char>::value>>
@@ -117,7 +117,7 @@ template <class ToCharT,
           class = std::enable_if_t<std::is_same<ToCharT, char>::value>>
 auto from_dict_to_wide_encoding(std::string&& from)
 {
-	return std::move(from);
+	return move(from);
 }
 
 struct Locale_Input {
@@ -180,7 +180,7 @@ struct Unicode_Input {
 struct Same_As_Dict_Input {
 	auto& cvt_for_byte_dict(std::string& in) { return in; }
 	auto& cvt_for_byte_dict(const std::string& in) { return in; }
-	auto cvt_for_byte_dict(std::string&& in) { return std::move(in); }
+	auto cvt_for_byte_dict(std::string&& in) { return move(in); }
 
 	auto cvt_for_u8_dict(const std::string& in)
 	{

@@ -105,7 +105,7 @@ class String_Set {
 
 	String_Set() = default;
 	String_Set(const StrT& s) : d(s) { sort_uniq(); }
-	String_Set(StrT&& s) : d(std::move(s)) { sort_uniq(); }
+	String_Set(StrT&& s) : d(move(s)) { sort_uniq(); }
 	template <class InputIterator>
 	String_Set(InputIterator first, InputIterator last) : d(first, last)
 	{
@@ -124,7 +124,7 @@ class String_Set {
 	}
 	auto operator=(StrT&& s) -> String_Set&
 	{
-		d = std::move(s);
+		d = move(s);
 		sort_uniq();
 		return *this;
 	}
