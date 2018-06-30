@@ -1394,8 +1394,10 @@ auto is_compound_forbidden_by_patterns(
 }
 
 template <Affixing_Mode m, class CharT>
-auto Dictionary::check_compound(std::basic_string<CharT>& word,
-                                size_t num) const -> Compounding_Result
+auto Dictionary::check_compound(const std::basic_string<CharT>& word,
+                                size_t start_pos, size_t num_part,
+                                std::basic_string<CharT>&& part) const
+    -> Compounding_Result
 {
 	auto& compound_patterns = get_structures<CharT>().compound_patterns;
 	size_t min_length = 3;
@@ -1403,23 +1405,22 @@ auto Dictionary::check_compound(std::basic_string<CharT>& word,
 		min_length = compound_min_length;
 	if (word.size() < min_length * 2)
 		return {};
-	auto part_str = basic_string<CharT>();
 	size_t max_length = word.size() - min_length;
-	for (auto i = min_length; i <= max_length; ++i) {
-		part_str.assign(word, 0, i);
-		auto part1_entry = check_word_in_compound<m>(part_str);
+	for (auto i = start_pos + min_length; i <= max_length; ++i) {
+		part.assign(word, start_pos, i - start_pos);
+		auto part1_entry = check_word_in_compound<m>(part);
 		if (!part1_entry)
 			continue;
 		// No need to check part1 for forbidenflag here, that is checked
 		// in spell_break.
 
-		part_str.assign(word, i, word.npos);
+		part.assign(word, i, word.npos);
 		auto part2_entry =
-		    check_word_in_compound<AT_COMPOUND_END>(part_str);
+		    check_word_in_compound<AT_COMPOUND_END>(part);
 
 		if (!part2_entry)
 			part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
-			    part_str, num + 1);
+			    word, i, num_part + 1, move(part));
 		if (!part2_entry)
 			continue;
 

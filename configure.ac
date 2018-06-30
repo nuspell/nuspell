@@ -17,6 +17,7 @@ AS_IF([test x$enable_code_coverage = xyes],[
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
+AM_PROG_AR
 LT_INIT
 AC_PROG_AWK
 AC_CHECK_PROG([ronn], [ronn], [yes])
