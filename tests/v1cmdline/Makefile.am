@@ -149,8 +149,6 @@ forbiddenword.dic \
 forceucase.dic \
 germancompounding.dic \
 hu.dic \
-ignore.dic \
-ignoreutf.dic \
 nepali.dic \
 onlyincompound2.dic \
 opentaal_cpdpat2.dic \

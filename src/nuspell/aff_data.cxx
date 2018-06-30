@@ -795,16 +795,20 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		wide_structures.ignored_chars = u_to_u(ignore_chars);
 
 		for (auto& x : prefixes) {
+			auto appending = u_to_u(x.appending);
+			erase_chars(appending,
+			            wide_structures.ignored_chars.data());
 			wide_structures.prefixes.emplace(
 			    x.flag, x.cross_product, u_to_u(x.stripping),
-			    u_to_u(x.appending), x.new_flags,
-			    u_to_u(x.condition));
+			    appending, x.new_flags, u_to_u(x.condition));
 		}
 		for (auto& x : suffixes) {
+			auto appending = u_to_u(x.appending);
+			erase_chars(appending,
+			            wide_structures.ignored_chars.data());
 			wide_structures.suffixes.emplace(
 			    x.flag, x.cross_product, u_to_u(x.stripping),
-			    u_to_u(x.appending), x.new_flags,
-			    u_to_u(x.condition));
+			    appending, x.new_flags, u_to_u(x.condition));
 		}
 		for (auto& x : compound_check_patterns) {
 			auto forbid_affixed = x.first_word_end == "0";
@@ -826,11 +830,15 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		structures.ignored_chars = ignore_chars;
 
 		for (auto& x : prefixes) {
+			erase_chars(x.appending,
+			            structures.ignored_chars.data());
 			structures.prefixes.emplace(x.flag, x.cross_product,
 			                            x.stripping, x.appending,
 			                            x.new_flags, x.condition);
 		}
 		for (auto& x : suffixes) {
+			erase_chars(x.appending,
+			            structures.ignored_chars.data());
 			structures.suffixes.emplace(x.flag, x.cross_product,
 			                            x.stripping, x.appending,
 			                            x.new_flags, x.condition);
@@ -967,6 +975,17 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			continue;
 		}
 		// parse_morhological_fields(ss, morphs);
+
+		using boost::locale::conv::utf_to_utf;
+		if (encoding.is_utf8() &&
+		    !wide_structures.ignored_chars.empty()) {
+			auto ustr = utf_to_utf<wchar_t>(word);
+			erase_chars(ustr, wide_structures.ignored_chars.data());
+			word = utf_to_utf<char>(ustr);
+		}
+		if (!encoding.is_utf8()) {
+			erase_chars(word, structures.ignored_chars.data());
+		}
 
 		auto casing = classify_casing(word, locale_aff);
 		const char16_t HIDDEN_HOMONYM_FLAG = -1;

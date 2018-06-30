@@ -72,6 +72,8 @@ auto Dictionary::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 	if (is_number(s))
 		return GOOD_WORD;
 
+	erase_chars(s, d.ignored_chars.data());
+
 	// handle break patterns
 	auto copy = s;
 	auto ret = spell_break<CharT>(s);

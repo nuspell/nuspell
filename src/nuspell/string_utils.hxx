@@ -217,6 +217,8 @@ template <class CharT>
 auto& erase_chars(std::basic_string<CharT>& s,
                   const std::basic_string<CharT>& erase_chars)
 {
+	if (erase_chars.empty())
+		return s;
 	auto is_erasable = [&](CharT c) {
 		return erase_chars.find(c) != erase_chars.npos;
 	};
