@@ -55,7 +55,7 @@ struct Comparer_Str_Rep {
 
 	auto static cmp_prefix_of(const StrT& p, StrViewT of)
 	{
-		return p.compare(0, p.npos, of.data(), 0,
+		return p.compare(0, p.npos, of.data(),
 		                 min(p.size(), of.size()));
 	}
 	auto operator()(const pair<StrT, StrT>& a, StrViewT b)
@@ -66,7 +66,7 @@ struct Comparer_Str_Rep {
 	{
 		return cmp_prefix_of(b.first, a) > 0;
 	}
-	auto eq(const pair<StrT, StrT>& a, StrViewT b)
+	auto static eq(const pair<StrT, StrT>& a, StrViewT b)
 	{
 		return cmp_prefix_of(a.first, b) == 0;
 	}
