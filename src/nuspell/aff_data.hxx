@@ -201,7 +201,6 @@ struct Aff_Data {
 			return parse_dic(dic);
 		return false;
 	}
-	void log(const string& affpath);
 	template <class CharT>
 	auto get_structures() const -> const Aff_Structures<CharT>&;
 };
