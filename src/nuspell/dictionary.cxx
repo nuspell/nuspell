@@ -1472,4 +1472,19 @@ auto Dictionary::check_word_in_compound(std::basic_string<CharT>& word) const
 	return {};
 }
 
+auto Dictionary::spell(const std::string& word, std::locale loc) -> Spell_Result
+{
+	using namespace std;
+	using info_t = boost::locale::info;
+	auto& dic_info = use_facet<info_t>(locale_aff);
+	Locale_Input l;
+	if (dic_info.utf8()) {
+		return spell_priv<wchar_t>(l.cvt_for_u8_dict(word, loc));
+	}
+	else {
+		return spell_priv<char>(
+		    l.cvt_for_byte_dict(word, loc, locale_aff));
+	}
+}
+
 } // namespace nuspell

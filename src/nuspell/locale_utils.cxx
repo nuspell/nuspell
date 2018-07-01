@@ -729,5 +729,39 @@ auto install_ctype_facets_inplace(std::locale& boost_loc) -> void
 	boost_loc = locale(boost_loc, new icu_ctype_char(enc));
 	boost_loc = locale(boost_loc, new icu_ctype_wide(enc));
 }
+
+auto Locale_Input::cvt_for_byte_dict(const std::string& in,
+                                     const std::locale& inloc,
+                                     const std::locale& dicloc) -> std::string
+{
+	using namespace std;
+	using info_t = boost::locale::info;
+	using namespace boost::locale::conv;
+	if (has_facet<boost::locale::info>(inloc)) {
+		auto& in_info = use_facet<info_t>(inloc);
+		auto& dic_info = use_facet<info_t>(dicloc);
+		auto in_enc = in_info.encoding();
+		auto dic_enc = dic_info.encoding();
+		if (in_enc == dic_enc) {
+			return in;
+		}
+	}
+	return to_narrow(to_wide(in, inloc), dicloc);
+}
+
+auto Locale_Input::cvt_for_u8_dict(const std::string& in,
+                                   const std::locale& inloc) -> std::wstring
+{
+	using namespace std;
+	using info_t = boost::locale::info;
+	using namespace boost::locale::conv;
+	if (has_facet<boost::locale::info>(inloc)) {
+		auto& in_info = use_facet<info_t>(inloc);
+		if (in_info.utf8())
+			return utf_to_utf<wchar_t>(in);
+	}
+	return to_wide(in, inloc);
+}
+
 } // namespace encoding
 } // namespace nuspell

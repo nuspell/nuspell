@@ -29,7 +29,6 @@
 #include <type_traits>
 
 #include <boost/locale/encoding_utf.hpp>
-#include <boost/locale/info.hpp>
 
 namespace nuspell {
 
@@ -123,43 +122,10 @@ auto from_dict_to_wide_encoding(std::string&& from)
 struct Locale_Input {
 	auto static cvt_for_byte_dict(const std::string& in,
 	                              const std::locale& inloc,
-	                              const std::locale& dicloc);
+	                              const std::locale& dicloc) -> std::string;
 	auto static cvt_for_u8_dict(const std::string& in,
-	                            const std::locale& inloc);
+	                            const std::locale& inloc) -> std::wstring;
 };
-
-auto inline Locale_Input::cvt_for_byte_dict(const std::string& in,
-                                            const std::locale& inloc,
-                                            const std::locale& dicloc)
-{
-	using namespace std;
-	using info_t = boost::locale::info;
-	using namespace boost::locale::conv;
-	if (has_facet<boost::locale::info>(inloc)) {
-		auto& in_info = use_facet<info_t>(inloc);
-		auto& dic_info = use_facet<info_t>(dicloc);
-		auto in_enc = in_info.encoding();
-		auto dic_enc = dic_info.encoding();
-		if (in_enc == dic_enc) {
-			return in;
-		}
-	}
-	return to_narrow(to_wide(in, inloc), dicloc);
-}
-
-auto inline Locale_Input::cvt_for_u8_dict(const std::string& in,
-                                          const std::locale& inloc)
-{
-	using namespace std;
-	using info_t = boost::locale::info;
-	using namespace boost::locale::conv;
-	if (has_facet<boost::locale::info>(inloc)) {
-		auto& in_info = use_facet<info_t>(inloc);
-		if (in_info.utf8())
-			return utf_to_utf<wchar_t>(in);
-	}
-	return to_wide(in, inloc);
-}
 
 template <class CharT>
 struct Unicode_Input {
