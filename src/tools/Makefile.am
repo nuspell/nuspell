@@ -1,5 +1,5 @@
 #bin_PROGRAMS=analyze chmorph hunspell munch unmunch hzip hunzip
-bin_PROGRAMS=hunspell
+noinst_PROGRAMS=hunspell
 
 AM_CPPFLAGS = -I${top_builddir}/src/hunspell -I${top_srcdir}/src/hunspell \
               -I${top_srcdir}/src/parsers $(CODE_COVERAGE_CPPFLAGS)

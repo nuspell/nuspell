@@ -1,4 +1,4 @@
-lib_LIBRARIES = libhunspell.a
+noinst_LIBRARIES = libhunspell.a
 libhunspell_includedir = $(includedir)/hunspell
 libhunspell_a_SOURCES=affentry.cxx affentry.hxx affixmgr.cxx affixmgr.hxx \
                            atypes.hxx baseaffix.hxx csutil.cxx csutil.hxx \
@@ -10,8 +10,8 @@ libhunspell_a_SOURCES=affentry.cxx affentry.hxx affixmgr.cxx affixmgr.hxx \
 nodist_libhunspell_a_SOURCES=hunvisapi.h
 
 
-libhunspell_include_HEADERS=hunspell.hxx hunspell.h hunvisapi.h \
-		                w_char.hxx atypes.hxx
+#libhunspell_include_HEADERS=hunspell.hxx hunspell.h hunvisapi.h \
+#		                w_char.hxx atypes.hxx
 
 # libhunspell_a_LDFLAGS=-no-undefined -version-info 0:1:0
 
