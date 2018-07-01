@@ -297,8 +297,8 @@ class String_Set {
 	bool operator>=(const String_Set& rhs) const { return d >= rhs.d; }
 	bool operator>(const String_Set& rhs) const { return d > rhs.d; }
 };
-extern template class String_Set<char>;
-extern template class String_Set<wchar_t>;
+// extern template class String_Set<char>;
+// extern template class String_Set<wchar_t>;
 extern template class String_Set<char16_t>;
 
 template <class CharT>

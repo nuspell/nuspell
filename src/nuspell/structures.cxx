@@ -27,8 +27,8 @@ namespace nuspell {
 
 using namespace std;
 
-template class String_Set<char>;
-template class String_Set<wchar_t>;
+// template class String_Set<char>;
+// template class String_Set<wchar_t>;
 template class String_Set<char16_t>;
 
 template <class CharT>

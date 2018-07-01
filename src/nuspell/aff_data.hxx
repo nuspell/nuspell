@@ -65,7 +65,7 @@ struct Aff_Structures {
 	Substr_Replacer<CharT> input_substr_replacer;
 	Substr_Replacer<CharT> output_substr_replacer;
 	Break_Table<CharT> break_table;
-	String_Set<CharT> ignored_chars;
+	std::basic_string<CharT> ignored_chars;
 	Prefix_Table<CharT> prefixes;
 	Suffix_Table<CharT> suffixes;
 	std::vector<Compound_Pattern<CharT>> compound_patterns;

@@ -796,16 +796,14 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 
 		for (auto& x : prefixes) {
 			auto appending = u_to_u(x.appending);
-			erase_chars(appending,
-			            wide_structures.ignored_chars.data());
+			erase_chars(appending, wide_structures.ignored_chars);
 			wide_structures.prefixes.emplace(
 			    x.flag, x.cross_product, u_to_u(x.stripping),
 			    appending, x.new_flags, u_to_u(x.condition));
 		}
 		for (auto& x : suffixes) {
 			auto appending = u_to_u(x.appending);
-			erase_chars(appending,
-			            wide_structures.ignored_chars.data());
+			erase_chars(appending, wide_structures.ignored_chars);
 			wide_structures.suffixes.emplace(
 			    x.flag, x.cross_product, u_to_u(x.stripping),
 			    appending, x.new_flags, u_to_u(x.condition));
@@ -830,15 +828,13 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		structures.ignored_chars = ignore_chars;
 
 		for (auto& x : prefixes) {
-			erase_chars(x.appending,
-			            structures.ignored_chars.data());
+			erase_chars(x.appending, structures.ignored_chars);
 			structures.prefixes.emplace(x.flag, x.cross_product,
 			                            x.stripping, x.appending,
 			                            x.new_flags, x.condition);
 		}
 		for (auto& x : suffixes) {
-			erase_chars(x.appending,
-			            structures.ignored_chars.data());
+			erase_chars(x.appending, structures.ignored_chars);
 			structures.suffixes.emplace(x.flag, x.cross_product,
 			                            x.stripping, x.appending,
 			                            x.new_flags, x.condition);
@@ -980,11 +976,11 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		if (encoding.is_utf8() &&
 		    !wide_structures.ignored_chars.empty()) {
 			auto ustr = utf_to_utf<wchar_t>(word);
-			erase_chars(ustr, wide_structures.ignored_chars.data());
+			erase_chars(ustr, wide_structures.ignored_chars);
 			word = utf_to_utf<char>(ustr);
 		}
 		if (!encoding.is_utf8()) {
-			erase_chars(word, structures.ignored_chars.data());
+			erase_chars(word, structures.ignored_chars);
 		}
 
 		auto casing = classify_casing(word, locale_aff);

@@ -7,7 +7,6 @@ Name: @PACKAGE@
 Description: Nuspell spellchecking library
 URL: @PACKAGE_URL@
 Version: @VERSION@
-Libs: -L${libdir} -lnuspell
-Libs.private: @BOOST_LOCALE_LIBS@
+Libs: -L${libdir} -lnuspell @BOOST_LOCALE_LDFLAGS@ @BOOST_LOCALE_LIBS@
 Requires: icu-uc
-Cflags: -I${includedir}
+Cflags: -I${includedir} @BOOST_CPPFLAGS@
