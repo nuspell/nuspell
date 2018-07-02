@@ -1,5 +1,6 @@
-AM_CPPFLAGS=-I${top_builddir}/src/hunspell $(CODE_COVERAGE_CPPFLAGS)
-AM_CXXFLAGS=-I${top_builddir}/src/hunspell $(CODE_COVERAGE_CXXFLAGS)
+AM_CPPFLAGS=-I${top_builddir}/src/hunspell -DHUNSPELL_STATIC \
+	    $(CODE_COVERAGE_CPPFLAGS)
+AM_CXXFLAGS=$(CODE_COVERAGE_CXXFLAGS)
 
 noinst_LIBRARIES=libparsers.a
 libparsers_a_SOURCES=firstparser.cxx firstparser.hxx xmlparser.cxx \

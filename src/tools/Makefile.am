@@ -2,7 +2,8 @@
 noinst_PROGRAMS=hunspell
 
 AM_CPPFLAGS = -I${top_builddir}/src/hunspell -I${top_srcdir}/src/hunspell \
-              -I${top_srcdir}/src/parsers $(CODE_COVERAGE_CPPFLAGS)
+              -I${top_srcdir}/src/parsers -DHUNSPELL_STATIC \
+	      $(CODE_COVERAGE_CPPFLAGS)
 AM_CXXFLAGS = -std=c++14 $(CODE_COVERAGE_CXXFLAGS)
 LDADD      = $(CODE_COVERAGE_LIBS)
 
@@ -18,8 +19,8 @@ LDADD      = $(CODE_COVERAGE_LIBS)
 #
 hunspell_SOURCES=hunspell.cxx
 nodist_hunspell_SOURCES= ../../config.h
-hunspell_LDADD = @LIBICONV@ ../parsers/libparsers.a \
-	../hunspell/libhunspell.a @CURSESLIB@ @READLINELIB@ $(LDADD)
+hunspell_LDADD = $(LIBICONV) ../parsers/libparsers.a \
+	../hunspell/libhunspell.a $(CURSESLIB) $(READLINELIB) $(LDADD)
 
 #analyze_SOURCES=analyze.cxx
 #analyze_LDADD = ../hunspell/libhunspell.a
