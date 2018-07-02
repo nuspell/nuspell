@@ -574,7 +574,7 @@ class String_Pair {
 	String_Pair(Str1&& str, size_t i) : i(i), s(std::forward<Str1>(str))
 	{
 		if (i > s.size())
-			throw std::out_of_range("word split too long");
+			throw std::out_of_range("Word split is too long.");
 	}
 	template <
 	    class Str1, class Str2,
