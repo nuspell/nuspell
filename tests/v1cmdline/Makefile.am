@@ -132,9 +132,6 @@ base_utf.dic \
 checkcompoundcase2.dic \
 checkcompoundcaseutf.dic \
 checkcompounddup.dic \
-checkcompoundpattern2.dic \
-checkcompoundpattern3.dic \
-checkcompoundpattern4.dic \
 checkcompoundrep.dic \
 checkcompoundtriple.dic \
 compoundrule.dic \

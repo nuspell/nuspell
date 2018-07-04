@@ -28,6 +28,7 @@
 #include <stdexcept>
 
 #include <boost/locale.hpp>
+#include <boost/scope_exit.hpp>
 
 namespace nuspell {
 
@@ -1394,12 +1395,11 @@ auto is_compound_forbidden_by_patterns(
 }
 
 template <Affixing_Mode m, class CharT>
-auto Dictionary::check_compound(const std::basic_string<CharT>& word,
+auto Dictionary::check_compound(std::basic_string<CharT>& word,
                                 size_t start_pos, size_t num_part,
                                 std::basic_string<CharT>&& part) const
     -> Compounding_Result
 {
-	auto& compound_patterns = get_structures<CharT>().compound_patterns;
 	size_t min_length = 3;
 	if (compound_min_length != 0)
 		min_length = compound_min_length;
@@ -1407,12 +1407,90 @@ auto Dictionary::check_compound(const std::basic_string<CharT>& word,
 		return {};
 	size_t max_length = word.size() - min_length;
 	for (auto i = start_pos + min_length; i <= max_length; ++i) {
+
+		auto part1_entry = check_compound_classic<m>(
+		    word, start_pos, i, num_part, move(part));
+
+		if (part1_entry)
+			return part1_entry;
+
+		part1_entry = check_compound_with_pattern_replacements<m>(
+		    word, start_pos, i, num_part, move(part));
+
+		if (part1_entry)
+			return part1_entry;
+	}
+	return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::check_compound_classic(std::basic_string<CharT>& word,
+                                        size_t start_pos, size_t i,
+                                        size_t num_part,
+                                        std::basic_string<CharT>&& part) const
+    -> Compounding_Result
+{
+	auto& compound_patterns = get_structures<CharT>().compound_patterns;
+	part.assign(word, start_pos, i - start_pos);
+	auto part1_entry = check_word_in_compound<m>(part);
+	if (!part1_entry)
+		return {};
+
+	if (part1_entry->second.contains(forbiddenword_flag))
+		return {};
+
+	part.assign(word, i, word.npos);
+	auto part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
+
+	if (!part2_entry)
+		part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
+		    word, i, num_part + 1, move(part));
+	if (!part2_entry)
+		return {};
+
+	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
+	                                      part1_entry, part2_entry))
+		return {};
+
+	if (part2_entry->second.contains(forbiddenword_flag))
+		return {};
+
+	return part1_entry;
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::check_compound_with_pattern_replacements(
+    std::basic_string<CharT>& word, size_t start_pos, size_t i, size_t num_part,
+    std::basic_string<CharT>&& part) const -> Compounding_Result
+{
+	auto& compound_patterns = get_structures<CharT>().compound_patterns;
+	for (auto& p : compound_patterns) {
+		if (p.replacement.empty())
+			continue;
+		if (word.compare(i, p.replacement.size(), p.replacement) != 0)
+			continue;
+
+		// at this point p.replacement is substring in word
+		word.replace(i, p.replacement.size(), p.begin_end_chars.str());
+		i += p.begin_end_chars.idx();
+		BOOST_SCOPE_EXIT_ALL(&)
+		{
+			i -= p.begin_end_chars.idx();
+			word.replace(i, p.begin_end_chars.str().size(),
+			             p.replacement);
+		};
+
 		part.assign(word, start_pos, i - start_pos);
 		auto part1_entry = check_word_in_compound<m>(part);
 		if (!part1_entry)
-			continue;
-		// No need to check part1 for forbidenflag here, that is checked
-		// in spell_break.
+			return {};
+
+		if (part1_entry->second.contains(forbiddenword_flag))
+			return {};
+
+		if (p.first_word_flag != 0 &&
+		    !part1_entry->second.contains(p.first_word_flag))
+			return {};
 
 		part.assign(word, i, word.npos);
 		auto part2_entry =
@@ -1422,16 +1500,16 @@ auto Dictionary::check_compound(const std::basic_string<CharT>& word,
 			part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
 			    word, i, num_part + 1, move(part));
 		if (!part2_entry)
-			continue;
+			return {};
 
-		if (is_compound_forbidden_by_patterns(
-		        compound_patterns, word, i, part1_entry, part2_entry))
-			continue;
+		if (p.second_word_flag != 0 &&
+		    !part2_entry->second.contains(p.second_word_flag))
+			return {};
 
 		if (part2_entry->second.contains(forbiddenword_flag))
 			return {};
-		else
-			return part1_entry;
+
+		return part1_entry;
 	}
 	return {};
 }
