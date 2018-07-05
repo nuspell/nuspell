@@ -226,10 +226,10 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	// total number of words
 	auto total = 0;
 	// total number of words with identical spelling correctness
-	auto truepos = 0;
-	auto trueneg = 0;
-	auto falsepos = 0;
-	auto falseneg = 0;
+	auto true_pos = 0;
+	auto true_neg = 0;
+	auto false_pos = 0;
+	auto false_neg = 0;
 	// store cpu time for Hunspell and Nuspell
 	auto htime = rdtsc();
 	htime = 0;
@@ -242,42 +242,43 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 		    hun.spell(to_narrow(to_wide(word, in.getloc()), hloc));
 		htime += tickb - ticka;
 		ntime += rdtsc() - tickb;
-		if (hres)
+		if (hres) {
 			if (res) {
-				++truepos;
+				++true_pos;
 			}
 			else {
-				++falseneg;
-				cout << word << '\n';
+				++false_neg;
+				out << word << '\n';
 			}
-		else if (res) {
-			++falsepos;
-			cout << word << '\n';
 		}
 		else {
-			++trueneg;
+			if (res) {
+				++false_pos;
+				out << word << '\n';
+			}
+			else {
+				++true_neg;
+			}
 		}
 		++total;
 	}
-	// prevent drowning cerr in cout
-	cout.flush();
 	// prevent devision by zero
 	if (total == 0) {
-		clog << total << endl;
+		out << total << endl;
 		return;
 	}
 	// rates
 	auto speedup = (float)htime / ntime;
-	auto trueposr = (float)truepos / total;
-	auto truenegr = (float)trueneg / total;
-	auto falseposr = (float)falsepos / total;
-	auto falsenegr = (float)falseneg / total;
+	auto trueposr = (float)true_pos / total;
+	auto truenegr = (float)true_neg / total;
+	auto falseposr = (float)false_pos / total;
+	auto falsenegr = (float)false_neg / total;
 
-	clog << total << ' ' << ntime << ' ' << setprecision(3) << speedup
-	     << ' ' << truepos << ' ' << setprecision(3) << trueposr << ' '
-	     << trueneg << ' ' << setprecision(3) << truenegr << ' ' << falsepos
-	     << ' ' << setprecision(3) << falseposr << ' ' << falseneg << ' '
-	     << setprecision(3) << falsenegr << endl;
+	out << total << ' ' << ntime << ' ' << setprecision(3) << speedup << ' '
+	    << true_pos << ' ' << setprecision(3) << trueposr << ' ' << true_neg
+	    << ' ' << setprecision(3) << truenegr << ' ' << false_pos << ' '
+	    << setprecision(3) << falseposr << ' ' << false_neg << ' '
+	    << setprecision(3) << falsenegr << endl;
 }
 
 namespace std {
@@ -381,14 +382,14 @@ int main(int argc, char* argv[])
 		cerr << e.what() << '\n';
 		return 1;
 	}
-	auto haff = filename + ".aff";
-	auto hdic = filename + ".dic";
-	Hunspell hun(haff.c_str(), hdic.c_str());
-	auto hloc = gen("en_US"s + hun.get_dic_encoding());
+	auto aff_name = filename + ".aff";
+	auto dic_name = filename + ".dic";
+	Hunspell hun(aff_name.c_str(), dic_name.c_str());
+	auto hun_loc = gen("en_US." + hun.get_dict_encoding());
 	auto loop_function = normal_loop;
 
 	if (args.files.empty()) {
-		loop_function(cin, cout, dic, hun, hloc);
+		loop_function(cin, cout, dic, hun, hun_loc);
 	}
 	else {
 		for (auto& file_name : args.files) {
@@ -398,7 +399,7 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 			in.imbue(cin.getloc());
-			loop_function(in, cout, dic, hun, hloc);
+			loop_function(in, cout, dic, hun, hun_loc);
 		}
 	}
 	return 0;
