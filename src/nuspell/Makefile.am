@@ -26,3 +26,7 @@ structures.hxx
 bin_PROGRAMS = nuspell
 nuspell_SOURCES = main.cxx
 LDADD = libnuspell.a $(LIBADD)
+
+noinst_PROGRAMS = regress
+nodist_regress_SOURCES = regress.cxx
+regress_LDADD = libnuspell.a ../hunspell/libhunspell.a $(LIBADD)
