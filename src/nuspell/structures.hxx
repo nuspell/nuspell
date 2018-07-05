@@ -611,7 +611,7 @@ struct Compound_Pattern {
 	StrT replacement;
 	char16_t first_word_flag = 0;
 	char16_t second_word_flag = 0;
-	bool forbid_first_affixed = false;
+	bool match_first_only_unaffixed_or_zero_affixed = false;
 };
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX

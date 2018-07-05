@@ -809,8 +809,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			    appending, x.new_flags, u_to_u(x.condition));
 		}
 		for (auto& x : compound_check_patterns) {
-			auto forbid_affixed = x.first_word_end == "0";
-			if (forbid_affixed)
+			auto forbid_unaffixed = x.first_word_end == "0";
+			if (forbid_unaffixed)
 				x.first_word_end.clear();
 			wide_structures.compound_patterns.push_back(
 			    {{u_to_u(x.first_word_end),
@@ -818,7 +818,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			     u_to_u(x.replacement),
 			     x.first_word_flag,
 			     x.second_word_flag,
-			     forbid_affixed});
+			     forbid_unaffixed});
 		}
 	}
 	else {
@@ -840,15 +840,15 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			                            x.new_flags, x.condition);
 		}
 		for (auto& x : compound_check_patterns) {
-			auto forbid_affixed = x.first_word_end == "0";
-			if (forbid_affixed)
+			auto forbid_unaffixed = x.first_word_end == "0";
+			if (forbid_unaffixed)
 				x.first_word_end.clear();
 			structures.compound_patterns.push_back(
 			    {{x.first_word_end, x.second_word_begin},
 			     x.replacement,
 			     x.first_word_flag,
 			     x.second_word_flag,
-			     forbid_affixed});
+			     forbid_unaffixed});
 		}
 	}
 

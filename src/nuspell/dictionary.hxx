@@ -65,7 +65,7 @@ struct Affixing_Result
 
 struct Compounding_Result {
 	Dic_Data::const_pointer word_entry = {};
-	bool affixed = {};
+	bool affixed_and_modified = {}; /**< non-zero affix */
 	operator Dic_Data::const_pointer() const { return word_entry; }
 	auto& operator*() const { return *word_entry; }
 	auto operator-> () const { return word_entry; }

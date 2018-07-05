@@ -1378,7 +1378,8 @@ auto match_compound_pattern(const Compound_Pattern<CharT>& p,
 	if (p.second_word_flag != 0 &&
 	    !second->second.contains(p.second_word_flag))
 		return false;
-	if (p.forbid_first_affixed && first.affixed)
+	if (p.match_first_only_unaffixed_or_zero_affixed &&
+	    first.affixed_and_modified)
 		return false;
 	return true;
 }
@@ -1514,6 +1515,12 @@ auto Dictionary::check_compound_with_pattern_replacements(
 	return {};
 }
 
+template <class AffixT>
+auto is_modiying_affix(const AffixT& a)
+{
+	return a.stripping.size() != 0 || a.appending.size() != 0;
+}
+
 template <Affixing_Mode m, class CharT>
 auto Dictionary::check_word_in_compound(std::basic_string<CharT>& word) const
     -> Compounding_Result
@@ -1537,16 +1544,21 @@ auto Dictionary::check_word_in_compound(std::basic_string<CharT>& word) const
 	}
 	auto x1 = strip_prefix_only<m>(word);
 	if (x1)
-		return {x1, true};
+		return {x1, is_modiying_affix(*get<1>(x1))};
+
 	auto x2 = strip_suffix_only<m>(word);
 	if (x2)
-		return {x2, true};
+		return {x2, is_modiying_affix(*get<1>(x2))};
+
 	auto x3 = strip_prefix_then_suffix<m>(word);
 	if (x3)
-		return {x3, true};
+		return {x3, is_modiying_affix(*get<1>(x3)) ||
+			        is_modiying_affix(*get<2>(x3))};
+
 	auto x4 = strip_suffix_then_prefix<m>(word);
 	if (x4)
-		return {x4, true};
+		return {x4, is_modiying_affix(*get<1>(x4)) ||
+			        is_modiying_affix(*get<2>(x4))};
 	return {};
 }
 
