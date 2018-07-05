@@ -184,16 +184,15 @@ auto print_help(const string& program_name) -> void
 	     "standard output. At the end of each presented file, space-\n"
 	     "separated statistics are printed to standard output, being:\n"
 	     "total number of words\n"
-	     "average CPU time per word with Hunspell\n"
-	     "average CPU time per word with Nuspell\n"
-	     "speedup factor from Hunspell to Nuspell\n"
-	     "total true positive\n"
+	     "total CPU time for Nuspell\n"
+	     "speedup factor compared to Hunspell\n"
+	     "total true positives\n"
 	     "true positive rate\n"
-	     "total true negative\n"
+	     "total true negatives\n"
 	     "true negative rate\n"
-	     "total false positive\n"
+	     "total false positives\n"
 	     "false positive rate\n"
-	     "total false negative\n"
+	     "total false negatives\n"
 	     "false negative rate\n";
 	o << "\n"
 	     "Bug reports: <https://github.com/hunspell/nuspell/issues>\n"
@@ -268,17 +267,17 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 		return;
 	}
 	// rates
-	auto speedup = (float)htime/ntime;
+	auto speedup = (float)htime / ntime;
 	auto trueposr = (float)truepos / total;
 	auto truenegr = (float)trueneg / total;
 	auto falseposr = (float)falsepos / total;
 	auto falsenegr = (float)falseneg / total;
 
-	clog << total << ' ' << setprecision(3) << speedup << ' '
-	     << truepos << ' ' << setprecision(3) << trueposr << ' '
-	     << trueneg << ' ' << setprecision(3) << truenegr << ' '
-	     << falsepos << ' ' << setprecision(3) << falseposr << ' '
-	     << falseneg << ' ' << setprecision(3) << falsenegr << endl;
+	clog << total << ' ' << ntime << ' ' << setprecision(3) << speedup
+	     << ' ' << truepos << ' ' << setprecision(3) << trueposr << ' '
+	     << trueneg << ' ' << setprecision(3) << truenegr << ' ' << falsepos
+	     << ' ' << setprecision(3) << falseposr << ' ' << falseneg << ' '
+	     << setprecision(3) << falsenegr << endl;
 }
 
 namespace std {

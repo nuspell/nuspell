@@ -1553,12 +1553,12 @@ auto Dictionary::check_word_in_compound(std::basic_string<CharT>& word) const
 	auto x3 = strip_prefix_then_suffix<m>(word);
 	if (x3)
 		return {x3, is_modiying_affix(*get<1>(x3)) ||
-			        is_modiying_affix(*get<2>(x3))};
+		                is_modiying_affix(*get<2>(x3))};
 
 	auto x4 = strip_suffix_then_prefix<m>(word);
 	if (x4)
 		return {x4, is_modiying_affix(*get<1>(x4)) ||
-			        is_modiying_affix(*get<2>(x4))};
+		                is_modiying_affix(*get<2>(x4))};
 	return {};
 }
 
