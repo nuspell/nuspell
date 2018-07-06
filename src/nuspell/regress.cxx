@@ -274,11 +274,22 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	auto falseposr = (float)false_pos / total;
 	auto falsenegr = (float)false_neg / total;
 
+	auto accuracy = (true_pos + true_neg) * 1.0 / total;
+	auto precision = true_pos * 1.0 / (true_pos + false_pos);
+
+	out << "Total= " << total << '\n';
+	out << "TP   = " << true_pos << '\n';
+	out << "TN   = " << true_neg << '\n';
+	out << "FP   = " << false_pos << '\n';
+	out << "FN   = " << false_neg << '\n';
+	out << "Acc  = " << accuracy * 100 << "%\n";
+	out << "Prec = " << precision * 100 << "%\n";
+	out << "Speedup = " << speedup * 100 << "%\n";
+
 	out << total << ' ' << ntime << ' ' << setprecision(3) << speedup << ' '
-	    << true_pos << ' ' << setprecision(3) << trueposr << ' ' << true_neg
-	    << ' ' << setprecision(3) << truenegr << ' ' << false_pos << ' '
-	    << setprecision(3) << falseposr << ' ' << false_neg << ' '
-	    << setprecision(3) << falsenegr << endl;
+	    << true_pos << ' ' << trueposr << ' ' << true_neg << ' ' << truenegr
+	    << ' ' << false_pos << ' ' << falseposr << ' ' << false_neg << ' '
+	    << falsenegr << endl;
 }
 
 namespace std {
