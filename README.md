@@ -1,16 +1,8 @@
-<!-- add following also to nuspell.org
-[![Code Coverage Codecov](https://codecov.io/gh/hunspell/nuspell/branch/master/graph/badge.svg)](https://codecov.io/gh/hunspell/nuspell)
-[![Build Status Travis](https://travis-ci.org/hunspell/nuspell.svg?branch=master)](https://travis-ci.org/hunspell/nuspell)
-[![Build Status AppVeyor]([https://ci.appveyor.com/api/projects/status/ecxsq3s4j2b9n965?svg=true](https://ci.appveyor.com/api/projects/status/ecxsq3s4j2b9n965?svg=true)](https://ci.appveyor.com/project/hunspell-bot/nuspell-n4uof)
-
-see also https://shields.io/
--->
-
 # About Nuspell
 
 NOTICE: Nuspell is currently under development. For contributing see
 [version 2
-specification](https://github.com/hunspell/hunspell/wiki/Version-2-Specification).
+specification](https://github.com/nuspell/nuspell/wiki/Version-2-Specification).
 
 Nuspell is a spell checker library and
 program designed for languages with rich morphology and complex word
@@ -154,7 +146,7 @@ You can also pass the `CXXFLAGS` directly to `make` without calling
 sessions.
 
 If you like to develop and debug with an IDE, see documentation at
-https://github.com/hunspell/hunspell/wiki/IDE-Setup
+https://github.com/nuspell/nuspell/wiki/IDE-Setup
 
 # Testing
 
@@ -180,7 +172,7 @@ Short documentation in man-pages:
     nuspell -h
 
 Full documentation in the
-[wiki](https://github.com/hunspell/hunspell/wiki).
+[wiki](https://github.com/nuspell/nuspell/wiki).
 
 Documentation for developers can be generated from the source files by
 running:
@@ -236,13 +228,12 @@ Including in your program:
 
 Linking with Nuspell static library:
 
-    g++ -lnuspell example.cxx
+    g++ example.cxx -lnuspell -lboost-locale -licuuc -licudata
     # or better, use pkg-config
-    g++ $(pkg-config --cflags --libs nuspell) example.cxx
+    g++ example.cxx $(pkg-config --cflags --libs nuspell)
 
 ## Dictionaries
 
 Myspell, Hunspell and Nuspell dictionaries:
 
-https://github.com/hunspell/hunspell/wiki/Dictionaries-and-Contacts
-
+https://github.com/nuspell/nuspell/wiki/Dictionaries-and-Contacts
