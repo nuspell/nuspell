@@ -231,17 +231,18 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	auto false_pos = 0;
 	auto false_neg = 0;
 	// store cpu time for Hunspell and Nuspell
-	auto htime = rdtsc();
-	htime = 0;
-	auto ntime = htime;
+	auto hun_time = rdtsc();
+	hun_time = 0;
+	auto nu_time = hun_time;
 	while (in >> word) {
-		auto ticka = rdtsc();
+		auto a_tick = rdtsc();
 		auto res = dic.spell(word, in.getloc());
-		auto tickb = rdtsc();
+		auto b_tick = rdtsc();
 		auto hres =
 		    hun.spell(to_narrow(to_wide(word, in.getloc()), hloc));
-		htime += tickb - ticka;
-		ntime += rdtsc() - tickb;
+		auto c_tick = rdtsc();
+		nu_time += b_tick - a_tick;
+		hun_time += c_tick - b_tick;
 		if (hres) {
 			if (res) {
 				++true_pos;
@@ -268,7 +269,7 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 		return;
 	}
 	// rates
-	auto speedup = (float)htime / ntime;
+	auto speedup = (float)hun_time / nu_time;
 	auto trueposr = (float)true_pos / total;
 	auto truenegr = (float)true_neg / total;
 	auto falseposr = (float)false_pos / total;
@@ -285,11 +286,13 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	out << "Acc  = " << accuracy * 100 << "%\n";
 	out << "Prec = " << precision * 100 << "%\n";
 	out << "Speedup = " << speedup * 100 << "%\n";
+	out << "Nu tick = " << nu_time << '\n';
+	out << "Hun tick= " << hun_time << '\n';
 
-	out << total << ' ' << ntime << ' ' << setprecision(3) << speedup << ' '
-	    << true_pos << ' ' << trueposr << ' ' << true_neg << ' ' << truenegr
-	    << ' ' << false_pos << ' ' << falseposr << ' ' << false_neg << ' '
-	    << falsenegr << endl;
+	out << total << ' ' << nu_time << ' ' << setprecision(3) << speedup
+	    << ' ' << true_pos << ' ' << trueposr << ' ' << true_neg << ' '
+	    << truenegr << ' ' << false_pos << ' ' << falseposr << ' '
+	    << false_neg << ' ' << falsenegr << endl;
 }
 
 namespace std {
