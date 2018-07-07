@@ -396,7 +396,7 @@ int main(int argc, char* argv[])
 	auto aff_name = filename + ".aff";
 	auto dic_name = filename + ".dic";
 	Hunspell hun(aff_name.c_str(), dic_name.c_str());
-	auto hun_loc = gen("en_US." + hun.get_dict_encoding());
+	auto hun_loc = dic.locale_aff;
 	auto loop_function = normal_loop;
 
 	if (args.files.empty()) {

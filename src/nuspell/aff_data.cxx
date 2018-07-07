@@ -506,6 +506,8 @@ auto get_locale_name(string lang, string enc, const string& filename) -> string
 {
 	if (enc.empty())
 		enc = "ISO8859-1";
+	else if (enc.compare(0, 10, "MICROSOFT-") == 0)
+		enc.erase(0, 10);
 	if (lang.empty()) {
 		if (filename.empty()) {
 			lang = "en_US";
