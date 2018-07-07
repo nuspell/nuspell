@@ -156,6 +156,16 @@ class Dictionary : public Aff_Data {
 	    -> Affixing_Result<Prefix<CharT>, Suffix<CharT>>;
 
 	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_prefix_then_suffix_commutative(
+	    std::basic_string<CharT>& word) const
+	    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>;
+
+	template <Affixing_Mode m = FULL_WORD, class CharT>
+	auto strip_pfx_then_sfx_comm_2(const Prefix<CharT>& pe,
+	                               std::basic_string<CharT>& word) const
+	    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>;
+
+	template <Affixing_Mode m = FULL_WORD, class CharT>
 	auto strip_suffix_then_suffix(std::basic_string<CharT>& s) const
 	    -> Affixing_Result<Suffix<CharT>, Suffix<CharT>>;
 

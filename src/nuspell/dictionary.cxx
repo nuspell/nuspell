@@ -346,14 +346,9 @@ auto Dictionary::check_word(std::basic_string<CharT>& s) const
 			return &ret3->second;
 	}
 	{
-		auto ret4 = strip_prefix_then_suffix(s);
+		auto ret4 = strip_prefix_then_suffix_commutative(s);
 		if (ret4)
 			return &ret4->second;
-	}
-	{
-		auto ret5 = strip_suffix_then_prefix(s);
-		if (ret5)
-			return &ret5->second;
 	}
 	if (complex_prefixes == false) {
 		auto ret6 = strip_suffix_then_suffix(s);
@@ -797,6 +792,87 @@ auto Dictionary::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 		}
 	}
 	return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_prefix_then_suffix_commutative(
+    std::basic_string<CharT>& word) const
+    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>
+{
+        auto& prefixes = get_structures<CharT>().prefixes;
+
+        for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+	        auto& pe = *it;
+		if (pe.cross_product == false)
+			continue;
+		if (affix_NOT_valid<m>(pe))
+			continue;
+		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe);
+		if (!pe.check_condition(word))
+			continue;
+		auto ret = strip_pfx_then_sfx_comm_2<m>(pe, word);
+		if (ret)
+			return ret;
+        }
+        return {};
+}
+
+template <Affixing_Mode m, class CharT>
+auto Dictionary::strip_pfx_then_sfx_comm_2(const Prefix<CharT>& pe,
+                                           std::basic_string<CharT>& word) const
+    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>
+{
+        auto& dic = words;
+        auto& suffixes = get_structures<CharT>().suffixes;
+
+        for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+	        auto& se = *it;
+		if (se.cross_product == false)
+			continue;
+		if (affix_NOT_valid<m>(se))
+			continue;
+		auto has_needaffix_pe = pe.cont_flags.contains(need_affix_flag);
+		auto has_needaffix_se = se.cont_flags.contains(need_affix_flag);
+		if (has_needaffix_pe && has_needaffix_se)
+			continue;
+		if (is_circumfix(pe) != is_circumfix(se))
+			continue;
+		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se);
+		if (!se.check_condition(word))
+			continue;
+		for (auto& word_entry :
+		     make_iterator_range(dic.equal_range(word))) {
+			auto& word_flags = word_entry.second;
+
+			auto valid_cross_pe_outer =
+			    !has_needaffix_pe &&
+			    cross_valid_inner_outer(word_flags, se) &&
+			    (cross_valid_inner_outer(se, pe) ||
+			     cross_valid_inner_outer(word_flags, pe));
+
+			auto valid_cross_se_outer =
+			    !has_needaffix_se &&
+			    cross_valid_inner_outer(word_flags, pe) &&
+			    (cross_valid_inner_outer(pe, se) ||
+			     cross_valid_inner_outer(word_flags, se));
+
+			if (!valid_cross_pe_outer && !valid_cross_se_outer)
+				continue;
+
+			// badflag check
+			if (m == FULL_WORD &&
+			    word_flags.contains(compound_onlyin_flag))
+				continue;
+			// needflag check
+			if (!is_valid_inside_compound<m>(word_flags) &&
+			    !is_valid_inside_compound<m>(se.cont_flags) &&
+			    !is_valid_inside_compound<m>(pe.cont_flags))
+				continue;
+			return {word_entry, se, pe};
+		}
+        }
+
+        return {};
 }
 
 template <Affixing_Mode m, class CharT>
@@ -1560,15 +1636,10 @@ auto Dictionary::check_word_in_compound(std::basic_string<CharT>& word) const
 	if (x2)
 		return {x2, is_modiying_affix(*get<1>(x2))};
 
-	auto x3 = strip_prefix_then_suffix<m>(word);
+	auto x3 = strip_prefix_then_suffix_commutative<m>(word);
 	if (x3)
 		return {x3, is_modiying_affix(*get<1>(x3)) ||
 		                is_modiying_affix(*get<2>(x3))};
-
-	auto x4 = strip_suffix_then_prefix<m>(word);
-	if (x4)
-		return {x4, is_modiying_affix(*get<1>(x4)) ||
-		                is_modiying_affix(*get<2>(x4))};
 	return {};
 }
 
