@@ -259,10 +259,11 @@ auto classify_casing(const std::basic_string<CharT>& s,
 	using namespace std;
 	size_t upper = 0;
 	size_t lower = 0;
+	auto& f = use_facet<ctype<CharT>>(loc);
 	for (auto& c : s) {
-		if (isupper(c, loc))
+		if (f.is(ctype_base::upper, c))
 			upper++;
-		else if (islower(c, loc))
+		else if (f.is(ctype_base::lower, c))
 			lower++;
 		// else neutral
 	}

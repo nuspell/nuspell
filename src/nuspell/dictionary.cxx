@@ -368,9 +368,10 @@ auto Dictionary::check_word(std::basic_string<CharT>& s) const
 		if (ret8)
 			return &ret8->second;
 
-		auto ret9 = strip_2_suffixes_then_prefix(s);
-		if (ret9)
-			return &ret9->second;
+		// this is slow and unused so comment
+		// auto ret9 = strip_2_suffixes_then_prefix(s);
+		// if (ret9)
+		//	return &ret9->second;
 	}
 	else {
 		auto ret6 = strip_prefix_then_prefix(s);
@@ -384,9 +385,10 @@ auto Dictionary::check_word(std::basic_string<CharT>& s) const
 		if (ret8)
 			return &ret8->second;
 
-		auto ret9 = strip_2_prefixes_then_suffix(s);
-		if (ret9)
-			return &ret9->second;
+		// this is slow and unused so comment
+		// auto ret9 = strip_2_prefixes_then_suffix(s);
+		// if (ret9)
+		//	return &ret9->second;
 	}
 	auto ret10 = check_compound(s);
 	if (ret10)
