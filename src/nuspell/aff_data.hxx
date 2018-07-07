@@ -95,7 +95,14 @@ struct Compound_Check_Pattern {
 	char16_t second_word_flag;
 };
 
-using Dic_Data_Base = std::unordered_multimap<std::string, Flag_Set>;
+using Dic_Data_Base = multi_index_container<
+    std::pair<std::string, Flag_Set>,
+    indexed_by<
+        hashed_non_unique<member<std::pair<std::string, Flag_Set>, std::string,
+                                 &std::pair<std::string, Flag_Set>::first>,
+                          std::hash<std::string>, std::equal_to<std::string>>>
+
+    >;
 /**
  * @brief Map between words and word_flags.
  *
@@ -107,14 +114,17 @@ using Dic_Data_Base = std::unordered_multimap<std::string, Flag_Set>;
  */
 class Dic_Data : public Dic_Data_Base {
       public:
-	using Dic_Data_Base::find;
-	auto find(const std::wstring& word) -> iterator;
-	auto find(const std::wstring& word) const -> const_iterator;
-	using Dic_Data_Base::equal_range;
-	auto equal_range(const std::wstring& word)
-	    -> std::pair<iterator, iterator>;
+	auto find(const std::string& word) const
+	{
+		return Dic_Data_Base::find(word);
+	}
+	auto find(const std::wstring& word) const -> Dic_Data_Base::iterator;
+	auto equal_range(const std::string& word) const
+	{
+		return Dic_Data_Base::equal_range(word);
+	}
 	auto equal_range(const std::wstring& word) const
-	    -> std::pair<const_iterator, const_iterator>;
+	    -> std::pair<Dic_Data_Base::iterator, Dic_Data_Base::iterator>;
 };
 
 struct Aff_Data {

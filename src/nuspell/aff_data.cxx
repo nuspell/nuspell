@@ -997,7 +997,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 
 			if (h != hom.second) {
 				// replace if found
-				h->second = flags;
+				words.modify(
+				    h, [&](auto& e) { e.second = flags; });
 			}
 			else {
 				words.emplace(word, flags);
@@ -1028,22 +1029,12 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	return in.eof(); // success if we reached eof
 }
 
-auto Dic_Data::find(const wstring& word) -> iterator
+auto Dic_Data::find(const wstring& word) const -> Dic_Data_Base::iterator
 {
 	return find(boost::locale::conv::utf_to_utf<char>(word));
-}
-
-auto Dic_Data::find(const wstring& word) const -> const_iterator
-{
-	return find(boost::locale::conv::utf_to_utf<char>(word));
-}
-auto Dic_Data::equal_range(const std::wstring& word)
-    -> std::pair<iterator, iterator>
-{
-	return equal_range(boost::locale::conv::utf_to_utf<char>(word));
 }
 auto Dic_Data::equal_range(const std::wstring& word) const
-    -> std::pair<const_iterator, const_iterator>
+    -> std::pair<Dic_Data_Base::iterator, Dic_Data_Base::iterator>
 {
 	return equal_range(boost::locale::conv::utf_to_utf<char>(word));
 }
