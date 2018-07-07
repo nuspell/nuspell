@@ -1031,6 +1031,8 @@ auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
 
 	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se2 = *it;
+		if (se2.cross_product == false)
+			continue;
 		if (!cross_valid_inner_outer(se2, se1) &&
 		    !cross_valid_inner_outer(pe1, se1))
 			continue;
@@ -1108,6 +1110,8 @@ auto Dictionary::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
 
 	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& pe1 = *it;
+		if (pe1.cross_product == false)
+			continue;
 		if (!cross_valid_inner_outer(se2, se1) &&
 		    !cross_valid_inner_outer(pe1, se1))
 			continue;
@@ -1256,6 +1260,8 @@ auto Dictionary::strip_p_s_p_3(const Prefix<CharT>& pe1,
 
 	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& pe2 = *it;
+		if (pe2.cross_product == false)
+			continue;
 		if (!cross_valid_inner_outer(pe2, pe1) &&
 		    !cross_valid_inner_outer(se1, pe1))
 			continue;
@@ -1332,6 +1338,8 @@ auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 
 	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se1 = *it;
+		if (se1.cross_product == false)
+			continue;
 		if (!cross_valid_inner_outer(pe2, pe1) &&
 		    !cross_valid_inner_outer(se1, pe1))
 			continue;
