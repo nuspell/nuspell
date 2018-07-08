@@ -558,7 +558,7 @@ using Affix_Table_Base = multi_index_container<
 template <class CharT, class AffixT>
 class Affix_Table : private Affix_Table_Base<CharT, AffixT> {
       private:
-	bool has_cont_flags = false;
+	Flag_Set all_cont_flags;
 
       public:
 	using base = Affix_Table_Base<CharT, AffixT>;
@@ -568,15 +568,21 @@ class Affix_Table : private Affix_Table_Base<CharT, AffixT> {
 	{
 		auto ret = base::emplace(std::forward<Args>(a)...);
 		auto it = ret.first;
-		if (it->cont_flags.size() != 0)
-			has_cont_flags = true;
+		all_cont_flags += it->cont_flags;
 		return ret;
 	}
 	auto equal_range(my_string_view<CharT> appending) const
 	{
 		return base::equal_range(appending);
 	}
-	auto has_continuation_flags() const { return has_cont_flags; }
+	auto has_continuation_flags() const
+	{
+		return all_cont_flags.size() != 0;
+	}
+	auto has_continuation_flag(char16_t flag) const
+	{
+		return all_cont_flags.contains(flag);
+	}
 };
 
 template <class CharT>

@@ -881,11 +881,19 @@ auto Dictionary::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
     -> Affixing_Result<Suffix<CharT>, Suffix<CharT>>
 {
 	auto& suffixes = get_structures<CharT>().suffixes;
+
+	// The following check is purely for performance, it does not change
+	// correctness.
 	if (!suffixes.has_continuation_flags())
 		return {};
 
 	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se1 = *it;
+
+		// The following check is purely for performance, it does not
+		// change correctness.
+		if (!suffixes.has_continuation_flag(se1.flag))
+			continue;
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
 		if (is_circumfix(se1))
@@ -941,11 +949,18 @@ auto Dictionary::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
     -> Affixing_Result<Prefix<CharT>, Prefix<CharT>>
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
+
+	// The following check is purely for performance, it does not change
+	// correctness.
 	if (!prefixes.has_continuation_flags())
 		return {};
 
 	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& pe1 = *it;
+		// The following check is purely for performance, it does not
+		// change correctness.
+		if (!prefixes.has_continuation_flag(pe1.flag))
+			continue;
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
 		if (is_circumfix(pe1))
