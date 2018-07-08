@@ -799,10 +799,10 @@ auto Dictionary::strip_prefix_then_suffix_commutative(
     std::basic_string<CharT>& word) const
     -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>
 {
-        auto& prefixes = get_structures<CharT>().prefixes;
+	auto& prefixes = get_structures<CharT>().prefixes;
 
-        for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
-	        auto& pe = *it;
+	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+		auto& pe = *it;
 		if (pe.cross_product == false)
 			continue;
 		if (affix_NOT_valid<m>(pe))
@@ -813,8 +813,8 @@ auto Dictionary::strip_prefix_then_suffix_commutative(
 		auto ret = strip_pfx_then_sfx_comm_2<m>(pe, word);
 		if (ret)
 			return ret;
-        }
-        return {};
+	}
+	return {};
 }
 
 template <Affixing_Mode m, class CharT>
@@ -822,20 +822,21 @@ auto Dictionary::strip_pfx_then_sfx_comm_2(const Prefix<CharT>& pe,
                                            std::basic_string<CharT>& word) const
     -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>
 {
-        auto& dic = words;
-        auto& suffixes = get_structures<CharT>().suffixes;
+	auto& dic = words;
+	auto& suffixes = get_structures<CharT>().suffixes;
+	auto has_needaffix_pe = pe.cont_flags.contains(need_affix_flag);
+	auto is_circumfix_pe = is_circumfix(pe);
 
-        for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
-	        auto& se = *it;
+	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+		auto& se = *it;
 		if (se.cross_product == false)
 			continue;
 		if (affix_NOT_valid<m>(se))
 			continue;
-		auto has_needaffix_pe = pe.cont_flags.contains(need_affix_flag);
 		auto has_needaffix_se = se.cont_flags.contains(need_affix_flag);
 		if (has_needaffix_pe && has_needaffix_se)
 			continue;
-		if (is_circumfix(pe) != is_circumfix(se))
+		if (is_circumfix_pe != is_circumfix(se))
 			continue;
 		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se);
 		if (!se.check_condition(word))
@@ -870,9 +871,9 @@ auto Dictionary::strip_pfx_then_sfx_comm_2(const Prefix<CharT>& pe,
 				continue;
 			return {word_entry, se, pe};
 		}
-        }
+	}
 
-        return {};
+	return {};
 }
 
 template <Affixing_Mode m, class CharT>
@@ -880,6 +881,8 @@ auto Dictionary::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
     -> Affixing_Result<Suffix<CharT>, Suffix<CharT>>
 {
 	auto& suffixes = get_structures<CharT>().suffixes;
+	if (!suffixes.has_continuation_flags())
+		return {};
 
 	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
 		auto& se1 = *it;
@@ -923,9 +926,9 @@ auto Dictionary::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
 			// badflag check
-			// if (m == FULL_WORD &&
-			//    word_flags.contains(compound_onlyin_flag))
-			//	continue;
+			if (m == FULL_WORD &&
+			    word_flags.contains(compound_onlyin_flag))
+				continue;
 			// needflag check here if needed
 			return {word_entry, se2, se1};
 		}
@@ -938,6 +941,8 @@ auto Dictionary::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
     -> Affixing_Result<Prefix<CharT>, Prefix<CharT>>
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
+	if (!prefixes.has_continuation_flags())
+		return {};
 
 	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
 		auto& pe1 = *it;
@@ -980,9 +985,9 @@ auto Dictionary::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 			if (!cross_valid_inner_outer(word_flags, pe2))
 				continue;
 			// badflag check
-			// if (m == FULL_WORD &&
-			//    word_flags.contains(compound_onlyin_flag))
-			//	continue;
+			if (m == FULL_WORD &&
+			    word_flags.contains(compound_onlyin_flag))
+				continue;
 			// needflag check here if needed
 			return {word_entry, pe2, pe1};
 		}
@@ -1054,9 +1059,9 @@ auto Dictionary::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
 			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
 			// badflag check
-			// if (m == FULL_WORD &&
-			//    word_flags.contains(compound_onlyin_flag))
-			//	continue;
+			if (m == FULL_WORD &&
+			    word_flags.contains(compound_onlyin_flag))
+				continue;
 			// needflag check here if needed
 			return {word_entry};
 		}
@@ -1134,9 +1139,9 @@ auto Dictionary::strip_s_p_s_3(const Suffix<CharT>& se1,
 			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
 			// badflag check
-			// if (m == FULL_WORD &&
-			//    word_flags.contains(compound_onlyin_flag))
-			//	continue;
+			if (m == FULL_WORD &&
+			    word_flags.contains(compound_onlyin_flag))
+				continue;
 			// needflag check here if needed
 			return {word_entry};
 		}
@@ -1209,9 +1214,9 @@ auto Dictionary::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
 			if (!cross_valid_inner_outer(word_flags, pe1))
 				continue;
 			// badflag check
-			// if (m == FULL_WORD &&
-			//    word_flags.contains(compound_onlyin_flag))
-			//	continue;
+			if (m == FULL_WORD &&
+			    word_flags.contains(compound_onlyin_flag))
+				continue;
 			// needflag check here if needed
 			return {word_entry};
 		}
@@ -1284,9 +1289,9 @@ auto Dictionary::strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
 			if (!cross_valid_inner_outer(word_flags, pe2))
 				continue;
 			// badflag check
-			// if (m == FULL_WORD &&
-			//    word_flags.contains(compound_onlyin_flag))
-			//	continue;
+			if (m == FULL_WORD &&
+			    word_flags.contains(compound_onlyin_flag))
+				continue;
 			return {word_entry};
 		}
 	}
@@ -1363,9 +1368,9 @@ auto Dictionary::strip_p_s_p_3(const Prefix<CharT>& pe1,
 			if (!cross_valid_inner_outer(word_flags, pe2))
 				continue;
 			// badflag check
-			// if (m == FULL_WORD &&
-			//    word_flags.contains(compound_onlyin_flag))
-			//	continue;
+			if (m == FULL_WORD &&
+			    word_flags.contains(compound_onlyin_flag))
+				continue;
 			return {word_entry};
 		}
 	}
@@ -1437,9 +1442,9 @@ auto Dictionary::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 			if (!cross_valid_inner_outer(word_flags, se1))
 				continue;
 			// badflag check
-			// if (m == FULL_WORD &&
-			//    word_flags.contains(compound_onlyin_flag))
-			//	continue;
+			if (m == FULL_WORD &&
+			    word_flags.contains(compound_onlyin_flag))
+				continue;
 			return {word_entry};
 		}
 	}

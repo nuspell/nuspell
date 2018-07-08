@@ -549,19 +549,42 @@ struct sv_eq {
 	}
 };
 
-template <class CharT>
-using Prefix_Table = multi_index_container<
-    Prefix<CharT>,
-    indexed_by<hashed_non_unique<member<Prefix<CharT>, std::basic_string<CharT>,
-                                        &Prefix<CharT>::appending>,
-                                 sv_hash<CharT>, sv_eq<CharT>>>>;
+template <class CharT, class AffixT>
+using Affix_Table_Base = multi_index_container<
+    AffixT, indexed_by<hashed_non_unique<
+                member<AffixT, std::basic_string<CharT>, &AffixT::appending>,
+                sv_hash<CharT>, sv_eq<CharT>>>>;
+
+template <class CharT, class AffixT>
+class Affix_Table : private Affix_Table_Base<CharT, AffixT> {
+      private:
+	bool has_cont_flags = false;
+
+      public:
+	using base = Affix_Table_Base<CharT, AffixT>;
+	using typename base::iterator;
+	template <class... Args>
+	auto emplace(Args&&... a)
+	{
+		auto ret = base::emplace(std::forward<Args>(a)...);
+		auto it = ret.first;
+		if (it->cont_flags.size() != 0)
+			has_cont_flags = true;
+		return ret;
+	}
+	auto equal_range(my_string_view<CharT> appending) const
+	{
+		return base::equal_range(appending);
+	}
+	auto has_continuation_flags() const { return has_cont_flags; }
+};
 
 template <class CharT>
-using Suffix_Table = multi_index_container<
-    Suffix<CharT>,
-    indexed_by<hashed_non_unique<member<Suffix<CharT>, std::basic_string<CharT>,
-                                        &Suffix<CharT>::appending>,
-                                 sv_hash<CharT>, sv_eq<CharT>>>>;
+using Prefix_Table = Affix_Table<CharT, Prefix<CharT>>;
+
+template <class CharT>
+using Suffix_Table = Affix_Table<CharT, Suffix<CharT>>;
+
 template <class CharT>
 class String_Pair {
 	using StrT = std::basic_string<CharT>;
