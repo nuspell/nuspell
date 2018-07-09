@@ -542,6 +542,9 @@ class Hash_Multiset {
 		});
 		if (first == end(bucket))
 			return {local_iterator(), local_iterator()};
+		auto next = first + 1;
+		if (next == end(bucket) || !equal(key, key_extract(*next)))
+			return {first, next};
 		auto last = find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
 			return equal(key, key_extract(x));
 		});
@@ -568,6 +571,9 @@ class Hash_Multiset {
 		});
 		if (first == end(bucket))
 			return {local_const_iterator(), local_const_iterator()};
+		auto next = first + 1;
+		if (next == end(bucket) || !equal(key, key_extract(*next)))
+			return {first, next};
 		auto last = find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
 			return equal(key, key_extract(x));
 		});
