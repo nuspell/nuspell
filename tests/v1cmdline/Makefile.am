@@ -142,7 +142,6 @@ compoundrule5.dic \
 compoundrule6.dic \
 compoundrule7.dic \
 compoundrule8.dic \
-forbiddenword.dic \
 forceucase.dic \
 germancompounding.dic \
 hu.dic \

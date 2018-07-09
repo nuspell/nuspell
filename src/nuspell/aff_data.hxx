@@ -30,6 +30,7 @@
 #include <utility>
 #include <vector>
 
+#include "locale_utils.hxx"
 #include "structures.hxx"
 
 namespace nuspell {
@@ -95,14 +96,10 @@ struct Compound_Check_Pattern {
 	char16_t second_word_flag;
 };
 
-using Dic_Data_Base = multi_index_container<
-    std::pair<std::string, Flag_Set>,
-    indexed_by<
-        hashed_non_unique<member<std::pair<std::string, Flag_Set>, std::string,
-                                 &std::pair<std::string, Flag_Set>::first>,
-                          std::hash<std::string>, std::equal_to<std::string>>>
-
-    >;
+using Dic_Data_Base =
+    Hash_Multiset<std::pair<std::string, Flag_Set>, std::string,
+                  member<std::pair<std::string, Flag_Set>, std::string,
+                         &std::pair<std::string, Flag_Set>::first>>;
 /**
  * @brief Map between words and word_flags.
  *
@@ -114,17 +111,13 @@ using Dic_Data_Base = multi_index_container<
  */
 class Dic_Data : public Dic_Data_Base {
       public:
-	auto find(const std::string& word) const
-	{
-		return Dic_Data_Base::find(word);
-	}
-	auto find(const std::wstring& word) const -> Dic_Data_Base::iterator;
-	auto equal_range(const std::string& word) const
-	{
-		return Dic_Data_Base::equal_range(word);
-	}
+	using Dic_Data_Base::equal_range;
 	auto equal_range(const std::wstring& word) const
-	    -> std::pair<Dic_Data_Base::iterator, Dic_Data_Base::iterator>;
+	    -> std::pair<Dic_Data_Base::local_const_iterator,
+	                 Dic_Data_Base::local_const_iterator>
+	{
+		return equal_range(boost::locale::conv::utf_to_utf<char>(word));
+	}
 };
 
 struct Aff_Data {

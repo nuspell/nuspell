@@ -27,11 +27,13 @@
 #include "condition.hxx"
 
 #include <algorithm>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include <boost/container/small_vector.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index_container.hpp>
@@ -416,6 +418,162 @@ class Break_Table {
 };
 extern template class Break_Table<char>;
 extern template class Break_Table<wchar_t>;
+
+struct identity {
+	template <class T>
+	constexpr auto&& operator()(T&& t)
+	{
+		return std::forward<T>(t);
+	}
+};
+
+template <class Value, class Key = Value, class KeyExtract = identity,
+          class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>>
+class Hash_Multiset {
+      private:
+	using bucket_type = boost::container::small_vector<Value, 1>;
+	static constexpr float max_load_fact = 7.0 / 8.0;
+	std::vector<bucket_type> data;
+	size_t sz = 0;
+	size_t max_load_factor_capacity = 0;
+	KeyExtract key_extract = {};
+	Hash hash = {};
+	KeyEqual equal = {};
+
+      public:
+	using key_type = Key;
+	using value_type = Value;
+	using size_type = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	using hasher = Hash;
+	using reference = value_type&;
+	using const_reference = const value_type&;
+	using pointer = value_type*;
+	using const_pointer = const value_type*;
+	using local_iterator = typename bucket_type::iterator;
+	using local_const_iterator = typename bucket_type::const_iterator;
+
+	Hash_Multiset() : data(16) {}
+
+	auto size() const { return sz; }
+	auto empty() const { return size() == 0; }
+
+	auto rehash(size_t count)
+	{
+		if (empty()) {
+			size_t capacity = 16;
+			while (capacity <= count)
+				capacity <<= 1;
+			data.resize(capacity);
+			max_load_factor_capacity =
+			    std::ceil(capacity * max_load_fact);
+			return;
+		}
+		if (count < size() / max_load_fact)
+			count = size() / max_load_fact;
+		auto n = Hash_Multiset();
+		n.rehash(count);
+		for (auto& b : data) {
+			for (auto& x : b) {
+				n.insert(x);
+			}
+		}
+		data.swap(n.data);
+		sz = n.sz;
+		max_load_factor_capacity = n.max_load_factor_capacity;
+	}
+
+	auto reserve(size_t count) -> void
+	{
+		rehash(std::ceil(count / max_load_fact));
+	}
+
+	auto insert(const_reference value)
+	{
+		if (sz == max_load_factor_capacity) {
+			reserve(sz + 1);
+		}
+		auto&& key = key_extract(value);
+		auto h = hash(key);
+		auto h_mod = h & (data.size() - 1);
+		auto& bucket = data[h_mod];
+		if (bucket.size() == 0 || bucket.size() == 1 ||
+		    equal(key, key_extract(bucket.back()))) {
+			bucket.push_back(value);
+			++sz;
+			return end(bucket) - 1;
+		}
+		auto last = find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
+			return equal(key, key_extract(x));
+		});
+		if (last != rend(bucket)) {
+			auto ret = bucket.insert(last.base(), value);
+			++sz;
+			return ret;
+		}
+
+		bucket.push_back(value);
+		++sz;
+		return end(bucket) - 1;
+	}
+	template <class... Args>
+	auto emplace(Args&&... a)
+	{
+		return insert(value_type(std::forward<Args>(a)...));
+	}
+
+	auto equal_range(const key_type& key)
+	    -> std::pair<local_iterator, local_iterator>
+	{
+		if (data.empty())
+			return {local_iterator(), local_iterator()};
+		auto h = hash(key);
+		auto h_mod = h & (data.size() - 1);
+		auto& bucket = data[h_mod];
+		if (bucket.empty())
+			return {local_iterator(), local_iterator()};
+		if (bucket.size() == 1) {
+			if (equal(key, key_extract(bucket.front())))
+				return {begin(bucket), end(bucket)};
+			return {local_iterator(), local_iterator()};
+		}
+		auto first = find_if(begin(bucket), end(bucket), [&](auto& x) {
+			return equal(key, key_extract(x));
+		});
+		if (first == end(bucket))
+			return {local_iterator(), local_iterator()};
+		auto last = find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
+			return equal(key, key_extract(x));
+		});
+		return {first, last.base()};
+	}
+
+	auto equal_range(const key_type& key) const
+	    -> std::pair<local_const_iterator, local_const_iterator>
+	{
+		if (data.empty())
+			return {local_const_iterator(), local_const_iterator()};
+		auto h = hash(key);
+		auto h_mod = h & (data.size() - 1);
+		auto& bucket = data[h_mod];
+		if (bucket.empty())
+			return {local_const_iterator(), local_const_iterator()};
+		if (bucket.size() == 1) {
+			if (equal(key, key_extract(bucket.front())))
+				return {begin(bucket), end(bucket)};
+			return {local_const_iterator(), local_const_iterator()};
+		}
+		auto first = find_if(begin(bucket), end(bucket), [&](auto& x) {
+			return equal(key, key_extract(x));
+		});
+		if (first == end(bucket))
+			return {local_const_iterator(), local_const_iterator()};
+		auto last = find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
+			return equal(key, key_extract(x));
+		});
+		return {first, last.base()};
+	}
+};
 
 template <class CharT>
 class Prefix {

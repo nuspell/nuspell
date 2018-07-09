@@ -991,14 +991,15 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		case Casing::ALL_CAPITAL: {
 			// check for hidden homonym
 			auto hom = words.equal_range(word);
-			auto h = find_if(hom.first, hom.second, [&](auto& w) {
-				return w.second.contains(HIDDEN_HOMONYM_FLAG);
-			});
+			auto h =
+			    std::find_if(hom.first, hom.second, [&](auto& w) {
+				    return w.second.contains(
+				        HIDDEN_HOMONYM_FLAG);
+			    });
 
 			if (h != hom.second) {
 				// replace if found
-				words.modify(
-				    h, [&](auto& e) { e.second = flags; });
+				h->second = flags;
 			}
 			else {
 				words.emplace(word, flags);
@@ -1027,15 +1028,5 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		}
 	}
 	return in.eof(); // success if we reached eof
-}
-
-auto Dic_Data::find(const wstring& word) const -> Dic_Data_Base::iterator
-{
-	return find(boost::locale::conv::utf_to_utf<char>(word));
-}
-auto Dic_Data::equal_range(const std::wstring& word) const
-    -> std::pair<Dic_Data_Base::iterator, Dic_Data_Base::iterator>
-{
-	return equal_range(boost::locale::conv::utf_to_utf<char>(word));
 }
 } // namespace nuspell
