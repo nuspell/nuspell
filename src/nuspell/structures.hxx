@@ -524,7 +524,8 @@ class Hash_Multiset {
 		return insert(value_type(std::forward<Args>(a)...));
 	}
 
-	auto equal_range(const key_type& key)
+	template <class CompatibleKey>
+	auto equal_range(const CompatibleKey& key)
 	    -> std::pair<local_iterator, local_iterator>
 	{
 		using namespace std;
@@ -556,7 +557,8 @@ class Hash_Multiset {
 		return {first, last.base()};
 	}
 
-	auto equal_range(const key_type& key) const
+	template <class CompatibleKey>
+	auto equal_range(const CompatibleKey& key) const
 	    -> std::pair<local_const_iterator, local_const_iterator>
 	{
 		using namespace std;
@@ -722,10 +724,10 @@ struct sv_eq {
 };
 
 template <class CharT, class AffixT>
-using Affix_Table_Base = multi_index_container<
-    AffixT, indexed_by<hashed_non_unique<
-                member<AffixT, std::basic_string<CharT>, &AffixT::appending>,
-                sv_hash<CharT>, sv_eq<CharT>>>>;
+using Affix_Table_Base =
+    Hash_Multiset<AffixT, std::basic_string<CharT>,
+                  member<AffixT, std::basic_string<CharT>, &AffixT::appending>,
+                  sv_hash<CharT>, sv_eq<CharT>>;
 
 template <class CharT, class AffixT>
 class Affix_Table : private Affix_Table_Base<CharT, AffixT> {
@@ -734,14 +736,13 @@ class Affix_Table : private Affix_Table_Base<CharT, AffixT> {
 
       public:
 	using base = Affix_Table_Base<CharT, AffixT>;
-	using typename base::iterator;
+	using iterator = typename base::local_const_iterator;
 	template <class... Args>
 	auto emplace(Args&&... a)
 	{
-		auto ret = base::emplace(std::forward<Args>(a)...);
-		auto it = ret.first;
+		auto it = base::emplace(std::forward<Args>(a)...);
 		all_cont_flags += it->cont_flags;
-		return ret;
+		return it;
 	}
 	auto equal_range(my_string_view<CharT> appending) const
 	{
