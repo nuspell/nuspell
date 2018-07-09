@@ -1017,6 +1017,9 @@ auto Dictionary::strip_prefix_then_2_suffixes(
 	auto& prefixes = get_structures<CharT>().prefixes;
 	auto& suffixes = get_structures<CharT>().suffixes;
 
+	if (!suffixes.has_continuation_flags())
+		return {};
+
 	for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
 		auto& pe1 = *i1;
 		if (pe1.cross_product == false)
@@ -1091,6 +1094,10 @@ auto Dictionary::strip_suffix_prefix_suffix(
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
 	auto& suffixes = get_structures<CharT>().suffixes;
+
+	if (!suffixes.has_continuation_flags() &&
+	    !prefixes.has_continuation_flags())
+		return {};
 
 	for (auto i1 = Suffix_Iter<CharT>(suffixes, word); i1; ++i1) {
 		auto& se1 = *i1;
@@ -1171,6 +1178,11 @@ auto Dictionary::strip_2_suffixes_then_prefix(
 {
 	auto& suffixes = get_structures<CharT>().suffixes;
 
+	auto& prefixes = get_structures<CharT>().prefixes;
+	if (!suffixes.has_continuation_flags() &&
+	    !prefixes.has_continuation_flags())
+		return {};
+
 	for (auto i1 = Suffix_Iter<CharT>(suffixes, word); i1; ++i1) {
 		auto& se1 = *i1;
 		if (outer_affix_NOT_valid<m>(se1))
@@ -1247,6 +1259,9 @@ auto Dictionary::strip_suffix_then_2_prefixes(
 	auto& prefixes = get_structures<CharT>().prefixes;
 	auto& suffixes = get_structures<CharT>().suffixes;
 
+	if (!prefixes.has_continuation_flags())
+		return {};
+
 	for (auto i1 = Suffix_Iter<CharT>(suffixes, word); i1; ++i1) {
 		auto& se1 = *i1;
 		if (se1.cross_product == false)
@@ -1320,6 +1335,10 @@ auto Dictionary::strip_prefix_suffix_prefix(
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
 	auto& suffixes = get_structures<CharT>().suffixes;
+
+	if (!suffixes.has_continuation_flags() &&
+	    !prefixes.has_continuation_flags())
+		return {};
 
 	for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
 		auto& pe1 = *i1;
@@ -1398,6 +1417,11 @@ auto Dictionary::strip_2_prefixes_then_suffix(
     std::basic_string<CharT>& word) const -> Affixing_Result<>
 {
 	auto& prefixes = get_structures<CharT>().prefixes;
+
+	auto& suffixes = get_structures<CharT>().suffixes;
+	if (!suffixes.has_continuation_flags() &&
+	    !prefixes.has_continuation_flags())
+		return {};
 
 	for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
 		auto& pe1 = *i1;
