@@ -349,22 +349,26 @@ TEST_CASE("method to_title", "[string_utils]")
 
 TEST_CASE("method classify_casing", "[string_utils]")
 {
-	CHECK(Casing::SMALL == classify_casing(""s));
-	CHECK(Casing::SMALL == classify_casing("alllowercase"s));
-	CHECK(Casing::SMALL == classify_casing("alllowercase3"s));
-	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase"s));
-	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase_"s));
-	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE"s));
-	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE."s));
-	CHECK(Casing::CAMEL == classify_casing("iCamelCase"s));
-	CHECK(Casing::CAMEL == classify_casing("iCamelCase@"s));
-	CHECK(Casing::PASCAL == classify_casing("InitCamelCase"s));
-	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s));
-
-	CHECK_FALSE(Casing::INIT_CAPITAL == classify_casing("İstanbul"s));
-	CHECK_FALSE(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"s));
 	boost::locale::generator g;
-	auto loc = g("tr_TR.UTF-8");
+	auto loc = g("en_US.utf-8");
+	install_ctype_facets_inplace(loc);
+	CHECK(Casing::SMALL == classify_casing(""s, loc));
+	CHECK(Casing::SMALL == classify_casing("alllowercase"s, loc));
+	CHECK(Casing::SMALL == classify_casing("alllowercase3"s, loc));
+	CHECK(Casing::INIT_CAPITAL ==
+	      classify_casing("Initandlowercase"s, loc));
+	CHECK(Casing::INIT_CAPITAL ==
+	      classify_casing("Initandlowercase_"s, loc));
+	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE"s, loc));
+	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE."s, loc));
+	CHECK(Casing::CAMEL == classify_casing("iCamelCase"s, loc));
+	CHECK(Casing::CAMEL == classify_casing("iCamelCase@"s, loc));
+	CHECK(Casing::PASCAL == classify_casing("InitCamelCase"s, loc));
+	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "s, loc));
+
+	CHECK_FALSE(Casing::INIT_CAPITAL == classify_casing("İstanbul"s, loc));
+	CHECK(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"s, loc));
+	loc = g("tr_TR.UTF-8");
 	install_ctype_facets_inplace(loc);
 	CHECK_FALSE(Casing::INIT_CAPITAL == classify_casing("İstanbul"s, loc));
 	CHECK(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"s, loc));
