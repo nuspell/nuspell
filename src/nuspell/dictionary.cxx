@@ -336,14 +336,14 @@ auto Dictionary::check_word(std::basic_string<CharT>& s) const
 		return &word_flags;
 	}
 	{
-		auto ret2 = strip_prefix_only(s);
-		if (ret2)
-			return &ret2->second;
-	}
-	{
 		auto ret3 = strip_suffix_only(s);
 		if (ret3)
 			return &ret3->second;
+	}
+	{
+		auto ret2 = strip_prefix_only(s);
+		if (ret2)
+			return &ret2->second;
 	}
 	{
 		auto ret4 = strip_prefix_then_suffix_commutative(s);
@@ -1648,13 +1648,13 @@ auto Dictionary::check_word_in_compound(std::basic_string<CharT>& word) const
 		    word_flags.contains(compound_last_flag))
 			return {&we};
 	}
-	auto x1 = strip_prefix_only<m>(word);
-	if (x1)
-		return {x1, is_modiying_affix(*get<1>(x1))};
-
 	auto x2 = strip_suffix_only<m>(word);
 	if (x2)
 		return {x2, is_modiying_affix(*get<1>(x2))};
+
+	auto x1 = strip_prefix_only<m>(word);
+	if (x1)
+		return {x1, is_modiying_affix(*get<1>(x1))};
 
 	auto x3 = strip_prefix_then_suffix_commutative<m>(word);
 	if (x3)
