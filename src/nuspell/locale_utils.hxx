@@ -18,22 +18,7 @@
 
 /**
  * @file locale_utils.hxx
- * Encoding transformations. See namespace nuspell::encoding
- */
-
-#ifndef LOCALE_UTILS_HXX
-#define LOCALE_UTILS_HXX
-
-#include <locale>
-#include <string>
-#include <type_traits>
-
-#include <boost/locale/encoding_utf.hpp>
-
-namespace nuspell {
-
-/**
- * @brief Encoding transformations namespace.
+ * Encoding transformations.
  *
  * The library differentiates three encodings:
  *
@@ -55,7 +40,17 @@ namespace nuspell {
  * For conversion between intermediate and dictionary encoding we have
  * the functions to_dict_encoding() and from_dict_to_wide_encoding().
  */
-inline namespace encoding {
+
+#ifndef LOCALE_UTILS_HXX
+#define LOCALE_UTILS_HXX
+
+#include <locale>
+#include <string>
+#include <type_traits>
+
+#include <boost/locale/encoding_utf.hpp>
+
+namespace nuspell {
 
 auto decode_utf8(const std::string& s) -> std::u32string;
 auto validate_utf8(const std::string& s) -> bool;
@@ -154,6 +149,29 @@ struct Same_As_Dict_Input {
 		return utf_to_utf<wchar_t>(in);
 	}
 };
-} // namespace encoding
+
+/**
+ * Casing type enum, ignoring neutral case characters.
+ */
+enum class Casing {
+	SMALL /**< all lower case or neutral case, e.g. "lowercase" or "123" */,
+	INIT_CAPITAL /**< start upper case, rest lower case, e.g. "InitCap" */,
+	ALL_CAPITAL /**< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
+	CAMEL /**< camel case, start lower case, e.g. "camelCase" */,
+	PASCAL /**< pascal case, start upper case, e.g. "PascalCase" */
+};
+
+/**
+ * Determines casing (capitalization) type for a word.
+ *
+ * Casing is sometimes referred to as capitalization.
+ *
+ * @param s word for which casing is determined.
+ * @return The casing type.
+ */
+template <class CharT>
+auto classify_casing(const std::basic_string<CharT>& s,
+                     const std::locale& loc = std::locale()) -> Casing;
+
 } // namespace nuspell
 #endif // LOCALE_UTILS_HXX

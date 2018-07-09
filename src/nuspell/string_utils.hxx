@@ -228,62 +228,6 @@ auto& erase_chars(std::basic_string<CharT>& s,
 }
 
 /**
- * Casing type enum, ignoring neutral case characters.
- */
-enum class Casing {
-	SMALL /**< all lower case or neutral case, e.g. "lowercase" or "123" */,
-	INIT_CAPITAL /**< start upper case, rest lower case, e.g. "InitCap" */,
-	ALL_CAPITAL /**< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
-	CAMEL /**< camel case, start lower case, e.g. "camelCase" */,
-	PASCAL /**< pascal case, start upper case, e.g. "PascalCase" */
-};
-
-/**
- * Determines casing (capitalization) type for a word.
- *
- * Casing is sometimes referred to as capitalization.
- *
- * @param s word for which casing is determined.
- * @return The casing type.
- */
-template <class CharT>
-auto classify_casing(const std::basic_string<CharT>& s,
-                     const std::locale& loc = std::locale()) -> Casing
-{
-	// TODO implement Default Case Detection from unicode standard
-	// https://www.unicode.org/versions/Unicode10.0.0/ch03.pdf
-	// See Chapter 13.3
-	//
-	// use boost::locale::to_lower to upper etc.
-
-	using namespace std;
-	size_t upper = 0;
-	size_t lower = 0;
-	auto& f = use_facet<ctype<CharT>>(loc);
-	for (auto& c : s) {
-		if (f.is(ctype_base::upper, c))
-			upper++;
-		else if (f.is(ctype_base::lower, c))
-			lower++;
-		// else neutral
-	}
-	if (upper == 0)               // all lowercase, maybe with some neutral
-		return Casing::SMALL; // most common case
-
-	auto first_capital = isupper(s[0], loc);
-	if (first_capital && upper == 1)
-		return Casing::INIT_CAPITAL; // second most common
-
-	if (lower == 0)
-		return Casing::ALL_CAPITAL;
-
-	if (first_capital)
-		return Casing::PASCAL;
-	else
-		return Casing::CAMEL;
-}
-
-/**
  * Tests if word is a number.
  *
  * Allow numbers with dots ".", dashes "-" and commas ",", but forbids double

@@ -18,7 +18,7 @@
 
 /**
  * @file locale_utils.cxx
- * Encoding transformations. See namespace nuspell::encoding
+ * Encoding transformations.
  */
 
 #include "locale_utils.hxx"
@@ -43,7 +43,6 @@
 #endif
 
 namespace nuspell {
-inline namespace encoding {
 using namespace std;
 
 #ifdef __GNUC__
@@ -555,14 +554,18 @@ auto fill_ctype(const string& enc, ctype_base::mask* m, char* upper,
 	ucnv_close(cvt);
 }
 
-class icu_ctype_char final : public std::ctype<char> {
+template <class CharT>
+class my_ctype;
+
+template <>
+class my_ctype<char> final : public std::ctype<char> {
       private:
 	mask tbl[256];
 	char upper[256];
 	char lower[256];
 
       public:
-	icu_ctype_char(const std::string& enc, std::size_t refs = 0)
+	my_ctype(const std::string& enc, std::size_t refs = 0)
 	    : std::ctype<char>(tbl, false, refs)
 	{
 		fill_ctype(enc, tbl, upper, lower);
@@ -613,12 +616,13 @@ auto fill_ctype_wide(const string& enc, wchar_t* widen)
 	ucnv_close(cvt);
 }
 
-class icu_ctype_wide final : public std::ctype<wchar_t> {
+template <>
+class my_ctype<wchar_t> final : public std::ctype<wchar_t> {
       private:
 	char_type wd[256];
 
       public:
-	icu_ctype_wide(const std::string& enc, std::size_t refs = 0)
+	my_ctype(const std::string& enc, std::size_t refs = 0)
 	    : std::ctype<wchar_t>(refs)
 	{
 		fill_ctype_wide(enc, wd);
@@ -726,8 +730,8 @@ auto install_ctype_facets_inplace(std::locale& boost_loc) -> void
 
 	auto& info = use_facet<boost::locale::info>(boost_loc);
 	auto enc = info.encoding();
-	boost_loc = locale(boost_loc, new icu_ctype_char(enc));
-	boost_loc = locale(boost_loc, new icu_ctype_wide(enc));
+	boost_loc = locale(boost_loc, new my_ctype<char>(enc));
+	boost_loc = locale(boost_loc, new my_ctype<wchar_t>(enc));
 }
 
 auto Locale_Input::cvt_for_byte_dict(const std::string& in,
@@ -763,5 +767,44 @@ auto Locale_Input::cvt_for_u8_dict(const std::string& in,
 	return to_wide(in, inloc);
 }
 
-} // namespace encoding
+template <class CharT>
+auto classify_casing(const std::basic_string<CharT>& s, const std::locale& loc)
+    -> Casing
+{
+	// TODO implement Default Case Detection from unicode standard
+	// https://www.unicode.org/versions/Unicode10.0.0/ch03.pdf
+	// See Chapter 13.3
+	//
+	// use boost::locale::to_lower to upper etc.
+
+	using namespace std;
+	size_t upper = 0;
+	size_t lower = 0;
+	auto& f = use_facet<my_ctype<CharT>>(loc);
+	for (auto& c : s) {
+		if (f.is(ctype_base::upper, c))
+			upper++;
+		else if (f.is(ctype_base::lower, c))
+			lower++;
+		// else neutral
+	}
+	if (upper == 0)               // all lowercase, maybe with some neutral
+		return Casing::SMALL; // most common case
+
+	auto first_capital = isupper(s[0], loc);
+	if (first_capital && upper == 1)
+		return Casing::INIT_CAPITAL; // second most common
+
+	if (lower == 0)
+		return Casing::ALL_CAPITAL;
+
+	if (first_capital)
+		return Casing::PASCAL;
+	else
+		return Casing::CAMEL;
+}
+template auto classify_casing(const std::string&, const std::locale&) -> Casing;
+template auto classify_casing(const std::wstring&, const std::locale&)
+    -> Casing;
+
 } // namespace nuspell
