@@ -52,7 +52,7 @@ class Condition {
 	using vector = std::vector<T>;
 
       private:
-	const StrT cond;
+	StrT cond;
 	vector<tuple<size_t, size_t, Span_Type>> spans; // pos, len, type
 	size_t length = 0;
 
