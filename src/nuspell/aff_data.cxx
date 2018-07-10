@@ -990,7 +990,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		switch (casing) {
 		case Casing::ALL_CAPITAL: {
 			// check for hidden homonym
-			auto hom = words.equal_range(word);
+			auto hom = words.equal_range_nonconst_unsafe(word);
 			auto h =
 			    std::find_if(hom.first, hom.second, [&](auto& w) {
 				    return w.second.contains(

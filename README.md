@@ -27,16 +27,11 @@ Main features of Nuspell spell checker and morphological analyzer:
 
 Build-only dependencies:
 
-    g++ make autoconf automake libtool wget
+    g++ make autoconf automake libtool pkg-config wget libiconv
 
 Runtime dependencies:
 
-|                 | Mandatory          |Optional          |
-|-----------------|--------------------|------------------|
-| libnuspell 1    |                    |                  |
-| cmd line tool 1 | libiconv           | ncurses readline |
-| libnuspell 2    | boost-locale, icu4c|                  |
-| cmd line tool 2 |                    |                  |
+    boost-locale icu4c
 
 Recommended tools for developers:
 

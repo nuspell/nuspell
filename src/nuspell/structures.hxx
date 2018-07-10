@@ -448,8 +448,8 @@ class Hash_Multiset {
 	using hasher = Hash;
 	using reference = value_type&;
 	using const_reference = const value_type&;
-	using pointer = value_type*;
-	using const_pointer = const value_type*;
+	using pointer = typename bucket_type::pointer;
+	using const_pointer = typename bucket_type::const_pointer;
 	using local_iterator = typename bucket_type::iterator;
 	using local_const_iterator = typename bucket_type::const_iterator;
 
@@ -524,29 +524,31 @@ class Hash_Multiset {
 		return insert(value_type(std::forward<Args>(a)...));
 	}
 
+	// Note, leaks non-const iterator. do not modify
+	// the key part of the returned value(s).
 	template <class CompatibleKey>
-	auto equal_range(const CompatibleKey& key)
+	auto equal_range_nonconst_unsafe(const CompatibleKey& key)
 	    -> std::pair<local_iterator, local_iterator>
 	{
 		using namespace std;
 		if (data.empty())
-			return {local_iterator(), local_iterator()};
+			return {};
 		auto h = hash(key);
 		auto h_mod = h & (data.size() - 1);
 		auto& bucket = data[h_mod];
 		if (bucket.empty())
-			return {local_iterator(), local_iterator()};
+			return {};
 		if (bucket.size() == 1) {
 			if (equal(key, key_extract(bucket.front())))
 				return {begin(bucket), end(bucket)};
-			return {local_iterator(), local_iterator()};
+			return {};
 		}
 		auto first =
 		    std::find_if(begin(bucket), end(bucket), [&](auto& x) {
 			    return equal(key, key_extract(x));
 		    });
 		if (first == end(bucket))
-			return {local_iterator(), local_iterator()};
+			return {};
 		auto next = first + 1;
 		if (next == end(bucket) || !equal(key, key_extract(*next)))
 			return {first, next};
@@ -563,23 +565,23 @@ class Hash_Multiset {
 	{
 		using namespace std;
 		if (data.empty())
-			return {local_const_iterator(), local_const_iterator()};
+			return {};
 		auto h = hash(key);
 		auto h_mod = h & (data.size() - 1);
 		auto& bucket = data[h_mod];
 		if (bucket.empty())
-			return {local_const_iterator(), local_const_iterator()};
+			return {};
 		if (bucket.size() == 1) {
 			if (equal(key, key_extract(bucket.front())))
 				return {begin(bucket), end(bucket)};
-			return {local_const_iterator(), local_const_iterator()};
+			return {};
 		}
 		auto first =
 		    std::find_if(begin(bucket), end(bucket), [&](auto& x) {
 			    return equal(key, key_extract(x));
 		    });
 		if (first == end(bucket))
-			return {local_const_iterator(), local_const_iterator()};
+			return {};
 		auto next = first + 1;
 		if (next == end(bucket) || !equal(key, key_extract(*next)))
 			return {first, next};
