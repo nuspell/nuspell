@@ -66,7 +66,6 @@ compoundaffix.dic \
 compoundaffix2.dic \
 compoundaffix3.dic \
 checkcompounddup.dic \
-checkcompoundtriple.dic \
 simplifiedtriple.dic \
 checkcompoundrep.dic \
 checkcompoundcase2.dic \

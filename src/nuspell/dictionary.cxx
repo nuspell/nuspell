@@ -1531,6 +1531,10 @@ auto Dictionary::check_compound(std::basic_string<CharT>& word,
                                 std::basic_string<CharT>&& part) const
     -> Compounding_Result
 {
+	if (compound_flag == 0 && compound_begin_flag == 0 &&
+	    compound_middle_flag == 0 && compound_last_flag == 0)
+		return {};
+
 	size_t min_length = 3;
 	if (compound_min_length != 0)
 		min_length = compound_min_length;
@@ -1569,6 +1573,14 @@ auto Dictionary::check_compound_classic(std::basic_string<CharT>& word,
 
 	if (part1_entry->second.contains(forbiddenword_flag))
 		return {};
+
+	if (compound_check_triple) {
+		auto triple = basic_string<CharT>(3, word[i]);
+		if (word.compare(i - 1, 3, triple) == 0)
+			return {};
+		if (i >= 2 && word.compare(i - 2, 3, triple) == 0)
+			return {};
+	}
 
 	part.assign(word, i, word.npos);
 	auto part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
@@ -1622,6 +1634,14 @@ auto Dictionary::check_compound_with_pattern_replacements(
 		if (p.first_word_flag != 0 &&
 		    !part1_entry->second.contains(p.first_word_flag))
 			return {};
+
+		if (compound_check_triple) {
+			auto triple = basic_string<CharT>(3, word[i]);
+			if (word.compare(i - 1, 3, triple) == 0)
+				return {};
+			if (i >= 2 && word.compare(i - 2, 3, triple) == 0)
+				return {};
+		}
 
 		part.assign(word, i, word.npos);
 		auto part2_entry =
