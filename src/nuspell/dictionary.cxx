@@ -1649,21 +1649,21 @@ auto Dictionary::check_compound_with_pattern_replacements(
 		part.assign(word, start_pos, i - start_pos);
 		auto part1_entry = check_word_in_compound<m>(part);
 		if (!part1_entry)
-			return {};
+			continue;
 
 		if (part1_entry->second.contains(forbiddenword_flag))
-			return {};
+			continue;
 
 		if (p.first_word_flag != 0 &&
 		    !part1_entry->second.contains(p.first_word_flag))
-			return {};
+			continue;
 
 		if (compound_check_triple) {
 			auto triple = basic_string<CharT>(3, word[i]);
 			if (word.compare(i - 1, 3, triple) == 0)
-				return {};
+				continue;
 			if (i >= 2 && word.compare(i - 2, 3, triple) == 0)
-				return {};
+				continue;
 		}
 
 		part.assign(word, i, word.npos);
@@ -1674,14 +1674,36 @@ auto Dictionary::check_compound_with_pattern_replacements(
 			part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
 			    word, i, num_part + 1, move(part));
 		if (!part2_entry)
-			return {};
+			goto simplified_triple;
 
 		if (p.second_word_flag != 0 &&
 		    !part2_entry->second.contains(p.second_word_flag))
-			return {};
+			goto simplified_triple;
 
 		if (part2_entry->second.contains(forbiddenword_flag))
-			return {};
+			continue;
+
+		return part1_entry;
+        simplified_triple:
+		if (!compound_simplified_triple)
+			continue;
+		if (!(i >= 2 && word[i - 1] == word[i - 2]))
+			continue;
+		word.insert(i, 1, word[i - 1]);
+		BOOST_SCOPE_EXIT_ALL(&) { word.erase(i, 1); };
+		part.assign(word, i, word.npos);
+		part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
+
+		if (!part2_entry)
+			part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
+			    word, i, num_part + 1, move(part));
+		if (!part2_entry)
+			continue;
+		if (p.second_word_flag != 0 &&
+		    !part2_entry->second.contains(p.second_word_flag))
+			continue;
+		if (part2_entry->second.contains(forbiddenword_flag))
+			continue;
 
 		return part1_entry;
 	}
