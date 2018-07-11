@@ -1589,12 +1589,35 @@ auto Dictionary::check_compound_classic(std::basic_string<CharT>& word,
 		part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
 		    word, i, num_part + 1, move(part));
 	if (!part2_entry)
-		return {};
+		goto simplified_triple;
 
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
 	                                      part1_entry, part2_entry))
+		goto simplified_triple;
+
+	if (part2_entry->second.contains(forbiddenword_flag))
 		return {};
 
+	return part1_entry;
+
+simplified_triple:
+	if (!compound_simplified_triple)
+		return {};
+	if (!(i >= 2 && word[i - 1] == word[i - 2]))
+		return {};
+	word.insert(i, 1, word[i - 1]);
+	BOOST_SCOPE_EXIT_ALL(&) { word.erase(i, 1); };
+	part.assign(word, i, word.npos);
+	part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
+
+	if (!part2_entry)
+		part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
+		    word, i, num_part + 1, move(part));
+	if (!part2_entry)
+		return {};
+	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
+	                                      part1_entry, part2_entry))
+		return {};
 	if (part2_entry->second.contains(forbiddenword_flag))
 		return {};
 

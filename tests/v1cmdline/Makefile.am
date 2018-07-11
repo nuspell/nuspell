@@ -66,6 +66,7 @@ compoundaffix.dic \
 compoundaffix2.dic \
 compoundaffix3.dic \
 checkcompounddup.dic \
+checkcompoundtriple.dic \
 simplifiedtriple.dic \
 checkcompoundrep.dic \
 checkcompoundcase2.dic \
@@ -132,7 +133,6 @@ checkcompoundcase2.dic \
 checkcompoundcaseutf.dic \
 checkcompounddup.dic \
 checkcompoundrep.dic \
-checkcompoundtriple.dic \
 compoundrule.dic \
 compoundrule2.dic \
 compoundrule3.dic \
@@ -145,8 +145,7 @@ forceucase.dic \
 germancompounding.dic \
 hu.dic \
 nepali.dic \
-opentaal_forbiddenword1.dic \
-simplifiedtriple.dic
+opentaal_forbiddenword1.dic
 
 clean-local:
 	-rm -rf testSubDir
