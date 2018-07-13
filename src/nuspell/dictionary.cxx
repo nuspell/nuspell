@@ -1684,7 +1684,7 @@ auto Dictionary::check_compound_with_pattern_replacements(
 			continue;
 
 		return part1_entry;
-        simplified_triple:
+	simplified_triple:
 		if (!compound_simplified_triple)
 			continue;
 		if (!(i >= 2 && word[i - 1] == word[i - 2]))
