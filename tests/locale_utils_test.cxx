@@ -29,14 +29,14 @@ using namespace std;
 using namespace std::literals::string_literals;
 using namespace nuspell;
 
-TEST_CASE("method decode_utf8", "[locale_utils]")
+TEST_CASE("method utf8_to_32_alternative", "[locale_utils]")
 {
-	CHECK(U""s == decode_utf8(""s));
+	CHECK(U""s == utf8_to_32_alternative(""s));
 
-	CHECK(
-	    U"abczĳß«абвњ\U0001FFFFерњеӤ\u0801\u0912日本にреѐ"s ==
-	    decode_utf8(u8"abczĳß«абвњ\U0001FFFFерњеӤ\u0801\u0912日本にреѐ"s));
-	CHECK(U"日  Ӥ" != decode_utf8("Ӥ日本に"s));
+	CHECK(U"abczĳß«абвњ\U0001FFFFерњеӤ\u0801\u0912日本にреѐ"s ==
+	      utf8_to_32_alternative(
+	          u8"abczĳß«абвњ\U0001FFFFерњеӤ\u0801\u0912日本にреѐ"s));
+	CHECK(U"日  Ӥ" != utf8_to_32_alternative("Ӥ日本に"s));
 	// need counter example too
 }
 

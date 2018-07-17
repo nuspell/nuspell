@@ -52,9 +52,24 @@
 
 namespace nuspell {
 
-auto decode_utf8(const std::string& s) -> std::u32string;
+auto utf8_to_32_alternative(const std::string& s) -> std::u32string;
 auto validate_utf8(const std::string& s) -> bool;
-auto my_utf_to_utf(const std::wstring& in, std::string& out) -> void;
+auto wide_to_utf8(const std::wstring& in, std::string& out) -> void;
+auto inline wide_to_utf8(const std::wstring& in)
+{
+	return boost::locale::conv::utf_to_utf<char>(in);
+}
+
+auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool;
+auto inline utf8_to_wide(const std::string& in)
+{
+	return boost::locale::conv::utf_to_utf<wchar_t>(in);
+}
+
+auto inline utf8_to_32(const std::string& in)
+{
+	return boost::locale::conv::utf_to_utf<char32_t>(in);
+}
 
 auto is_ascii(char c) -> bool;
 auto is_all_ascii(const std::string& s) -> bool;
@@ -73,47 +88,6 @@ auto to_narrow(const std::wstring& in, const std::locale& outloc)
     -> std::string;
 
 auto install_ctype_facets_inplace(std::locale& boost_loc) -> void;
-
-// put template function definitions bellow the declarations above
-// otherwise doxygen has bugs when generating call graphs
-
-template <class FromCharT>
-auto to_dict_encoding(const std::basic_string<FromCharT>& from)
-{
-	using namespace boost::locale::conv;
-	return utf_to_utf<char>(from);
-}
-
-inline auto& to_dict_encoding(std::string& from) { return from; }
-inline auto& to_dict_encoding(const std::string& from) { return from; }
-inline auto to_dict_encoding(std::string&& from) { return move(from); }
-
-template <class ToCharT,
-          class = std::enable_if_t<!std::is_same<ToCharT, char>::value>>
-auto from_dict_to_wide_encoding(const std::string& from)
-{
-	using namespace boost::locale::conv;
-	return utf_to_utf<ToCharT>(from);
-}
-
-template <class ToCharT,
-          class = std::enable_if_t<std::is_same<ToCharT, char>::value>>
-auto& from_dict_to_wide_encoding(std::string& from)
-{
-	return from;
-}
-template <class ToCharT,
-          class = std::enable_if_t<std::is_same<ToCharT, char>::value>>
-auto& from_dict_to_wide_encoding(const std::string& from)
-{
-	return from;
-}
-template <class ToCharT,
-          class = std::enable_if_t<std::is_same<ToCharT, char>::value>>
-auto from_dict_to_wide_encoding(std::string&& from)
-{
-	return move(from);
-}
 
 struct Locale_Input {
 	auto static cvt_for_byte_dict(const std::string& in,

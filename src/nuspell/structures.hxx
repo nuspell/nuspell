@@ -27,6 +27,7 @@
 #include "condition.hxx"
 
 #include <algorithm>
+#include <cmath>
 #include <iterator>
 #include <stdexcept>
 #include <string>
@@ -34,9 +35,7 @@
 #include <vector>
 
 #include <boost/container/small_vector.hpp>
-#include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
-#include <boost/multi_index_container.hpp>
 #include <boost/range/iterator_range_core.hpp>
 
 #ifdef __has_include
@@ -695,9 +694,6 @@ extern template class Prefix<wchar_t>;
 extern template class Suffix<char>;
 extern template class Suffix<wchar_t>;
 
-using boost::multi_index_container;
-using boost::multi_index::hashed_non_unique;
-using boost::multi_index::indexed_by;
 using boost::multi_index::member;
 
 #ifdef NUSPELL_STR_VIEW_NS

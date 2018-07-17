@@ -98,7 +98,7 @@ auto Dic_Data::equal_range(const std::wstring& word) const
                  Dic_Data_Base::local_const_iterator>
 {
 	auto static thread_local u8buf = string();
-	my_utf_to_utf(word, u8buf);
+	wide_to_utf8(word, u8buf);
 	return equal_range(u8buf);
 }
 
@@ -279,7 +279,7 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			     << line_num << endl;
 			break;
 		}
-		auto u32flags = boost::locale::conv::utf_to_utf<char32_t>(s);
+		auto u32flags = utf8_to_32(s);
 		if (!is_all_bmp(u32flags)) {
 			cerr << "Nuspell warning: flags must be in BMP, "
 			        "skipping non-BMP\n"
@@ -789,8 +789,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	if (encoding.is_utf8()) {
 		using namespace boost::locale::conv;
 		auto u_to_u_pair = [](auto& x) {
-			return make_pair(utf_to_utf<wchar_t>(x.first),
-			                 utf_to_utf<wchar_t>(x.second));
+			return make_pair(utf8_to_wide(x.first),
+			                 utf8_to_wide(x.second));
 		};
 		auto iconv =
 		    boost::adaptors::transform(input_conversion, u_to_u_pair);
@@ -799,7 +799,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		    boost::adaptors::transform(output_conversion, u_to_u_pair);
 		wide_structures.output_substr_replacer = oconv;
 
-		auto u_to_u = [](auto& x) { return utf_to_utf<wchar_t>(x); };
+		auto u_to_u = [](auto& x) { return utf8_to_wide(x); };
 		auto break_pat =
 		    boost::adaptors::transform(break_patterns, u_to_u);
 		wide_structures.break_table = break_pat;
@@ -983,12 +983,11 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		}
 		// parse_morhological_fields(ss, morphs);
 
-		using boost::locale::conv::utf_to_utf;
 		if (encoding.is_utf8() &&
 		    !wide_structures.ignored_chars.empty()) {
-			auto ustr = utf_to_utf<wchar_t>(word);
+			auto ustr = utf8_to_wide(word);
 			erase_chars(ustr, wide_structures.ignored_chars);
-			word = utf_to_utf<char>(ustr);
+			word = wide_to_utf8(ustr);
 		}
 		if (!encoding.is_utf8()) {
 			erase_chars(word, structures.ignored_chars);

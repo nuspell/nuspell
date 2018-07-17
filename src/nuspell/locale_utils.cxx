@@ -247,7 +247,7 @@ out_of_u8_loop:
 	return out;
 }
 
-auto decode_utf8(const std::string& s) -> std::u32string
+auto utf8_to_32_alternative(const std::string& s) -> std::u32string
 {
 	u32string ret(s.size(), 0);
 	auto last = decode_utf8(begin(s), end(s), begin(ret));
@@ -268,7 +268,7 @@ auto validate_utf8(const std::string& s) -> bool
 	return true;
 }
 
-auto my_utf_to_utf(const std::wstring& in, std::string& out) -> void
+auto wide_to_utf8(const std::wstring& in, std::string& out) -> void
 {
 	using namespace boost::locale::utf;
 
@@ -472,76 +472,6 @@ auto get_char_mask(UChar32 cp)
 	//	ret |= ctype_base::graph;
 	//}
 	return ret;
-}
-
-auto general_category_to_ctype_mask(UCharCategory cat) -> ctype_base::mask
-{
-	switch (cat) {
-	case U_UNASSIGNED:
-		// case U_GENERAL_OTHER_TYPES:
-		// no print, graph
-		return {};
-	case U_UPPERCASE_LETTER:
-		return ctype_base::upper | ctype_base::alpha |
-		       ctype_base::print;
-	case U_LOWERCASE_LETTER:
-		return ctype_base::lower | ctype_base::alpha |
-		       ctype_base::print;
-	case U_TITLECASE_LETTER:
-		return ctype_base::upper | ctype_base::alpha |
-		       ctype_base::print;
-	case U_MODIFIER_LETTER:
-		return ctype_base::alpha | ctype_base::print;
-	case U_OTHER_LETTER:
-		return ctype_base::alpha | ctype_base::print;
-	case U_NON_SPACING_MARK:
-		return ctype_base::print;
-	case U_ENCLOSING_MARK:
-		return ctype_base::print;
-	case U_COMBINING_SPACING_MARK:
-		return ctype_base::print;
-	case U_DECIMAL_DIGIT_NUMBER:
-	case U_LETTER_NUMBER:
-	case U_OTHER_NUMBER:
-		return ctype_base::digit | ctype_base::print;
-	case U_SPACE_SEPARATOR:
-		return ctype_base::space | ctype_base::blank |
-		       ctype_base::print; // no graph
-	case U_LINE_SEPARATOR:
-		return ctype_base::space | ctype_base::cntrl |
-		       ctype_base::print; // no graph
-	case U_PARAGRAPH_SEPARATOR:
-		return ctype_base::space | ctype_base::cntrl |
-		       ctype_base::print; // no graph
-	case U_CONTROL_CHAR:
-		return ctype_base::cntrl; // no print, graph
-	case U_FORMAT_CHAR:
-		return ctype_base::cntrl; // no print, graph
-	case U_PRIVATE_USE_CHAR:
-		// no print
-		return {};
-	case U_SURROGATE:
-		// no print, graph
-		return {};
-	case U_DASH_PUNCTUATION:
-	case U_START_PUNCTUATION:
-	case U_END_PUNCTUATION:
-	case U_CONNECTOR_PUNCTUATION:
-	case U_OTHER_PUNCTUATION:
-		return ctype_base::punct | ctype_base::print;
-
-	case U_MATH_SYMBOL:
-	case U_CURRENCY_SYMBOL:
-	case U_MODIFIER_SYMBOL:
-	case U_OTHER_SYMBOL:
-		return ctype_base::print;
-	case U_INITIAL_PUNCTUATION:
-	case U_FINAL_PUNCTUATION:
-		return ctype_base::punct | ctype_base::print;
-	case U_CHAR_CATEGORY_COUNT:
-		return {};
-	}
-	return {};
 }
 
 auto fill_ctype(const string& enc, ctype_base::mask* m, char* upper,
@@ -767,7 +697,7 @@ auto Locale_Input::cvt_for_byte_dict(const std::string& in,
 	using namespace std;
 	using info_t = boost::locale::info;
 	using namespace boost::locale::conv;
-	if (has_facet<boost::locale::info>(inloc)) {
+	if (has_facet<info_t>(inloc)) {
 		auto& in_info = use_facet<info_t>(inloc);
 		auto& dic_info = use_facet<info_t>(dicloc);
 		auto in_enc = in_info.encoding();
@@ -785,7 +715,7 @@ auto Locale_Input::cvt_for_u8_dict(const std::string& in,
 	using namespace std;
 	using info_t = boost::locale::info;
 	using namespace boost::locale::conv;
-	if (has_facet<boost::locale::info>(inloc)) {
+	if (has_facet<info_t>(inloc)) {
 		auto& in_info = use_facet<info_t>(inloc);
 		if (in_info.utf8())
 			return utf_to_utf<wchar_t>(in);
