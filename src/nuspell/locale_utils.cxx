@@ -268,6 +268,32 @@ auto validate_utf8(const std::string& s) -> bool
 	return true;
 }
 
+auto my_utf_to_utf(const std::wstring& in, std::string& out) -> void
+{
+	using namespace boost::locale::utf;
+
+	auto in_it = begin(in);
+	auto in_last = end(in);
+
+	if (in.size() <= 15)
+		out.resize(15);
+	else
+		out.resize(in.size() + 4);
+	auto out_it = begin(out);
+
+	while (in_it != in_last) {
+		auto cp = utf_traits<wchar_t>::decode_valid(in_it);
+		if (unlikely(end(out) - out_it < 4)) {
+			// resize
+			auto i = out_it - begin(out);
+			out.resize(out.size() + in.size());
+			out_it = begin(out) + i;
+		}
+		out_it = utf_traits<char>::encode(cp, out_it);
+	}
+	out.erase(out_it, end(out));
+}
+
 auto is_ascii(char c) -> bool { return static_cast<unsigned char>(c) <= 127; }
 
 auto is_all_ascii(const std::string& s) -> bool

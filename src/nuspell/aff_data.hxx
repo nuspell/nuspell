@@ -114,10 +114,7 @@ class Dic_Data : public Dic_Data_Base {
 	using Dic_Data_Base::equal_range;
 	auto equal_range(const std::wstring& word) const
 	    -> std::pair<Dic_Data_Base::local_const_iterator,
-	                 Dic_Data_Base::local_const_iterator>
-	{
-		return equal_range(boost::locale::conv::utf_to_utf<char>(word));
-	}
+	                 Dic_Data_Base::local_const_iterator>;
 };
 
 struct Aff_Data {

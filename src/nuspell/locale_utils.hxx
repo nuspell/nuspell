@@ -54,6 +54,7 @@ namespace nuspell {
 
 auto decode_utf8(const std::string& s) -> std::u32string;
 auto validate_utf8(const std::string& s) -> bool;
+auto my_utf_to_utf(const std::wstring& in, std::string& out) -> void;
 
 auto is_ascii(char c) -> bool;
 auto is_all_ascii(const std::string& s) -> bool;

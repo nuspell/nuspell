@@ -93,6 +93,15 @@ auto Encoding::operator=(const std::string& e) -> Encoding&
 	return *this;
 }
 
+auto Dic_Data::equal_range(const std::wstring& word) const
+    -> std::pair<Dic_Data_Base::local_const_iterator,
+                 Dic_Data_Base::local_const_iterator>
+{
+	auto static thread_local u8buf = string();
+	my_utf_to_utf(word, u8buf);
+	return equal_range(u8buf);
+}
+
 void reset_failbit_istream(std::istream& in)
 {
 	in.clear(in.rdstate() & ~in.failbit);
