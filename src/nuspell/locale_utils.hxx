@@ -54,22 +54,14 @@ namespace nuspell {
 
 auto utf8_to_32_alternative(const std::string& s) -> std::u32string;
 auto validate_utf8(const std::string& s) -> bool;
+
 auto wide_to_utf8(const std::wstring& in, std::string& out) -> void;
-auto inline wide_to_utf8(const std::wstring& in)
-{
-	return boost::locale::conv::utf_to_utf<char>(in);
-}
+auto wide_to_utf8(const std::wstring& in) -> std::string;
 
 auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool;
-auto inline utf8_to_wide(const std::string& in)
-{
-	return boost::locale::conv::utf_to_utf<wchar_t>(in);
-}
+auto utf8_to_wide(const std::string& in) -> std::wstring;
 
-auto inline utf8_to_32(const std::string& in)
-{
-	return boost::locale::conv::utf_to_utf<char32_t>(in);
-}
+auto utf8_to_32(const std::string& in) -> std::u32string;
 
 auto is_ascii(char c) -> bool;
 auto is_all_ascii(const std::string& s) -> bool;

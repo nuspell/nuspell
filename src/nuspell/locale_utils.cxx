@@ -268,30 +268,104 @@ auto validate_utf8(const std::string& s) -> bool
 	return true;
 }
 
-auto wide_to_utf8(const std::wstring& in, std::string& out) -> void
+template <class InChar, class OutChar>
+auto valid_utf_to_utf(const std::basic_string<InChar>& in,
+                      std::basic_string<OutChar>& out) -> void
 {
 	using namespace boost::locale::utf;
 
 	auto in_it = begin(in);
 	auto in_last = end(in);
 
-	if (in.size() <= 15)
-		out.resize(15);
-	else
-		out.resize(in.size() + 4);
+	auto constexpr max_out_width = utf_traits<OutChar>::max_width;
+	if (in.size() <= 15 / sizeof(OutChar)) {
+		out.resize(15 / sizeof(OutChar));
+	}
+	else {
+		auto new_size = in.size() + max_out_width - 1;
+		if (out.size() < new_size)
+			out.resize(new_size);
+	}
 	auto out_it = begin(out);
 
 	while (in_it != in_last) {
-		auto cp = utf_traits<wchar_t>::decode_valid(in_it);
-		if (unlikely(end(out) - out_it < 4)) {
+		auto cp = utf_traits<InChar>::decode_valid(in_it);
+		if (unlikely(end(out) - out_it < max_out_width)) {
 			// resize
 			auto i = out_it - begin(out);
 			out.resize(out.size() + in.size());
 			out_it = begin(out) + i;
 		}
-		out_it = utf_traits<char>::encode(cp, out_it);
+		out_it = utf_traits<OutChar>::encode(cp, out_it);
 	}
 	out.erase(out_it, end(out));
+}
+
+template <class InChar, class OutChar>
+auto utf_to_utf_my(const std::basic_string<InChar>& in,
+                   std::basic_string<OutChar>& out) -> bool
+{
+	using namespace boost::locale::utf;
+
+	auto in_it = begin(in);
+	auto in_last = end(in);
+
+	auto constexpr max_out_width = utf_traits<OutChar>::max_width;
+	if (in.size() <= 15 / sizeof(OutChar)) {
+		out.resize(15 / sizeof(OutChar));
+	}
+	else {
+		auto new_size = in.size() + max_out_width - 1;
+		if (out.size() < new_size)
+			out.resize(new_size);
+	}
+	auto out_it = begin(out);
+	auto valid = true;
+	while (in_it != in_last) {
+		auto cp = utf_traits<InChar>::decode(in_it, in_last);
+		if (unlikely(cp == incomplete || cp == illegal)) {
+			valid = false;
+			continue;
+		}
+		if (unlikely(end(out) - out_it < max_out_width)) {
+			// resize
+			auto i = out_it - begin(out);
+			out.resize(out.size() + in.size());
+			out_it = begin(out) + i;
+		}
+		out_it = utf_traits<OutChar>::encode(cp, out_it);
+	}
+	out.erase(out_it, end(out));
+	return valid;
+}
+
+auto wide_to_utf8(const std::wstring& in, std::string& out) -> void
+{
+	return valid_utf_to_utf(in, out);
+}
+auto wide_to_utf8(const std::wstring& in) -> std::string
+{
+	auto out = string();
+	valid_utf_to_utf(in, out);
+	return out;
+}
+
+auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool
+{
+	return utf_to_utf_my(in, out);
+}
+auto utf8_to_wide(const std::string& in) -> std::wstring
+{
+	auto out = wstring();
+	utf_to_utf_my(in, out);
+	return out;
+}
+
+auto utf8_to_32(const std::string& in) -> std::u32string
+{
+	auto out = u32string();
+	utf_to_utf_my(in, out);
+	return out;
 }
 
 auto is_ascii(char c) -> bool { return static_cast<unsigned char>(c) <= 127; }
@@ -718,7 +792,7 @@ auto Locale_Input::cvt_for_u8_dict(const std::string& in,
 	if (has_facet<info_t>(inloc)) {
 		auto& in_info = use_facet<info_t>(inloc);
 		if (in_info.utf8())
-			return utf_to_utf<wchar_t>(in);
+			return utf8_to_wide(in);
 	}
 	return to_wide(in, inloc);
 }
