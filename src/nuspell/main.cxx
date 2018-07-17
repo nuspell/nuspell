@@ -318,7 +318,7 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto word = string();
 	while (in >> word) {
-		auto res = dic.spell(word, in.getloc());
+		auto res = dic.spell(word);
 		switch (res) {
 		case BAD_WORD:
 			out << '&' << '\n';
@@ -347,7 +347,7 @@ auto misspelled_word_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto word = string();
 	while (in >> word) {
-		auto res = dic.spell(word, in.getloc());
+		auto res = dic.spell(word);
 		if (res == BAD_WORD)
 			out << word << '\n';
 	}
@@ -357,7 +357,7 @@ auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto word = string();
 	while (in >> word) {
-		auto res = dic.spell(word, in.getloc());
+		auto res = dic.spell(word);
 		if (res != BAD_WORD)
 			out << word << '\n';
 	}
@@ -371,7 +371,7 @@ auto misspelled_line_loop(istream& in, ostream& out, Dictionary& dic)
 		auto print = false;
 		split_on_whitespace_v(line, words, in.getloc());
 		for (auto& word : words) {
-			auto res = dic.spell(word, in.getloc());
+			auto res = dic.spell(word);
 			if (res == BAD_WORD) {
 				print = true;
 				break;
@@ -390,7 +390,7 @@ auto correct_line_loop(istream& in, ostream& out, Dictionary& dic)
 		auto print = true;
 		split_on_whitespace_v(line, words, in.getloc());
 		for (auto& word : words) {
-			auto res = dic.spell(word, in.getloc());
+			auto res = dic.spell(word);
 			if (res == BAD_WORD) {
 				print = false;
 				break;
@@ -506,6 +506,7 @@ int main(int argc, char* argv[])
 		cerr << e.what() << '\n';
 		return 1;
 	}
+	dic.imbue(cin.getloc());
 	auto loop_function = normal_loop;
 	switch (args.mode) {
 	case DEFAULT_MODE:

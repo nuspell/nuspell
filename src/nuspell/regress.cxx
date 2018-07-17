@@ -236,7 +236,7 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	auto nu_time = hun_time;
 	while (in >> word) {
 		auto a_tick = rdtsc();
-		auto res = dic.spell(word, in.getloc());
+		auto res = dic.spell(word);
 		auto b_tick = rdtsc();
 		auto hres =
 		    hun.spell(to_narrow(to_wide(word, in.getloc()), hloc));
@@ -396,10 +396,12 @@ int main(int argc, char* argv[])
 		cerr << e.what() << '\n';
 		return 1;
 	}
+	dic.imbue(cin.getloc());
+
 	auto aff_name = filename + ".aff";
 	auto dic_name = filename + ".dic";
 	Hunspell hun(aff_name.c_str(), dic_name.c_str());
-	auto hun_loc = dic.locale_aff;
+	auto hun_loc = gen(get_locale_name("", hun.get_dict_encoding()));
 	auto loop_function = normal_loop;
 
 	if (args.files.empty()) {

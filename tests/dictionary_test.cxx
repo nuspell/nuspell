@@ -28,10 +28,10 @@ using namespace std;
 using namespace std::literals::string_literals;
 using namespace nuspell;
 
-TEST_CASE("simple", "[dictionary]")
+TEST_CASE("simple", "[Dict_Base]")
 {
 	boost::locale::generator gen;
-	auto d = Dictionary();
+	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
 	auto words = {"table", "chair", "book", "fóóáár", "áárfóóĳ"};
@@ -48,10 +48,10 @@ TEST_CASE("simple", "[dictionary]")
 		CHECK(d.spell_priv<wchar_t>(w) == BAD_WORD);
 }
 
-TEST_CASE("suffixes", "[dictionary]")
+TEST_CASE("suffixes", "[Dict_Base]")
 {
 	boost::locale::generator gen;
-	auto d = Dictionary();
+	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
 	d.words.emplace("berry", u"T");
@@ -71,10 +71,10 @@ TEST_CASE("suffixes", "[dictionary]")
 		CHECK(d.spell_priv<char>(w) == BAD_WORD);
 }
 
-TEST_CASE("break_pattern", "[dictionary]")
+TEST_CASE("break_pattern", "[Dict_Base]")
 {
 	boost::locale::generator gen;
-	auto d = Dictionary();
+	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
 	d.words.emplace("user", u"");

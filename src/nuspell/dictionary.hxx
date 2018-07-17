@@ -48,31 +48,31 @@ enum Affixing_Mode {
 
 template <class... Affixes>
 struct Affixing_Result
-    : public std::tuple<Dic_Data::const_pointer, const Affixes*...> {
+    : public std::tuple<Word_List::const_pointer, const Affixes*...> {
 	using base_type =
-	    std::tuple<Dic_Data::const_pointer, const Affixes*...>;
+	    std::tuple<Word_List::const_pointer, const Affixes*...>;
 	Affixing_Result() = default;
-	Affixing_Result(Dic_Data::const_reference word_entry,
+	Affixing_Result(Word_List::const_reference word_entry,
 	                const Affixes&... affixes)
 	    : base_type(&word_entry, &affixes...)
 	{
 	}
 	// operator bool() const { return std::get<0>(*this); }
-	operator Dic_Data::const_pointer() const { return std::get<0>(*this); }
+	operator Word_List::const_pointer() const { return std::get<0>(*this); }
 	auto& operator*() const { return *std::get<0>(*this); }
 	auto operator-> () const { return std::get<0>(*this); }
 };
 
 struct Compounding_Result {
-	Dic_Data::const_pointer word_entry = {};
+	Word_List::const_pointer word_entry = {};
 	bool affixed_and_modified = {}; /**< non-zero affix */
-	operator Dic_Data::const_pointer() const { return word_entry; }
+	operator Word_List::const_pointer() const { return word_entry; }
 	auto& operator*() const { return *word_entry; }
 	auto operator-> () const { return word_entry; }
 };
 
-class Dictionary : public Aff_Data {
-      public:
+struct Dict_Base : public Aff_Data {
+
 	template <class CharT>
 	auto spell_priv(std::basic_string<CharT> s) -> Spell_Result;
 	template <class CharT>
@@ -270,7 +270,7 @@ class Dictionary : public Aff_Data {
 	    -> Compounding_Result;
 
       public:
-	Dictionary()
+	Dict_Base()
 	    : Aff_Data() // we explicity do value init so content is zeroed
 	{
 	}
@@ -283,10 +283,14 @@ class Dictionary : public Aff_Data {
 		std::ifstream dic_file(path + ".dic");
 		return parse_aff_dic(aff_file, dic_file);
 	}
+};
+
+template <class InputEncodingTraits>
+struct Basic_Dictionary : protected Dict_Base, protected InputEncodingTraits {
 
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
-		auto ret = Dictionary();
+		auto ret = Basic_Dictionary();
 		if (!ret.parse_aff_dic(aff, dic))
 			throw std::ios_base::failure("Error parsing.");
 		return ret;
@@ -302,17 +306,12 @@ class Dictionary : public Aff_Data {
 			throw std::ios_base::failure("Dic file not found.");
 		return load_from_aff_dic(aff_file, dic_file);
 	}
-
-	auto spell_dict_encoding(const std::string& word) -> Spell_Result;
-
-	auto spell_c_locale(const std::string& word) -> Spell_Result;
-
-	auto spell(const std::string& word, std::locale loc = std::locale())
-	    -> Spell_Result;
-	auto spell_u8(const std::string& word) -> Spell_Result;
-	auto spell(const std::wstring& word) -> Spell_Result;
-	auto spell(const std::u16string& word) -> Spell_Result;
-	auto spell(const std::u32string& word) -> Spell_Result;
+	using InputEncodingTraits::getloc;
+	using InputEncodingTraits::imbue;
+	auto spell(const std::string& word) -> Spell_Result;
 };
+
+using Dictionary = Basic_Dictionary<Locale_Input>;
+
 } // namespace nuspell
 #endif // NUSPELL_DICTIONARY_HXX

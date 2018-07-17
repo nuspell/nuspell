@@ -93,9 +93,9 @@ auto Encoding::operator=(const std::string& e) -> Encoding&
 	return *this;
 }
 
-auto Dic_Data::equal_range(const std::wstring& word) const
-    -> std::pair<Dic_Data_Base::local_const_iterator,
-                 Dic_Data_Base::local_const_iterator>
+auto Word_List::equal_range(const std::wstring& word) const
+    -> std::pair<Word_List_Base::local_const_iterator,
+                 Word_List_Base::local_const_iterator>
 {
 	auto static thread_local u8buf = string();
 	wide_to_utf8(word, u8buf);
@@ -515,7 +515,8 @@ auto get_locale_name(string lang, string enc, const string& filename) -> string
 {
 	if (enc.empty())
 		enc = "ISO8859-1";
-	else if (enc.compare(0, 10, "MICROSOFT-") == 0)
+	else if (enc.compare(0, 10, "MICROSOFT-") == 0 ||
+	         enc.compare(0, 10, "microsoft-") == 0)
 		enc.erase(0, 10);
 	if (lang.empty()) {
 		if (filename.empty()) {

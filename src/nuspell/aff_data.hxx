@@ -96,7 +96,7 @@ struct Compound_Check_Pattern {
 	char16_t second_word_flag;
 };
 
-using Dic_Data_Base =
+using Word_List_Base =
     Hash_Multiset<std::pair<std::string, Flag_Set>, std::string,
                   member<std::pair<std::string, Flag_Set>, std::string,
                          &std::pair<std::string, Flag_Set>::first>>;
@@ -109,12 +109,12 @@ using Dic_Data_Base =
  * Does not store morphological data as is low priority feature and is out of
  * scope.
  */
-class Dic_Data : public Dic_Data_Base {
+class Word_List : public Word_List_Base {
       public:
-	using Dic_Data_Base::equal_range;
+	using Word_List_Base::equal_range;
 	auto equal_range(const std::wstring& word) const
-	    -> std::pair<Dic_Data_Base::local_const_iterator,
-	                 Dic_Data_Base::local_const_iterator>;
+	    -> std::pair<Word_List_Base::local_const_iterator,
+	                 Word_List_Base::local_const_iterator>;
 };
 
 struct Aff_Data {
@@ -129,7 +129,7 @@ struct Aff_Data {
 
 	// data members
 	// word list
-	Dic_Data words;
+	Word_List words;
 
 	Aff_Structures<char> structures;
 	Aff_Structures<wchar_t> wide_structures;

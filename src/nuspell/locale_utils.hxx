@@ -81,12 +81,26 @@ auto to_narrow(const std::wstring& in, const std::locale& outloc)
 
 auto install_ctype_facets_inplace(std::locale& boost_loc) -> void;
 
-struct Locale_Input {
+class Locale_Input {
+	std::locale external_locale;
 	auto static cvt_for_byte_dict(const std::string& in,
 	                              const std::locale& inloc,
 	                              const std::locale& dicloc) -> std::string;
 	auto static cvt_for_u8_dict(const std::string& in,
 	                            const std::locale& inloc) -> std::wstring;
+
+      public:
+	auto imbue(const std::locale& loc) { external_locale = loc; }
+	auto& getloc() { return external_locale; }
+	auto cvt_for_byte_dict(const std::string& in, const std::locale& dicloc)
+	    -> std::string
+	{
+		return cvt_for_byte_dict(in, getloc(), dicloc);
+	}
+	auto cvt_for_u8_dict(const std::string& in) -> std::wstring
+	{
+		return cvt_for_u8_dict(in, getloc());
+	}
 };
 
 template <class CharT>
@@ -99,18 +113,6 @@ struct Unicode_Input {
 	}
 
 	auto static cvt_for_u8_dict(const std::basic_string<CharT>& in)
-	{
-		using namespace boost::locale::conv;
-		return utf_to_utf<wchar_t>(in);
-	}
-};
-
-struct Same_As_Dict_Input {
-	auto& cvt_for_byte_dict(std::string& in) { return in; }
-	auto& cvt_for_byte_dict(const std::string& in) { return in; }
-	auto cvt_for_byte_dict(std::string&& in) { return move(in); }
-
-	auto cvt_for_u8_dict(const std::string& in)
 	{
 		using namespace boost::locale::conv;
 		return utf_to_utf<wchar_t>(in);
