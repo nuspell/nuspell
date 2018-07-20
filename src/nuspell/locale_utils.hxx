@@ -91,11 +91,14 @@ class Locale_Input {
 
       public:
 	auto imbue(const std::locale& loc) { external_locale = loc; }
+	// getloc() calls in iostreams return by value doing a ref-counted copy
+	// of pointer. Doing that we pay little extra than just returning a
+	// const reference. Here we fix that and return a const reference.
 	auto& getloc() const { return external_locale; }
 	auto cvt_for_byte_dict(const std::string& in,
-	                       const std::locale& dicloc) const -> std::string
+	                       const std::locale& dic_loc) const -> std::string
 	{
-		return cvt_for_byte_dict(in, getloc(), dicloc);
+		return cvt_for_byte_dict(in, getloc(), dic_loc);
 	}
 	auto cvt_for_u8_dict(const std::string& in) const -> std::wstring
 	{

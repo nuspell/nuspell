@@ -233,12 +233,12 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	// store cpu time for Hunspell and Nuspell
 	auto hun_time = uint64_t(0);
 	auto nu_time = uint64_t(0);
+	auto in_loc = in.getloc();
 	while (in >> word) {
 		auto a_tick = rdtsc();
 		auto res = dic.spell(word);
 		auto b_tick = rdtsc();
-		auto hres =
-		    hun.spell(to_narrow(to_wide(word, in.getloc()), hloc));
+		auto hres = hun.spell(to_narrow(to_wide(word, in_loc), hloc));
 		auto c_tick = rdtsc();
 		nu_time += b_tick - a_tick;
 		hun_time += c_tick - b_tick;

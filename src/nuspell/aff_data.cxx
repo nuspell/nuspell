@@ -112,8 +112,9 @@ bool read_to_slash_or_space(std::istream& in, std::string& out)
 	in >> std::ws;
 	int c;
 	bool readSomething = false;
+	auto loc = in.getloc();
 	while ((c = in.get()) != istream::traits_type::eof() &&
-	       !isspace<char>(c, in.getloc()) && c != '/') {
+	       !isspace<char>(c, loc) && c != '/') {
 		out.push_back(c);
 		readSomething = true;
 	}
