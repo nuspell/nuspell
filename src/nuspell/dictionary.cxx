@@ -349,7 +349,7 @@ auto Dict_Base::check_word(std::basic_string<CharT>& s) const -> const Flag_Set*
 		if (ret4)
 			return &ret4->second;
 	}
-	if (complex_prefixes == false) {
+	if (!complex_prefixes) {
 		auto ret6 = strip_suffix_then_suffix(s);
 		if (ret6)
 			return &ret6->second;
@@ -1712,7 +1712,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 template <class AffixT>
 auto is_modiying_affix(const AffixT& a)
 {
-	return a.stripping.size() != 0 || a.appending.size() != 0;
+	return !a.stripping.empty() || !a.appending.empty();
 }
 
 template <Affixing_Mode m, class CharT>

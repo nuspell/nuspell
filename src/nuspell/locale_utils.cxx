@@ -658,7 +658,7 @@ class my_ctype<wchar_t> final : public std::ctype<wchar_t> {
 		fill_ctype_wide(enc, wd);
 	}
 
-	virtual bool do_is(mask m, char_type c) const
+	bool do_is(mask m, char_type c) const override
 	{
 		if ((m & space) && u_isspace(c))
 			return true;
@@ -689,38 +689,44 @@ class my_ctype<wchar_t> final : public std::ctype<wchar_t> {
 
 		return false;
 	}
-	virtual const char_type* do_is(const char_type* first,
-	                               const char_type* last, mask* vec) const
+	const char_type* do_is(const char_type* first, const char_type* last,
+	                       mask* vec) const override
 	{
 		transform(first, last, vec,
 		          [&](auto c) { return get_char_mask(c); });
 		return last;
 	}
-	virtual const char_type* do_scan_is(mask m, const char_type* first,
-	                                    const char_type* last) const
+	const char_type* do_scan_is(mask m, const char_type* first,
+	                            const char_type* last) const override
 	{
 		return find_if(first, last,
 		               [&](auto c) { return do_is(m, c); });
 	}
-	virtual const char_type* do_scan_not(mask m, const char_type* first,
-	                                     const char_type* last) const
+	const char_type* do_scan_not(mask m, const char_type* first,
+	                             const char_type* last) const override
 	{
 		return find_if_not(first, last,
 		                   [&](auto c) { return do_is(m, c); });
 	}
 
-	virtual char_type do_toupper(char_type c) const { return u_toupper(c); }
-	virtual const char_type* do_toupper(char_type* low,
-	                                    const char_type* high) const
+	char_type do_toupper(char_type c) const override
+	{
+		return u_toupper(c);
+	}
+	const char_type* do_toupper(char_type* low,
+	                            const char_type* high) const override
 	{
 		for (; low != high; ++low) {
 			*low = u_toupper(*low);
 		}
 		return high;
 	}
-	virtual char_type do_tolower(char_type c) const { return u_tolower(c); }
-	virtual const char_type* do_tolower(char_type* first,
-	                                    const char_type* last) const
+	char_type do_tolower(char_type c) const override
+	{
+		return u_tolower(c);
+	}
+	const char_type* do_tolower(char_type* first,
+	                            const char_type* last) const override
 	{
 		for (; first != last; ++first) {
 			*first = u_tolower(*first);
@@ -728,26 +734,25 @@ class my_ctype<wchar_t> final : public std::ctype<wchar_t> {
 		return last;
 	}
 
-	virtual char_type do_widen(char c) const
+	char_type do_widen(char c) const override
 	{
 		return wd[static_cast<unsigned char>(c)];
 	}
-	virtual const char* do_widen(const char* low, const char* high,
-	                             char_type* dest) const
+	const char* do_widen(const char* low, const char* high,
+	                     char_type* dest) const override
 	{
 		transform(low, high, dest, [&](auto c) { return do_widen(c); });
 		return high;
 	}
-	virtual char do_narrow(char_type c, char dfault) const
+	char do_narrow(char_type c, char dfault) const override
 	{
 		auto n = char_traits<char_type>::find(wd, 256, c);
 		if (n)
 			return n - wd;
 		return dfault;
 	}
-	virtual const char_type* do_narrow(const char_type* low,
-	                                   const char_type* high, char dfault,
-	                                   char* dest) const
+	const char_type* do_narrow(const char_type* low, const char_type* high,
+	                           char dfault, char* dest) const override
 	{
 		transform(low, high, dest,
 		          [&](auto c) { return do_narrow(c, dfault); });

@@ -305,7 +305,7 @@ auto decode_single_flag(istream& in, size_t line_num, Flag_Type t,
                         const Encoding& enc) -> char16_t
 {
 	auto flags = decode_flags(in, line_num, t, enc);
-	if (flags.size()) {
+	if (!flags.empty()) {
 		return flags.front();
 	}
 	return 0;
@@ -487,7 +487,7 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 		for (; it != last; ++it) {
 			auto& m = *it;
 			auto number_pos = m.position(1);
-			auto fl = strtoul(str.data() + number_pos, nullptr, 10);
+			auto fl = strtoul(&str[number_pos], nullptr, 10);
 			if (fl <= char16_t(-1))
 				ret.push_back(fl);
 

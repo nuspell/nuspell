@@ -86,7 +86,7 @@ struct Args_t {
 	vector<string> other_dicts;
 	vector<string> files;
 
-	Args_t() {}
+	Args_t() = default;
 	Args_t(int argc, char* argv[]) { parse_args(argc, argv); }
 	auto parse_args(int argc, char* argv[]) -> void;
 };
@@ -103,9 +103,9 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	// command line options. mode is FSM state, this while loop is FSM.
 	const char* shortopts = ":d:i:hv";
 	const struct option longopts[] = {
-	    {"version", 0, 0, 'v'},
-	    {"help", 0, 0, 'h'},
-	    {nullptr, 0, 0, 0},
+	    {"version", 0, nullptr, 'v'},
+	    {"help", 0, nullptr, 'h'},
+	    {nullptr, 0, nullptr, 0},
 	};
 	while ((c = getopt_long(argc, argv, shortopts, longopts, nullptr)) !=
 	       -1) {
@@ -231,9 +231,8 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	auto false_pos = 0;
 	auto false_neg = 0;
 	// store cpu time for Hunspell and Nuspell
-	auto hun_time = rdtsc();
-	hun_time = 0;
-	auto nu_time = hun_time;
+	auto hun_time = uint64_t(0);
+	auto nu_time = uint64_t(0);
 	while (in >> word) {
 		auto a_tick = rdtsc();
 		auto res = dic.spell(word);

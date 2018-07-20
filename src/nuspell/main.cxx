@@ -80,7 +80,7 @@ struct Args_t {
 	vector<string> other_dicts;
 	vector<string> files;
 
-	Args_t() {}
+	Args_t() = default;
 	Args_t(int argc, char* argv[]) { parse_args(argc, argv); }
 	auto parse_args(int argc, char* argv[]) -> void;
 };
@@ -104,9 +104,9 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	// command line options. mode is FSM state, this while loop is FSM.
 	const char* shortopts = ":d:i:DGLUlhv";
 	const struct option longopts[] = {
-	    {"version", 0, 0, 'v'},
-	    {"help", 0, 0, 'h'},
-	    {nullptr, 0, 0, 0},
+	    {"version", 0, nullptr, 'v'},
+	    {"help", 0, nullptr, 'h'},
+	    {nullptr, 0, nullptr, 0},
 	};
 	while ((c = getopt_long(argc, argv, shortopts, longopts, nullptr)) !=
 	       -1) {

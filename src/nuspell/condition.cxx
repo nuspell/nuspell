@@ -133,13 +133,13 @@ auto Condition<CharT>::match(const StrT& s, size_t pos, size_t len) const
 			++i;
 			break;
 		case ANY_OF:
-			if (tr::find(cond.data() + x_pos, x_len, s[i]))
+			if (tr::find(&cond[x_pos], x_len, s[i]))
 				++i;
 			else
 				return false;
 			break;
 		case NONE_OF:
-			if (tr::find(cond.data() + x_pos, x_len, s[i]))
+			if (tr::find(&cond[x_pos], x_len, s[i]))
 				return false;
 			else
 				++i;
