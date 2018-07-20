@@ -91,13 +91,13 @@ class Locale_Input {
 
       public:
 	auto imbue(const std::locale& loc) { external_locale = loc; }
-	auto& getloc() { return external_locale; }
-	auto cvt_for_byte_dict(const std::string& in, const std::locale& dicloc)
-	    -> std::string
+	auto& getloc() const { return external_locale; }
+	auto cvt_for_byte_dict(const std::string& in,
+	                       const std::locale& dicloc) const -> std::string
 	{
 		return cvt_for_byte_dict(in, getloc(), dicloc);
 	}
-	auto cvt_for_u8_dict(const std::string& in) -> std::wstring
+	auto cvt_for_u8_dict(const std::string& in) const -> std::wstring
 	{
 		return cvt_for_u8_dict(in, getloc());
 	}

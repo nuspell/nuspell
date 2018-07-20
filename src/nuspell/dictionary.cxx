@@ -43,7 +43,7 @@ using boost::locale::to_title;
  * @return The spelling result.
  */
 template <class CharT>
-auto Dict_Base::spell_priv(std::basic_string<CharT> s) -> Spell_Result
+auto Dict_Base::spell_priv(std::basic_string<CharT> s) const -> Spell_Result
 {
 	auto& d = get_structures<CharT>();
 
@@ -87,8 +87,8 @@ auto Dict_Base::spell_priv(std::basic_string<CharT> s) -> Spell_Result
 }
 // only these explicit template instantiations are needed for the spell_*
 // functions.
-template auto Dict_Base::spell_priv(const string s) -> Spell_Result;
-template auto Dict_Base::spell_priv(const wstring s) -> Spell_Result;
+template auto Dict_Base::spell_priv(const string s) const -> Spell_Result;
+template auto Dict_Base::spell_priv(const wstring s) const -> Spell_Result;
 
 /**
  * Checks recursively the spelling according to break patterns.
@@ -97,7 +97,7 @@ template auto Dict_Base::spell_priv(const wstring s) -> Spell_Result;
  * @return The spelling result.
  */
 template <class CharT>
-auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth)
+auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth) const
     -> Spell_Result
 {
 	// check spelling accoring to case
@@ -164,7 +164,8 @@ auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth)
  * @return The spelling result.
  */
 template <class CharT>
-auto Dict_Base::spell_casing(std::basic_string<CharT>& s) -> const Flag_Set*
+auto Dict_Base::spell_casing(std::basic_string<CharT>& s) const
+    -> const Flag_Set*
 {
 	auto casing_type = classify_casing(s, locale_aff);
 	const Flag_Set* res = nullptr;
@@ -192,7 +193,7 @@ auto Dict_Base::spell_casing(std::basic_string<CharT>& s) -> const Flag_Set*
  * @return The flags of the corresponding dictionary word.
  */
 template <class CharT>
-auto Dict_Base::spell_casing_upper(std::basic_string<CharT>& s)
+auto Dict_Base::spell_casing_upper(std::basic_string<CharT>& s) const
     -> const Flag_Set*
 {
 	auto& loc = locale_aff;
@@ -250,7 +251,7 @@ auto Dict_Base::spell_casing_upper(std::basic_string<CharT>& s)
  * @return The flags of the corresponding dictionary word.
  */
 template <class CharT>
-auto Dict_Base::spell_casing_title(std::basic_string<CharT>& s)
+auto Dict_Base::spell_casing_title(std::basic_string<CharT>& s) const
     -> const Flag_Set*
 {
 	auto& loc = locale_aff;
@@ -292,7 +293,7 @@ auto Dict_Base::spell_casing_title(std::basic_string<CharT>& s)
  */
 template <class CharT>
 auto Dict_Base::spell_sharps(std::basic_string<CharT>& base, size_t pos,
-                             size_t n, size_t rep) -> const Flag_Set*
+                             size_t n, size_t rep) const -> const Flag_Set*
 {
 	const size_t MAX_SHARPS = 5;
 	pos = base.find(LITERAL(CharT, "ss"), pos);
@@ -1752,7 +1753,7 @@ auto Dict_Base::check_word_in_compound(std::basic_string<CharT>& word) const
 }
 
 template <>
-auto Basic_Dictionary<Locale_Input>::spell(const std::string& word)
+auto Basic_Dictionary<Locale_Input>::spell(const std::string& word) const
     -> Spell_Result
 {
 	using namespace std;
