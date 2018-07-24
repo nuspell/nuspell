@@ -240,20 +240,20 @@ auto is_number(const std::basic_string<CharT>& s) -> bool
 	if (s.empty())
 		return false;
 
-	size_t i = 0;
+	auto it = begin(s);
 	if (s[0] == '-')
-		++i;
-	for (; i != s.size();) {
-		auto next =
-		    s.find_first_not_of(LITERAL(CharT, "0123456789"), i);
-		if (next == i)
+		++it;
+	while (it != end(s)) {
+		auto next = find_if(it, end(s),
+		                    [](auto c) { return c < '0' || c > '9'; });
+		if (next == it)
 			return false;
-		if (next == s.npos)
+		if (next == end(s))
 			return true;
-		i = next;
-		auto c = s[i];
+		it = next;
+		auto c = *it;
 		if (c == '.' || c == ',' || c == '-')
-			++i;
+			++it;
 		else
 			return false;
 	}
