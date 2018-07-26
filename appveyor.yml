@@ -8,4 +8,4 @@ install:
 - cmd: '%BASH_PATH% -lc "pacman --noconfirm -S mingw-w64-x86_64-boost"'
 
 build_script:
-- cmd: '%BASH_PATH% -lc "cd $APPVEYOR_BUILD_FOLDER; autoreconf -i && ./configure && make && make check"'
+- cmd: '%BASH_PATH% -lc "cd $APPVEYOR_BUILD_FOLDER; autoreconf -i && ./configure && make -j 4 && make check -j 4"'
