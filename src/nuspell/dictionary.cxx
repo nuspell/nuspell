@@ -43,14 +43,14 @@ using boost::locale::to_title;
  * @return The spelling result.
  */
 template <class CharT>
-auto Dict_Base::spell_priv(std::basic_string<CharT> s) const -> Spell_Result
+auto Dict_Base::spell_priv(std::basic_string<CharT> s) const -> bool
 {
 	auto& d = get_structures<CharT>();
 
 	// allow words under maximum length
 	size_t MAXWORDLENGTH = 180;
 	if (s.size() >= MAXWORDLENGTH)
-		return BAD_WORD;
+		return false;
 
 	// do input conversion (iconv)
 	d.input_substr_replacer.replace(s);
@@ -58,7 +58,7 @@ auto Dict_Base::spell_priv(std::basic_string<CharT> s) const -> Spell_Result
 	// triming whitespace should be part of tokenization, not here
 	// boost::trim(s, locale_aff);
 	if (s.empty())
-		return GOOD_WORD;
+		return true;
 	bool abbreviation = s.back() == '.';
 	if (abbreviation) {
 		// trim trailing periods
@@ -66,12 +66,12 @@ auto Dict_Base::spell_priv(std::basic_string<CharT> s) const -> Spell_Result
 		// if i == npos, i + 1 == 0, so no need for extra if.
 		s.erase(i + 1);
 		if (s.empty())
-			return GOOD_WORD;
+			return true;
 	}
 
 	// accept number
 	if (is_number(s))
-		return GOOD_WORD;
+		return true;
 
 	erase_chars(s, d.ignored_chars);
 
@@ -87,8 +87,8 @@ auto Dict_Base::spell_priv(std::basic_string<CharT> s) const -> Spell_Result
 }
 // only these explicit template instantiations are needed for the spell_*
 // functions.
-template auto Dict_Base::spell_priv(const string s) const -> Spell_Result;
-template auto Dict_Base::spell_priv(const wstring s) const -> Spell_Result;
+template auto Dict_Base::spell_priv(const string s) const -> bool;
+template auto Dict_Base::spell_priv(const wstring s) const -> bool;
 
 /**
  * Checks recursively the spelling according to break patterns.
@@ -98,22 +98,22 @@ template auto Dict_Base::spell_priv(const wstring s) const -> Spell_Result;
  */
 template <class CharT>
 auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth) const
-    -> Spell_Result
+    -> bool
 {
 	// check spelling accoring to case
 	auto res = spell_casing<CharT>(s);
 	if (res) {
 		// handle forbidden words
 		if (res->contains(forbiddenword_flag)) {
-			return BAD_WORD;
+			return false;
 		}
 		if (forbid_warn && res->contains(warn_flag)) {
-			return BAD_WORD;
+			return false;
 		}
-		return GOOD_WORD;
+		return true;
 	}
 	if (depth == 9)
-		return BAD_WORD;
+		return false;
 
 	auto& break_table = get_structures<CharT>().break_table;
 
@@ -154,7 +154,7 @@ auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth) const
 		}
 	}
 
-	return BAD_WORD;
+	return false;
 }
 
 /**
@@ -1754,7 +1754,7 @@ auto Dict_Base::check_word_in_compound(std::basic_string<CharT>& word) const
 
 template <>
 auto Basic_Dictionary<Locale_Input>::spell(const std::string& word) const
-    -> Spell_Result
+    -> bool
 {
 	using namespace std;
 	using info_t = boost::locale::info;

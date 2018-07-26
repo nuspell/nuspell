@@ -319,20 +319,10 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 	auto word = string();
 	while (in >> word) {
 		auto res = dic.spell(word);
-		switch (res) {
-		case BAD_WORD:
-			out << '&' << '\n';
-			break;
-		case GOOD_WORD:
+		if (res)
 			out << '*' << '\n';
-			break;
-		case AFFIXED_GOOD_WORD:
-			out << '+' << '\n';
-			break;
-		case COMPOUND_GOOD_WORD:
-			out << '-' << '\n';
-			break;
-		}
+		else
+			out << '&' << '\n';
 	}
 }
 
@@ -348,7 +338,7 @@ auto misspelled_word_loop(istream& in, ostream& out, Dictionary& dic)
 	auto word = string();
 	while (in >> word) {
 		auto res = dic.spell(word);
-		if (res == BAD_WORD)
+		if (res == false)
 			out << word << '\n';
 	}
 }
@@ -358,7 +348,7 @@ auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
 	auto word = string();
 	while (in >> word) {
 		auto res = dic.spell(word);
-		if (res != BAD_WORD)
+		if (res != false)
 			out << word << '\n';
 	}
 }
@@ -373,7 +363,7 @@ auto misspelled_line_loop(istream& in, ostream& out, Dictionary& dic)
 		split_on_whitespace_v(line, words, loc);
 		for (auto& word : words) {
 			auto res = dic.spell(word);
-			if (res == BAD_WORD) {
+			if (res == false) {
 				print = true;
 				break;
 			}
@@ -393,7 +383,7 @@ auto correct_line_loop(istream& in, ostream& out, Dictionary& dic)
 		split_on_whitespace_v(line, words, loc);
 		for (auto& word : words) {
 			auto res = dic.spell(word);
-			if (res == BAD_WORD) {
+			if (res == false) {
 				print = false;
 				break;
 			}

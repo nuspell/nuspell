@@ -40,12 +40,12 @@ TEST_CASE("simple", "[Dict_Base]")
 
 	auto good = {L"table", L"chair", L"book", L"fóóáár", L"áárfóóĳ"};
 	for (auto& g : good)
-		CHECK(d.spell_priv<wchar_t>(g) == GOOD_WORD);
+		CHECK(d.spell_priv<wchar_t>(g) == true);
 
 	auto wrong = {L"tabel", L"chiar",    L"boko", L"xyyz",  L"fooxy",
 	              L"xyfoo", L"fooxybar", L"ééőő", L"fóóéé", L"őőáár"};
 	for (auto& w : wrong)
-		CHECK(d.spell_priv<wchar_t>(w) == BAD_WORD);
+		CHECK(d.spell_priv<wchar_t>(w) == false);
 }
 
 TEST_CASE("suffixes", "[Dict_Base]")
@@ -64,11 +64,11 @@ TEST_CASE("suffixes", "[Dict_Base]")
 	auto good = {"berry", "Berry", "berries", "BERRIES",
 	             "May",   "MAY",   "vary"};
 	for (auto& g : good)
-		CHECK(d.spell_priv<char>(g) == GOOD_WORD);
+		CHECK(d.spell_priv<char>(g) == true);
 
 	auto wrong = {"beRRies", "Maies", "MAIES", "maies", "varies"};
 	for (auto& w : wrong)
-		CHECK(d.spell_priv<char>(w) == BAD_WORD);
+		CHECK(d.spell_priv<char>(w) == false);
 }
 
 TEST_CASE("break_pattern", "[Dict_Base]")
@@ -85,9 +85,9 @@ TEST_CASE("break_pattern", "[Dict_Base]")
 	auto good = {"user",           "interface", "user-interface",
 	             "interface-user", "user-user", "interface-interface"};
 	for (auto& g : good)
-		CHECK(d.spell_priv<char>(g) == GOOD_WORD);
+		CHECK(d.spell_priv<char>(g) == true);
 
 	auto wrong = {"user--interface", "user interface", "user - interface"};
 	for (auto& w : wrong)
-		CHECK(d.spell_priv<char>(w) == BAD_WORD);
+		CHECK(d.spell_priv<char>(w) == false);
 }

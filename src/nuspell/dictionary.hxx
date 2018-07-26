@@ -32,13 +32,6 @@
 
 namespace nuspell {
 
-enum Spell_Result {
-	BAD_WORD /**< spelling of word is unknown */,
-	GOOD_WORD /**< word is spelled correctly */,
-	AFFIXED_GOOD_WORD /**< affixed word is spelled correctly */,
-	COMPOUND_GOOD_WORD /**< compound word is spelled correctly */
-};
-
 enum Affixing_Mode {
 	FULL_WORD,
 	AT_COMPOUND_BEGIN,
@@ -74,10 +67,10 @@ struct Compounding_Result {
 struct Dict_Base : public Aff_Data {
 
 	template <class CharT>
-	auto spell_priv(std::basic_string<CharT> s) const -> Spell_Result;
+	auto spell_priv(std::basic_string<CharT> s) const -> bool;
 	template <class CharT>
 	auto spell_break(std::basic_string<CharT>& s, size_t depth = 0) const
-	    -> Spell_Result;
+	    -> bool;
 	template <class CharT>
 	auto spell_casing(std::basic_string<CharT>& s) const -> const Flag_Set*;
 	template <class CharT>
@@ -311,7 +304,7 @@ struct Basic_Dictionary : protected Dict_Base, protected InputEncodingTraits {
 	}
 	using InputEncodingTraits::getloc;
 	using InputEncodingTraits::imbue;
-	auto spell(const std::string& word) const -> Spell_Result;
+	auto spell(const std::string& word) const -> bool;
 };
 
 using Dictionary = Basic_Dictionary<Locale_Input>;
