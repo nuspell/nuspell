@@ -301,7 +301,7 @@ class Globber {
 
 		FileListerWindows fl;
 
-		if (i->find_first_of(':') != i->npos) {
+		if (i->find(':') != i->npos) {
 			// absolute path
 			q1.push_back(*i++);
 		}
@@ -371,9 +371,6 @@ struct Globber {
 template <class OutIt>
 auto get_mozilla_paths(OutIt out) -> OutIt
 {
-// Note that Iceweasel and Icedove use the same paths as Firefox and Thunderbird
-// respectively. SeaMonkey, a.k.a. Iceape, is no longer available on Debian or
-// Ubuntu.
 #ifdef _POSIX_VERSION
 	// add Mozilla Linux global path
 	array<const char*, 4> dirs = {"/usr/local/lib/firefox/dictionaries",

@@ -58,17 +58,17 @@ TEST_CASE("suffixes", "[Dict_Base]")
 	d.words.emplace("May", u"T");
 	d.words.emplace("vary", u"");
 
-	d.structures.suffixes.emplace(u'T', true, "y"s, "ies"s, Flag_Set(),
-	                              ".[^aeiou]y"s);
+	d.wide_structures.suffixes.emplace(u'T', true, L"y"s, L"ies"s,
+	                                   Flag_Set(), L".[^aeiou]y"s);
 
-	auto good = {"berry", "Berry", "berries", "BERRIES",
-	             "May",   "MAY",   "vary"};
+	auto good = {L"berry", L"Berry", L"berries", L"BERRIES",
+	             L"May",   L"MAY",   L"vary"};
 	for (auto& g : good)
-		CHECK(d.spell_priv<char>(g) == true);
+		CHECK(d.spell_priv<wchar_t>(g) == true);
 
-	auto wrong = {"beRRies", "Maies", "MAIES", "maies", "varies"};
+	auto wrong = {L"beRRies", L"Maies", L"MAIES", L"maies", L"varies"};
 	for (auto& w : wrong)
-		CHECK(d.spell_priv<char>(w) == false);
+		CHECK(d.spell_priv<wchar_t>(w) == false);
 }
 
 TEST_CASE("break_pattern", "[Dict_Base]")
@@ -80,14 +80,15 @@ TEST_CASE("break_pattern", "[Dict_Base]")
 	d.words.emplace("user", u"");
 	d.words.emplace("interface", u"");
 
-	d.structures.break_table = {"-"};
+	d.wide_structures.break_table = {L"-"};
 
-	auto good = {"user",           "interface", "user-interface",
-	             "interface-user", "user-user", "interface-interface"};
+	auto good = {L"user",           L"interface", L"user-interface",
+	             L"interface-user", L"user-user", L"interface-interface"};
 	for (auto& g : good)
-		CHECK(d.spell_priv<char>(g) == true);
+		CHECK(d.spell_priv<wchar_t>(g) == true);
 
-	auto wrong = {"user--interface", "user interface", "user - interface"};
+	auto wrong = {L"user--interface", L"user interface",
+	              L"user - interface"};
 	for (auto& w : wrong)
-		CHECK(d.spell_priv<char>(w) == false);
+		CHECK(d.spell_priv<wchar_t>(w) == false);
 }
