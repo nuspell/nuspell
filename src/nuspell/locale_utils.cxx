@@ -414,16 +414,17 @@ auto u32_to_ucs2_skip_non_bmp(const std::u32string& s, std::u16string& out)
 	out.erase(i, end(out));
 }
 
-auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring
+auto to_wide(const std::string& in, const std::locale& loc, std::wstring& out)
+    -> bool
 {
-	using namespace std;
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
-	auto out = std::wstring(in.size(), L'\0');
+	out.resize(in.size(), L'\0');
 	auto state = mbstate_t();
 	auto in_ptr = in.c_str();
 	auto in_last = in.c_str() + in.size();
 	auto out_ptr = &out[0];
 	auto out_last = &out[out.size()];
+	auto valid = true;
 	for (;;) {
 		auto err = cvt.in(state, in_ptr, in_last, in_ptr, out_ptr,
 		                  out_last, out_ptr);
@@ -440,6 +441,7 @@ auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring
 		else if (err == cvt.partial && out_ptr != out_last) {
 			// incomplete sequence at the end
 			*out_ptr++ = L'\uFFFD';
+			valid = false;
 			break;
 		}
 		else if (err == cvt.error) {
@@ -451,22 +453,31 @@ auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring
 			}
 			in_ptr++;
 			*out_ptr++ = L'\uFFFD';
+			valid = false;
 		}
 	}
 	out.erase(out_ptr - &out[0]);
-	return out;
+	return valid;
 }
 
-auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
+auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring
 {
-	using namespace std;
+	auto ret = wstring();
+	to_wide(in, loc, ret);
+	return ret;
+}
+
+auto to_narrow(const std::wstring& in, std::string& out, const std::locale& loc)
+    -> bool
+{
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
-	auto out = string(in.size(), '\0');
+	out.resize(in.size(), '\0');
 	auto state = mbstate_t();
 	auto in_ptr = in.c_str();
 	auto in_last = in.c_str() + in.size();
 	auto out_ptr = &out[0];
 	auto out_last = &out[out.size()];
+	auto valid = true;
 	for (size_t i = 2;;) {
 		auto err = cvt.out(state, in_ptr, in_last, in_ptr, out_ptr,
 		                   out_last, out_ptr);
@@ -485,6 +496,7 @@ auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 			// size is big enough after 2 resizes,
 			// incomplete sequence at the end
 			*out_ptr++ = '?';
+			valid = false;
 			break;
 		}
 		else if (err == cvt.error) {
@@ -497,10 +509,18 @@ auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 			}
 			in_ptr++;
 			*out_ptr++ = '?';
+			valid = false;
 		}
 	}
 	out.erase(out_ptr - &out[0]);
-	return out;
+	return valid;
+}
+
+auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
+{
+	auto ret = string();
+	to_narrow(in, ret, loc);
+	return ret;
 }
 
 auto get_char_mask(UChar32 cp)
@@ -770,10 +790,10 @@ auto install_ctype_facets_inplace(std::locale& boost_loc) -> void
 }
 
 auto Locale_Input::cvt_for_byte_dict(const std::string& in,
-                                     const std::locale& inloc,
-                                     const std::locale& dicloc) -> std::string
+                                     const std::locale& inloc, std::string& out,
+                                     const std::locale& dicloc,
+                                     std::wstring& wide_buffer) -> bool
 {
-	using namespace std;
 	using info_t = boost::locale::info;
 	using namespace boost::locale::conv;
 	if (has_facet<info_t>(inloc)) {
@@ -782,24 +802,27 @@ auto Locale_Input::cvt_for_byte_dict(const std::string& in,
 		auto in_enc = in_info.encoding();
 		auto dic_enc = dic_info.encoding();
 		if (in_enc == dic_enc) {
-			return in;
+			out = in;
+			return true;
 		}
 	}
-	return to_narrow(to_wide(in, inloc), dicloc);
+	auto valid1 = to_wide(in, inloc, wide_buffer);
+	auto valid2 = to_narrow(wide_buffer, out, dicloc);
+	return valid1 && valid2;
 }
 
 auto Locale_Input::cvt_for_u8_dict(const std::string& in,
-                                   const std::locale& inloc) -> std::wstring
+                                   const std::locale& inloc, std::wstring& out)
+    -> bool
 {
-	using namespace std;
 	using info_t = boost::locale::info;
 	using namespace boost::locale::conv;
 	if (has_facet<info_t>(inloc)) {
 		auto& in_info = use_facet<info_t>(inloc);
 		if (in_info.utf8())
-			return utf8_to_wide(in);
+			return utf8_to_wide(in, out);
 	}
-	return to_wide(in, inloc);
+	return to_wide(in, inloc, out);
 }
 
 template <class CharT>

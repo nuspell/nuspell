@@ -67,7 +67,9 @@ struct Compounding_Result {
 struct Dict_Base : public Aff_Data {
 
 	template <class CharT>
-	auto spell_priv(std::basic_string<CharT> s) const -> bool;
+	auto spell_priv(const std::basic_string<CharT>& s) const -> bool;
+	template <class CharT>
+	auto spell_priv(std::basic_string<CharT>& s) const -> bool;
 	template <class CharT>
 	auto spell_break(std::basic_string<CharT>& s, size_t depth = 0) const
 	    -> bool;
@@ -282,7 +284,7 @@ struct Dict_Base : public Aff_Data {
 };
 
 template <class InputEncodingTraits>
-struct Basic_Dictionary : protected Dict_Base, protected InputEncodingTraits {
+struct Basic_Dictionary : protected Dict_Base, public InputEncodingTraits {
 
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
@@ -302,8 +304,6 @@ struct Basic_Dictionary : protected Dict_Base, protected InputEncodingTraits {
 			throw std::ios_base::failure("Dic file not found.");
 		return load_from_aff_dic(aff_file, dic_file);
 	}
-	using InputEncodingTraits::getloc;
-	using InputEncodingTraits::imbue;
 	auto spell(const std::string& word) const -> bool;
 };
 

@@ -75,7 +75,11 @@ auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string;
 auto u32_to_ucs2_skip_non_bmp(const std::u32string& s, std::u16string& out)
     -> void;
 
+auto to_wide(const std::string& in, const std::locale& inloc, std::wstring& out)
+    -> bool;
 auto to_wide(const std::string& in, const std::locale& inloc) -> std::wstring;
+auto to_narrow(const std::wstring& in, std::string& out,
+               const std::locale& outloc) -> bool;
 auto to_narrow(const std::wstring& in, const std::locale& outloc)
     -> std::string;
 
@@ -83,11 +87,16 @@ auto install_ctype_facets_inplace(std::locale& boost_loc) -> void;
 
 class Locale_Input {
 	std::locale external_locale;
+
 	auto static cvt_for_byte_dict(const std::string& in,
 	                              const std::locale& inloc,
-	                              const std::locale& dicloc) -> std::string;
+	                              std::string& out,
+	                              const std::locale& dicloc,
+	                              std::wstring& wide_buffer) -> bool;
+
 	auto static cvt_for_u8_dict(const std::string& in,
-	                            const std::locale& inloc) -> std::wstring;
+	                            const std::locale& inloc, std::wstring& out)
+	    -> bool;
 
       public:
 	auto imbue(const std::locale& loc) { external_locale = loc; }
@@ -95,14 +104,19 @@ class Locale_Input {
 	// of pointer. Doing that we pay little extra than just returning a
 	// const reference. Here we fix that and return a const reference.
 	auto& getloc() const { return external_locale; }
-	auto cvt_for_byte_dict(const std::string& in,
-	                       const std::locale& dic_loc) const -> std::string
+
+      protected:
+	auto cvt_for_byte_dict(const std::string& in, std::string& out,
+	                       const std::locale& dicloc,
+	                       std::wstring& wide_buffer) const
 	{
-		return cvt_for_byte_dict(in, getloc(), dic_loc);
+		return cvt_for_byte_dict(in, getloc(), out, dicloc,
+		                         wide_buffer);
 	}
-	auto cvt_for_u8_dict(const std::string& in) const -> std::wstring
+
+	auto cvt_for_u8_dict(const std::string& in, std::wstring& out) const
 	{
-		return cvt_for_u8_dict(in, getloc());
+		return cvt_for_u8_dict(in, getloc(), out);
 	}
 };
 

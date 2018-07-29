@@ -37,20 +37,24 @@ using boost::make_iterator_range;
 using boost::locale::to_lower;
 using boost::locale::to_title;
 
+template <class CharT>
+auto Dict_Base::spell_priv(const std::basic_string<CharT>& s) const -> bool
+{
+	auto s2 = s;
+	return spell_priv<CharT>(s2);
+}
+template auto Dict_Base::spell_priv(const string& s) const -> bool;
+template auto Dict_Base::spell_priv(const wstring& s) const -> bool;
+
 /** Check spelling for a word.
  *
  * @param s string to check spelling for.
  * @return The spelling result.
  */
 template <class CharT>
-auto Dict_Base::spell_priv(std::basic_string<CharT> s) const -> bool
+auto Dict_Base::spell_priv(std::basic_string<CharT>& s) const -> bool
 {
 	auto& d = get_structures<CharT>();
-
-	// allow words under maximum length
-	size_t MAXWORDLENGTH = 180;
-	if (s.size() >= MAXWORDLENGTH)
-		return false;
 
 	// do input conversion (iconv)
 	d.input_substr_replacer.replace(s);
@@ -87,8 +91,8 @@ auto Dict_Base::spell_priv(std::basic_string<CharT> s) const -> bool
 }
 // only these explicit template instantiations are needed for the spell_*
 // functions.
-template auto Dict_Base::spell_priv(const string s) const -> bool;
-template auto Dict_Base::spell_priv(const wstring s) const -> bool;
+template auto Dict_Base::spell_priv(string& s) const -> bool;
+template auto Dict_Base::spell_priv(wstring& s) const -> bool;
 
 /**
  * Checks recursively the spelling according to break patterns.
@@ -1759,11 +1763,27 @@ auto Basic_Dictionary<Locale_Input>::spell(const std::string& word) const
 	using namespace std;
 	using info_t = boost::locale::info;
 	auto& dic_info = use_facet<info_t>(locale_aff);
+	auto static thread_local wide_word = wstring();
 	if (dic_info.utf8()) {
-		return spell_priv<wchar_t>(cvt_for_u8_dict(word));
+		cvt_for_u8_dict(word, wide_word);
+		if (wide_word.size() > 180) {
+			wide_word.resize(180);
+			wide_word.shrink_to_fit();
+			return false;
+		}
+		return spell_priv<wchar_t>(wide_word);
 	}
 	else {
-		return spell_priv<char>(cvt_for_byte_dict(word, locale_aff));
+		auto static thread_local narrow_word = string();
+		cvt_for_byte_dict(word, narrow_word, locale_aff, wide_word);
+		if (narrow_word.size() > 180) {
+			narrow_word.resize(180);
+			narrow_word.shrink_to_fit();
+			wide_word.resize(180);
+			wide_word.shrink_to_fit();
+			return false;
+		}
+		return spell_priv<char>(narrow_word);
 	}
 }
 
