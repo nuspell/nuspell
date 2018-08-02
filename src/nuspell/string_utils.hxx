@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <iterator>
 #include <locale>
+#include <stack>
 #include <string>
 #include <vector>
 
@@ -259,5 +260,49 @@ auto is_number(const std::basic_string<CharT>& s) -> bool
 	}
 	return false;
 }
+
+template <class DataIter, class PatternIter, class FuncEq>
+auto match_simple_regex(DataIter data_first, DataIter data_last,
+                        PatternIter pat_first, PatternIter pat_last, FuncEq eq)
+{
+	auto s = std::stack<std::pair<DataIter, PatternIter>>();
+	s.emplace(data_first, pat_first);
+	auto data_it = DataIter();
+	auto pat_it = PatternIter();
+	while (!s.empty()) {
+		std::tie(data_it, pat_it) = s.top();
+		s.pop();
+		if (pat_it == pat_last) {
+			if (data_it == data_last)
+				return true;
+			else
+				return false;
+		}
+		auto node_type = *pat_it;
+		if (pat_it + 1 == pat_last)
+			node_type = 0;
+		else
+			node_type = *(pat_it + 1);
+		switch (node_type) {
+		case '?':
+			s.emplace(data_it, pat_it + 2);
+			if (data_it != data_last && eq(*data_it, *pat_it))
+				s.emplace(data_it + 1, pat_it + 2);
+			break;
+		case '*':
+			s.emplace(data_it, pat_it + 2);
+			if (data_it != data_last && eq(*data_it, *pat_it))
+				s.emplace(data_it + 1, pat_it);
+
+			break;
+		default:
+			if (data_it != data_last && eq(*data_it, *pat_it))
+				s.emplace(data_it + 1, pat_it + 1);
+			break;
+		}
+	}
+	return false;
+}
+
 } // namespace nuspell
 #endif // NUSPELL_STRING_UTILS_HXX

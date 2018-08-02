@@ -28,7 +28,7 @@ using namespace std;
 using namespace std::literals::string_literals;
 using namespace nuspell;
 
-TEST_CASE("simple", "[Dict_Base]")
+TEST_CASE("simple", "[dictionary]")
 {
 	boost::locale::generator gen;
 	auto d = Dict_Base();
@@ -48,7 +48,7 @@ TEST_CASE("simple", "[Dict_Base]")
 		CHECK(d.spell_priv<wchar_t>(w) == false);
 }
 
-TEST_CASE("suffixes", "[Dict_Base]")
+TEST_CASE("suffixes", "[dictionary]")
 {
 	boost::locale::generator gen;
 	auto d = Dict_Base();
@@ -71,7 +71,7 @@ TEST_CASE("suffixes", "[Dict_Base]")
 		CHECK(d.spell_priv<wchar_t>(w) == false);
 }
 
-TEST_CASE("break_pattern", "[Dict_Base]")
+TEST_CASE("break_pattern", "[dictionary]")
 {
 	boost::locale::generator gen;
 	auto d = Dict_Base();
