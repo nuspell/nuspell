@@ -20,8 +20,6 @@
 
 #include "../src/nuspell/string_utils.hxx"
 
-#include <boost/locale.hpp>
-
 using namespace std;
 using namespace std::literals::string_literals;
 using namespace nuspell;
@@ -91,89 +89,74 @@ TEST_CASE("method split_on_whitespace", "[string_utils]")
 
 TEST_CASE("method is_number", "[string_utils]")
 {
-	CHECK(false == is_number(""s));
-	CHECK(false == is_number("a"s));
-	CHECK(false == is_number("1a"s));
-	CHECK(false == is_number("a1"s));
-	CHECK(false == is_number(".a"s));
-	CHECK(false == is_number("a."s));
-	CHECK(false == is_number(",a"s));
-	CHECK(false == is_number("a,"s));
-	CHECK(false == is_number("-a"s));
-	CHECK(false == is_number("a-"s));
+	CHECK_FALSE(is_number(""s));
+	CHECK_FALSE(is_number("a"s));
+	CHECK_FALSE(is_number("1a"s));
+	CHECK_FALSE(is_number("a1"s));
+	CHECK_FALSE(is_number(".a"s));
+	CHECK_FALSE(is_number("a."s));
+	CHECK_FALSE(is_number(",a"s));
+	CHECK_FALSE(is_number("a,"s));
+	CHECK_FALSE(is_number("-a"s));
+	CHECK_FALSE(is_number("a-"s));
 
-	CHECK(false == is_number("1..1"s));
-	CHECK(false == is_number("1.,1"s));
-	CHECK(false == is_number("1.-1"s));
-	CHECK(false == is_number("1,.1"s));
-	CHECK(false == is_number("1,,1"s));
-	CHECK(false == is_number("1,-1"s));
-	CHECK(false == is_number("1-.1"s));
-	CHECK(false == is_number("1-,1"s));
-	CHECK(false == is_number("1--1"s));
+	CHECK_FALSE(is_number("1..1"s));
+	CHECK_FALSE(is_number("1.,1"s));
+	CHECK_FALSE(is_number("1.-1"s));
+	CHECK_FALSE(is_number("1,.1"s));
+	CHECK_FALSE(is_number("1,,1"s));
+	CHECK_FALSE(is_number("1,-1"s));
+	CHECK_FALSE(is_number("1-.1"s));
+	CHECK_FALSE(is_number("1-,1"s));
+	CHECK_FALSE(is_number("1--1"s));
 
-	CHECK(true == is_number("1,1111"s));
-	CHECK(true == is_number("-1,1111"s));
-	CHECK(true == is_number("1,1111.00"s));
-	CHECK(true == is_number("-1,1111.00"s));
-	CHECK(true == is_number("1.1111"s));
-	CHECK(true == is_number("-1.1111"s));
-	CHECK(true == is_number("1.1111,00"s));
-	CHECK(true == is_number("-1.1111,00"s));
+	CHECK(is_number("1,1111"s));
+	CHECK(is_number("-1,1111"s));
+	CHECK(is_number("1,1111.00"s));
+	CHECK(is_number("-1,1111.00"s));
+	CHECK(is_number("1.1111"s));
+	CHECK(is_number("-1.1111"s));
+	CHECK(is_number("1.1111,00"s));
+	CHECK(is_number("-1.1111,00"s));
 
 	// below needs extra review
 
-	CHECK(true == is_number("1"s));
-	CHECK(true == is_number("-1"s));
-	CHECK(false == is_number("1-"s));
+	CHECK(is_number("1"s));
+	CHECK(is_number("-1"s));
+	CHECK_FALSE(is_number("1-"s));
 
-	CHECK(false == is_number("1."s));
-	CHECK(false == is_number("-1."s));
-	CHECK(false == is_number("1.-"s));
+	CHECK_FALSE(is_number("1."s));
+	CHECK_FALSE(is_number("-1."s));
+	CHECK_FALSE(is_number("1.-"s));
 
-	CHECK(false == is_number("1,"s));
-	CHECK(false == is_number("-1,"s));
-	CHECK(false == is_number("1,-"s));
+	CHECK_FALSE(is_number("1,"s));
+	CHECK_FALSE(is_number("-1,"s));
+	CHECK_FALSE(is_number("1,-"s));
 
-	CHECK(true == is_number("1.1"s));
-	CHECK(true == is_number("-1.1"s));
-	CHECK(false == is_number("1.1-"s));
+	CHECK(is_number("1.1"s));
+	CHECK(is_number("-1.1"s));
+	CHECK_FALSE(is_number("1.1-"s));
 
-	CHECK(true == is_number("1,1"s));
-	CHECK(true == is_number("-1,1"s));
-	CHECK(false == is_number("1,1-"s));
+	CHECK(is_number("1,1"s));
+	CHECK(is_number("-1,1"s));
+	CHECK_FALSE(is_number("1,1-"s));
 
-	CHECK(false == is_number(".1"s));
-	CHECK(false == is_number("-.1"s));
-	CHECK(false == is_number(".1-"s));
+	CHECK_FALSE(is_number(".1"s));
+	CHECK_FALSE(is_number("-.1"s));
+	CHECK_FALSE(is_number(".1-"s));
 
-	CHECK(false == is_number(",1"s));
-	CHECK(false == is_number("-,1"s));
-	CHECK(false == is_number(",1-"s));
+	CHECK_FALSE(is_number(",1"s));
+	CHECK_FALSE(is_number("-,1"s));
+	CHECK_FALSE(is_number(",1-"s));
 }
 
-TEST_CASE("function match simple regex", "[string_utils]")
+TEST_CASE("function match_simple_regex", "[string_utils]")
 {
-	auto pat = "abc?de*ff"s;
-	auto dat1 = "abdff"s;
-	auto dat2 = "abcdff"s;
-	auto dat3 = "abdeeff"s;
-	auto dat4 = "abcdeff"s;
-	auto dat_false1 = "abcdeeeefff"s;
-	auto dat_false2 = "abccdeeeeff"s;
-	auto dat_false3 = "qwerty"s;
-	CHECK(match_simple_regex(begin(dat1), end(dat1), begin(pat), end(pat),
-	                         equal_to<char>()));
-	CHECK(match_simple_regex(begin(dat2), end(dat2), begin(pat), end(pat),
-	                         equal_to<char>()));
-	CHECK(match_simple_regex(begin(dat3), end(dat3), begin(pat), end(pat),
-	                         equal_to<char>()));
-	CHECK(match_simple_regex(begin(dat4), end(dat4), begin(pat), end(pat),
-	                         equal_to<char>()));
-	CHECK_FALSE(match_simple_regex(begin(dat_false1), end(dat_false1),
-	                               begin(pat), end(pat), equal_to<char>()));
-	CHECK_FALSE(match_simple_regex(begin(dat_false2), end(dat_false2),
-	                               begin(pat), end(pat), equal_to<char>()));
-	CHECK_FALSE(match_simple_regex(begin(dat_false3), end(dat_false3),
-	                               begin(pat), end(pat), equal_to<char>()));
+	CHECK(match_simple_regex("abdff"s, "abc?de*ff"s));
+	CHECK(match_simple_regex("abcdff"s, "abc?de*ff"s));
+	CHECK(match_simple_regex("abdeeff"s, "abc?de*ff"s));
+	CHECK(match_simple_regex("abcdeff"s, "abc?de*ff"s));
+	CHECK_FALSE(match_simple_regex("abcdeeeefff"s, "abc?de*ff"s));
+	CHECK_FALSE(match_simple_regex("abccdeeeeff"s, "abc?de*ff"s));
+	CHECK_FALSE(match_simple_regex("qwerty"s, "abc?de*ff"s));
 }

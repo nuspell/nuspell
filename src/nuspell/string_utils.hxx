@@ -261,9 +261,10 @@ auto is_number(const std::basic_string<CharT>& s) -> bool
 	return false;
 }
 
-template <class DataIter, class PatternIter, class FuncEq>
+template <class DataIter, class PatternIter, class FuncEq = std::equal_to<>>
 auto match_simple_regex(DataIter data_first, DataIter data_last,
-                        PatternIter pat_first, PatternIter pat_last, FuncEq eq)
+                        PatternIter pat_first, PatternIter pat_last,
+                        FuncEq eq = FuncEq())
 {
 	auto s = std::stack<std::pair<DataIter, PatternIter>>();
 	s.emplace(data_first, pat_first);
@@ -302,6 +303,15 @@ auto match_simple_regex(DataIter data_first, DataIter data_last,
 		}
 	}
 	return false;
+}
+
+template <class DataRange, class PatternRange, class FuncEq = std::equal_to<>>
+auto match_simple_regex(const DataRange& data, const PatternRange& pattern,
+                        FuncEq eq = FuncEq())
+{
+	using namespace std;
+	return match_simple_regex(begin(data), end(data), begin(pattern),
+	                          end(pattern), eq);
 }
 
 } // namespace nuspell

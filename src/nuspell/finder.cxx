@@ -61,13 +61,13 @@ using namespace std;
 namespace nuspell {
 
 #ifdef _WIN32
-const char PATHSEP = ';';
-const char DIRSEP = '\\';
+const auto PATHSEP = ';';
+const auto DIRSEP = '\\';
 const auto SEPARATORS = "\\/";
 #else
-const char PATHSEP = ':';
-const char DIRSEP = '/';
-const auto SEPARATORS = "/";
+const auto PATHSEP = ':';
+const auto DIRSEP = '/';
+const auto SEPARATORS = '/';
 #endif
 
 /**
@@ -648,9 +648,29 @@ auto search_path_for_dicts(const string& dir, OutIt out) -> OutIt
  */
 auto Finder::search_dictionaries() -> void
 {
+	dictionaries.clear();
 	for (auto& path : paths) {
 		search_path_for_dicts(path, back_inserter(dictionaries));
 	}
+	stable_sort(dictionaries.begin(), dictionaries.end(),
+	            [](auto& a, auto& b) { return a.first < b.first; });
+}
+
+auto Finder::search_dictionaries_in_all_paths() -> Finder
+{
+	auto ret = Finder();
+	ret.add_default_paths();
+	ret.add_mozilla_paths();
+	ret.add_libreoffice_paths();
+	ret.add_apacheopenoffice_paths();
+	ret.search_dictionaries();
+	return ret;
+}
+
+auto Finder::find(const std::string& dict) const -> const_iterator
+{
+	return std::find_if(begin(), end(),
+	                    [&](auto& e) { return e.first == dict; });
 }
 
 /**
@@ -659,7 +679,7 @@ auto Finder::search_dictionaries() -> void
  * @param dict name or path of dictionary without the trailing .aff/.dic.
  * @return the full path to dictionary or empty if does not exists.
  */
-auto Finder::get_dictionary(const string& dict) const -> string
+auto Finder::get_dictionary(const std::string& dict) const -> string
 {
 	// first check if it is a path
 	if (dict.find_first_of(SEPARATORS) != dict.npos) {
@@ -668,11 +688,9 @@ auto Finder::get_dictionary(const string& dict) const -> string
 	}
 	else {
 		// search list
-		for (auto& d : dictionaries) {
-			if (d.first == dict) {
-				return d.second;
-			}
-		}
+		auto x = find(dict);
+		if (x != end())
+			return x->second;
 	}
 	return "";
 }

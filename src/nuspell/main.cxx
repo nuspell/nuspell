@@ -458,12 +458,7 @@ int main(int argc, char* argv[])
 	clog << "INFO: Input  locale " << cin.getloc() << '\n';
 	clog << "INFO: Output locale " << cout.getloc() << '\n';
 
-	auto f = Finder();
-	f.add_default_paths();
-	f.add_libreoffice_paths();
-	f.add_mozilla_paths();
-	f.add_apacheopenoffice_paths();
-	f.search_dictionaries();
+	auto f = Finder::search_dictionaries_in_all_paths();
 
 	if (args.mode == LIST_DICTIONARIES_MODE) {
 		list_dictionaries(f);

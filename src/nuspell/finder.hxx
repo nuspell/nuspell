@@ -30,26 +30,28 @@
 namespace nuspell {
 
 class Finder {
-	using string = std::string;
-	template <class T>
-	using vector = std::vector<T>;
-	template <class T, class U>
-	using pair = std::pair<T, U>;
+	using Dict_List = std::vector<std::pair<std::string, std::string>>;
 
-	vector<string> paths;
-	vector<pair<string, string>> dictionaries;
+	std::vector<std::string> paths;
+	Dict_List dictionaries;
 
       public:
+	using const_iterator = Dict_List::const_iterator;
+
 	auto add_default_paths() -> void;
 	auto add_mozilla_paths() -> void;
 	auto add_libreoffice_paths() -> void;
 	auto add_apacheopenoffice_paths() -> void;
 	auto search_dictionaries() -> void;
 
+	auto static search_dictionaries_in_all_paths() -> Finder;
+
 	auto& get_all_paths() const { return paths; }
 	auto& get_all_dictionaries() const { return dictionaries; }
-
-	auto get_dictionary(const string& dict) const -> string;
+	auto begin() const { return dictionaries.begin(); }
+	auto end() const { return dictionaries.end(); }
+	auto find(const std::string& dict_lang) const -> const_iterator;
+	auto get_dictionary(const std::string& dict) const -> std::string;
 };
 } // namespace nuspell
 
