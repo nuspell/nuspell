@@ -124,7 +124,6 @@ hu.dic \
 warn.dic
 
 XFAIL_TESTS = \
-2999225.dic \
 allcaps.dic \
 allcaps2.dic \
 allcaps_utf.dic \
@@ -133,19 +132,10 @@ checkcompoundcase2.dic \
 checkcompoundcaseutf.dic \
 checkcompounddup.dic \
 checkcompoundrep.dic \
-compoundrule.dic \
-compoundrule2.dic \
-compoundrule3.dic \
-compoundrule4.dic \
-compoundrule5.dic \
-compoundrule6.dic \
-compoundrule7.dic \
-compoundrule8.dic \
 forceucase.dic \
 germancompounding.dic \
 hu.dic \
-nepali.dic \
-opentaal_forbiddenword1.dic
+nepali.dic
 
 clean-local:
 	-rm -rf testSubDir

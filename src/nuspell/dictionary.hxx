@@ -256,11 +256,12 @@ struct Dict_Base : public Aff_Data {
 	    size_t num_part, std::basic_string<CharT>&& part) const
 	    -> Compounding_Result;
 
-	template <Affixing_Mode m = AT_COMPOUND_BEGIN, class CharT>
-	auto check_compound_with_rules(std::basic_string<CharT>& word,
-	                               size_t start_pos, size_t i,
-	                               size_t num_part,
-	                               std::basic_string<CharT>&& part) const
+	template <class CharT>
+	auto
+	check_compound_with_rules(std::basic_string<CharT>& word,
+	                          std::vector<const Flag_Set*>& words_data,
+	                          size_t start_pos = 0,
+	                          std::basic_string<CharT>&& part = {}) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m, class CharT>

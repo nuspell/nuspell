@@ -393,6 +393,11 @@ auto Dict_Base::check_word(std::basic_string<CharT>& s) const -> const Flag_Set*
 	if (ret10)
 		return &ret10->second;
 
+	auto words_data = vector<const Flag_Set*>();
+	auto ret11 = check_compound_with_rules(s, words_data);
+	if (ret11)
+		return &ret11->second;
+
 	return nullptr;
 }
 
@@ -1753,6 +1758,79 @@ auto Dict_Base::check_word_in_compound(std::basic_string<CharT>& word) const
 	if (x3)
 		return {x3, is_modiying_affix(*get<1>(x3)) ||
 		                is_modiying_affix(*get<2>(x3))};
+	return {};
+}
+
+auto match_compund_rule(const std::vector<const Flag_Set*>& words_data,
+                        const u16string& pattern)
+{
+	return match_simple_regex(
+	    words_data, pattern,
+	    [](const Flag_Set* d, char16_t p) { return d->contains(p); });
+}
+
+template <class CharT>
+auto Dict_Base::check_compound_with_rules(
+    std::basic_string<CharT>& word, std::vector<const Flag_Set*>& words_data,
+    size_t start_pos, std::basic_string<CharT>&& part) const
+    -> Compounding_Result
+{
+	if (compound_rules.empty())
+		return {};
+
+	size_t min_length = 3;
+	if (compound_min_length != 0)
+		min_length = compound_min_length;
+	if (word.size() < min_length * 2)
+		return {};
+	size_t max_length = word.size() - min_length;
+	for (auto i = start_pos + min_length; i <= max_length; ++i) {
+
+		part.assign(word, start_pos, i - start_pos);
+		auto part1_entry = Word_List::const_pointer();
+		auto range = words.equal_range(part);
+		for (auto& we : make_iterator_range(range)) {
+			auto& word_flags = we.second;
+			if (word_flags.contains(need_affix_flag))
+				continue;
+			part1_entry = &we;
+			break;
+		}
+		if (!part1_entry)
+			continue;
+		words_data.push_back(&part1_entry->second);
+		BOOST_SCOPE_EXIT_ALL(&) { words_data.pop_back(); };
+
+		part.assign(word, i, word.npos);
+		auto part2_entry = Word_List::const_pointer();
+		range = words.equal_range(part);
+		for (auto& we : make_iterator_range(range)) {
+			auto& word_flags = we.second;
+			if (word_flags.contains(need_affix_flag))
+				continue;
+			part2_entry = &we;
+			break;
+		}
+		if (!part2_entry) {
+			part2_entry = check_compound_with_rules(
+			    word, words_data, i, move(part));
+			if (part2_entry)
+				return {part2_entry};
+			else
+				continue;
+		}
+
+		words_data.push_back(&part2_entry->second);
+		BOOST_SCOPE_EXIT_ALL(&) { words_data.pop_back(); };
+
+		auto m =
+		    any_of(begin(compound_rules), end(compound_rules),
+		           [&](const u16string& p) {
+			           return match_compund_rule(words_data, p);
+		           });
+		if (m)
+			return {part1_entry};
+	}
 	return {};
 }
 
