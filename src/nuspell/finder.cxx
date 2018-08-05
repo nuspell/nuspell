@@ -669,8 +669,17 @@ auto Finder::search_dictionaries_in_all_paths() -> Finder
 
 auto Finder::find(const std::string& dict) const -> const_iterator
 {
-	return std::find_if(begin(), end(),
-	                    [&](auto& e) { return e.first == dict; });
+	return find_if(begin(), end(),
+	               [&](auto& e) { return e.first == dict; });
+}
+
+auto Finder::equal_range(const string& dict) const
+    -> std::pair<const_iterator, const_iterator>
+{
+	auto eq = [&](auto& e) { return e.first == dict; };
+	auto a = find_if(begin(), end(), eq);
+	auto b = find_if_not(a, end(), eq);
+	return {a, b};
 }
 
 /**

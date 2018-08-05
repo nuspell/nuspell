@@ -39,11 +39,11 @@ before_script:
     osx) export DYLD_LIBRARY_PATH=$BOOST_ROOT/lib ;;
   esac
 - |
-  # On Linux Use gcc-5. On OS X always use clang, dont download gcc from Homebrew.
+  # On Linux Use gcc-7. On OS X always use clang, dont download gcc from Homebrew.
   if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then
     export CXX="g++-7" CC="gcc-7";
   fi
-- export CXXFLAGS='-g -O2 -DBOOST_LOCALE_HIDE_AUTO_PTR'
+- export CPPFLAGS='-DBOOST_LOCALE_HIDE_AUTO_PTR'
 
 script: autoreconf -i && ./configure && make -j 4 && make check -j 4
 

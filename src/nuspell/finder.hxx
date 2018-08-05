@@ -50,7 +50,9 @@ class Finder {
 	auto& get_all_dictionaries() const { return dictionaries; }
 	auto begin() const { return dictionaries.begin(); }
 	auto end() const { return dictionaries.end(); }
-	auto find(const std::string& dict_lang) const -> const_iterator;
+	auto find(const std::string& dict) const -> const_iterator;
+	auto equal_range(const std::string& dict) const
+	    -> std::pair<const_iterator, const_iterator>;
 	auto get_dictionary(const std::string& dict) const -> std::string;
 };
 } // namespace nuspell
