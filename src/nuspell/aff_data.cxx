@@ -78,21 +78,6 @@ namespace nuspell {
 
 using namespace std;
 
-Encoding::Encoding(const std::string& e) : name(e)
-{
-	boost::algorithm::to_upper(name, locale::classic());
-	if (name == "UTF8")
-		name = "UTF-8";
-}
-auto Encoding::operator=(const std::string& e) -> Encoding&
-{
-	name = e;
-	boost::algorithm::to_upper(name, locale::classic());
-	if (name == "UTF8")
-		name = "UTF-8";
-	return *this;
-}
-
 auto Word_List::equal_range(const std::wstring& word) const
     -> std::pair<Word_List_Base::local_const_iterator,
                  Word_List_Base::local_const_iterator>
@@ -512,26 +497,16 @@ auto strip_bom(istream& in)
 	}
 }
 
-auto get_locale_name(string lang, string enc, const string& filename) -> string
-{
-	if (enc.empty())
-		enc = "ISO8859-1";
-	else if (enc.compare(0, 10, "MICROSOFT-") == 0 ||
-	         enc.compare(0, 10, "microsoft-") == 0)
-		enc.erase(0, 10);
-	if (lang.empty()) {
-		if (filename.empty()) {
-			lang = "en_US";
-		}
-	}
-	return lang + "." + enc;
-}
-
 auto Aff_Data::set_encoding_and_language(const string& enc, const string& lang)
     -> void
 {
 	boost::locale::generator locale_generator;
-	locale_aff = locale_generator(get_locale_name(lang, enc));
+	auto name = lang;
+	if (name.empty())
+		name = "en_US";
+	if (!enc.empty())
+		name += '.' + enc;
+	locale_aff = locale_generator(name);
 	install_ctype_facets_inplace(locale_aff);
 }
 
@@ -787,7 +762,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	}
 
 	// now fill data structures from temporary data
-	set_encoding_and_language(encoding, language_code);
+	set_encoding_and_language(encoding.value_or_default(), language_code);
 	if (encoding.is_utf8()) {
 		using namespace boost::locale::conv;
 		auto u_to_u_pair = [](auto& x) {

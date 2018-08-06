@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <limits>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/locale.hpp>
 
 #include <unicode/uchar.h>
@@ -864,5 +865,14 @@ auto classify_casing(const std::basic_string<CharT>& s, const std::locale& loc)
 template auto classify_casing(const std::string&, const std::locale&) -> Casing;
 template auto classify_casing(const std::wstring&, const std::locale&)
     -> Casing;
+
+auto Encoding::normalize_name() -> void
+{
+	boost::algorithm::to_upper(name, locale::classic());
+	if (name == "UTF8")
+		name = "UTF-8";
+	else if (name.compare(0, 10, "MICROSOFT-") == 0)
+		name.erase(0, 10);
+}
 
 } // namespace nuspell

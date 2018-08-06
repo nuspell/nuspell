@@ -36,7 +36,6 @@ string_utils_test.cxx \
 condition_test.cxx \
 structures_test.cxx \
 dictionary_test.cxx \
-aff_data_test.cxx \
 catch_main.cxx
 
 nodist_ch_catch_SOURCES = catch.hpp catch_reporter_tap.hpp

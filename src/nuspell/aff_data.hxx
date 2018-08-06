@@ -35,25 +35,6 @@
 
 namespace nuspell {
 
-auto get_locale_name(std::string lang, std::string enc,
-                     const std::string& filename = "") -> std::string;
-
-class Encoding {
-	std::string name;
-
-      public:
-	enum Enc_Type { SINGLEBYTE = false, UTF8 = true };
-
-	Encoding() = default;
-	Encoding(const std::string& e);
-	auto operator=(const std::string& e) -> Encoding&;
-	auto empty() const -> bool { return name.empty(); }
-	operator const std::string&() const { return name; }
-	auto value() const -> const std::string& { return name; }
-	auto is_utf8() const -> bool { return name == "UTF-8"; }
-	operator Enc_Type() const { return is_utf8() ? UTF8 : SINGLEBYTE; }
-};
-
 enum Flag_Type {
 	FLAG_SINGLE_CHAR /**< single-character flag, e.g. for "a" */,
 	FLAG_DOUBLE_CHAR /**< double-character flag, e.g for "aa" */,

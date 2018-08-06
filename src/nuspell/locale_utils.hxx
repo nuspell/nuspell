@@ -159,5 +159,48 @@ template <class CharT>
 auto classify_casing(const std::basic_string<CharT>& s,
                      const std::locale& loc = std::locale()) -> Casing;
 
+class Encoding {
+	std::string name;
+
+	auto normalize_name() -> void;
+
+      public:
+	enum Enc_Type { SINGLEBYTE = false, UTF8 = true };
+
+	Encoding() = default;
+	Encoding(const std::string& e) : name(e) { normalize_name(); };
+	Encoding(std::string&& e) : name(move(e)) { normalize_name(); };
+	Encoding(const char* e) : name(e) { normalize_name(); };
+	auto& operator=(const std::string& e)
+	{
+		name = e;
+		normalize_name();
+		return *this;
+	}
+	auto& operator=(std::string&& e)
+	{
+		name = move(e);
+		normalize_name();
+		return *this;
+	}
+	auto& operator=(const char* e)
+	{
+		name = e;
+		normalize_name();
+		return *this;
+	}
+	auto empty() const { return name.empty(); }
+	operator const std::string&() const { return name; }
+	auto& value() const { return name; }
+	auto is_utf8() const { return name == "UTF-8"; }
+	auto value_or_default() -> std::string
+	{
+		if (name.empty())
+			return "ISO8859-1";
+		else
+			return name;
+	}
+	operator Enc_Type() const { return is_utf8() ? UTF8 : SINGLEBYTE; }
+};
 } // namespace nuspell
 #endif // LOCALE_UTILS_HXX
