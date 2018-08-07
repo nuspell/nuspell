@@ -497,6 +497,17 @@ auto strip_bom(istream& in)
 	}
 }
 
+/**
+ * @brief Sets the internal encoding, and optionally, language.
+ *
+ * Sets the encoding of the strings inside the dictionary. This function
+ * should not be called manually because it is called by parse_aff(). Should
+ * be only called if you are manually filling this object via C++ code,
+ * and not from file.
+ *
+ * @param enc
+ * @param lang
+ */
 auto Aff_Data::set_encoding_and_language(const string& enc, const string& lang)
     -> void
 {
@@ -876,7 +887,6 @@ auto dic_find_end_of_word_heuristics(const string& line)
  * Parses an input stream offering dictionary information.
  *
  * @param in input stream to read from.
- * @param aff affix data to retrive locale and flag settings from.
  * @return true on success.
  */
 auto Aff_Data::parse_dic(istream& in) -> bool

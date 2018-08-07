@@ -31,7 +31,8 @@
 namespace nuspell {
 
 /**
- * A class providing implementation for limited regular expression matching.
+ * A class providing implementation for limited regular expression matching
+ * used in affix entries.
  *
  * This results in increase of performance over an implementation with <regex>
  * use.
@@ -56,9 +57,12 @@ class Condition {
 	vector<tuple<size_t, size_t, Span_Type>> spans; // pos, len, type
 	size_t length = 0;
 
+	auto construct() -> void;
+
       public:
 	Condition() = default;
-	Condition(const StrT& condition);
+	Condition(const StrT& condition) : cond(condition) { construct(); }
+	Condition(StrT&& condition) : cond(move(condition)) { construct(); };
 	auto match(const StrT& s, size_t pos = 0, size_t len = StrT::npos) const
 	    -> bool;
 	auto match_prefix(const StrT& s) const -> bool;

@@ -30,14 +30,8 @@ namespace nuspell {
 
 using namespace std;
 
-/**
- * Constructs a Condition object.
- *
- * @param condition string containing simplifed regular expression to construct
- * this Condition object for.
- */
 template <class CharT>
-Condition<CharT>::Condition(const StrT& condition) : cond(condition)
+auto Condition<CharT>::construct() -> void
 {
 	size_t i = 0;
 	for (; i != cond.size();) {
