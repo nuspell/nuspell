@@ -32,6 +32,14 @@
 
 namespace nuspell {
 
+#ifdef __GNUC__
+#define likely(expr) __builtin_expect(!!(expr), 1)
+#define unlikely(expr) __builtin_expect(!!(expr), 0)
+#else
+#define likely(expr) (expr)
+#define unlikely(expr) (expr)
+#endif
+
 using namespace std;
 using boost::make_iterator_range;
 using boost::locale::to_lower;
@@ -1843,24 +1851,29 @@ auto Basic_Dictionary<Locale_Input>::spell(const std::string& word) const
 	auto& dic_info = use_facet<info_t>(locale_aff);
 	auto static thread_local wide_word = wstring();
 	if (dic_info.utf8()) {
-		cvt_for_u8_dict(word, wide_word);
-		if (wide_word.size() > 180) {
+		auto ok = cvt_for_u8_dict(word, wide_word);
+		if (unlikely(wide_word.size() > 180)) {
 			wide_word.resize(180);
 			wide_word.shrink_to_fit();
 			return false;
 		}
+		if (unlikely(!ok))
+			return false;
 		return spell_priv<wchar_t>(wide_word);
 	}
 	else {
 		auto static thread_local narrow_word = string();
-		cvt_for_byte_dict(word, narrow_word, locale_aff, wide_word);
-		if (narrow_word.size() > 180) {
+		auto ok =
+		    cvt_for_byte_dict(word, narrow_word, locale_aff, wide_word);
+		if (unlikely(narrow_word.size() > 180)) {
 			narrow_word.resize(180);
 			narrow_word.shrink_to_fit();
 			wide_word.resize(180);
 			wide_word.shrink_to_fit();
 			return false;
 		}
+		if (unlikely(!ok))
+			return false;
 		return spell_priv<char>(narrow_word);
 	}
 }

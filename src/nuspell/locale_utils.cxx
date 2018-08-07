@@ -821,7 +821,9 @@ auto Locale_Input::cvt_for_u8_dict(const std::string& in,
 	if (has_facet<info_t>(inloc)) {
 		auto& in_info = use_facet<info_t>(inloc);
 		if (in_info.utf8())
-			return utf8_to_wide(in, out);
+			return utf8_to_wide(in, out); // Skips chars on error.
+		// Might end up with empty out string if all in is error,
+		// thus check the return value at the caller.
 	}
 	return to_wide(in, inloc, out);
 }
