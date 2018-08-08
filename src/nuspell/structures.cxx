@@ -22,6 +22,7 @@
  */
 
 #include "structures.hxx"
+#include "string_utils.hxx"
 
 namespace nuspell {
 
@@ -161,4 +162,47 @@ template class Prefix<char>;
 template class Prefix<wchar_t>;
 template class Suffix<char>;
 template class Suffix<wchar_t>;
+
+auto Compound_Rule_Table::fill_all_flags() -> void
+{
+	for (auto& f : rules) {
+		all_flags += f;
+	}
+	all_flags.erase(u'?');
+	all_flags.erase(u'*');
+}
+
+struct Out_Iter_One_Bool {
+	bool* value = nullptr;
+	auto& operator++() { return *this; }
+	auto& operator++(int) { return *this; }
+	auto& operator*() { return *this; }
+	auto operator=(char16_t) { *value = true; }
+};
+
+auto Compound_Rule_Table::has_any_of_flags(const Flag_Set& f) const -> bool
+{
+	auto has_intersection = false;
+	auto out_it = Out_Iter_One_Bool{&has_intersection};
+	set_intersection(begin(all_flags), end(all_flags), begin(f), end(f),
+	                 out_it);
+	return has_intersection;
+}
+
+auto match_compund_rule(const std::vector<const Flag_Set*>& words_data,
+                        const u16string& pattern)
+{
+	return match_simple_regex(
+	    words_data, pattern,
+	    [](const Flag_Set* d, char16_t p) { return d->contains(p); });
+}
+
+auto Compound_Rule_Table::match_any_rule(
+    const std::vector<const Flag_Set*> data) const -> bool
+{
+	return any_of(begin(rules), end(rules), [&](const u16string& p) {
+		return match_compund_rule(data, p);
+	});
+}
+
 } // namespace nuspell

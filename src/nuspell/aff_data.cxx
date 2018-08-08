@@ -539,6 +539,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<pair<string, string>> output_conversion;
 	vector<vector<string>> morphological_aliases;
 	vector<Compound_Check_Pattern> compound_check_patterns;
+	vector<u16string> rules;
 	bool break_exists = false;
 
 	flag_type = FLAG_SINGLE_CHAR;
@@ -661,7 +662,11 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			*command_bools[command] = true;
 		}
 		else if (command_shorts.count(command)) {
-			ss >> *command_shorts[command];
+			auto ptr = command_shorts[command];
+			ss >> *ptr;
+			if (ptr == &compound_min_length && *ptr == 0) {
+				compound_min_length = 1;
+			}
 		}
 		else if (command_flag.count(command)) {
 			*command_flag[command] = decode_single_flag(
@@ -749,8 +754,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 				                    encoding, rule);
 			};
 			parse_vector_of_T(ss, line_num, command,
-			                  cmd_with_vec_cnt, compound_rules,
-			                  func);
+			                  cmd_with_vec_cnt, rules, func);
 		}
 		else if (command == "COMPOUNDSYLLABLE") {
 			ss >> compound_syllable_max >> compound_syllable_vowels;
@@ -774,6 +778,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 
 	// now fill data structures from temporary data
 	set_encoding_and_language(encoding.value_or_default(), language_code);
+	compound_rules = move(rules);
 	if (encoding.is_utf8()) {
 		using namespace boost::locale::conv;
 		auto u_to_u_pair = [](auto& x) {

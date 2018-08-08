@@ -165,7 +165,7 @@ struct Aff_Data {
 	bool compound_check_triple;
 	bool compound_simplified_triple;
 
-	vector<u16string> compound_rules;
+	Compound_Rule_Table compound_rules;
 
 	unsigned short compound_syllable_max;
 	string compound_syllable_vowels;

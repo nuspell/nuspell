@@ -813,5 +813,41 @@ struct Compound_Pattern {
 	char16_t second_word_flag = 0;
 	bool match_first_only_unaffixed_or_zero_affixed = false;
 };
+
+class Compound_Rule_Table {
+	std::vector<std::u16string> rules;
+	Flag_Set all_flags;
+
+	auto fill_all_flags() -> void;
+
+      public:
+	Compound_Rule_Table() = default;
+	Compound_Rule_Table(const std::vector<std::u16string>& tbl) : rules(tbl)
+	{
+		fill_all_flags();
+	}
+	Compound_Rule_Table(std::vector<std::u16string>&& tbl)
+	    : rules(move(tbl))
+	{
+		fill_all_flags();
+	}
+	auto operator=(const std::vector<std::u16string>& tbl)
+	{
+		rules = tbl;
+		fill_all_flags();
+		return *this;
+	}
+	auto operator=(std::vector<std::u16string>&& tbl)
+	{
+		rules = move(tbl);
+		fill_all_flags();
+		return *this;
+	}
+	auto empty() const { return rules.empty(); }
+	auto has_any_of_flags(const Flag_Set& f) const -> bool;
+	auto match_any_rule(const std::vector<const Flag_Set*> data) const
+	    -> bool;
+};
+
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX

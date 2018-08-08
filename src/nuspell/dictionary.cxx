@@ -1769,14 +1769,6 @@ auto Dict_Base::check_word_in_compound(std::basic_string<CharT>& word) const
 	return {};
 }
 
-auto match_compund_rule(const std::vector<const Flag_Set*>& words_data,
-                        const u16string& pattern)
-{
-	return match_simple_regex(
-	    words_data, pattern,
-	    [](const Flag_Set* d, char16_t p) { return d->contains(p); });
-}
-
 template <class CharT>
 auto Dict_Base::check_compound_with_rules(
     std::basic_string<CharT>& word, std::vector<const Flag_Set*>& words_data,
@@ -1801,6 +1793,8 @@ auto Dict_Base::check_compound_with_rules(
 			auto& word_flags = we.second;
 			if (word_flags.contains(need_affix_flag))
 				continue;
+			if (!compound_rules.has_any_of_flags(word_flags))
+				continue;
 			part1_entry = &we;
 			break;
 		}
@@ -1815,6 +1809,8 @@ auto Dict_Base::check_compound_with_rules(
 		for (auto& we : make_iterator_range(range)) {
 			auto& word_flags = we.second;
 			if (word_flags.contains(need_affix_flag))
+				continue;
+			if (!compound_rules.has_any_of_flags(word_flags))
 				continue;
 			part2_entry = &we;
 			break;
@@ -1831,11 +1827,7 @@ auto Dict_Base::check_compound_with_rules(
 		words_data.push_back(&part2_entry->second);
 		BOOST_SCOPE_EXIT_ALL(&) { words_data.pop_back(); };
 
-		auto m =
-		    any_of(begin(compound_rules), end(compound_rules),
-		           [&](const u16string& p) {
-			           return match_compund_rule(words_data, p);
-		           });
+		auto m = compound_rules.match_any_rule(words_data);
 		if (m)
 			return {part1_entry};
 	}
