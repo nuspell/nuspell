@@ -141,20 +141,12 @@ struct Unicode_Input {
  */
 enum class Casing {
 	SMALL /**< all lower case or neutral case, e.g. "lowercase" or "123" */,
-	INIT_CAPITAL /**< start upper case, rest lower case, e.g. "InitCap" */,
+	INIT_CAPITAL /**< start upper case, rest lower case, e.g. "Initcap" */,
 	ALL_CAPITAL /**< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
 	CAMEL /**< camel case, start lower case, e.g. "camelCase" */,
 	PASCAL /**< pascal case, start upper case, e.g. "PascalCase" */
 };
 
-/**
- * Determines casing (capitalization) type for a word.
- *
- * Casing is sometimes referred to as capitalization.
- *
- * @param s word for which casing is determined.
- * @return The casing type.
- */
 template <class CharT>
 auto classify_casing(const std::basic_string<CharT>& s,
                      const std::locale& loc = std::locale()) -> Casing;

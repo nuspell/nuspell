@@ -828,6 +828,14 @@ auto Locale_Input::cvt_for_u8_dict(const std::string& in,
 	return to_wide(in, inloc, out);
 }
 
+/**
+ * Determines casing (capitalization) type for a word.
+ *
+ * Casing is sometimes referred to as capitalization.
+ *
+ * @param s word for which casing is determined.
+ * @return The casing type.
+ */
 template <class CharT>
 auto classify_casing(const std::basic_string<CharT>& s, const std::locale& loc)
     -> Casing
@@ -864,10 +872,20 @@ auto classify_casing(const std::basic_string<CharT>& s, const std::locale& loc)
 	else
 		return Casing::CAMEL;
 }
-template auto classify_casing(const std::string&, const std::locale&) -> Casing;
-template auto classify_casing(const std::wstring&, const std::locale&)
-    -> Casing;
+template auto classify_casing(const string&, const locale&) -> Casing;
+template auto classify_casing(const wstring&, const locale&) -> Casing;
 
+/**
+ * @brief Check if word[i] or word[i-1] are uppercase
+ *
+ * Check if the two chars are alphabetic and at least one of them is in
+ * uppercase.
+ *
+ * @param word
+ * @param i
+ * @param loc
+ * @return true if at least one is uppercase, false otherwise.
+ */
 template <class CharT>
 auto has_uppercase_at_compound_word_boundary(
     const std::basic_string<CharT>& word, size_t i, const std::locale& loc)

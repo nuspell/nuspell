@@ -1606,11 +1606,11 @@ auto Dict_Base::check_compound_classic(std::basic_string<CharT>& word,
 	auto part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
 	if (!part2_entry)
 		goto try_recursive;
+	if (part2_entry->second.contains(forbiddenword_flag))
+		goto try_recursive;
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
 	                                      part1_entry, part2_entry))
 		goto try_recursive;
-	if (part2_entry->second.contains(forbiddenword_flag))
-		return {};
 
 	return part1_entry;
 
@@ -1622,8 +1622,6 @@ try_recursive:
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
 	                                      part1_entry, part2_entry))
 		goto try_simplified_triple;
-	if (part2_entry->second.contains(forbiddenword_flag))
-		return {};
 	return part1_entry;
 
 try_simplified_triple:
@@ -1637,11 +1635,11 @@ try_simplified_triple:
 	part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
 	if (!part2_entry)
 		goto try_simplified_triple_recursive;
+	if (part2_entry->second.contains(forbiddenword_flag))
+		goto try_simplified_triple_recursive;
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
 	                                      part1_entry, part2_entry))
 		goto try_simplified_triple_recursive;
-	if (part2_entry->second.contains(forbiddenword_flag))
-		return {};
 	return part1_entry;
 
 try_simplified_triple_recursive:
@@ -1651,8 +1649,6 @@ try_simplified_triple_recursive:
 		return {};
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
 	                                      part1_entry, part2_entry))
-		return {};
-	if (part2_entry->second.contains(forbiddenword_flag))
 		return {};
 	return part1_entry;
 }
@@ -1704,11 +1700,11 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		    check_word_in_compound<AT_COMPOUND_END>(part);
 		if (!part2_entry)
 			goto try_recursive;
+		if (part2_entry->second.contains(forbiddenword_flag))
+			goto try_recursive;
 		if (p.second_word_flag != 0 &&
 		    !part2_entry->second.contains(p.second_word_flag))
 			goto try_recursive;
-		if (part2_entry->second.contains(forbiddenword_flag))
-			return {};
 
 		return part1_entry;
 
@@ -1720,8 +1716,6 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		if (p.second_word_flag != 0 &&
 		    !part2_entry->second.contains(p.second_word_flag))
 			goto try_simplified_triple;
-		if (part2_entry->second.contains(forbiddenword_flag))
-			return {};
 		return part1_entry;
 
 	try_simplified_triple:
@@ -1735,11 +1729,11 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
 		if (!part2_entry)
 			goto try_simplified_triple_recursive;
+		if (part2_entry->second.contains(forbiddenword_flag))
+			goto try_simplified_triple_recursive;
 		if (p.second_word_flag != 0 &&
 		    !part2_entry->second.contains(p.second_word_flag))
 			goto try_simplified_triple_recursive;
-		if (part2_entry->second.contains(forbiddenword_flag))
-			return {};
 		return part1_entry;
 
 	try_simplified_triple_recursive:
@@ -1749,8 +1743,6 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			continue;
 		if (p.second_word_flag != 0 &&
 		    !part2_entry->second.contains(p.second_word_flag))
-			continue;
-		if (part2_entry->second.contains(forbiddenword_flag))
 			continue;
 		return part1_entry;
 	}
