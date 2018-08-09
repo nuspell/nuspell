@@ -1583,14 +1583,13 @@ auto Dict_Base::check_compound_classic(std::basic_string<CharT>& word,
     -> Compounding_Result
 {
 	auto& compound_patterns = get_structures<CharT>().compound_patterns;
+
 	part.assign(word, start_pos, i - start_pos);
 	auto part1_entry = check_word_in_compound<m>(part);
 	if (!part1_entry)
 		return {};
-
 	if (part1_entry->second.contains(forbiddenword_flag))
 		return {};
-
 	if (compound_check_triple) {
 		auto triple = basic_string<CharT>(3, word[i]);
 		if (word.compare(i - 1, 3, triple) == 0)
@@ -1611,6 +1610,8 @@ auto Dict_Base::check_compound_classic(std::basic_string<CharT>& word,
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
 	                                      part1_entry, part2_entry))
 		goto try_recursive;
+	if (compound_check_duplicate && part1_entry == part2_entry)
+		goto try_recursive;
 
 	return part1_entry;
 
@@ -1622,6 +1623,9 @@ try_recursive:
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
 	                                      part1_entry, part2_entry))
 		goto try_simplified_triple;
+	// if (compound_check_duplicate && part1_entry == part2_entry)
+	//	goto try_simplified_triple;
+
 	return part1_entry;
 
 try_simplified_triple:
@@ -1640,6 +1644,9 @@ try_simplified_triple:
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
 	                                      part1_entry, part2_entry))
 		goto try_simplified_triple_recursive;
+	if (compound_check_duplicate && part1_entry == part2_entry)
+		goto try_simplified_triple_recursive;
+
 	return part1_entry;
 
 try_simplified_triple_recursive:
@@ -1650,6 +1657,9 @@ try_simplified_triple_recursive:
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
 	                                      part1_entry, part2_entry))
 		return {};
+	// if (compound_check_duplicate && part1_entry == part2_entry)
+	//	return {};
+
 	return part1_entry;
 }
 
@@ -1679,14 +1689,11 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		auto part1_entry = check_word_in_compound<m>(part);
 		if (!part1_entry)
 			continue;
-
 		if (part1_entry->second.contains(forbiddenword_flag))
 			continue;
-
 		if (p.first_word_flag != 0 &&
 		    !part1_entry->second.contains(p.first_word_flag))
 			continue;
-
 		if (compound_check_triple) {
 			auto triple = basic_string<CharT>(3, word[i]);
 			if (word.compare(i - 1, 3, triple) == 0)
@@ -1705,6 +1712,8 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		if (p.second_word_flag != 0 &&
 		    !part2_entry->second.contains(p.second_word_flag))
 			goto try_recursive;
+		if (compound_check_duplicate && part1_entry == part2_entry)
+			goto try_recursive;
 
 		return part1_entry;
 
@@ -1716,6 +1725,9 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		if (p.second_word_flag != 0 &&
 		    !part2_entry->second.contains(p.second_word_flag))
 			goto try_simplified_triple;
+		// if (compound_check_duplicate && part1_entry == part2_entry)
+		//	goto try_simplified_triple;
+
 		return part1_entry;
 
 	try_simplified_triple:
@@ -1734,6 +1746,9 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		if (p.second_word_flag != 0 &&
 		    !part2_entry->second.contains(p.second_word_flag))
 			goto try_simplified_triple_recursive;
+		if (compound_check_duplicate && part1_entry == part2_entry)
+			goto try_simplified_triple_recursive;
+
 		return part1_entry;
 
 	try_simplified_triple_recursive:
@@ -1744,6 +1759,9 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		if (p.second_word_flag != 0 &&
 		    !part2_entry->second.contains(p.second_word_flag))
 			continue;
+		// if (compound_check_duplicate && part1_entry == part2_entry)
+		//	return {};
+
 		return part1_entry;
 	}
 	return {};

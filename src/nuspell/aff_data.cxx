@@ -562,7 +562,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	    {"FORBIDWARN", &forbid_warn},
 
 	    {"COMPOUNDMORESUFFIXES", &compound_more_suffixes},
-	    {"CHECKCOMPOUNDDUP", &compound_check_up},
+	    {"CHECKCOMPOUNDDUP", &compound_check_duplicate},
 	    {"CHECKCOMPOUNDREP", &compound_check_rep},
 	    {"CHECKCOMPOUNDCASE", &compound_check_case},
 	    {"CHECKCOMPOUNDTRIPLE", &compound_check_triple},

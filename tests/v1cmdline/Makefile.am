@@ -130,7 +130,6 @@ allcaps2.dic \
 allcaps_utf.dic \
 base_utf.dic \
 checkcompounddup.dic \
-checkcompoundrep.dic \
 forceucase.dic \
 hu.dic \
 nepali.dic

@@ -159,7 +159,7 @@ struct Aff_Data {
 	char16_t compound_root_flag;
 	char16_t compound_force_uppercase;
 	bool compound_more_suffixes;
-	bool compound_check_up;
+	bool compound_check_duplicate;
 	bool compound_check_rep;
 	bool compound_check_case;
 	bool compound_check_triple;
