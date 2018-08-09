@@ -612,18 +612,18 @@ template <>
 class my_ctype<char> final : public std::ctype<char> {
       private:
 	mask tbl[256];
-	char upper[256];
-	char lower[256];
+	char upper_table[256];
+	char lower_table[256];
 
       public:
 	my_ctype(const std::string& enc, std::size_t refs = 0)
 	    : std::ctype<char>(tbl, false, refs)
 	{
-		fill_ctype(enc, tbl, upper, lower);
+		fill_ctype(enc, tbl, upper_table, lower_table);
 	}
 	char_type do_toupper(char_type c) const override
 	{
-		return upper[static_cast<unsigned char>(c)];
+		return upper_table[static_cast<unsigned char>(c)];
 	}
 	const char_type* do_toupper(char_type* first,
 	                            const char_type* last) const override
@@ -635,7 +635,7 @@ class my_ctype<char> final : public std::ctype<char> {
 	}
 	char_type do_tolower(char_type c) const override
 	{
-		return lower[static_cast<unsigned char>(c)];
+		return lower_table[static_cast<unsigned char>(c)];
 	}
 	const char_type* do_tolower(char_type* first,
 	                            const char_type* last) const override
@@ -867,6 +867,25 @@ auto classify_casing(const std::basic_string<CharT>& s, const std::locale& loc)
 template auto classify_casing(const std::string&, const std::locale&) -> Casing;
 template auto classify_casing(const std::wstring&, const std::locale&)
     -> Casing;
+
+template <class CharT>
+auto has_uppercase_at_compound_word_boundary(
+    const std::basic_string<CharT>& word, size_t i, const std::locale& loc)
+    -> bool
+{
+	auto& f = use_facet<my_ctype<CharT>>(loc);
+	if (f.is(f.upper, word[i])) {
+		if (f.is(f.alpha, word[i - 1]))
+			return true;
+	}
+	else if (f.is(f.upper, word[i - 1]) && f.is(f.alpha, word[i]))
+		return true;
+	return false;
+}
+template auto has_uppercase_at_compound_word_boundary(const string&, size_t,
+                                                      const locale&) -> bool;
+template auto has_uppercase_at_compound_word_boundary(const wstring&, size_t,
+                                                      const locale&) -> bool;
 
 auto Encoding::normalize_name() -> void
 {

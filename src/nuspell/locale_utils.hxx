@@ -159,6 +159,11 @@ template <class CharT>
 auto classify_casing(const std::basic_string<CharT>& s,
                      const std::locale& loc = std::locale()) -> Casing;
 
+template <class CharT>
+auto has_uppercase_at_compound_word_boundary(
+    const std::basic_string<CharT>& word, size_t i, const std::locale& loc)
+    -> bool;
+
 class Encoding {
 	std::string name;
 

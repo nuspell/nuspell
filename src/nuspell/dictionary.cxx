@@ -1598,6 +1598,9 @@ auto Dict_Base::check_compound_classic(std::basic_string<CharT>& word,
 		if (i >= 2 && word.compare(i - 2, 3, triple) == 0)
 			return {};
 	}
+	if (compound_check_case &&
+	    has_uppercase_at_compound_word_boundary(word, i, locale_aff))
+		return {};
 
 	part.assign(word, i, word.npos);
 	auto part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);

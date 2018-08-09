@@ -69,6 +69,7 @@ checkcompounddup.dic \
 checkcompoundtriple.dic \
 simplifiedtriple.dic \
 checkcompoundrep.dic \
+checkcompoundcase.dic \
 checkcompoundcase2.dic \
 checkcompoundcaseutf.dic \
 checkcompoundpattern.dic \
@@ -128,12 +129,9 @@ allcaps.dic \
 allcaps2.dic \
 allcaps_utf.dic \
 base_utf.dic \
-checkcompoundcase2.dic \
-checkcompoundcaseutf.dic \
 checkcompounddup.dic \
 checkcompoundrep.dic \
 forceucase.dic \
-germancompounding.dic \
 hu.dic \
 nepali.dic
 
