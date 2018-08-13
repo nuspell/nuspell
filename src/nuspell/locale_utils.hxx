@@ -46,9 +46,6 @@
 
 #include <locale>
 #include <string>
-#include <type_traits>
-
-#include <boost/locale/encoding_utf.hpp>
 
 namespace nuspell {
 
@@ -85,56 +82,17 @@ auto to_narrow(const std::wstring& in, const std::locale& outloc)
 
 auto install_ctype_facets_inplace(std::locale& boost_loc) -> void;
 
-class Locale_Input {
-	std::locale external_locale;
-
-	auto static cvt_for_byte_dict(const std::string& in,
-	                              const std::locale& inloc,
-	                              std::string& out,
-	                              const std::locale& dicloc,
-	                              std::wstring& wide_buffer) -> bool;
-
-	auto static cvt_for_u8_dict(const std::string& in,
-	                            const std::locale& inloc, std::wstring& out)
-	    -> bool;
-
-      public:
-	auto imbue(const std::locale& loc) { external_locale = loc; }
-	// getloc() calls in iostreams return by value doing a ref-counted copy
-	// of pointer. Doing that we pay little extra than just returning a
-	// const reference. Here we fix that and return a const reference.
-	auto& getloc() const { return external_locale; }
-
-      protected:
-	auto cvt_for_byte_dict(const std::string& in, std::string& out,
-	                       const std::locale& dicloc,
-	                       std::wstring& wide_buffer) const
-	{
-		return cvt_for_byte_dict(in, getloc(), out, dicloc,
-		                         wide_buffer);
-	}
-
-	auto cvt_for_u8_dict(const std::string& in, std::wstring& out) const
-	{
-		return cvt_for_u8_dict(in, getloc(), out);
-	}
+enum class Encoding_Details {
+	EXTERNAL_U8_INTERNAL_U8,
+	EXTERNAL_OTHER_INTERNAL_U8,
+	EXTERNAL_U8_INTERNAL_OTHER,
+	EXTERNAL_OTHER_INTERNAL_OTHER,
+	EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE,
+	BAD_LOCALES
 };
 
-template <class CharT>
-struct Unicode_Input {
-	auto static cvt_for_byte_dict(const std::basic_string<CharT>& in,
-	                              const std::locale& dicloc)
-	{
-		using namespace boost::locale::conv;
-		return to_narrow(utf_to_utf<wchar_t>(in), dicloc);
-	}
-
-	auto static cvt_for_u8_dict(const std::basic_string<CharT>& in)
-	{
-		using namespace boost::locale::conv;
-		return utf_to_utf<wchar_t>(in);
-	}
-};
+auto analyze_encodings(const std::locale& external, const std::locale& internal)
+    -> Encoding_Details;
 
 /**
  * Casing type enum, ignoring neutral case characters.

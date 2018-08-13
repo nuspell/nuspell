@@ -284,9 +284,11 @@ struct Dict_Base : public Aff_Data {
 	}
 };
 
-template <class InputEncodingTraits>
-struct Basic_Dictionary : protected Dict_Base, public InputEncodingTraits {
+class Basic_Dictionary : protected Dict_Base {
+	std::locale external_locale;
+	Encoding_Details enc_details;
 
+      public:
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
 		auto ret = Basic_Dictionary();
@@ -305,10 +307,15 @@ struct Basic_Dictionary : protected Dict_Base, public InputEncodingTraits {
 			throw std::ios_base::failure("Dic file not found.");
 		return load_from_aff_dic(aff_file, dic_file);
 	}
+	auto imbue(const std::locale& loc)
+	{
+		external_locale = loc;
+		enc_details = analyze_encodings(external_locale, locale_aff);
+	}
 	auto spell(const std::string& word) const -> bool;
 };
 
-using Dictionary = Basic_Dictionary<Locale_Input>;
+using Dictionary = Basic_Dictionary;
 
 } // namespace nuspell
 #endif // NUSPELL_DICTIONARY_HXX

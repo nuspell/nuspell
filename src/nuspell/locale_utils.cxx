@@ -790,42 +790,35 @@ auto install_ctype_facets_inplace(std::locale& boost_loc) -> void
 	boost_loc = locale(boost_loc, new my_ctype<wchar_t>(enc));
 }
 
-auto Locale_Input::cvt_for_byte_dict(const std::string& in,
-                                     const std::locale& inloc, std::string& out,
-                                     const std::locale& dicloc,
-                                     std::wstring& wide_buffer) -> bool
+auto analyze_encodings(const locale& external, const locale& internal)
+    -> Encoding_Details
 {
-	using info_t = boost::locale::info;
-	using namespace boost::locale::conv;
-	if (has_facet<info_t>(inloc)) {
-		auto& in_info = use_facet<info_t>(inloc);
-		auto& dic_info = use_facet<info_t>(dicloc);
-		auto in_enc = in_info.encoding();
-		auto dic_enc = dic_info.encoding();
-		if (in_enc == dic_enc) {
-			out = in;
-			return true;
-		}
-	}
-	auto valid1 = to_wide(in, inloc, wide_buffer);
-	auto valid2 = to_narrow(wide_buffer, out, dicloc);
-	return valid1 && valid2;
-}
+	using namespace boost::locale;
+	using ed = nuspell::Encoding_Details;
 
-auto Locale_Input::cvt_for_u8_dict(const std::string& in,
-                                   const std::locale& inloc, std::wstring& out)
-    -> bool
-{
-	using info_t = boost::locale::info;
-	using namespace boost::locale::conv;
-	if (has_facet<info_t>(inloc)) {
-		auto& in_info = use_facet<info_t>(inloc);
-		if (in_info.utf8())
-			return utf8_to_wide(in, out); // Skips chars on error.
-		// Might end up with empty out string if all in is error,
-		// thus check the return value at the caller.
+	if (!has_facet<info>(internal))
+		return ed::BAD_LOCALES;
+	auto& int_info = use_facet<info>(internal);
+	if (has_facet<info>(external)) {
+		auto& ext_info = use_facet<info>(external);
+		if (ext_info.utf8() && int_info.utf8())
+			return ed::EXTERNAL_U8_INTERNAL_U8;
+		if (ext_info.utf8() && !int_info.utf8())
+			return ed::EXTERNAL_U8_INTERNAL_OTHER;
+		if (int_info.utf8())
+			return ed::EXTERNAL_OTHER_INTERNAL_U8;
+		auto int_enc = int_info.encoding();
+		auto ext_enc = ext_info.encoding();
+		auto& cvt =
+		    use_facet<codecvt<wchar_t, char, mbstate_t>>(internal);
+		if (int_enc == ext_enc && cvt.encoding() >= 0 &&
+		    cvt.max_length() == 1)
+			return ed::EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE;
+		return ed::EXTERNAL_OTHER_INTERNAL_OTHER;
 	}
-	return to_wide(in, inloc, out);
+	if (int_info.utf8())
+		return ed::EXTERNAL_OTHER_INTERNAL_U8;
+	return ed::EXTERNAL_OTHER_INTERNAL_OTHER;
 }
 
 /**

@@ -1875,29 +1875,48 @@ auto Dict_Base::check_compound_with_rules(
 	return {};
 }
 
-template <>
-auto Basic_Dictionary<Locale_Input>::spell(const std::string& word) const
-    -> bool
+auto Basic_Dictionary::spell(const std::string& word) const -> bool
 {
-	using namespace std;
+	using ed = nuspell::Encoding_Details;
+
+	auto static thread_local wide_word = wstring();
+	auto static thread_local narrow_word = string();
+	auto ok_enc = true;
+	switch (enc_details) {
+	case ed::EXTERNAL_U8_INTERNAL_U8:
+		ok_enc = utf8_to_wide(word, wide_word);
+		break;
+	case ed::EXTERNAL_OTHER_INTERNAL_U8:
+		ok_enc = to_wide(word, external_locale, wide_word);
+		break;
+	case ed::EXTERNAL_U8_INTERNAL_OTHER:
+		ok_enc = utf8_to_wide(word, wide_word);
+		ok_enc &= to_narrow(wide_word, narrow_word, locale_aff);
+		break;
+	case ed::EXTERNAL_OTHER_INTERNAL_OTHER:
+		ok_enc = to_wide(word, external_locale, wide_word);
+		ok_enc &= to_narrow(wide_word, narrow_word, locale_aff);
+		break;
+	case ed::EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE:
+		narrow_word = word;
+		ok_enc = true;
+		break;
+	case ed::BAD_LOCALES:
+		return false;
+	}
 	using info_t = boost::locale::info;
 	auto& dic_info = use_facet<info_t>(locale_aff);
-	auto static thread_local wide_word = wstring();
 	if (dic_info.utf8()) {
-		auto ok = cvt_for_u8_dict(word, wide_word);
 		if (unlikely(wide_word.size() > 180)) {
 			wide_word.resize(180);
 			wide_word.shrink_to_fit();
 			return false;
 		}
-		if (unlikely(!ok))
+		if (unlikely(!ok_enc))
 			return false;
 		return spell_priv<wchar_t>(wide_word);
 	}
 	else {
-		auto static thread_local narrow_word = string();
-		auto ok =
-		    cvt_for_byte_dict(word, narrow_word, locale_aff, wide_word);
 		if (unlikely(narrow_word.size() > 180)) {
 			narrow_word.resize(180);
 			narrow_word.shrink_to_fit();
@@ -1905,7 +1924,7 @@ auto Basic_Dictionary<Locale_Input>::spell(const std::string& word) const
 			wide_word.shrink_to_fit();
 			return false;
 		}
-		if (unlikely(!ok))
+		if (unlikely(!ok_enc))
 			return false;
 		return spell_priv<char>(narrow_word);
 	}
