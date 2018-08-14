@@ -1904,9 +1904,9 @@ auto Basic_Dictionary::spell(const std::string& word) const -> bool
 	case ed::BAD_LOCALES:
 		return false;
 	}
-	using info_t = boost::locale::info;
-	auto& dic_info = use_facet<info_t>(locale_aff);
-	if (dic_info.utf8()) {
+	switch (enc_details) {
+	case ed::EXTERNAL_U8_INTERNAL_U8:
+	case ed::EXTERNAL_OTHER_INTERNAL_U8:
 		if (unlikely(wide_word.size() > 180)) {
 			wide_word.resize(180);
 			wide_word.shrink_to_fit();
@@ -1915,8 +1915,7 @@ auto Basic_Dictionary::spell(const std::string& word) const -> bool
 		if (unlikely(!ok_enc))
 			return false;
 		return spell_priv<wchar_t>(wide_word);
-	}
-	else {
+	default:
 		if (unlikely(narrow_word.size() > 180)) {
 			narrow_word.resize(180);
 			narrow_word.shrink_to_fit();
