@@ -65,6 +65,10 @@ enum Mode {
 	MISSPELLED_LINES_MODE /**< printing only misspelled lines */,
 	CORRECT_WORDS_MODE /**< printing only correct words */,
 	CORRECT_LINES_MODE /**< printing only correct lines */,
+	CRUDE_PARSE_MODE /**< use crude pasring for running text */,
+	CRUDE_PARSE_NO_SUGGEST_MODE /**< use crude pasring for running text
+	                               without suggestions*/
+	,
 	LINES_MODE /**< where correctness is based on entire line */,
 	LIST_DICTIONARIES_MODE /**< printing available dictionaries */,
 	HELP_MODE /**< printing help information */,
@@ -74,7 +78,7 @@ enum Mode {
 
 struct Args_t {
 	Mode mode = DEFAULT_MODE;
-	string program_name = PACKAGE;
+	string program_name = PACKAGE; // ignore warning padding struct
 	string dictionary;
 	string encoding;
 	vector<string> other_dicts;
@@ -102,7 +106,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	int c;
 	// The program can run in various modes depending on the
 	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:DGLUlhv";
+	const char* shortopts = ":d:i:CDGLUlhv";
 	const struct option longopts[] = {
 	    {"version", 0, nullptr, 'v'},
 	    {"help", 0, nullptr, 'h'},
@@ -123,6 +127,15 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 			break;
 		case 'i':
 			encoding = optarg;
+
+			break;
+		case 'C':
+			if (mode == DEFAULT_MODE)
+				mode = CRUDE_PARSE_MODE;
+			else if (mode == NO_SUGGEST_MODE)
+				mode = CRUDE_PARSE_NO_SUGGEST_MODE;
+			else
+				mode = ERROR_MODE;
 
 			break;
 		case 'D':
@@ -164,6 +177,8 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 		case 'U':
 			if (mode == DEFAULT_MODE)
 				mode = NO_SUGGEST_MODE;
+			else if (mode == CRUDE_PARSE_MODE)
+				mode = CRUDE_PARSE_NO_SUGGEST_MODE;
 			else
 				mode = ERROR_MODE;
 
@@ -221,8 +236,11 @@ auto print_help(const string& program_name) -> void
 	     "Check spelling of each FILE. Without FILE, check standard "
 	     "input.\n"
 	     "\n"
-	     "  -d di_CT      use di_CT dictionary. Only one dictionary is\n"
-	     "                currently supported\n"
+	     "  -d di_CT      use di_CT dictionary. Only one dictionary at a\n"
+	     "                time is currently supported\n"
+	     "  -C            crude parsing of plain running text, prints\n"
+	     "                spelling correctness, tab and tokenized word\n"
+	     "                or prints a $ and tab for end of line\n"
 	     "  -D            show available dictionaries and exit\n"
 	     "  -i enc        input encoding, default is active locale\n"
 	     "  -l            print only misspelled words or lines\n"
@@ -350,6 +368,24 @@ auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
 		auto res = dic.spell(word);
 		if (res != false)
 			out << word << '\n';
+	}
+}
+
+auto crude_parse_loop(istream& in, ostream& out, Dictionary& dic)
+{
+	auto line = string();
+	auto words = vector<string>();
+	auto loc = in.getloc();
+	while (getline(in, line)) {
+		parse_on_whitespace_v(line, words, loc);
+		for (auto& word : words) {
+			auto res = dic.spell(word);
+			if (res)
+				out << "*\t" << word << '\n';
+			else
+				out << "&\t" << word << '\n';
+		}
+		out << "$\t\n";
 	}
 }
 
@@ -500,6 +536,13 @@ int main(int argc, char* argv[])
 		// loop_function = normal_loop;
 		break;
 	case NO_SUGGEST_MODE:
+		// This will differ from normal loop once suggestion has been
+		// implemented. loop_function = normal_loop;
+		break;
+	case CRUDE_PARSE_MODE:
+		loop_function = crude_parse_loop;
+		break;
+	case CRUDE_PARSE_NO_SUGGEST_MODE:
 		// This will differ from normal loop once suggestion has been
 		// implemented. loop_function = normal_loop;
 		break;

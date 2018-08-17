@@ -87,6 +87,22 @@ TEST_CASE("method split_on_whitespace", "[string_utils]")
 	CHECK(exp == out);
 }
 
+TEST_CASE("method parse_on_whitespace", "[string_utils]")
+{
+	// also tests _v variant
+
+	auto in = "   qwe ert  \tasd "s;
+	auto exp = vector<string>{"   ", "qwe", " ", "ert", "  \t", "asd", " "};
+	auto out = vector<string>();
+	parse_on_whitespace_v(in, out);
+	CHECK(exp == out);
+
+	in = "   \t\r\n  "s;
+	exp = vector<string>{in};
+	parse_on_whitespace_v(in, out);
+	CHECK(exp == out);
+}
+
 TEST_CASE("method is_number", "[string_utils]")
 {
 	CHECK_FALSE(is_number(""s));

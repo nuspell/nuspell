@@ -166,6 +166,48 @@ auto split_first(const std::basic_string<CharT>& s, const CharOrStr& sep)
 }
 
 /**
+ * Parses on whitespace.
+ *
+ * Consecutive whitespace is treated as single separator. Includes whitespace
+ * in output.
+ *
+ * @param s string to split.
+ * @param out start of the output range where separated strings are
+ * appended.
+ * @param loc locale object that takes care of what is whitespace.
+ * @return The iterator that indicates the end of the output range.
+ */
+template <class CharT, class OutIt>
+auto parse_on_whitespace(const std::basic_string<CharT>& s, OutIt out,
+                         const std::locale& loc = std::locale()) -> OutIt
+{
+	auto& f = std::use_facet<std::ctype<CharT>>(loc);
+	auto isspace = [&](auto& c) { return f.is(std::ctype_base::space, c); };
+	auto i1 = begin(s);
+	auto endd = end(s);
+	do {
+		auto i2 = std::find_if_not(i1, endd, isspace);
+		if (i2 != i1)
+			*out++ = std::basic_string<CharT>(i1, i2);
+		if (i2 == endd)
+			break;
+		auto i3 = std::find_if(i2, endd, isspace);
+		*out++ = std::basic_string<CharT>(i2, i3);
+		i1 = i3;
+	} while (i1 != endd);
+	return out;
+}
+
+template <class CharT>
+auto parse_on_whitespace_v(const std::basic_string<CharT>& s,
+                           std::vector<std::basic_string<CharT>>& v,
+                           const std::locale& loc = std::locale()) -> void
+{
+	v.clear();
+	parse_on_whitespace(s, back_inserter(v), loc);
+}
+
+/**
  * Splits on whitespace.
  *
  * Consecutive whitespace is treated as single separator. Behaves same as

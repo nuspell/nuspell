@@ -80,7 +80,7 @@ enum Mode {
 
 struct Args_t {
 	Mode mode = DEFAULT_MODE;
-	string program_name = PACKAGE;
+	string program_name = PACKAGE; // ignore warning padding struct
 	string dictionary;
 	string encoding;
 	vector<string> other_dicts;
