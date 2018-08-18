@@ -13,6 +13,7 @@ AX_CODE_COVERAGE
 AS_IF([test x$enable_code_coverage = xyes],[
 	: ${CXXFLAGS=""}; : ${CFLAGS=""}
 ])
+AX_GENERATE_CHANGELOG
 
 # Checks for programs.
 AC_PROG_CXX

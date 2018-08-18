@@ -28,6 +28,7 @@ nuspell_SOURCES = main.cxx
 LDADD = libnuspell.a $(LIBADD)
 
 noinst_PROGRAMS = regress
-nodist_regress_SOURCES = regress.cxx
-regress_CPPFLAGS = $(AM_CPPFLAGS) -DHUNSPELL_STATIC
+regress_SOURCES = regress.cxx
+regress_CPPFLAGS = $(AM_CPPFLAGS) -DHUNSPELL_STATIC \
+                   -I$(top_builddir)/src/hunspell
 regress_LDADD = libnuspell.a ../hunspell/libhunspell.a $(LIBADD)

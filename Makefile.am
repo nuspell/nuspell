@@ -8,3 +8,7 @@ pkgconf_DATA = nuspell.pc
 EXTRA_DIST = COPYING.LESSER nuspell.pc.in LICENSES
 
 @CODE_COVERAGE_RULES@
+
+@GENERATE_CHANGELOG_RULES@
+CHANGELOG_START = v1.6.2^
+dist-hook: dist-ChangeLog

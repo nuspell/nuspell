@@ -665,6 +665,7 @@ nepali.good \
 hu.aff \
 hu.dic \
 hu.good \
+hu.wrong \
 warn.aff \
 warn.dic \
 warn.good
