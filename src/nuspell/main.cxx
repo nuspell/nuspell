@@ -106,7 +106,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	int c;
 	// The program can run in various modes depending on the
 	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:CDGLUlhv";
+	const char* shortopts = ":d:i:aCDGLUlhv";
 	const struct option longopts[] = {
 	    {"version", 0, nullptr, 'v'},
 	    {"help", 0, nullptr, 'h'},
@@ -115,6 +115,10 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	while ((c = getopt_long(argc, argv, shortopts, longopts, nullptr)) !=
 	       -1) {
 		switch (c) {
+		case 'a':
+			// ispell pipe mode, same as default mode
+			if (mode != DEFAULT_MODE)
+				mode = ERROR_MODE;
 		case 'd':
 			if (dictionary.empty())
 				dictionary = optarg;
@@ -244,8 +248,8 @@ auto print_help(const string& program_name) -> void
 	     "                spelling correctness, tab and tokenized word\n"
 	     "                or prints a $ and tab for end of input line\n"
 	     "  -D            print search paths and available dictionaries "
-	     "and exit\n"
-	     "  -i enc        input encoding, default is active locale\n"
+	     "                and exit\n"
+	     "  -i enc        input/output encoding, default is active locale\n"
 	     "  -l            print only misspelled words or lines\n"
 	     "  -G            print only correct words or lines\n"
 	     "  -L            lines mode\n"
@@ -459,30 +463,27 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	boost::locale::generator gen;
-	auto loc = gen("");
-	install_ctype_facets_inplace(loc);
-	if (args.encoding.empty()) {
-		cin.imbue(loc);
-	}
-	else {
-		try {
-			auto loc2 = gen("en_US." + args.encoding);
-			install_ctype_facets_inplace(loc2);
-			cin.imbue(loc2);
+	auto loc = std::locale();
+	try {
+		if (args.encoding.empty()) {
+			loc = gen("");
+			install_ctype_facets_inplace(loc);
 		}
-		catch (const boost::locale::conv::invalid_charset_error& e) {
-			cerr << e.what() << '\n';
+		else {
+			loc = gen("en_US." + args.encoding);
+			install_ctype_facets_inplace(loc);
+		}
+	}
+	catch (const boost::locale::conv::invalid_charset_error& e) {
+		cerr << e.what() << '\n';
 #ifdef _POSIX_VERSION
-			cerr << "Nuspell error: see `locale -m` for supported "
-			        "encodings.\n";
+		cerr << "Nuspell error: see `locale -m` for supported "
+		        "encodings.\n";
 #endif
-			return 1;
-		}
+		return 1;
 	}
+	cin.imbue(loc);
 	cout.imbue(loc);
-	cerr.imbue(loc);
-	clog.imbue(loc);
-	setlocale(LC_CTYPE, "");
 
 	switch (args.mode) {
 	case HELP_MODE:

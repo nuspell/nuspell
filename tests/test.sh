@@ -17,98 +17,62 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
 
-# set -x # uncomment for debugging
-set -o pipefail
-
-export LC_ALL="C"
-
 function check_valgrind_log () {
-if [[ "$VALGRIND" != "" && -f $TEMPDIR/test.pid* ]]; then
-	log=$(ls $TEMPDIR/test.pid*)
+if [[ "$VALGRIND" != "" && -f $temp_dir/test.pid* ]]; then
+	log=$(ls $temp_dir/test.pid*)
 	if ! grep -q 'ERROR SUMMARY: 0 error' $log; then
-		echo "Fail in $NAME $1 checking detected by Valgrind"
-		echo "$log Valgrind log file moved to $TEMPDIR/badlogs"
-		mv $log $TEMPDIR/badlogs
+		echo "Fail in $in_dict $1 checking detected by Valgrind"
+		echo "$log Valgrind log file moved to $temp_dir/badlogs"
+		mv $log $temp_dir/badlogs
 		exit 1
 	fi
 	if grep -q 'LEAK SUMMARY' $log; then
-		echo "Memory leak in $NAME $1 checking detected by Valgrind"
-		echo "$log Valgrind log file moved to $TEMPDIR/badlogs"
-		mv $log $TEMPDIR/badlogs
+		echo "Memory leak in $in_dict $1 checking detected by Valgrind"
+		echo "$log Valgrind log file moved to $temp_dir/badlogs"
+		mv $log $temp_dir/badlogs
 		exit 1
 	fi
 	rm -f $log
 fi
 }
 
-TEMPDIR=./testSubDir
-NAME="${1%.dic}"
-shift
-ENCODING=UTF-8 #io encoding passed with -i
-if [[ "$1" == "-i" && -n "$2" ]]; then
-	ENCODING="$2"
-	shift 2
-fi
-shopt -s expand_aliases
-
-[[ "$HUNSPELL" = "" ]] && HUNSPELL="$(dirname $0)"/../src/nuspell/nuspell
-[[ "$ANALYZE" = "" ]] && ANALYZE="$(dirname $0)"/../src/tools/analyze
-[[ "$LIBTOOL" = "" ]] && LIBTOOL="$(dirname $0)"/../libtool
-alias hunspell='"$LIBTOOL" --mode=execute "$HUNSPELL"'
-alias analyze='"$LIBTOOL" --mode=execute "$ANALYZE"'
-
-if [[ "$VALGRIND" != "" ]]; then
-	mkdir $TEMPDIR 2> /dev/null || :
-	rm -f $TEMPDIR/test.pid* || :
-	mkdir $TEMPDIR/badlogs 2> /dev/null || :
-	alias hunspell='"$LIBTOOL" --mode=execute valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$TEMPDIR/test.pid "$HUNSPELL"'
-	alias analyze='"$LIBTOOL" --mode=execute valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$TEMPDIR/test.pid "$ANALYZE"'
-fi
-
-CR=$(printf "\r")
-
-in_dict="$NAME"
-if [[ ! -f "$in_dict.dic" ]]; then
-	echo "Dictionary $in_dict.dic does not exists"
-	exit 3
-fi
-
+function test-good {
 # Tests good words
 in_file="$in_dict.good"
 
 if [[ -f $in_file ]]; then
-	out=$(hunspell -l -i "$ENCODING" "$@" -d "$in_dict" < "$in_file" \
-	      | tr -d "$CR")
+	out=$(hunspell -l -i "$encoding" "$@" -d "$in_dict" < "$in_file" \
+	      | tr -d $'\r')
 	if [[ $? -ne 0 ]]; then exit 2; fi
 	if [[ "$out" != "" ]]; then
 		echo "============================================="
-		echo "Fail in $NAME.good. Good words recognised as wrong:"
+		echo "Fail in $in_dict.good. Good words recognised as wrong:"
 		echo "$out"
 		exit 1
 	fi
 fi
-
 check_valgrind_log "good words"
+}
 
+function test-bad {
 # Tests bad words
 in_file="$in_dict.wrong"
 
 if [[ -f $in_file ]]; then
-	out=$(hunspell -G -i "$ENCODING" "$@" -d "$in_dict" < "$in_file" \
-	      | tr -d "$CR") #strip carige return for mingw builds
+	out=$(hunspell -G -i "$encoding" "$@" -d "$in_dict" < "$in_file" \
+	      | tr -d $'\r') #strip carige return for mingw builds
 	if [[ $? -ne 0 ]]; then exit 2; fi
 	if [[ "$out" != "" ]]; then
 		echo "============================================="
-		echo "Fail in $NAME.wrong. Bad words recognised as good:"
+		echo "Fail in $in_dict.wrong. Bad words recognised as good:"
 		echo "$out"
 		exit 1
 	fi
 fi
-
 check_valgrind_log "bad words"
+}
 
-exit 0 # XXXX DISABLES TESTING SUGGESTIONS. remove when suggestions are implemented
-
+function test-morph {
 # Tests morphological analysis
 in_file="$in_dict.good"
 expected_file="$in_dict.morph"
@@ -116,34 +80,80 @@ expected_file="$in_dict.morph"
 if [[ -f $expected_file ]]; then
 	#in=$(sed 's/	$//' "$in_file") #passes without this.
 	out=$(analyze "$in_dict.aff" "$in_dict.dic" "$in_file" \
-	      | tr -d "$CR") #strip carige return for mingw builds
+	      | tr -d $'\r') #strip carige return for mingw builds
 	if [[ $? -ne 0 ]]; then exit 2; fi
 	expected=$(<"$expected_file")
 	if [[ "$out" != "$expected" ]]; then
 		echo "============================================="
-		echo "Fail in $NAME.morph. Bad analysis?"
+		echo "Fail in $in_dict.morph. Bad analysis?"
 		diff "$expected_file" <(echo "$out") | grep '^<' | sed 's/^..//'
 		exit 1
 	fi
 fi
-
 check_valgrind_log "morphological analysis"
+}
 
+function test-sug {
 # Tests suggestions
 in_file=$in_dict.wrong
 expected_file=$in_dict.sug
 
 if [[ -f $expected_file ]]; then
-	out=$(hunspell -i "$ENCODING" "$@" -a -d "$in_dict" <"$in_file" | \
+	out=$(hunspell -i "$encoding" "$@" -a -d "$in_dict" <"$in_file" | \
 	      { grep -a '^&' || true; } | sed 's/^[^:]*: //')
 	if [[ $? -ne 0 ]]; then exit 2; fi
 	expected=$(<"$expected_file")
 	if [[ "$out" != "$expected" ]]; then
 		echo "============================================="
-		echo "Fail in $NAME.sug. Bad suggestion?"
+		echo "Fail in $in_dict.sug. Bad suggestion?"
 		diff "$expected_file" <(echo "$out")
 		exit 1
 	fi
 fi
-
 check_valgrind_log "suggestion"
+}
+
+# script starts here
+
+# set -x # uncomment for debugging
+set -o pipefail
+export LC_ALL="C"
+temp_dir=./testSubDir
+test_name="$1"
+shift
+encoding=UTF-8 #io encoding passed with -i
+if [[ "$1" == "-i" && -n "$2" ]]; then
+	encoding="$2"
+	shift 2
+fi
+
+[[ "$HUNSPELL" = "" ]] && HUNSPELL="$(dirname $0)"/../src/nuspell/nuspell
+[[ "$ANALYZE" = "" ]] && ANALYZE="$(dirname $0)"/../src/tools/analyze
+[[ "$LIBTOOL" = "" ]] && LIBTOOL="$(dirname $0)"/../libtool
+shopt -s expand_aliases
+alias hunspell='"$HUNSPELL"'
+alias analyze='"$ANALYZE"'
+
+if [[ "$VALGRIND" != "" ]]; then
+	mkdir $temp_dir 2> /dev/null || :
+	rm -f $temp_dir/test.pid* || :
+	mkdir $temp_dir/badlogs 2> /dev/null || :
+	alias hunspell='"$LIBTOOL" --mode=execute valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$temp_dir/test.pid "$HUNSPELL"'
+	alias analyze='"$LIBTOOL" --mode=execute valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$temp_dir/test.pid "$ANALYZE"'
+fi
+
+case $test_name in
+*.dic)
+	in_dict=${test_name%.dic}
+	test-good
+	test-bad
+	;;
+*.sug)
+	in_dict=${test_name%.sug}
+	test-sug
+	;;
+*.morph)
+	in_dict=${test_name%.sug}
+	test-morph
+	;;
+esac

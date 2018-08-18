@@ -25,7 +25,7 @@ input.
   - `-D`:
     print search paths and available dictionaries and exit
   - `-i <enc>`:
-    input encoding, default is active locale
+    input/output encoding, default is active locale
   - `-l`:
     print only misspelled words or lines
   - `-G`:

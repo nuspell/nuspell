@@ -1,10 +1,7 @@
-## Process this file with automake to create Makefile.in
-
-TEST_EXTENSIONS = .dic
 AM_TESTS_ENVIRONMENT = export HUNSPELL=$(top_builddir)/src/nuspell/nuspell; \
                        export ANALYZE=$(top_builddir)/src/tools/analyze; \
                        export LIBTOOL=$(top_builddir)/libtool;
-DIC_LOG_COMPILER = $(top_srcdir)/tests/test.sh
+LOG_COMPILER = $(top_srcdir)/tests/test.sh
 
 TESTS =	\
 affixes.dic \
@@ -123,7 +120,41 @@ onlyincompound2.dic \
 forceucase.dic \
 nepali.dic \
 hu.dic \
-warn.dic
+warn.dic \
+\
+1463589.sug \
+1463589_utf.sug \
+1695964.sug \
+allcaps2.sug \
+allcaps.sug \
+allcaps_utf.sug \
+base.sug \
+base_utf.sug \
+breakdefault.sug \
+checksharps.sug \
+checksharpsutf.sug \
+forceucase.sug \
+i35725.sug \
+i54633.sug \
+i58202.sug \
+IJ.sug \
+keepcase.sug \
+map.sug \
+maputf.sug \
+ngram_utf_fix.sug \
+nosuggest.sug \
+oconv.sug \
+onlyincompound.sug \
+opentaal_forbiddenword1.sug \
+opentaal_forbiddenword2.sug \
+opentaal_keepcase.sug \
+phone.sug \
+rep.sug \
+reputf.sug \
+sug.sug \
+sugutf.sug \
+utf8_nonbmp.sug
+
 
 XFAIL_TESTS = \
 allcaps.dic \
@@ -133,7 +164,40 @@ base_utf.dic \
 checkcompoundrep.dic \
 forceucase.dic \
 hu.dic \
-nepali.dic
+nepali.dic \
+\
+1463589.sug \
+1463589_utf.sug \
+1695964.sug \
+allcaps2.sug \
+allcaps.sug \
+allcaps_utf.sug \
+base.sug \
+base_utf.sug \
+breakdefault.sug \
+checksharps.sug \
+checksharpsutf.sug \
+forceucase.sug \
+i35725.sug \
+i54633.sug \
+i58202.sug \
+IJ.sug \
+keepcase.sug \
+map.sug \
+maputf.sug \
+ngram_utf_fix.sug \
+nosuggest.sug \
+oconv.sug \
+onlyincompound.sug \
+opentaal_forbiddenword1.sug \
+opentaal_forbiddenword2.sug \
+opentaal_keepcase.sug \
+phone.sug \
+rep.sug \
+reputf.sug \
+sug.sug \
+sugutf.sug \
+utf8_nonbmp.sug
 
 clean-local:
 	-rm -rf testSubDir
