@@ -366,15 +366,14 @@ class Break_Table {
 
       private:
 	Table_Str table;
-	iterator start_word_breaks_last_it;
-	iterator end_word_breaks_last_it;
+	size_t start_word_breaks_last_idx = 0;
+	size_t end_word_breaks_last_idx = 0;
 
 	auto order_entries() -> void; // implemented in cxx
 
       public:
 	Break_Table() = default;
 	Break_Table(const Table_Str& v) : table(v) { order_entries(); }
-
 	Break_Table(Table_Str&& v) : table(move(v)) { order_entries(); }
 
 	auto& operator=(const Table_Str& v)
@@ -401,18 +400,17 @@ class Break_Table {
 
 	auto start_word_breaks() const -> boost::iterator_range<const_iterator>
 	{
-		return {std::begin(table),
-		        const_iterator(start_word_breaks_last_it)};
+		return {begin(table),
+			begin(table) + start_word_breaks_last_idx};
 	}
 	auto end_word_breaks() const -> boost::iterator_range<const_iterator>
 	{
-		return {const_iterator(start_word_breaks_last_it),
-		        const_iterator(end_word_breaks_last_it)};
+		return {begin(table) + start_word_breaks_last_idx,
+			begin(table) + end_word_breaks_last_idx};
 	}
 	auto middle_word_breaks() const -> boost::iterator_range<const_iterator>
 	{
-		return {const_iterator(end_word_breaks_last_it),
-		        std::end(table)};
+		return {begin(table) + end_word_breaks_last_idx, end(table)};
 	}
 };
 extern template class Break_Table<char>;

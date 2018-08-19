@@ -130,8 +130,6 @@ template class Substr_Replacer<wchar_t>;
 template <class CharT>
 auto Break_Table<CharT>::order_entries() -> void
 {
-	using boost::make_iterator_range;
-
 	auto it = remove_if(begin(table), end(table), [](auto& s) {
 		return s.empty() ||
 		       (s.size() == 1 && (s[0] == '^' || s[0] == '$'));
@@ -140,20 +138,19 @@ auto Break_Table<CharT>::order_entries() -> void
 
 	auto is_start_word_break = [=](auto& x) { return x[0] == '^'; };
 	auto is_end_word_break = [=](auto& x) { return x.back() == '$'; };
-	start_word_breaks_last_it =
+	auto start_word_breaks_last =
 	    partition(begin(table), end(table), is_start_word_break);
+	start_word_breaks_last_idx = start_word_breaks_last - begin(table);
 
-	for (auto& e :
-	     make_iterator_range(begin(table), start_word_breaks_last_it)) {
-		e.erase(0, 1);
-	}
+	for_each(begin(table), start_word_breaks_last,
+	         [](auto& e) { e.erase(0, 1); });
 
-	end_word_breaks_last_it =
-	    partition(start_word_breaks_last_it, end(table), is_end_word_break);
-	for (auto& e : make_iterator_range(start_word_breaks_last_it,
-	                                   end_word_breaks_last_it)) {
-		e.pop_back();
-	}
+	auto end_word_breaks_last =
+	    partition(start_word_breaks_last, end(table), is_end_word_break);
+	end_word_breaks_last_idx = end_word_breaks_last - begin(table);
+
+	for_each(start_word_breaks_last, end_word_breaks_last,
+	         [](auto& e) { e.pop_back(); });
 }
 template class Break_Table<char>;
 template class Break_Table<wchar_t>;
