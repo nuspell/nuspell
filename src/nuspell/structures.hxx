@@ -856,5 +856,256 @@ class Compound_Rule_Table {
 	    -> bool;
 };
 
+/**
+ * @brief Vector of strings that recycles erased strings
+ */
+class List_Strings {
+	using VecT = std::vector<std::string>;
+	std::vector<std::string> d;
+	size_t sz = 0;
+
+      public:
+	using value_type = VecT::value_type;
+	using allocator_type = typename VecT::allocator_type;
+	using size_type = typename VecT::size_type;
+	using difference_type = typename VecT::difference_type;
+	using reference = typename VecT::reference;
+	using const_reference = typename VecT::const_reference;
+	using pointer = typename VecT::pointer;
+	using const_pointer = typename VecT::const_pointer;
+	using iterator = typename VecT::iterator;
+	using const_iterator = typename VecT::const_iterator;
+	using reverse_iterator = typename VecT::reverse_iterator;
+	using const_reverse_iterator = typename VecT::const_reverse_iterator;
+
+	List_Strings() = default;
+	explicit List_Strings(size_type n) : d(n), sz(n) {}
+	List_Strings(size_type n, const_reference value) : d(n, value), sz(n) {}
+	template <class InputIterator>
+	List_Strings(InputIterator first, InputIterator last)
+	    : d(first, last), sz(d.size())
+	{
+	}
+	List_Strings(std::initializer_list<value_type> il) : d(il), sz(d.size())
+	{
+	}
+
+	List_Strings(const List_Strings& other) = default;
+	List_Strings(List_Strings&& other) : d(move(other.d)), sz(other.sz)
+	{
+		other.sz = 0;
+	}
+	auto operator=(const List_Strings& other) -> List_Strings& = default;
+	auto& operator=(List_Strings&& other)
+	{
+		d = move(other.d);
+		sz = other.sz;
+		other.sz = 0;
+		return *this;
+	}
+	auto& operator=(std::initializer_list<value_type> il)
+	{
+		d = il;
+		sz = d.size();
+		return *this;
+	}
+	template <class InputIterator>
+	auto assign(InputIterator first, InputIterator last)
+	{
+		d.assign(first, last);
+		sz = d.size();
+	}
+	void assign(size_type n, const_reference value)
+	{
+		d.assign(n, value);
+		sz = n;
+	}
+	void assign(std::initializer_list<value_type> il) { *this = il; }
+	auto get_allocator() const noexcept { return d.get_allocator(); }
+
+	// iterators
+	auto begin() noexcept { return d.begin(); }
+	auto begin() const noexcept { return d.begin(); }
+	auto end() noexcept { return begin() + sz; }
+	auto end() const noexcept { return begin() + sz; }
+
+	auto rbegin() noexcept { return d.rend() - sz; }
+	auto rbegin() const noexcept { return d.rend() - sz; }
+	auto rend() noexcept { return d.rend(); }
+	auto rend() const noexcept { return d.rend(); }
+
+	auto cbegin() const noexcept { return d.cbegin(); }
+	auto cend() const noexcept { return cbegin() + sz; }
+
+	auto crbegin() const noexcept { return d.crend() - sz; }
+	auto crend() const noexcept { return d.crend(); }
+
+	// [vector.capacity], capacity
+	auto empty() const noexcept { return sz == 0; }
+	auto size() const noexcept { return sz; }
+	auto max_size() const noexcept { return d.max_size(); }
+	auto capacity() const noexcept { return d.size(); }
+	auto resize(size_type new_sz)
+	{
+		if (new_sz <= sz) {
+		}
+		else if (new_sz <= d.size()) {
+			std::for_each(begin() + sz, begin() + new_sz,
+			              [](auto& s) { s.clear(); });
+		}
+		else {
+			std::for_each(d.begin() + sz, d.end(),
+			              [](auto& s) { s.clear(); });
+			d.resize(new_sz);
+		}
+		sz = new_sz;
+	}
+	auto resize(size_type new_sz, const_reference c)
+	{
+		if (new_sz <= sz) {
+		}
+		else if (new_sz <= d.size()) {
+			std::for_each(begin() + sz, begin() + new_sz,
+			              [&](auto& s) { s = c; });
+		}
+		else {
+			std::for_each(d.begin() + sz, d.end(),
+			              [&](auto& s) { s = c; });
+			d.resize(new_sz, c);
+		}
+		sz = new_sz;
+	}
+	void reserve(size_type n)
+	{
+		if (n > d.size())
+			d.resize(n);
+	}
+	void shrink_to_fit()
+	{
+		d.resize(sz);
+		d.shrink_to_fit();
+		for (auto& s : d) {
+			s.shrink_to_fit();
+		}
+	}
+
+	// element access
+	auto& operator[](size_type n) { return d[n]; }
+	auto& operator[](size_type n) const { return d[n]; }
+	auto& at(size_type n)
+	{
+		if (n < sz)
+			return d[n];
+		else
+			throw std::out_of_range("out of range");
+	}
+	auto& at(size_type n) const
+	{
+		if (n < sz)
+			return d[n];
+		else
+			throw std::out_of_range("out of range");
+	}
+	auto& front() { return d.front(); }
+	auto& front() const { return d.front(); }
+	auto& back() { return d[sz - 1]; }
+	auto& back() const { return d[sz - 1]; }
+
+	// [vector.data], data access
+	auto data() noexcept { return d.data(); }
+	auto data() const noexcept { return d.data(); }
+
+	// [vector.modifiers], modifiers
+	template <class... Args>
+	auto& emplace_back(Args&&... args)
+	{
+		if (sz != d.size())
+			d[sz] = value_type(std::forward<Args>(args)...);
+		else
+			d.emplace_back(std::forward<Args>(args)...);
+		return d[sz++];
+	}
+	auto& emplace_back()
+	{
+		if (sz != d.size())
+			d[sz].clear();
+		else
+			d.emplace_back();
+		return d[sz++];
+	}
+	auto push_back(const_reference x)
+	{
+		if (sz != d.size())
+			d[sz] = x;
+		else
+			d.push_back(x);
+		++sz;
+	}
+	auto push_back(value_type&& x)
+	{
+		if (sz != d.size())
+			d[sz] = std::move(x);
+		else
+			d.push_back(std::move(x));
+		++sz;
+	}
+	auto pop_back() { --sz; }
+
+	auto erase(const_iterator position)
+	{
+		auto i0 = begin();
+		auto i1 = i0 + (position - cbegin());
+		auto i2 = i1 + 1;
+		auto i3 = end();
+		std::rotate(i1, i2, i3);
+		--sz;
+		return i1;
+	}
+	auto erase(const_iterator first, const_iterator last)
+	{
+		auto i0 = begin();
+		auto i1 = i0 + (first - cbegin());
+		auto i2 = i0 + (last - cbegin());
+		auto i3 = end();
+		std::rotate(i1, i2, i3);
+		sz -= last - first;
+		return i1;
+	}
+	auto swap(List_Strings& other)
+	{
+		d.swap(other.d);
+		std::swap(sz, other.sz);
+	}
+	auto clear() noexcept { sz = 0; }
+
+	auto operator==(const List_Strings& other) const
+	{
+		return std::equal(begin(), end(), other.begin(), other.end());
+	}
+	auto operator!=(const List_Strings& other) const
+	{
+		return !(*this == other);
+	}
+	auto operator<(const List_Strings& other) const
+	{
+		return std::lexicographical_compare(begin(), end(),
+		                                    other.begin(), other.end());
+	}
+	auto operator>=(const List_Strings& other) const
+	{
+		return !(*this < other);
+	}
+	auto operator>(const List_Strings& other) const
+	{
+		return std::lexicographical_compare(other.begin(), other.end(),
+		                                    begin(), end());
+	}
+	auto operator<=(const List_Strings& other) const
+	{
+		return !(*this > other);
+	}
+};
+auto inline swap(List_Strings& a, List_Strings& b) { a.swap(b); }
+
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX
