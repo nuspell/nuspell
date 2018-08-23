@@ -45,7 +45,7 @@ Otherwise, spell checking has occured and returns success.
     
 ## BUGS
 
-Bug reports: <https://github.com/hunspell/nuspell/issues>
+Bug reports: <https://github.com/nuspell/nuspell/issues>
 
 ## EXAMPLES
 
@@ -57,6 +57,6 @@ Bug reports: <https://github.com/hunspell/nuspell/issues>
     
 ## SEE ALSO
 
-Full documentation: <https://github.com/hunspell/hunspell/wiki>
+Full documentation: <https://github.com/nuspell/nuspell/wiki>
 
-Home page: <http://hunspell.github.io/>
+Home page: <http://nuspell.github.io/>

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([nuspell],[2.0.0],[https://github.com/hunspell/nuspell/issues],,
+AC_INIT([nuspell],[2.0.0],[https://github.com/nuspell/nuspell/issues],,
         [https://nuspell.org])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])

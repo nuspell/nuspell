@@ -252,10 +252,10 @@ auto print_help(const string& program_name) -> void
 	     "\n";
 	o << "Example: " << p << " -d en_US file.txt\n";
 	o << "\n"
-	     "Bug reports: <https://github.com/hunspell/nuspell/issues>\n"
+	     "Bug reports: <https://github.com/nuspell/nuspell/issues>\n"
 	     "Full documentation: "
-	     "<https://github.com/hunspell/hunspell/wiki>\n"
-	     "Home page: <http://hunspell.github.io/>\n";
+	     "<https://github.com/nuspell/nuspell/wiki>\n"
+	     "Home page: <http://nuspell.github.io/>\n";
 }
 
 /**
@@ -273,7 +273,7 @@ auto print_version() -> void
 	    "There is NO WARRANTY, to the extent permitted by law.\n"
 	    "\n"
 	    "Written by Dimitrij Mijoski, Sander van Geloven and others,\n"
-	    "see https://github.com/hunspell/nuspell/blob/master/AUTHORS\n";
+	    "see https://github.com/nuspell/nuspell/blob/master/AUTHORS\n";
 }
 
 /**
