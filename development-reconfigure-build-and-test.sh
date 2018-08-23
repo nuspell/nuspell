@@ -7,3 +7,4 @@ else
 	echo FAILED
 	exit $?
 fi
+./development-build-and-test.sh
