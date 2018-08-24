@@ -401,12 +401,12 @@ class Break_Table {
 	auto start_word_breaks() const -> boost::iterator_range<const_iterator>
 	{
 		return {begin(table),
-			begin(table) + start_word_breaks_last_idx};
+		        begin(table) + start_word_breaks_last_idx};
 	}
 	auto end_word_breaks() const -> boost::iterator_range<const_iterator>
 	{
 		return {begin(table) + start_word_breaks_last_idx,
-			begin(table) + end_word_breaks_last_idx};
+		        begin(table) + end_word_breaks_last_idx};
 	}
 	auto middle_word_breaks() const -> boost::iterator_range<const_iterator>
 	{

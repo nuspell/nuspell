@@ -401,11 +401,6 @@ auto Dict_Base::check_word(std::basic_string<CharT>& s) const -> const Flag_Set*
 	if (ret10)
 		return &ret10->second;
 
-	auto words_data = vector<const Flag_Set*>();
-	auto ret11 = check_compound_with_rules(s, words_data);
-	if (ret11)
-		return &ret11->second;
-
 	return nullptr;
 }
 
@@ -1542,16 +1537,32 @@ auto is_compound_forbidden_by_patterns(
 	});
 }
 
+template <class CharT>
+auto Dict_Base::check_compound(std::basic_string<CharT>& word) const
+    -> Compounding_Result
+{
+	auto part = std::basic_string<CharT>();
+
+	if (compound_flag || compound_begin_flag || compound_middle_flag ||
+	    compound_last_flag) {
+		auto ret = check_compound(word, 0, 0, part);
+		if (ret)
+			return ret;
+	}
+	if (!compound_rules.empty()) {
+		auto words_data = vector<const Flag_Set*>();
+		return check_compound_with_rules(word, words_data, 0, part);
+	}
+
+	return {};
+}
+
 template <Affixing_Mode m, class CharT>
 auto Dict_Base::check_compound(std::basic_string<CharT>& word, size_t start_pos,
                                size_t num_part,
-                               std::basic_string<CharT>&& part) const
+                               std::basic_string<CharT>& part) const
     -> Compounding_Result
 {
-	if (compound_flag == 0 && compound_begin_flag == 0 &&
-	    compound_middle_flag == 0 && compound_last_flag == 0)
-		return {};
-
 	size_t min_length = 3;
 	if (compound_min_length != 0)
 		min_length = compound_min_length;
@@ -1560,14 +1571,14 @@ auto Dict_Base::check_compound(std::basic_string<CharT>& word, size_t start_pos,
 	size_t max_length = word.size() - min_length;
 	for (auto i = start_pos + min_length; i <= max_length; ++i) {
 
-		auto part1_entry = check_compound_classic<m>(
-		    word, start_pos, i, num_part, move(part));
+		auto part1_entry = check_compound_classic<m>(word, start_pos, i,
+		                                             num_part, part);
 
 		if (part1_entry)
 			return part1_entry;
 
 		part1_entry = check_compound_with_pattern_replacements<m>(
-		    word, start_pos, i, num_part, move(part));
+		    word, start_pos, i, num_part, part);
 
 		if (part1_entry)
 			return part1_entry;
@@ -1579,7 +1590,7 @@ template <Affixing_Mode m, class CharT>
 auto Dict_Base::check_compound_classic(std::basic_string<CharT>& word,
                                        size_t start_pos, size_t i,
                                        size_t num_part,
-                                       std::basic_string<CharT>&& part) const
+                                       std::basic_string<CharT>& part) const
     -> Compounding_Result
 {
 	auto& compound_patterns = get_structures<CharT>().compound_patterns;
@@ -1616,8 +1627,8 @@ auto Dict_Base::check_compound_classic(std::basic_string<CharT>& word,
 	return part1_entry;
 
 try_recursive:
-	part2_entry = check_compound<AT_COMPOUND_MIDDLE>(word, i, num_part + 1,
-	                                                 move(part));
+	part2_entry =
+	    check_compound<AT_COMPOUND_MIDDLE>(word, i, num_part + 1, part);
 	if (!part2_entry)
 		goto try_simplified_triple;
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
@@ -1650,8 +1661,8 @@ try_simplified_triple:
 	return part1_entry;
 
 try_simplified_triple_recursive:
-	part2_entry = check_compound<AT_COMPOUND_MIDDLE>(word, i, num_part + 1,
-	                                                 move(part));
+	part2_entry =
+	    check_compound<AT_COMPOUND_MIDDLE>(word, i, num_part + 1, part);
 	if (!part2_entry)
 		return {};
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
@@ -1666,7 +1677,7 @@ try_simplified_triple_recursive:
 template <Affixing_Mode m, class CharT>
 auto Dict_Base::check_compound_with_pattern_replacements(
     std::basic_string<CharT>& word, size_t start_pos, size_t i, size_t num_part,
-    std::basic_string<CharT>&& part) const -> Compounding_Result
+    std::basic_string<CharT>& part) const -> Compounding_Result
 {
 	auto& compound_patterns = get_structures<CharT>().compound_patterns;
 	for (auto& p : compound_patterns) {
@@ -1719,7 +1730,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 
 	try_recursive:
 		part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
-		    word, i, num_part + 1, move(part));
+		    word, i, num_part + 1, part);
 		if (!part2_entry)
 			goto try_simplified_triple;
 		if (p.second_word_flag != 0 &&
@@ -1753,7 +1764,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 
 	try_simplified_triple_recursive:
 		part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
-		    word, i, num_part + 1, move(part));
+		    word, i, num_part + 1, part);
 		if (!part2_entry)
 			continue;
 		if (p.second_word_flag != 0 &&
@@ -1812,12 +1823,9 @@ auto Dict_Base::check_word_in_compound(std::basic_string<CharT>& word) const
 template <class CharT>
 auto Dict_Base::check_compound_with_rules(
     std::basic_string<CharT>& word, std::vector<const Flag_Set*>& words_data,
-    size_t start_pos, std::basic_string<CharT>&& part) const
+    size_t start_pos, std::basic_string<CharT>& part) const
     -> Compounding_Result
 {
-	if (compound_rules.empty())
-		return {};
-
 	size_t min_length = 3;
 	if (compound_min_length != 0)
 		min_length = compound_min_length;
@@ -1868,7 +1876,7 @@ auto Dict_Base::check_compound_with_rules(
 		}
 	try_recursive:
 		part2_entry =
-		    check_compound_with_rules(word, words_data, i, move(part));
+		    check_compound_with_rules(word, words_data, i, part);
 		if (part2_entry)
 			return {part2_entry};
 	}

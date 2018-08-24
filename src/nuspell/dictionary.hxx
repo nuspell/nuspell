@@ -238,30 +238,33 @@ struct Dict_Base : public Aff_Data {
 	                       std::basic_string<CharT>& word) const
 	    -> Affixing_Result<>;
 
+	template <class CharT>
+	auto check_compound(std::basic_string<CharT>& word) const
+	    -> Compounding_Result;
+
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN, class CharT>
-	auto check_compound(std::basic_string<CharT>& word,
-	                    size_t start_pos = 0, size_t num_part = 0,
-	                    std::basic_string<CharT>&& part = {}) const
+	auto check_compound(std::basic_string<CharT>& word, size_t start_pos,
+	                    size_t num_part,
+	                    std::basic_string<CharT>& part) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN, class CharT>
 	auto check_compound_classic(std::basic_string<CharT>& word,
 	                            size_t start_pos, size_t i, size_t num_part,
-	                            std::basic_string<CharT>&& part) const
+	                            std::basic_string<CharT>& part) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN, class CharT>
 	auto check_compound_with_pattern_replacements(
 	    std::basic_string<CharT>& word, size_t start_pos, size_t i,
-	    size_t num_part, std::basic_string<CharT>&& part) const
+	    size_t num_part, std::basic_string<CharT>& part) const
 	    -> Compounding_Result;
 
 	template <class CharT>
-	auto
-	check_compound_with_rules(std::basic_string<CharT>& word,
-	                          std::vector<const Flag_Set*>& words_data,
-	                          size_t start_pos = 0,
-	                          std::basic_string<CharT>&& part = {}) const
+	auto check_compound_with_rules(std::basic_string<CharT>& word,
+	                               std::vector<const Flag_Set*>& words_data,
+	                               size_t start_pos,
+	                               std::basic_string<CharT>& part) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m, class CharT>
