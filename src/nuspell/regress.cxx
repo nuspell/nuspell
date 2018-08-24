@@ -277,30 +277,29 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 		return;
 	}
 	// rates
-	auto speedup =
-	    static_cast<float>(duration_nu.count()) / duration_hun.count();
-	auto trueposr = static_cast<float>(true_pos) / total;
-	auto truenegr = static_cast<float>(true_neg) / total;
-	auto falseposr = static_cast<float>(false_pos) / total;
-	auto falsenegr = static_cast<float>(false_neg) / total;
-	auto accuracy = static_cast<float>(true_pos + true_neg) / total;
-	auto precision = static_cast<float>(true_pos) / (true_pos + false_pos);
+	auto speedup = duration_hun.count() * 1.0 / duration_nu.count();
+	auto trueposr = true_pos * 1.0 / total;
+	auto truenegr = true_neg * 1.0 / total;
+	auto falseposr = false_pos * 1.0 / total;
+	auto falsenegr = false_neg * 1.0 / total;
+	auto accuracy = (true_pos + true_neg) * 1.0 / total;
+	auto precision = true_pos * 1.0 / (true_pos + false_pos);
 
 	out.precision(3);
-	out << "TotalWords          " << total << '\n';
-	out << "TruePositives       " << true_pos << '\n';
-	out << "TruePositiveRate    " << fixed << trueposr << '\n';
-	out << "TrueNegatives       " << true_neg << '\n';
-	out << "TrueNegativeRate    " << fixed << truenegr << '\n';
-	out << "FalsePositives      " << false_pos << '\n';
-	out << "FalsePositiveRate   " << fixed << falseposr << '\n';
-	out << "FalseNegatives      " << false_neg << '\n';
-	out << "FalseNegativeRate   " << fixed << falsenegr << '\n';
-	out << "AccuracyRate        " << fixed << accuracy << '\n';
-	out << "PrecisionRate       " << fixed << precision << '\n';
-	out << "DurationNuspell     " << duration_nu.count() << '\n';
-	out << "DurationHunspell    " << duration_hun.count() << '\n';
-	out << "SpeedupRate         " << fixed << speedup << '\n';
+	out << "Total Words         " << total << '\n';
+	out << "True Positives      " << true_pos << '\n';
+	out << "True Positive Rate  " << trueposr << '\n';
+	out << "True Negatives      " << true_neg << '\n';
+	out << "True Negative Rate  " << truenegr << '\n';
+	out << "False Positives     " << false_pos << '\n';
+	out << "False Positive Rate " << falseposr << '\n';
+	out << "False Negatives     " << false_neg << '\n';
+	out << "False NegativeRate  " << falsenegr << '\n';
+	out << "Accuracy Rate       " << accuracy * 100 << "%\n";
+	out << "Precision Rate      " << precision * 100 << "%\n";
+	out << "Duration Nuspell    " << duration_nu.count() << '\n';
+	out << "Duration Hunspell   " << duration_hun.count() << '\n';
+	out << "Speedup Rate        " << speedup * 100 << "%\n";
 
 	// summarey for easy reporting
 	out << fixed << total << ' ' << true_pos << ' ' << trueposr << ' '
