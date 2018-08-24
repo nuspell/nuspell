@@ -517,8 +517,8 @@ auto Aff_Data::set_encoding_and_language(const string& enc, const string& lang)
 		name = "en_US";
 	if (!enc.empty())
 		name += '.' + enc;
-	locale_aff = locale_generator(name);
-	install_ctype_facets_inplace(locale_aff);
+	internal_locale = locale_generator(name);
+	install_ctype_facets_inplace(internal_locale);
 }
 
 /**
@@ -909,8 +909,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	if (!getline(in, line)) {
 		return false;
 	}
-	auto encoding =
-	    Encoding(use_facet<boost::locale::info>(locale_aff).encoding());
+	auto encoding = Encoding(
+	    use_facet<boost::locale::info>(internal_locale).encoding());
 	if (encoding.is_utf8() && !validate_utf8(line)) {
 		cerr << "Invalid utf in dic file" << endl;
 	}
@@ -985,7 +985,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			erase_chars(word, structures.ignored_chars);
 		}
 
-		auto casing = classify_casing(word, locale_aff);
+		auto casing = classify_casing(word, internal_locale);
 		const char16_t HIDDEN_HOMONYM_FLAG = -1;
 		switch (casing) {
 		case Casing::ALL_CAPITAL: {
@@ -1011,7 +1011,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			words.emplace(word, flags);
 
 			// add the hidden homonym directly in uppercase
-			auto up = boost::locale::to_upper(word, locale_aff);
+			auto up =
+			    boost::locale::to_upper(word, internal_locale);
 			auto hom = words.equal_range(up);
 			auto h = none_of(hom.first, hom.second, [&](auto& w) {
 				return w.second.contains(HIDDEN_HOMONYM_FLAG);

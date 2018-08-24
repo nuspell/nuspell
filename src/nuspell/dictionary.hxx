@@ -289,7 +289,9 @@ struct Dict_Base : public Aff_Data {
 
 class Basic_Dictionary : protected Dict_Base {
 	std::locale external_locale;
-	Encoding_Details enc_details;
+	Encoding_Details enc_details =
+	    Encoding_Details::EXTERNAL_OTHER_INTERNAL_OTHER;
+	friend struct List_Strings_Back_Inserter;
 
       public:
 	/**
@@ -303,10 +305,10 @@ class Basic_Dictionary : protected Dict_Base {
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
 		auto ret = Basic_Dictionary();
-		if (!ret.parse_aff_dic(aff, dic)) {
-			throw std::ios_base::failure(
-			    "Error parsing affix and dictionary files.");
-		}
+		if (!ret.parse_aff_dic(aff, dic))
+			throw std::ios_base::failure("Error parsing.");
+		ret.enc_details =
+		    analyze_encodings(ret.external_locale, ret.internal_locale);
 		return ret;
 	}
 	/**
@@ -322,21 +324,14 @@ class Basic_Dictionary : protected Dict_Base {
 	{
 		auto& path = file_path_without_extension;
 		std::ifstream aff_file(path + ".aff");
-		if (aff_file.fail()) {
-			throw std::ios_base::failure("Affix file not found.");
-		}
+		if (aff_file.fail())
+			throw std::ios_base::failure("Aff file not found.");
 		std::ifstream dic_file(path + ".dic");
-		if (dic_file.fail()) {
-			throw std::ios_base::failure(
-			    "Dictionary file not found.");
-		}
+		if (dic_file.fail())
+			throw std::ios_base::failure("Dic file not found.");
 		return load_from_aff_dic(aff_file, dic_file);
 	}
-	auto imbue(const std::locale& loc)
-	{
-		external_locale = loc;
-		enc_details = analyze_encodings(external_locale, locale_aff);
-	}
+	auto imbue(const std::locale& loc) -> void;
 	auto spell(const std::string& word) const -> bool;
 };
 

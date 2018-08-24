@@ -87,8 +87,7 @@ enum class Encoding_Details {
 	EXTERNAL_OTHER_INTERNAL_U8,
 	EXTERNAL_U8_INTERNAL_OTHER,
 	EXTERNAL_OTHER_INTERNAL_OTHER,
-	EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE,
-	BAD_LOCALES
+	EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE
 };
 
 auto analyze_encodings(const std::locale& external, const std::locale& internal)

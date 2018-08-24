@@ -116,7 +116,7 @@ struct Aff_Data {
 	Aff_Structures<wchar_t> wide_structures;
 
 	// general options
-	std::locale locale_aff;
+	std::locale internal_locale;
 	Flag_Type flag_type;
 	bool complex_prefixes;
 	bool fullstrip;

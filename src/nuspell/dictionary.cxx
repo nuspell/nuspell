@@ -179,7 +179,7 @@ template <class CharT>
 auto Dict_Base::spell_casing(std::basic_string<CharT>& s) const
     -> const Flag_Set*
 {
-	auto casing_type = classify_casing(s, locale_aff);
+	auto casing_type = classify_casing(s, internal_locale);
 	const Flag_Set* res = nullptr;
 
 	switch (casing_type) {
@@ -208,7 +208,7 @@ template <class CharT>
 auto Dict_Base::spell_casing_upper(std::basic_string<CharT>& s) const
     -> const Flag_Set*
 {
-	auto& loc = locale_aff;
+	auto& loc = internal_locale;
 
 	auto res = check_word(s);
 	if (res)
@@ -266,7 +266,7 @@ template <class CharT>
 auto Dict_Base::spell_casing_title(std::basic_string<CharT>& s) const
     -> const Flag_Set*
 {
-	auto& loc = locale_aff;
+	auto& loc = internal_locale;
 
 	// check title case
 	auto res = check_word<CharT>(s);
@@ -1609,7 +1609,7 @@ auto Dict_Base::check_compound_classic(std::basic_string<CharT>& word,
 			return {};
 	}
 	if (compound_check_case &&
-	    has_uppercase_at_compound_word_boundary(word, i, locale_aff))
+	    has_uppercase_at_compound_word_boundary(word, i, internal_locale))
 		return {};
 
 	part.assign(word, i, word.npos);
@@ -1883,6 +1883,12 @@ auto Dict_Base::check_compound_with_rules(
 	return {};
 }
 
+auto Basic_Dictionary::imbue(const locale& loc) -> void
+{
+	external_locale = loc;
+	enc_details = analyze_encodings(external_locale, internal_locale);
+}
+
 auto Basic_Dictionary::spell(const std::string& word) const -> bool
 {
 	using ed = nuspell::Encoding_Details;
@@ -1899,18 +1905,16 @@ auto Basic_Dictionary::spell(const std::string& word) const -> bool
 		break;
 	case ed::EXTERNAL_U8_INTERNAL_OTHER:
 		ok_enc = utf8_to_wide(word, wide_word);
-		ok_enc &= to_narrow(wide_word, narrow_word, locale_aff);
+		ok_enc &= to_narrow(wide_word, narrow_word, internal_locale);
 		break;
 	case ed::EXTERNAL_OTHER_INTERNAL_OTHER:
 		ok_enc = to_wide(word, external_locale, wide_word);
-		ok_enc &= to_narrow(wide_word, narrow_word, locale_aff);
+		ok_enc &= to_narrow(wide_word, narrow_word, internal_locale);
 		break;
 	case ed::EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE:
 		narrow_word = word;
 		ok_enc = true;
 		break;
-	case ed::BAD_LOCALES:
-		return false;
 	}
 	switch (enc_details) {
 	case ed::EXTERNAL_U8_INTERNAL_U8:

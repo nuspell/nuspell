@@ -796,8 +796,6 @@ auto analyze_encodings(const locale& external, const locale& internal)
 	using namespace boost::locale;
 	using ed = nuspell::Encoding_Details;
 
-	if (!has_facet<info>(internal))
-		return ed::BAD_LOCALES;
 	auto& int_info = use_facet<info>(internal);
 	if (has_facet<info>(external)) {
 		auto& ext_info = use_facet<info>(external);

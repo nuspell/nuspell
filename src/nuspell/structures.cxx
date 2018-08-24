@@ -174,7 +174,11 @@ struct Out_Iter_One_Bool {
 	auto& operator++() { return *this; }
 	auto& operator++(int) { return *this; }
 	auto& operator*() { return *this; }
-	auto operator=(char16_t) { *value = true; }
+	auto& operator=(char16_t)
+	{
+		*value = true;
+		return *this;
+	}
 };
 
 auto Compound_Rule_Table::has_any_of_flags(const Flag_Set& f) const -> bool
