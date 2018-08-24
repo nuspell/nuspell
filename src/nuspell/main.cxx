@@ -119,6 +119,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 			// ispell pipe mode, same as default mode
 			if (mode != DEFAULT_MODE)
 				mode = ERROR_MODE;
+			break;
 		case 'd':
 			if (dictionary.empty())
 				dictionary = optarg;
@@ -342,12 +343,29 @@ auto list_dictionaries(const Finder& f) -> void
 auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto word = string();
+	auto suggestions = List_Strings();
 	while (in >> word) {
-		auto res = dic.spell(word);
-		if (res)
+		auto correct = dic.spell(word);
+		if (correct) {
 			out << '*' << '\n';
+			continue;
+		}
+		dic.suggest(word, suggestions);
+		auto offset = in.tellg();
+		if (offset < 0)
+			offset = 0;
 		else
-			out << '&' << '\n';
+			offset -= streamoff(word.size());
+		if (suggestions.empty()) {
+			out << "# " << word << ' ' << offset << '\n';
+			continue;
+		}
+		out << "& " << word << ' ' << suggestions.size() << ' '
+		    << offset << ": ";
+		out << suggestions[0];
+		for_each(begin(suggestions) + 1, end(suggestions),
+		         [&](auto& sug) { out << ", " << sug; });
+		out << '\n';
 	}
 }
 

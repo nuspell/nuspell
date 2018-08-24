@@ -271,6 +271,10 @@ struct Dict_Base : public Aff_Data {
 	auto check_word_in_compound(std::basic_string<CharT>& s) const
 	    -> Compounding_Result;
 
+	template <class CharT, class OutIter>
+	auto suggest_priv(std::basic_string<CharT>& word, OutIter out) const
+	    -> OutIter;
+
       public:
 	Dict_Base()
 	    : Aff_Data() // we explicity do value init so content is zeroed
@@ -332,7 +336,12 @@ class Basic_Dictionary : protected Dict_Base {
 		return load_from_aff_dic(aff_file, dic_file);
 	}
 	auto imbue(const std::locale& loc) -> void;
+	auto external_to_internal_encoding(const std::string& in,
+	                                   std::wstring& wide_out,
+	                                   std::string& narrow_out) const
+	    -> bool;
 	auto spell(const std::string& word) const -> bool;
+	auto suggest(const std::string& word, List_Strings& out) const -> void;
 };
 
 using Dictionary = Basic_Dictionary;
