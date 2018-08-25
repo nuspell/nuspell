@@ -22,6 +22,10 @@ This is a tool for static C/C++ code analysis. Install with `sudo apt-get instal
 
 This is a programmable verification and analysis tool for C++. Install with `sudo apt-get install vera++` and run via `./vera++.sh`. The results are in `vera++.txt` and `vera++.xml`. See also https://bitbucket.org/verateam/vera
 
+## hpp2plantuml
+
+To gain some insight in the structure of the code in an alternative way, hpp2plantuml can be used. This tool generates PlantUML class diagrams from parsing only the C++ headers files. Run it with `./hpp2plantuml.sh` and see the output in `hpp2plantuml.svg` and `hpp2plantuml.png`.
+
 
 ## Qt Creator
 
