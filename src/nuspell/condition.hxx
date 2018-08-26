@@ -62,7 +62,7 @@ class Condition {
       public:
 	Condition() = default;
 	Condition(const StrT& condition) : cond(condition) { construct(); }
-	Condition(StrT&& condition) : cond(move(condition)) { construct(); };
+	Condition(StrT&& condition) : cond(move(condition)) { construct(); }
 	auto match(const StrT& s, size_t pos = 0, size_t len = StrT::npos) const
 	    -> bool;
 	auto match_prefix(const StrT& s) const -> bool;

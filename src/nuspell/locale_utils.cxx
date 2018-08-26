@@ -569,8 +569,51 @@ auto get_char_mask(UChar32 cp)
 	return ret;
 }
 
-auto fill_ctype(const string& enc, ctype_base::mask* m, char* upper,
-                char* lower)
+template <class CharT>
+class my_ctype;
+
+template <>
+class my_ctype<char> : public std::ctype<char> {
+      private:
+	mask tbl[256];
+	char upper_table[256];
+	char lower_table[256];
+
+	auto fill(const std::string& enc) -> void;
+
+      public:
+	my_ctype(const std::string& enc, std::size_t refs = 0)
+	    : std::ctype<char>(tbl, false, refs)
+	{
+		fill(enc);
+	}
+	char_type do_toupper(char_type c) const final override
+	{
+		return upper_table[static_cast<unsigned char>(c)];
+	}
+	const char_type* do_toupper(char_type* first,
+	                            const char_type* last) const final override
+	{
+		for (; first != last; ++first) {
+			*first = do_toupper(*first);
+		}
+		return last;
+	}
+	char_type do_tolower(char_type c) const final override
+	{
+		return lower_table[static_cast<unsigned char>(c)];
+	}
+	const char_type* do_tolower(char_type* first,
+	                            const char_type* last) const final override
+	{
+		for (; first != last; ++first) {
+			*first = do_tolower(*first);
+		}
+		return last;
+	}
+};
+
+auto my_ctype<char>::fill(const string& enc) -> void
 {
 	auto err = UErrorCode::U_ZERO_ERROR;
 	auto cvt = ucnv_open(enc.c_str(), &err);
@@ -581,105 +624,45 @@ auto fill_ctype(const string& enc, ctype_base::mask* m, char* upper,
 		auto cp = ucnv_getNextUChar(cvt, &ch_ptr, ch_ptr + 1, &err);
 		ucnv_resetToUnicode(cvt);
 		if (cp != 0xfffd && U_SUCCESS(err)) {
-			m[i] = get_char_mask(cp);
+			tbl[i] = get_char_mask(cp);
 			out = u_toupper(cp);
-			out.extract(&upper[i], 1, cvt, err);
+			out.extract(&upper_table[i], 1, cvt, err);
 			if (U_FAILURE(err)) {
-				upper[i] = i;
+				upper_table[i] = i;
 				err = UErrorCode::U_ZERO_ERROR;
 			}
 			out = u_tolower(cp);
-			out.extract(&lower[i], 1, cvt, err);
+			out.extract(&lower_table[i], 1, cvt, err);
 			if (U_FAILURE(err)) {
-				lower[i] = i;
+				lower_table[i] = i;
 				err = UErrorCode::U_ZERO_ERROR;
 			}
 		}
 		else {
-			m[i] = ctype_base::mask();
-			upper[i] = i;
-			lower[i] = i;
+			tbl[i] = ctype_base::mask();
+			upper_table[i] = i;
+			lower_table[i] = i;
 			err = UErrorCode::U_ZERO_ERROR;
 		}
 	}
 	ucnv_close(cvt);
 }
 
-template <class CharT>
-class my_ctype;
-
 template <>
-class my_ctype<char> final : public std::ctype<char> {
-      private:
-	mask tbl[256];
-	char upper_table[256];
-	char lower_table[256];
-
-      public:
-	my_ctype(const std::string& enc, std::size_t refs = 0)
-	    : std::ctype<char>(tbl, false, refs)
-	{
-		fill_ctype(enc, tbl, upper_table, lower_table);
-	}
-	char_type do_toupper(char_type c) const override
-	{
-		return upper_table[static_cast<unsigned char>(c)];
-	}
-	const char_type* do_toupper(char_type* first,
-	                            const char_type* last) const override
-	{
-		for (; first != last; ++first) {
-			*first = do_toupper(*first);
-		}
-		return last;
-	}
-	char_type do_tolower(char_type c) const override
-	{
-		return lower_table[static_cast<unsigned char>(c)];
-	}
-	const char_type* do_tolower(char_type* first,
-	                            const char_type* last) const override
-	{
-		for (; first != last; ++first) {
-			*first = do_tolower(*first);
-		}
-		return last;
-	}
-};
-
-auto fill_ctype_wide(const string& enc, wchar_t* widen)
-{
-	auto err = UErrorCode::U_ZERO_ERROR;
-	auto cvt = ucnv_open(enc.c_str(), &err);
-	auto out = icu::UnicodeString();
-	for (size_t i = 0; i < 256; ++i) {
-		const char ch = i;
-		auto ch_ptr = &ch;
-		auto cp = ucnv_getNextUChar(cvt, &ch_ptr, ch_ptr + 1, &err);
-		ucnv_resetToUnicode(cvt);
-		if (U_SUCCESS(err)) {
-			widen[i] = cp;
-		}
-		else {
-			widen[i] = -1;
-		}
-	}
-	ucnv_close(cvt);
-}
-
-template <>
-class my_ctype<wchar_t> final : public std::ctype<wchar_t> {
+class my_ctype<wchar_t> : public std::ctype<wchar_t> {
       private:
 	char_type wd[256];
+
+	auto fill_widen(const std::string& enc) -> void;
 
       public:
 	my_ctype(const std::string& enc, std::size_t refs = 0)
 	    : std::ctype<wchar_t>(refs)
 	{
-		fill_ctype_wide(enc, wd);
+		fill_widen(enc);
 	}
 
-	bool do_is(mask m, char_type c) const override
+	bool do_is(mask m, char_type c) const final override
 	{
 		if ((m & space) && u_isspace(c))
 			return true;
@@ -711,43 +694,43 @@ class my_ctype<wchar_t> final : public std::ctype<wchar_t> {
 		return false;
 	}
 	const char_type* do_is(const char_type* first, const char_type* last,
-	                       mask* vec) const override
+	                       mask* vec) const final override
 	{
 		transform(first, last, vec,
 		          [&](auto c) { return get_char_mask(c); });
 		return last;
 	}
 	const char_type* do_scan_is(mask m, const char_type* first,
-	                            const char_type* last) const override
+	                            const char_type* last) const final override
 	{
 		return find_if(first, last,
 		               [&](auto c) { return do_is(m, c); });
 	}
 	const char_type* do_scan_not(mask m, const char_type* first,
-	                             const char_type* last) const override
+	                             const char_type* last) const final override
 	{
 		return find_if_not(first, last,
 		                   [&](auto c) { return do_is(m, c); });
 	}
 
-	char_type do_toupper(char_type c) const override
+	char_type do_toupper(char_type c) const final override
 	{
 		return u_toupper(c);
 	}
 	const char_type* do_toupper(char_type* low,
-	                            const char_type* high) const override
+	                            const char_type* high) const final override
 	{
 		for (; low != high; ++low) {
 			*low = u_toupper(*low);
 		}
 		return high;
 	}
-	char_type do_tolower(char_type c) const override
+	char_type do_tolower(char_type c) const final override
 	{
 		return u_tolower(c);
 	}
 	const char_type* do_tolower(char_type* first,
-	                            const char_type* last) const override
+	                            const char_type* last) const final override
 	{
 		for (; first != last; ++first) {
 			*first = u_tolower(*first);
@@ -755,17 +738,17 @@ class my_ctype<wchar_t> final : public std::ctype<wchar_t> {
 		return last;
 	}
 
-	char_type do_widen(char c) const override
+	char_type do_widen(char c) const final override
 	{
 		return wd[static_cast<unsigned char>(c)];
 	}
 	const char* do_widen(const char* low, const char* high,
-	                     char_type* dest) const override
+	                     char_type* dest) const final override
 	{
 		transform(low, high, dest, [&](auto c) { return do_widen(c); });
 		return high;
 	}
-	char do_narrow(char_type c, char dfault) const override
+	char do_narrow(char_type c, char dfault) const final override
 	{
 		auto n = char_traits<char_type>::find(wd, 256, c);
 		if (n)
@@ -773,13 +756,33 @@ class my_ctype<wchar_t> final : public std::ctype<wchar_t> {
 		return dfault;
 	}
 	const char_type* do_narrow(const char_type* low, const char_type* high,
-	                           char dfault, char* dest) const override
+	                           char dfault, char* dest) const final override
 	{
 		transform(low, high, dest,
 		          [&](auto c) { return do_narrow(c, dfault); });
 		return high;
 	}
 };
+
+auto my_ctype<wchar_t>::fill_widen(const string& enc) -> void
+{
+	auto err = UErrorCode::U_ZERO_ERROR;
+	auto cvt = ucnv_open(enc.c_str(), &err);
+	auto out = icu::UnicodeString();
+	for (size_t i = 0; i < 256; ++i) {
+		const char ch = i;
+		auto ch_ptr = &ch;
+		auto cp = ucnv_getNextUChar(cvt, &ch_ptr, ch_ptr + 1, &err);
+		ucnv_resetToUnicode(cvt);
+		if (U_SUCCESS(err)) {
+			wd[i] = cp;
+		}
+		else {
+			wd[i] = -1;
+		}
+	}
+	ucnv_close(cvt);
+}
 
 auto install_ctype_facets_inplace(std::locale& boost_loc) -> void
 {
