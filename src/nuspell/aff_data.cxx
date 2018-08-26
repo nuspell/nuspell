@@ -540,6 +540,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<vector<string>> morphological_aliases;
 	vector<Compound_Check_Pattern> compound_check_patterns;
 	vector<u16string> rules;
+	vector<pair<string, string>> replacements;
 	bool break_exists = false;
 
 	flag_type = FLAG_SINGLE_CHAR;
@@ -775,6 +776,13 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		break_patterns.push_back("^-");
 		break_patterns.push_back("-$");
 	}
+	for (auto& r : replacements) {
+		auto& s = r.second;
+		auto i = s.find('_');
+		for (; i != s.npos; i = s.find('_', i + 1)) {
+			s[i] = ' ';
+		}
+	}
 
 	// now fill data structures from temporary data
 	set_encoding_and_language(encoding.value_or_default(), language_code);
@@ -824,6 +832,9 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			     x.second_word_flag,
 			     forbid_unaffixed});
 		}
+		auto reps =
+		    boost::adaptors::transform(replacements, u_to_u_pair);
+		wide_structures.replacements = reps;
 	}
 	else {
 		structures.input_substr_replacer = input_conversion;
@@ -854,6 +865,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			     x.second_word_flag,
 			     forbid_unaffixed});
 		}
+		structures.replacements = move(replacements);
 	}
 
 	cerr.flush();

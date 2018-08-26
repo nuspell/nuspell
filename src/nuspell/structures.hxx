@@ -117,19 +117,19 @@ class String_Set {
 		sort_uniq();
 	}
 
-	auto operator=(const StrT& s) -> String_Set&
+	auto& operator=(const StrT& s)
 	{
 		d = s;
 		sort_uniq();
 		return *this;
 	}
-	auto operator=(StrT&& s) -> String_Set&
+	auto& operator=(StrT&& s)
 	{
 		d = move(s);
 		sort_uniq();
 		return *this;
 	}
-	auto operator=(std::initializer_list<value_type> il) -> String_Set&
+	auto& operator=(std::initializer_list<value_type> il)
 	{
 		d = il;
 		sort_uniq();
@@ -339,7 +339,7 @@ class Substr_Replacer {
 	}
 
 	template <class Range>
-	auto operator=(const Range& range) -> Substr_Replacer&
+	auto& operator=(const Range& range)
 	{
 		table.assign(std::begin(range), std::end(range));
 		sort_uniq();
@@ -391,7 +391,7 @@ class Break_Table {
 	}
 
 	template <class Range>
-	auto operator=(const Range& range) -> Break_Table&
+	auto& operator=(const Range& range)
 	{
 		table.assign(std::begin(range), std::end(range));
 		order_entries();
@@ -1106,6 +1106,68 @@ class List_Strings {
 	}
 };
 auto inline swap(List_Strings& a, List_Strings& b) { a.swap(b); }
+
+template <class CharT>
+class Replacement_Table {
+      public:
+	using StrT = std::basic_string<CharT>;
+	using Table_Str = std::vector<std::pair<StrT, StrT>>;
+	using iterator = typename Table_Str::iterator;
+	using const_iterator = typename Table_Str::const_iterator;
+
+      private:
+	Table_Str table;
+	size_t start_word_reps_last_idx = 0;
+	size_t end_word_reps_last_idx = 0;
+
+	auto order_entries() -> void; // implemented in cxx
+
+      public:
+	Replacement_Table() = default;
+	Replacement_Table(const Table_Str& v) : table(v) { order_entries(); }
+	Replacement_Table(Table_Str&& v) : table(move(v)) { order_entries(); }
+
+	auto& operator=(const Table_Str& v)
+	{
+		table = v;
+		order_entries();
+		return *this;
+	}
+
+	auto& operator=(Table_Str&& v)
+	{
+		table = move(v);
+		order_entries();
+		return *this;
+	}
+
+	template <class Range>
+	auto& operator=(const Range& range)
+	{
+		table.assign(std::begin(range), std::end(range));
+		order_entries();
+		return *this;
+	}
+
+	auto start_word_replacements() const
+	    -> boost::iterator_range<const_iterator>
+	{
+		return {begin(table), begin(table) + start_word_reps_last_idx};
+	}
+	auto end_word_replacements() const
+	    -> boost::iterator_range<const_iterator>
+	{
+		return {begin(table) + start_word_reps_last_idx,
+			begin(table) + end_word_reps_last_idx};
+	}
+	auto any_place_replacements() const
+	    -> boost::iterator_range<const_iterator>
+	{
+		return {begin(table) + end_word_reps_last_idx, end(table)};
+	}
+};
+extern template class Break_Table<char>;
+extern template class Break_Table<wchar_t>;
 
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX
