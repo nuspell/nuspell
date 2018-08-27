@@ -185,16 +185,12 @@ IJ.sug \
 keepcase.sug \
 map.sug \
 maputf.sug \
-ngram_utf_fix.sug \
 nosuggest.sug \
 oconv.sug \
-onlyincompound.sug \
 opentaal_forbiddenword1.sug \
 opentaal_forbiddenword2.sug \
 opentaal_keepcase.sug \
 phone.sug \
-rep.sug \
-reputf.sug \
 sug.sug \
 sugutf.sug \
 utf8_nonbmp.sug

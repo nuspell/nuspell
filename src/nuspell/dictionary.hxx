@@ -275,6 +275,18 @@ struct Dict_Base : public Aff_Data {
 	auto suggest_priv(std::basic_string<CharT>& word, OutIter out) const
 	    -> OutIter;
 
+	template <class CharT, class OutIter>
+	auto add_if_correct(std::basic_string<CharT>& word, OutIter out) const
+	    -> OutIter;
+
+	template <class CharT, class OutIter>
+	auto rep_suggest(std::basic_string<CharT>& word, OutIter out) const
+	    -> OutIter;
+
+	template <class CharT, class OutIter>
+	auto extra_char_suggest(std::basic_string<CharT>& word,
+	                        OutIter out) const -> OutIter;
+
       public:
 	Dict_Base()
 	    : Aff_Data() // we explicity do value init so content is zeroed

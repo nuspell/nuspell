@@ -1117,6 +1117,7 @@ class Replacement_Table {
 
       private:
 	Table_Str table;
+	size_t whole_word_reps_last_idx = 0;
 	size_t start_word_reps_last_idx = 0;
 	size_t end_word_reps_last_idx = 0;
 
@@ -1149,16 +1150,22 @@ class Replacement_Table {
 		return *this;
 	}
 
+	auto whole_word_replacements() const
+	    -> boost::iterator_range<const_iterator>
+	{
+		return {begin(table), begin(table) + whole_word_reps_last_idx};
+	}
 	auto start_word_replacements() const
 	    -> boost::iterator_range<const_iterator>
 	{
-		return {begin(table), begin(table) + start_word_reps_last_idx};
+		return {begin(table) + whole_word_reps_last_idx,
+		        begin(table) + start_word_reps_last_idx};
 	}
 	auto end_word_replacements() const
 	    -> boost::iterator_range<const_iterator>
 	{
 		return {begin(table) + start_word_reps_last_idx,
-			begin(table) + end_word_reps_last_idx};
+		        begin(table) + end_word_reps_last_idx};
 	}
 	auto any_place_replacements() const
 	    -> boost::iterator_range<const_iterator>

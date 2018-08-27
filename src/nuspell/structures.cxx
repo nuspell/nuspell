@@ -216,20 +216,25 @@ auto Replacement_Table<CharT>::order_entries() -> void
 	});
 	table.erase(it, end(table));
 
-	auto is_start_word_break = [=](auto& x) { return x.first[0] == '^'; };
-	auto is_end_word_break = [=](auto& x) { return x.first.back() == '$'; };
-	auto start_word_breaks_last =
-	    partition(begin(table), end(table), is_start_word_break);
-	start_word_reps_last_idx = start_word_breaks_last - begin(table);
+	auto is_start_word_pat = [=](auto& x) { return x.first[0] == '^'; };
+	auto is_end_word_pat = [=](auto& x) { return x.first.back() == '$'; };
 
-	for_each(begin(table), start_word_breaks_last,
+	auto start_word_reps_last =
+	    partition(begin(table), end(table), is_start_word_pat);
+	start_word_reps_last_idx = start_word_reps_last - begin(table);
+	for_each(begin(table), start_word_reps_last,
 	         [](auto& e) { e.first.erase(0, 1); });
 
-	auto end_word_breaks_last =
-	    partition(start_word_breaks_last, end(table), is_end_word_break);
-	end_word_reps_last_idx = end_word_breaks_last - begin(table);
+	auto whole_word_reps_last =
+	    partition(begin(table), start_word_reps_last, is_end_word_pat);
+	whole_word_reps_last_idx = whole_word_reps_last - begin(table);
+	for_each(begin(table), whole_word_reps_last,
+	         [](auto& e) { e.first.pop_back(); });
 
-	for_each(start_word_breaks_last, end_word_breaks_last,
+	auto end_word_reps_last =
+	    partition(start_word_reps_last, end(table), is_end_word_pat);
+	end_word_reps_last_idx = end_word_reps_last - begin(table);
+	for_each(start_word_reps_last, end_word_reps_last,
 	         [](auto& e) { e.first.pop_back(); });
 }
 template class Replacement_Table<char>;

@@ -1887,9 +1887,91 @@ template <class CharT, class OutIter>
 auto Dict_Base::suggest_priv(std::basic_string<CharT>& word, OutIter out) const
     -> OutIter
 {
-	word += 'X';
+	out = rep_suggest(word, out);
+	out = extra_char_suggest(word, out);
+	return out;
+}
+
+template <class CharT, class OutIter>
+auto Dict_Base::add_if_correct(std::basic_string<CharT>& word,
+                               OutIter out) const -> OutIter
+{
+	if (check_word(word)) {
+		*out++ = word;
+		return out;
+	}
+	auto i = size_t(0);
+	auto j = word.find(' ');
+	if (j == word.npos)
+		return out;
+	auto part = basic_string<CharT>();
+	for (; j != word.npos; i = j + 1, j = word.find(' ', i)) {
+		part.assign(word, i, j - i);
+		if (!check_word(part))
+			return out;
+	}
 	*out++ = word;
-	word.pop_back();
+	return out;
+}
+
+template <class CharT, class OutIter>
+auto Dict_Base::rep_suggest(std::basic_string<CharT>& word, OutIter out) const
+    -> OutIter
+{
+	auto& reps = get_structures<CharT>().replacements;
+	for (auto& r : reps.whole_word_replacements()) {
+		auto& from = r.first;
+		auto& to = r.second;
+		if (word == from) {
+			word = to;
+			out = add_if_correct(word, out);
+			word = from;
+		}
+	}
+	for (auto& r : reps.start_word_replacements()) {
+		auto& from = r.first;
+		auto& to = r.second;
+		if (word.compare(0, from.size(), from) == 0) {
+			word.replace(0, from.size(), to);
+			out = add_if_correct(word, out);
+			word.replace(0, to.size(), from);
+		}
+	}
+	for (auto& r : reps.end_word_replacements()) {
+		auto& from = r.first;
+		auto& to = r.second;
+		auto pos = word.size() - from.size();
+		if (from.size() <= word.size() &&
+		    word.compare(pos, word.npos, from) == 0) {
+			word.replace(pos, word.npos, to);
+			out = add_if_correct(word, out);
+			word.replace(pos, word.npos, from);
+		}
+	}
+	for (auto& r : reps.any_place_replacements()) {
+		auto& from = r.first;
+		auto& to = r.second;
+		for (auto i = word.find(from); i != word.npos;
+		     i = word.find(from, i + 1)) {
+			word.replace(i, from.size(), to);
+			out = add_if_correct(word, out);
+			word.replace(i, to.size(), from);
+		}
+	}
+	return out;
+}
+
+template <class CharT, class OutIter>
+auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
+                                   OutIter out) const -> OutIter
+{
+	for (auto i = word.size() - 1; i != size_t(-1); --i) {
+		auto c = word[i];
+		word.erase(i, 1);
+		if (check_word(word))
+			*out++ = word;
+		word.insert(i, 1, c);
+	}
 	return out;
 }
 
