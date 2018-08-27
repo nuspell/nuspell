@@ -207,7 +207,11 @@ auto print_help(const string& program_name) -> void
 	     "  Accuracy Rate\n"
 	     "  Precision Rate\n"
 	     "  Duration Nuspell\n"
-	     "  Speedup Rate\n";
+	     "  Speedup Rate\n"
+	     "\n"
+	     "Please note, messages containing:\n"
+	     "  This UTF-8 encoding can't convert to UTF-16:"
+	     "are caused by Hunspell and can be ignored.\n";
 	o << "\n"
 	     "Bug reports: <https://github.com/nuspell/nuspell/issues>\n"
 	     "Full documentation: "
