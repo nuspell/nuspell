@@ -20,11 +20,11 @@
 
 #include <iostream>
 
-#include "../src/nuspell/condition.hxx"
+#include "../src/nuspell/structures.hxx"
 #include <boost/locale.hpp>
 
 using namespace std;
-using namespace std::literals::string_literals;
+using namespace std::literals;
 using namespace nuspell;
 
 TEST_CASE("method match characters with standard character <char>",

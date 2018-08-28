@@ -19,26 +19,6 @@
 /**
  * @file locale_utils.hxx
  * Encoding transformations.
- *
- * The library differentiates three encodings:
- *
- * 1. Entry point/input encoding. Can be anything.
- * 2. Intermediate - fixed length, either singlebyte or wide (UTF-32).
- * 3. Dictionary encoding, either singlebyte or narrow multibyte utf-8.
- *
- * If the dictionary is utf-8, then the wide instantiations of the template
- * agorithms will be used. If the dictionary is singlebyte then everything is
- * char.
- *
- * The functions Locale_Input::cvt_for_byte_dict() and
- * Locale_Input::cvt_for_u8_dict() convert from input
- * into intermediate.
- *
- * If the dictionary is UTF-8, we should still store large data in it because
- * storing the wordlist in UTF-32 will take more memory.
- *
- * For conversion between intermediate and dictionary encoding we have
- * the functions to_dict_encoding() and from_dict_to_wide_encoding().
  */
 
 #ifndef LOCALE_UTILS_HXX

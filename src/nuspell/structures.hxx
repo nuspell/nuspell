@@ -24,8 +24,6 @@
 #ifndef NUSPELL_STRUCTURES_HXX
 #define NUSPELL_STRUCTURES_HXX
 
-#include "condition.hxx"
-
 #include <algorithm>
 #include <cmath>
 #include <iterator>
@@ -587,6 +585,50 @@ class Hash_Multiset {
 			    return equal(key, key_extract(x));
 		    });
 		return {first, last.base()};
+	}
+};
+
+/**
+ * A class providing implementation for limited regular expression matching
+ * used in affix entries.
+ *
+ * This results in increase of performance over an implementation with <regex>
+ * use.
+ */
+template <class CharT>
+class Condition {
+      public:
+	enum Span_Type {
+		NORMAL /**< normal character */,
+		DOT /**< wildcard character */,
+		ANY_OF /**< set of possible characters */,
+		NONE_OF /**< set of excluding characters */
+	};
+	using StrT = std::basic_string<CharT>;
+	template <class T, class U, class V>
+	using tuple = std::tuple<T, U, V>;
+	template <class T>
+	using vector = std::vector<T>;
+
+      private:
+	StrT cond;
+	vector<tuple<size_t, size_t, Span_Type>> spans; // pos, len, type
+	size_t length = 0;
+
+	auto construct() -> void; // implemented in cxx
+
+      public:
+	Condition() = default;
+	Condition(const StrT& condition) : cond(condition) { construct(); }
+	Condition(StrT&& condition) : cond(move(condition)) { construct(); }
+	auto match(const StrT& s, size_t pos = 0, size_t len = StrT::npos) const
+	    -> bool; // implemented in cxx
+	auto match_prefix(const StrT& s) const { return match(s, 0, length); }
+	auto match_suffix(const StrT& s) const
+	{
+		if (length > s.size())
+			return false;
+		return match(s, s.size() - length, length);
 	}
 };
 
