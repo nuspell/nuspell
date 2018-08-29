@@ -292,50 +292,39 @@ struct Dict_Base : public Aff_Data {
 	    : Aff_Data() // we explicity do value init so content is zeroed
 	{
 	}
-
-	using Aff_Data::parse_aff_dic;
-	bool parse_aff_dic(const string& file_path_without_extension)
-	{
-		auto& path = file_path_without_extension;
-		std::ifstream aff_file(path + ".aff");
-		std::ifstream dic_file(path + ".dic");
-		return parse_aff_dic(aff_file, dic_file);
-	}
 };
 
 class Basic_Dictionary : protected Dict_Base {
+      protected:
 	std::locale external_locale;
-	Encoding_Details enc_details =
-	    Encoding_Details::EXTERNAL_OTHER_INTERNAL_OTHER;
+	Encoding_Details enc_details;
+
 	friend struct List_Strings_Back_Inserter;
 
+	Basic_Dictionary(std::istream& aff, std::istream& dic)
+	{
+		if (!parse_aff_dic(aff, dic))
+			throw std::ios_base::failure("Error parsing.");
+		enc_details =
+		    analyze_encodings(external_locale, internal_locale);
+	}
+	auto external_to_internal_encoding(const std::string& in,
+	                                   std::wstring& wide_out,
+	                                   std::string& narrow_out) const
+	    -> bool;
+
       public:
-	/**
-	 * Loads dictionary from provided affix and dictionary input streams.
-	 *
-	 * @param aff affix input stream to parse.
-	 * @param dic dictionary stream to parse.
-	 * @throws std::ios_base::failure
-	 * @return The created dictionary laoded with the parsed data.
-	 */
+	Basic_Dictionary()
+	{
+		// ensures the internal locale is boost locale
+		set_encoding_and_language("");
+		enc_details =
+		    analyze_encodings(external_locale, internal_locale);
+	}
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
-		auto ret = Basic_Dictionary();
-		if (!ret.parse_aff_dic(aff, dic))
-			throw std::ios_base::failure("Error parsing.");
-		ret.enc_details =
-		    analyze_encodings(ret.external_locale, ret.internal_locale);
-		return ret;
+		return Basic_Dictionary(aff, dic);
 	}
-	/**
-	 * Loads dictionary from affix and dictionary file path without
-	 * extension.
-	 *
-	 * @param file_path_without_extension file path without
-	 * extension to find the affix and dictionary files.
-	 * @throws std::ios_base::failure
-	 * @return The created dictionary laoded with the parsed data.
-	 */
 	auto static load_from_aff_dic(const string& file_path_without_extension)
 	{
 		auto& path = file_path_without_extension;
@@ -348,10 +337,6 @@ class Basic_Dictionary : protected Dict_Base {
 		return load_from_aff_dic(aff_file, dic_file);
 	}
 	auto imbue(const std::locale& loc) -> void;
-	auto external_to_internal_encoding(const std::string& in,
-	                                   std::wstring& wide_out,
-	                                   std::string& narrow_out) const
-	    -> bool;
 	auto spell(const std::string& word) const -> bool;
 	auto suggest(const std::string& word, List_Strings& out) const -> void;
 };
