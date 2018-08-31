@@ -87,6 +87,105 @@ TEST_CASE("method split_on_whitespace", "[string_utils]")
 	CHECK(exp == out);
 }
 
+#if 0
+TEST_CASE("method crude_parse_word_break", "[string_utils]")
+{
+	auto in = "\x0d"s;
+	auto exp = "CR"s;
+	auto out = string();
+	crude_parse_word_break(in, out);
+	CHECK(exp == out);
+
+	in = "\x0b"s;
+	exp = "Newline"s;
+	out = string();
+	crude_parse_word_break(in, out);
+	CHECK(exp == out);
+
+	in = "\x30a2"s;
+	exp = "Katakana"s;
+	out = string();
+	crude_parse_word_break(in, out);
+	CHECK(exp == out);
+
+	in = "A\x30a2"s;
+	exp = "Katakana"s;
+	out = string();
+	crude_parse_word_break(in, out, 1);
+	CHECK(exp == out);
+}
+
+TEST_CASE("method crude_parse_preprocess_boundaries", "[string_utils]")
+{
+	auto in = "\r\n"s;
+	auto exp =
+	    vector<pair<int, string>>{make_pair(0, "CR"s), make_pair(1, "LF"s)};
+	auto out = vector<pair<int, string>>();
+	crude_parse_preprocess_boundaries(in, out);
+	CHECK(exp == out);
+
+	in = "A\u0308A"s;
+	exp = vector<pair<int, string>>{make_pair(0, "ALetter"s),
+	                                make_pair(2, "ALetter"s)};
+	out = vector<pair<int, string>>();
+	crude_parse_preprocess_boundaries(in, out);
+	CHECK(exp == out);
+
+	in = "\n\u2060"s;
+	exp = vector<pair<int, string>>{make_pair(0, "LF"s),
+	                                make_pair(1, "Format"s)};
+	out = vector<pair<int, string>>();
+	crude_parse_preprocess_boundaries(in, out);
+	CHECK(exp == out);
+
+	in = "\x01\u0308\x01"s;
+	exp = vector<pair<int, string>>{make_pair(0, "Other"s),
+	                                make_pair(2, "Other"s)};
+	out = vector<pair<int, string>>();
+	crude_parse_preprocess_boundaries(in, out);
+	CHECK(exp == out);
+}
+
+TEST_CASE("method crude_parse_word_breakables", "[string_utils]")
+{
+	auto in = "ABC"s;
+	auto exp = vector<int>{1, 0, 0};
+	auto out = vector<int>();
+	crude_parse_word_breakables(in, out);
+	CHECK(exp == out);
+
+	in = "Hello, world."s;
+	exp = vector<int>{1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1};
+	out = vector<int>();
+	crude_parse_word_breakables(in, out);
+	CHECK(exp == out);
+
+	in = "\x01\u0308\x01"s;
+	exp = vector<int>{1, 0, 1};
+	out = vector<int>();
+	crude_parse_word_breakables(in, out);
+	CHECK(exp == out);
+}
+
+TEST_CASE("method crude_parse_words", "[string_utils]")
+{
+	auto in = "The quick (“brown”) fox can’t jump 32.3 feet, right?"s;
+	auto exp = vector<string>{
+	    "The"s,  " "s, "quick"s, " "s, "("s,     "“"s,     "brown"s, "”"s,
+	    ")"s,    " "s, "fox"s,   " "s, "can’t"s, " "s,     "jump"s,  " "s,
+	    "32.3"s, " "s, "feet"s,  ","s, " "s,     "right"s, "?"s};
+	auto out = vector<string>();
+	crude_parse_words(in, out);
+	CHECK(exp == out);
+
+	in = ""s;
+	exp = vector<string>{};
+	out = vector<string>();
+	crude_parse_words(in, out);
+	CHECK(exp == out);
+}
+#endif
+
 TEST_CASE("method parse_on_whitespace", "[string_utils]")
 {
 	// also tests _v variant

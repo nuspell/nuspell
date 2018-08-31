@@ -16,7 +16,7 @@
 # https://github.com/psycofdj/coverxygen
 /coverxygen
 
-https://pypi.org/project/hpp2plantuml/
+# hpp2plantuml
 /hpp2plantuml.puml
 /hpp2plantuml.svg
 /hpp2plantuml.png
