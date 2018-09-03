@@ -1218,5 +1218,21 @@ class Replacement_Table {
 extern template class Break_Table<char>;
 extern template class Break_Table<wchar_t>;
 
+template <class CharT>
+struct Similarity_Group {
+	using StrT = std::basic_string<CharT>;
+	StrT chars;
+	std::vector<StrT> strings;
+
+	auto parse(const StrT& s) -> void;
+	Similarity_Group() = default;
+	Similarity_Group(const StrT& s) { parse(s); }
+	auto& operator=(const StrT& s)
+	{
+		parse(s);
+		return *this;
+	}
+};
+
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX

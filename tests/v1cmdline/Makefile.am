@@ -183,8 +183,6 @@ i54633.sug \
 i58202.sug \
 IJ.sug \
 keepcase.sug \
-map.sug \
-maputf.sug \
 nosuggest.sug \
 oconv.sug \
 opentaal_forbiddenword1.sug \

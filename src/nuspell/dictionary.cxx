@@ -1889,12 +1889,13 @@ auto Dict_Base::suggest_priv(std::basic_string<CharT>& word, OutIter out) const
 {
 	out = rep_suggest(word, out);
 	out = extra_char_suggest(word, out);
+	out = map_suggest(word, out);
 	return out;
 }
 
 template <class CharT, class OutIter>
-auto Dict_Base::add_if_correct(std::basic_string<CharT>& word,
-                               OutIter out) const -> OutIter
+auto Dict_Base::try_rep_suggestion(std::basic_string<CharT>& word,
+                                   OutIter out) const -> OutIter
 {
 	if (check_word(word)) {
 		*out++ = word;
@@ -1924,7 +1925,7 @@ auto Dict_Base::rep_suggest(std::basic_string<CharT>& word, OutIter out) const
 		auto& to = r.second;
 		if (word == from) {
 			word = to;
-			out = add_if_correct(word, out);
+			out = try_rep_suggestion(word, out);
 			word = from;
 		}
 	}
@@ -1933,7 +1934,7 @@ auto Dict_Base::rep_suggest(std::basic_string<CharT>& word, OutIter out) const
 		auto& to = r.second;
 		if (word.compare(0, from.size(), from) == 0) {
 			word.replace(0, from.size(), to);
-			out = add_if_correct(word, out);
+			out = try_rep_suggestion(word, out);
 			word.replace(0, to.size(), from);
 		}
 	}
@@ -1944,7 +1945,7 @@ auto Dict_Base::rep_suggest(std::basic_string<CharT>& word, OutIter out) const
 		if (from.size() <= word.size() &&
 		    word.compare(pos, word.npos, from) == 0) {
 			word.replace(pos, word.npos, to);
-			out = add_if_correct(word, out);
+			out = try_rep_suggestion(word, out);
 			word.replace(pos, word.npos, from);
 		}
 	}
@@ -1954,7 +1955,7 @@ auto Dict_Base::rep_suggest(std::basic_string<CharT>& word, OutIter out) const
 		for (auto i = word.find(from); i != word.npos;
 		     i = word.find(from, i + 1)) {
 			word.replace(i, from.size(), to);
-			out = add_if_correct(word, out);
+			out = try_rep_suggestion(word, out);
 			word.replace(i, to.size(), from);
 		}
 	}
@@ -1971,6 +1972,59 @@ auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
 		if (check_word(word))
 			*out++ = word;
 		word.insert(i, 1, c);
+	}
+	return out;
+}
+
+template <class CharT, class OutIter>
+auto Dict_Base::map_suggest(std::basic_string<CharT>& word, OutIter out,
+                            size_t i) const -> OutIter
+{
+	auto& similarities = get_structures<CharT>().similarities;
+	for (; i != word.size(); ++i) {
+		for (auto& e : similarities) {
+			auto j = e.chars.find(word[i]);
+			if (j == word.npos)
+				goto try_find_strings;
+			for (auto c : e.chars) {
+				if (c == e.chars[j])
+					continue;
+				word[i] = c;
+				if (check_word(word))
+					*out++ = word;
+				out = map_suggest(word, out, i + 1);
+				word[i] = e.chars[j];
+			}
+			for (auto& r : e.strings) {
+				word.replace(i, 1, r);
+				if (check_word(word))
+					*out++ = word;
+				out = map_suggest(word, out, i + r.size());
+				word.replace(i, r.size(), 1, e.chars[j]);
+			}
+		try_find_strings:
+			for (auto& f : e.strings) {
+				if (word.compare(i, f.size(), f) != 0)
+					continue;
+				for (auto c : e.chars) {
+					word.replace(i, f.size(), 1, c);
+					if (check_word(word))
+						*out++ = word;
+					out = map_suggest(word, out, i + 1);
+					word.replace(i, 1, f);
+				}
+				for (auto& r : e.strings) {
+					if (f == r)
+						continue;
+					word.replace(i, f.size(), r);
+					if (check_word(word))
+						*out++ = word;
+					out = map_suggest(word, out,
+					                  i + r.size());
+					word.replace(i, r.size(), f);
+				}
+			}
+		}
 	}
 	return out;
 }

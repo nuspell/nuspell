@@ -541,6 +541,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<Compound_Check_Pattern> compound_check_patterns;
 	vector<u16string> rules;
 	vector<pair<string, string>> replacements;
+	vector<string> map_related_chars;
 	bool break_exists = false;
 
 	flag_type = FLAG_SINGLE_CHAR;
@@ -835,6 +836,10 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		auto reps =
 		    boost::adaptors::transform(replacements, u_to_u_pair);
 		wide_structures.replacements = reps;
+
+		auto maps =
+		    boost::adaptors::transform(map_related_chars, u_to_u);
+		wide_structures.similarities.assign(begin(maps), end(maps));
 	}
 	else {
 		structures.input_substr_replacer = input_conversion;
@@ -866,6 +871,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			     forbid_unaffixed});
 		}
 		structures.replacements = move(replacements);
+		structures.similarities.assign(begin(map_related_chars),
+		                               end(map_related_chars));
 	}
 
 	cerr.flush();

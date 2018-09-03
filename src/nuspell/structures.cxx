@@ -355,4 +355,28 @@ auto Replacement_Table<CharT>::order_entries() -> void
 template class Replacement_Table<char>;
 template class Replacement_Table<wchar_t>;
 
+template <class CharT>
+auto Similarity_Group<CharT>::parse(const StrT& s) -> void
+{
+	auto i = size_t(0);
+	for (;;) {
+		auto j = s.find('(', i);
+		chars.append(s, i, j - i);
+		if (j == s.npos)
+			break;
+		i = j + 1;
+		j = s.find(')', i);
+		if (j == s.npos)
+			break;
+		auto len = j - i;
+		if (len == 1)
+			chars += s[i];
+		else if (len > 1)
+			strings.push_back(s.substr(i, len));
+		i = j + 1;
+	}
+}
+template struct Similarity_Group<char>;
+template struct Similarity_Group<wchar_t>;
+
 } // namespace nuspell

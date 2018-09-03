@@ -52,6 +52,7 @@ struct Aff_Structures {
 	Suffix_Table<CharT> suffixes;
 	std::vector<Compound_Pattern<CharT>> compound_patterns;
 	Replacement_Table<CharT> replacements;
+	std::vector<Similarity_Group<CharT>> similarities;
 };
 
 struct Affix {
@@ -143,7 +144,6 @@ struct Aff_Data {
 	bool only_max_diff;
 	bool no_split_suggestions;
 	bool suggest_with_dots;
-	vector<string> map_related_chars; // vector<vector<string>>?
 	vector<pair<string, string>> phonetic_replacements;
 
 	// compounding options
