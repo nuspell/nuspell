@@ -252,7 +252,8 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	auto duration_hun = chrono::nanoseconds();
 	auto duration_nu = chrono::nanoseconds();
 	auto in_loc = in.getloc();
-	while (in >> word) {
+	// need to take entine line here, not `in >> word`
+	while (getline(in, word)) {
 		auto tick_a = chrono::high_resolution_clock::now();
 		auto res_nu = dic.spell(word);
 		auto tick_b = chrono::high_resolution_clock::now();
