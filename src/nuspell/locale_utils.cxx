@@ -834,8 +834,8 @@ auto classify_casing(const std::basic_string<CharT>& s, const std::locale& loc)
     -> Casing
 {
 	// TODO implement Default Case Detection from unicode standard
-	// https://www.unicode.org/versions/Unicode10.0.0/ch03.pdf
-	// See Chapter 13.3
+	// https://www.unicode.org/versions/Unicode11.0.0/ch03.pdf
+	// See Chapter 13.3. This might be feature for Boost or ICU.
 	//
 	// use boost::locale::to_lower to upper etc.
 

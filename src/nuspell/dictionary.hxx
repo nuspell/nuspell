@@ -292,19 +292,25 @@ class Basic_Dictionary : protected Dict_Base {
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
 		auto ret = Basic_Dictionary();
-		if (!ret.parse_aff_dic(aff, dic))
-			throw std::ios_base::failure("Error parsing.");
+		if (!ret.parse_aff_dic(aff, dic)) {
+			auto what = "Error parsing affix and dictionary files.";
+			throw std::ios_base::failure(what);
+		}
 		return ret;
 	}
 	auto static load_from_aff_dic(const string& file_path_without_extension)
 	{
 		auto& path = file_path_without_extension;
 		std::ifstream aff_file(path + ".aff");
-		if (aff_file.fail())
-			throw std::ios_base::failure("Aff file not found.");
+		if (aff_file.fail()) {
+			auto what = "Affix file not found.";
+			throw std::ios_base::failure(what);
+		}
 		std::ifstream dic_file(path + ".dic");
-		if (dic_file.fail())
-			throw std::ios_base::failure("Dic file not found.");
+		if (dic_file.fail()) {
+			auto what = "Dictionary file not found.";
+			throw std::ios_base::failure(what);
+		}
 		return load_from_aff_dic(aff_file, dic_file);
 	}
 	auto imbue(const std::locale& loc)

@@ -18,8 +18,12 @@ input.
 
   - `-d <di_CT>`:
     use di_CT dictionary. Only one dictionary is currently supported.
+  - `-C`:
+    crude parsing of plain running text, prints
+    spelling correctness, tab and tokenized word
+    or prints a $ and tab for end of input line
   - `-D`:
-    show available dictionaries and exit
+    print search paths and available dictionaries and exit
   - `-i <enc>`:
     input encoding, default is active locale
   - `-l`:
@@ -28,6 +32,8 @@ input.
     print only correct words or lines
   - `-L`:
     lines mode
+  - `-U`:
+    do not suggest, increases performance
   - `-h, --help`:
     display this help and exit
   - `-v, --version`:

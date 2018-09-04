@@ -9,3 +9,5 @@ system will run the tool on `make`.
 On Ubuntu/Debian the tool can be simply installed by
 
     sudo apt install ruby-ronn
+
+Note that the Markdown (`.md`) files are used to generate the actual man files.
