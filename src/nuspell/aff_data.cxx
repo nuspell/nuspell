@@ -170,9 +170,9 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 	string s;
 	u16string ret;
 	const auto err_message = "Nuspell warning: bytes above 127 in UTF-8 "
-	                         "stream should not be treated alone as "
-	                         "flags, please update dictionary to use "
-	                         "FLAG UTF-8 and make the file valid UTF-8";
+	                         "stream should not be treated alone as flags, "
+	                         "please update dictionary and affix files to "
+	                         "use FLAG UTF-8 and make the file valid UTF-8";
 	switch (t) {
 	case FLAG_SINGLE_CHAR:
 		in >> s;

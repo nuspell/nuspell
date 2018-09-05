@@ -53,6 +53,7 @@ utf8.dic \
 utf8_bom.dic \
 utf8_bom2.dic \
 utf8_nonbmp.dic \
+utf8_longflagwarn.dic \
 compoundflag.dic \
 compoundrule.dic \
 compoundrule2.dic \
@@ -295,6 +296,9 @@ utf8_nonbmp.dic \
 utf8_nonbmp.good \
 utf8_nonbmp.sug \
 utf8_nonbmp.wrong \
+utf8_longflagwarn.aff \
+utf8_longflagwarn.dic \
+utf8_longflagwarn.good \
 utfcompound.aff \
 utfcompound.dic \
 utfcompound.good \

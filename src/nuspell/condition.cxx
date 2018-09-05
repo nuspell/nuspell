@@ -53,16 +53,15 @@ auto Condition<CharT>::construct() -> void
 			continue;
 		}
 		if (cond[i] == ']') {
-			auto what =
-			    "Closing bracket has no matching opening bracket.";
-			throw invalid_argument(what);
+			throw invalid_argument(
+			    "Closing bracket has no matching opening bracket.");
 		}
 		if (cond[i] == '[') {
 			++i;
 			if (i == cond.size()) {
-				auto what = "Opening bracket has no matching "
-				            "closing bracket.";
-				throw invalid_argument(what);
+				throw invalid_argument(
+				    "Opening bracket has no matching closing "
+				    "bracket.");
 			}
 			Span_Type type;
 			if (cond[i] == '^') {
@@ -74,13 +73,13 @@ auto Condition<CharT>::construct() -> void
 			}
 			j = cond.find(']', i);
 			if (j == i) {
-				auto what = "Empty bracket expression.";
-				throw invalid_argument(what);
+				throw invalid_argument(
+				    "Empty bracket expression.");
 			}
 			if (j == cond.npos) {
-				auto what = "Opening bracket has no matching "
-				            "closing bracket.";
-				throw invalid_argument(what);
+				throw invalid_argument(
+				    "Opening bracket has no matching closing "
+				    "bracket.");
 			}
 			spans.emplace_back(i, j - i, type);
 			++length;

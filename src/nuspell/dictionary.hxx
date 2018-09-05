@@ -293,8 +293,8 @@ class Basic_Dictionary : protected Dict_Base {
 	{
 		auto ret = Basic_Dictionary();
 		if (!ret.parse_aff_dic(aff, dic)) {
-			auto what = "Error parsing affix and dictionary files.";
-			throw std::ios_base::failure(what);
+			throw std::ios_base::failure(
+			    "Error parsing affix and dictionary files.");
 		}
 		return ret;
 	}
@@ -303,13 +303,12 @@ class Basic_Dictionary : protected Dict_Base {
 		auto& path = file_path_without_extension;
 		std::ifstream aff_file(path + ".aff");
 		if (aff_file.fail()) {
-			auto what = "Affix file not found.";
-			throw std::ios_base::failure(what);
+			throw std::ios_base::failure("Affix file not found.");
 		}
 		std::ifstream dic_file(path + ".dic");
 		if (dic_file.fail()) {
-			auto what = "Dictionary file not found.";
-			throw std::ios_base::failure(what);
+			throw std::ios_base::failure(
+			    "Dictionary file not found.");
 		}
 		return load_from_aff_dic(aff_file, dic_file);
 	}
