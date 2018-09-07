@@ -70,6 +70,7 @@ struct Args_t {
 	string program_name = PACKAGE; // ignore warning padding struct
 	string dictionary;
 	string encoding;
+	bool print_false = false;
 	vector<string> other_dicts;
 	vector<string> files;
 
@@ -88,7 +89,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	int c;
 	// The program can run in various modes depending on the
 	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:hv";
+	const char* shortopts = ":d:i:Fhv";
 	const struct option longopts[] = {
 	    {"version", 0, nullptr, 'v'},
 	    {"help", 0, nullptr, 'h'},
@@ -111,6 +112,10 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 			encoding = optarg;
 
 			break;
+		case 'F':
+			print_false = true;
+
+			break;
 		case 'h':
 			if (mode == DEFAULT_MODE)
 				mode = HELP_MODE;
@@ -129,11 +134,13 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 			cerr << "Option -" << static_cast<char>(optopt)
 			     << " requires an operand\n";
 			mode = ERROR_MODE;
+
 			break;
 		case '?':
 			cerr << "Unrecognized option: '-"
 			     << static_cast<char>(optopt) << "'\n";
 			mode = ERROR_MODE;
+
 			break;
 		}
 	}
@@ -163,7 +170,8 @@ auto print_help(const string& program_name) -> void
 	     "  -d di_CT      use di_CT dictionary. Only one dictionary is\n"
 	     "                currently supported\n"
 	     "  -i enc        input encoding, default is active locale\n"
-	     "  -h, --help    display this help and exit\n"
+	     "  -F            print false negative and false positive words\n"
+	     "  -h, --help    print this help and exit\n"
 	     "  -v, --version print version number and exit\n"
 	     "\n";
 	o << "Example: " << p << " -d en_US file.txt\n";
@@ -238,7 +246,7 @@ auto print_version() -> void
 }
 
 auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
-                 locale& hloc)
+                 locale& hloc, bool print_false = false)
 {
 	auto word = string();
 	// total number of words
@@ -268,13 +276,17 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 			}
 			else {
 				++false_neg;
-				out << "FalseNegativeWord   " << word << '\n';
+				if (print_false)
+					out << "FalseNegativeWord   " << word
+					    << '\n';
 			}
 		}
 		else {
 			if (res_nu) {
 				++false_pos;
-				out << "FalsePositiveWord   " << word << '\n';
+				if (print_false)
+					out << "FalsePositiveWord   " << word
+					    << '\n';
 			}
 			else {
 				++true_neg;
@@ -447,7 +459,7 @@ int main(int argc, char* argv[])
 	auto loop_function = normal_loop;
 
 	if (args.files.empty()) {
-		loop_function(cin, cout, dic, hun, hun_loc);
+		loop_function(cin, cout, dic, hun, hun_loc, args.print_false);
 	}
 	else {
 		for (auto& file_name : args.files) {
@@ -457,7 +469,8 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 			in.imbue(cin.getloc());
-			loop_function(in, cout, dic, hun, hun_loc);
+			loop_function(in, cout, dic, hun, hun_loc,
+			              args.print_false);
 		}
 	}
 	return 0;

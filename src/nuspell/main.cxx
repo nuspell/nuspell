@@ -201,11 +201,13 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 			cerr << "Option -" << static_cast<char>(optopt)
 			     << " requires an operand\n";
 			mode = ERROR_MODE;
+
 			break;
 		case '?':
 			cerr << "Unrecognized option: '-"
 			     << static_cast<char>(optopt) << "'\n";
 			mode = ERROR_MODE;
+
 			break;
 		}
 	}
@@ -248,7 +250,7 @@ auto print_help(const string& program_name) -> void
 	     "  -G            print only correct words or lines\n"
 	     "  -L            lines mode\n"
 	     "  -U            do not suggest, increases performance\n"
-	     "  -h, --help    display this help and exit\n"
+	     "  -h, --help    print this help and exit\n"
 	     "  -v, --version print version number and exit\n"
 	     "\n";
 	o << "Example: " << p << " -d en_US file.txt\n";

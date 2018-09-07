@@ -11,10 +11,10 @@ BUILT_SOURCES = catch.hpp catch_reporter_tap.hpp
 catch_url = https://github.com/catchorg/Catch2/releases/download/v2.4.0
 
 catch.hpp:
-	wget $(catch_url)/catch.hpp
+	wget -nc $(catch_url)/catch.hpp
 
 catch_reporter_tap.hpp:
-	wget $(catch_url)/catch_reporter_tap.hpp
+	wget -nc $(catch_url)/catch_reporter_tap.hpp
 
 CLEANFILES = catch.hpp catch_reporter_tap.hpp
 
