@@ -168,7 +168,6 @@ nepali.dic \
 \
 1463589.sug \
 1463589_utf.sug \
-1695964.sug \
 allcaps2.sug \
 allcaps.sug \
 allcaps_utf.sug \
@@ -181,12 +180,9 @@ forceucase.sug \
 i35725.sug \
 i54633.sug \
 i58202.sug \
-IJ.sug \
 keepcase.sug \
 nosuggest.sug \
 oconv.sug \
-opentaal_forbiddenword1.sug \
-opentaal_forbiddenword2.sug \
 opentaal_keepcase.sug \
 phone.sug \
 sug.sug \

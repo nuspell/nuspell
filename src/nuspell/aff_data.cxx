@@ -533,6 +533,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	string language_code;
 	string ignore_chars;
 	string keyboard_layout;
+	string try_chars;
 	vector<Affix> prefixes;
 	vector<Affix> suffixes;
 	vector<string> break_patterns;
@@ -837,6 +838,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		    boost::adaptors::transform(map_related_chars, u_to_u);
 		wide_structures.similarities.assign(begin(maps), end(maps));
 		wide_structures.keyboard_closeness = u_to_u(keyboard_layout);
+		wide_structures.try_chars = u_to_u(try_chars);
 	}
 	else {
 		structures.input_substr_replacer = input_conversion;
@@ -871,6 +873,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		structures.similarities.assign(begin(map_related_chars),
 		                               end(map_related_chars));
 		structures.keyboard_closeness = move(keyboard_layout);
+		structures.try_chars = move(try_chars);
 	}
 
 	cerr.flush();

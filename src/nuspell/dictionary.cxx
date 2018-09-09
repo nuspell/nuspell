@@ -28,6 +28,7 @@
 #include <stdexcept>
 
 #include <boost/locale.hpp>
+#include <boost/range/adaptors.hpp>
 #include <boost/scope_exit.hpp>
 
 namespace nuspell {
@@ -1891,25 +1892,33 @@ auto Dict_Base::suggest_priv(std::basic_string<CharT>& word, OutIter out) const
 	out = map_suggest(word, out);
 	out = extra_char_suggest(word, out);
 	out = keyboard_suggest(word, out);
+	out = bad_char_suggest(word, out);
+	out = forgotten_char_suggest(word, out);
 	return out;
 }
 
 template <class CharT, class OutIter>
 auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
-                                   OutIter& out) const
+                                   OutIter& out) const -> bool
 {
-	if (check_word(word))
-		*out++ = word;
+	auto res = check_word(word);
+	if (!res)
+		return false;
+	if (res->contains(forbiddenword_flag))
+		return false;
+	if (forbid_warn && res->contains(warn_flag))
+		return false;
+	*out++ = word;
+	return true;
 }
 
 template <class CharT, class OutIter>
 auto Dict_Base::try_rep_suggestion(std::basic_string<CharT>& word,
                                    OutIter out) const -> OutIter
 {
-	if (check_word(word)) {
-		*out++ = word;
+	if (add_sug_if_correct(word, out))
 		return out;
-	}
+
 	auto i = size_t(0);
 	auto j = word.find(' ');
 	if (j == word.npos)
@@ -2061,6 +2070,38 @@ auto Dict_Base::keyboard_suggest(std::basic_string<CharT>& word,
 		}
 	}
 	return out;
+}
+
+template <class CharT, class OutIter>
+auto Dict_Base::bad_char_suggest(std::basic_string<CharT>& word,
+                                 OutIter out) const -> OutIter
+{
+	auto& try_chars = get_structures<CharT>().try_chars;
+	for (auto new_c : try_chars) {
+		for (auto& c : boost::adaptors::reverse(word)) {
+			if (c == new_c)
+				continue;
+			auto old_c = c;
+			c = new_c;
+			add_sug_if_correct(word, out);
+			c = old_c;
+		}
+	}
+	return out;
+}
+
+template <class CharT, class OutIter>
+auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
+                                       OutIter out) const -> OutIter
+{
+	auto& try_chars = get_structures<CharT>().try_chars;
+	for (auto new_c : try_chars) {
+		for (auto i = word.size(); i != size_t(-1); --i) {
+			word.insert(i, 1, new_c);
+			add_sug_if_correct(word, out);
+			word.erase(i, 1);
+		}
+	}
 }
 
 auto Basic_Dictionary::imbue(const locale& loc) -> void
