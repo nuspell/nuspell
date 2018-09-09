@@ -532,6 +532,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	Encoding encoding;
 	string language_code;
 	string ignore_chars;
+	string keyboard_layout;
 	vector<Affix> prefixes;
 	vector<Affix> suffixes;
 	vector<string> break_patterns;
@@ -773,16 +774,11 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	}
 	// default BREAK definition
 	if (!break_exists) {
-		break_patterns.push_back("-");
-		break_patterns.push_back("^-");
-		break_patterns.push_back("-$");
+		break_patterns = {"-", "^-", "-$"};
 	}
 	for (auto& r : replacements) {
 		auto& s = r.second;
-		auto i = s.find('_');
-		for (; i != s.npos; i = s.find('_', i + 1)) {
-			s[i] = ' ';
-		}
+		replace_char(s, '_', ' ');
 	}
 
 	// now fill data structures from temporary data
@@ -840,6 +836,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		auto maps =
 		    boost::adaptors::transform(map_related_chars, u_to_u);
 		wide_structures.similarities.assign(begin(maps), end(maps));
+		wide_structures.keyboard_closeness = u_to_u(keyboard_layout);
 	}
 	else {
 		structures.input_substr_replacer = input_conversion;
@@ -873,6 +870,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		structures.replacements = move(replacements);
 		structures.similarities.assign(begin(map_related_chars),
 		                               end(map_related_chars));
+		structures.keyboard_closeness = move(keyboard_layout);
 	}
 
 	cerr.flush();

@@ -276,6 +276,10 @@ struct Dict_Base : public Aff_Data {
 	    -> OutIter;
 
 	template <class CharT, class OutIter>
+	auto add_sug_if_correct(std::basic_string<CharT>& word,
+	                        OutIter& out) const;
+
+	template <class CharT, class OutIter>
 	auto try_rep_suggestion(std::basic_string<CharT>& word,
 	                        OutIter out) const -> OutIter;
 
@@ -290,6 +294,10 @@ struct Dict_Base : public Aff_Data {
 	template <class CharT, class OutIter>
 	auto map_suggest(std::basic_string<CharT>& word, OutIter out,
 	                 size_t i = 0) const -> OutIter;
+
+	template <class CharT, class OutIter>
+	auto keyboard_suggest(std::basic_string<CharT>& word, OutIter out) const
+	    -> OutIter;
 
       public:
 	Dict_Base()

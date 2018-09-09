@@ -270,6 +270,15 @@ auto& erase_chars(std::basic_string<CharT>& s,
 	return s;
 }
 
+template <class CharT>
+auto& replace_char(std::basic_string<CharT>& s, CharT from, CharT to)
+{
+	for (auto i = s.find(from); i != s.npos; i = s.find(from, i + 1)) {
+		s[i] = to;
+	}
+	return s;
+}
+
 /**
  * Tests if word is a number.
  *

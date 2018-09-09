@@ -1888,9 +1888,18 @@ auto Dict_Base::suggest_priv(std::basic_string<CharT>& word, OutIter out) const
     -> OutIter
 {
 	out = rep_suggest(word, out);
-	out = extra_char_suggest(word, out);
 	out = map_suggest(word, out);
+	out = extra_char_suggest(word, out);
+	out = keyboard_suggest(word, out);
 	return out;
+}
+
+template <class CharT, class OutIter>
+auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
+                                   OutIter& out) const
+{
+	if (check_word(word))
+		*out++ = word;
 }
 
 template <class CharT, class OutIter>
@@ -1969,8 +1978,7 @@ auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
 	for (auto i = word.size() - 1; i != size_t(-1); --i) {
 		auto c = word[i];
 		word.erase(i, 1);
-		if (check_word(word))
-			*out++ = word;
+		add_sug_if_correct(word, out);
 		word.insert(i, 1, c);
 	}
 	return out;
@@ -1990,15 +1998,13 @@ auto Dict_Base::map_suggest(std::basic_string<CharT>& word, OutIter out,
 				if (c == e.chars[j])
 					continue;
 				word[i] = c;
-				if (check_word(word))
-					*out++ = word;
+				add_sug_if_correct(word, out);
 				out = map_suggest(word, out, i + 1);
 				word[i] = e.chars[j];
 			}
 			for (auto& r : e.strings) {
 				word.replace(i, 1, r);
-				if (check_word(word))
-					*out++ = word;
+				add_sug_if_correct(word, out);
 				out = map_suggest(word, out, i + r.size());
 				word.replace(i, r.size(), 1, e.chars[j]);
 			}
@@ -2008,8 +2014,7 @@ auto Dict_Base::map_suggest(std::basic_string<CharT>& word, OutIter out,
 					continue;
 				for (auto c : e.chars) {
 					word.replace(i, f.size(), 1, c);
-					if (check_word(word))
-						*out++ = word;
+					add_sug_if_correct(word, out);
 					out = map_suggest(word, out, i + 1);
 					word.replace(i, 1, f);
 				}
@@ -2017,12 +2022,41 @@ auto Dict_Base::map_suggest(std::basic_string<CharT>& word, OutIter out,
 					if (f == r)
 						continue;
 					word.replace(i, f.size(), r);
-					if (check_word(word))
-						*out++ = word;
+					add_sug_if_correct(word, out);
 					out = map_suggest(word, out,
 					                  i + r.size());
 					word.replace(i, r.size(), f);
 				}
+			}
+		}
+	}
+	return out;
+}
+
+template <class CharT, class OutIter>
+auto Dict_Base::keyboard_suggest(std::basic_string<CharT>& word,
+                                 OutIter out) const -> OutIter
+{
+	auto& ct = use_facet<ctype<CharT>>(internal_locale);
+	auto& kb = get_structures<CharT>().keyboard_closeness;
+	for (auto& c : word) {
+		auto old_c = c;
+		auto upp_c = ct.toupper(c);
+		if (upp_c != c) {
+			c = upp_c;
+			add_sug_if_correct(word, out);
+			c = old_c;
+		}
+		for (auto i = kb.find(c); i != kb.npos; i = kb.find(c, i + 1)) {
+			if (i != 0 && kb[i - 1] != '|') {
+				c = kb[i - 1];
+				add_sug_if_correct(word, out);
+				c = old_c;
+			}
+			if (i + 1 != kb.size() && kb[i + 1] != '|') {
+				c = kb[i + 1];
+				add_sug_if_correct(word, out);
+				c = old_c;
 			}
 		}
 	}

@@ -53,6 +53,7 @@ struct Aff_Structures {
 	std::vector<Compound_Pattern<CharT>> compound_patterns;
 	Replacement_Table<CharT> replacements;
 	std::vector<Similarity_Group<CharT>> similarities;
+	std::basic_string<CharT> keyboard_closeness;
 };
 
 struct Affix {
@@ -135,7 +136,6 @@ struct Aff_Data {
 	string wordchars; // deprecated?
 
 	// suggestion options
-	string keyboard_layout;
 	string try_chars;
 	char16_t nosuggest_flag;
 	unsigned short max_compound_suggestions;
