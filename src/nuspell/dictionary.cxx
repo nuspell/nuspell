@@ -2102,6 +2102,7 @@ auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
 			word.erase(i, 1);
 		}
 	}
+	return out;
 }
 
 auto Basic_Dictionary::imbue(const locale& loc) -> void

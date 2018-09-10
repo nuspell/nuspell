@@ -937,7 +937,12 @@ class List_Strings {
 	{
 		other.sz = 0;
 	}
-	auto operator=(const List_Strings& other) -> List_Strings& = default;
+	auto& operator=(const List_Strings& other)
+	{
+		clear();
+		insert(begin(), other.begin(), other.end());
+		return *this;
+	}
 	auto& operator=(List_Strings&& other)
 	{
 		d = move(other.d);
@@ -947,29 +952,29 @@ class List_Strings {
 	}
 	auto& operator=(std::initializer_list<value_type> il)
 	{
-		d = il;
-		sz = d.size();
+		clear();
+		insert(begin(), il);
 		return *this;
 	}
 	template <class InputIterator>
 	auto assign(InputIterator first, InputIterator last)
 	{
-		d.assign(first, last);
-		sz = d.size();
+		clear();
+		insert(begin(), first, last);
 	}
 	void assign(size_type n, const_reference value)
 	{
-		d.assign(n, value);
-		sz = n;
+		clear();
+		insert(begin(), n, value);
 	}
 	void assign(std::initializer_list<value_type> il) { *this = il; }
 	auto get_allocator() const noexcept { return d.get_allocator(); }
 
 	// iterators
-	auto begin() noexcept { return d.begin(); }
-	auto begin() const noexcept { return d.begin(); }
-	auto end() noexcept { return begin() + sz; }
-	auto end() const noexcept { return begin() + sz; }
+	auto begin() noexcept -> iterator { return d.begin(); }
+	auto begin() const noexcept -> const_iterator { return d.begin(); }
+	auto end() noexcept -> iterator { return begin() + sz; }
+	auto end() const noexcept -> const_iterator { return begin() + sz; }
 
 	auto rbegin() noexcept { return d.rend() - sz; }
 	auto rbegin() const noexcept { return d.rend() - sz; }
@@ -1093,6 +1098,97 @@ class List_Strings {
 	}
 	auto pop_back() { --sz; }
 
+      private:
+	template <class U>
+	auto insert_priv(const_iterator pos, U&& val)
+	{
+		if (sz != d.size()) {
+			d[sz] = std::forward<U>(val);
+		}
+		else {
+			auto pos_idx = pos - cbegin();
+			d.push_back(std::forward<U>(val));
+			pos = cbegin() + pos_idx;
+		}
+		auto p = begin() + (pos - cbegin());
+		std::rotate(p, begin() + sz, begin() + sz + 1);
+		++sz;
+		return p;
+	}
+
+      public:
+	template <class... Args>
+	auto emplace(const_iterator pos, Args&&... args)
+	{
+		if (sz != d.size()) {
+			d[sz] = value_type(std::forward<Args>(args)...);
+		}
+		else {
+			auto pos_idx = pos - cbegin();
+			d.emplace(std::forward<Args>(args)...);
+			pos = cbegin() + pos_idx;
+		}
+		auto p = begin() + (pos - cbegin());
+		std::rotate(p, begin() + sz, begin() + sz + 1);
+		++sz;
+		return p;
+	}
+	auto insert(const_iterator pos, const_reference x)
+	{
+		return insert_priv(pos, x);
+	}
+	auto insert(const_iterator pos, value_type&& x)
+	{
+		return insert_priv(pos, std::move(x));
+	}
+	auto insert(const_iterator pos, size_type n, const_reference x)
+	    -> iterator
+	{
+		auto i = sz;
+		while (n != 0 && i != d.size()) {
+			d[i] = x;
+			--n;
+			++i;
+		}
+		if (n != 0) {
+			auto pos_idx = pos - cbegin();
+			d.insert(d.end(), n, x);
+			pos = cbegin() + pos_idx;
+			i = d.size();
+		}
+		auto p = begin() + (pos - cbegin());
+		std::rotate(p, begin() + sz, begin() + i);
+		sz = i;
+		return p;
+	}
+
+	template <class InputIterator>
+	auto insert(const_iterator pos, InputIterator first, InputIterator last)
+	    -> iterator
+	{
+		auto i = sz;
+		while (first != last && i != d.size()) {
+			d[i] = *first;
+			++first;
+			++i;
+		}
+		if (first != last) {
+			auto pos_idx = pos - cbegin();
+			d.insert(d.end(), first, last);
+			pos = cbegin() + pos_idx;
+			i = d.size();
+		}
+		auto p = begin() + (pos - cbegin());
+		std::rotate(p, begin() + sz, begin() + i);
+		sz = i;
+		return p;
+	}
+	auto insert(const_iterator pos, std::initializer_list<value_type> il)
+	    -> iterator
+	{
+		return insert(pos, il.begin(), il.end());
+	}
+
 	auto erase(const_iterator position)
 	{
 		auto i0 = begin();
@@ -1118,7 +1214,7 @@ class List_Strings {
 		d.swap(other.d);
 		std::swap(sz, other.sz);
 	}
-	auto clear() noexcept { sz = 0; }
+	auto clear() noexcept -> void { sz = 0; }
 
 	auto operator==(const List_Strings& other) const
 	{

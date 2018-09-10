@@ -200,3 +200,39 @@ TEST_CASE("class String_Pair", "[structures]")
 	CHECK_THROWS_WITH(String_Pair<char>("6789", 5),
 	                  "Word split is too long.");
 }
+
+TEST_CASE("class List_Strings", "[structures]")
+{
+	List_Strings l;
+	CHECK(l.size() == 0);
+	CHECK(begin(l) == end(l));
+	l.push_back("1");
+	l.push_back("2");
+	l.push_back("3");
+	CHECK(l.size() == 3);
+	CHECK(begin(l) + 3 == end(l));
+	CHECK(l[0] == "1");
+	CHECK(l[1] == "2");
+	CHECK(l[2] == "3");
+
+	l.insert(begin(l) + 1, {"qwe", "asd"});
+	CHECK(l.size() == 5);
+	CHECK(begin(l) + 5 == end(l));
+	CHECK(l[0] == "1");
+	CHECK(l[1] == "qwe");
+	CHECK(l[2] == "asd");
+	CHECK(l[3] == "2");
+	CHECK(l[4] == "3");
+
+	l.erase(begin(l) + 3);
+	CHECK(l.size() == 4);
+	CHECK(begin(l) + 4 == end(l));
+	CHECK(l[0] == "1");
+	CHECK(l[1] == "qwe");
+	CHECK(l[2] == "asd");
+	CHECK(l[3] == "3");
+
+	l.clear();
+	CHECK(l.size() == 0);
+	CHECK(begin(l) == end(l));
+}
