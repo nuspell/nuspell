@@ -333,6 +333,10 @@ class Basic_Dictionary : protected Dict_Base {
 	                                   std::string& narrow_out) const
 	    -> bool;
 
+	auto internal_to_external_encoding(std::string& in_out,
+	                                   std::wstring& wide_in_out) const
+	    -> bool;
+
       public:
 	Basic_Dictionary()
 	{
@@ -358,7 +362,8 @@ class Basic_Dictionary : protected Dict_Base {
 	}
 	auto imbue(const std::locale& loc) -> void;
 	auto spell(const std::string& word) const -> bool;
-	auto suggest(const std::string& word, List_Strings& out) const -> void;
+	auto suggest(const std::string& word, List_Strings<char>& out) const
+	    -> void;
 };
 
 using Dictionary = Basic_Dictionary;

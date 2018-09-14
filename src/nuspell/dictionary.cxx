@@ -2141,6 +2141,33 @@ auto Basic_Dictionary::external_to_internal_encoding(const string& in,
 	return ok;
 }
 
+auto Basic_Dictionary::internal_to_external_encoding(string& in_out,
+                                                     wstring& wide_in_out) const
+    -> bool
+{
+	using ed = Encoding_Details;
+	auto ok = true;
+	switch (enc_details) {
+	case ed::EXTERNAL_U8_INTERNAL_U8:
+		wide_to_utf8(wide_in_out, in_out);
+		break;
+	case ed::EXTERNAL_OTHER_INTERNAL_U8:
+		ok = to_narrow(wide_in_out, in_out, external_locale);
+		break;
+	case ed::EXTERNAL_U8_INTERNAL_OTHER:
+		ok = to_wide(in_out, internal_locale, wide_in_out);
+		wide_to_utf8(wide_in_out, in_out);
+		break;
+	case ed::EXTERNAL_OTHER_INTERNAL_OTHER:
+		ok = to_wide(in_out, internal_locale, wide_in_out);
+		ok &= to_narrow(wide_in_out, in_out, external_locale);
+		break;
+	case ed::EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE:
+		break;
+	}
+	return ok;
+}
+
 auto Basic_Dictionary::spell(const std::string& word) const -> bool
 {
 	using ed = Encoding_Details;
@@ -2175,78 +2202,17 @@ auto Basic_Dictionary::spell(const std::string& word) const -> bool
 	}
 }
 
-struct List_Strings_Back_Inserter {
-	const Basic_Dictionary* dict = nullptr;
-	List_Strings* list = nullptr;
-	auto& operator++() { return *this; }
-	auto& operator++(int) { return *this; }
-	auto& operator*() { return *this; }
-	auto& operator=(const string& s)
-	{
-		auto static thread_local wide = wstring();
-		using ed = Encoding_Details;
-		switch (dict->enc_details) {
-		case ed::EXTERNAL_U8_INTERNAL_OTHER: {
-			auto ok = to_wide(s, dict->internal_locale, wide);
-			if (unlikely(!ok))
-				break;
-			auto& out = list->emplace_back();
-			wide_to_utf8(wide, out);
-			break;
-		}
-		case ed::EXTERNAL_OTHER_INTERNAL_OTHER: {
-			auto& out = list->emplace_back();
-			auto ok = to_wide(s, dict->internal_locale, wide);
-			ok &= to_narrow(wide, out, dict->external_locale);
-			if (unlikely(!ok))
-				list->pop_back();
-			break;
-		}
-		case ed::EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE:
-			list->push_back(s);
-			break;
-		default:
-			throw logic_error(
-			    "bad internal state for encoding details");
-			break;
-		}
-		return *this;
-	}
-	auto& operator=(const wstring& s)
-	{
-		using ed = Encoding_Details;
-		switch (dict->enc_details) {
-		case ed::EXTERNAL_U8_INTERNAL_U8: {
-			auto& out = list->emplace_back();
-			wide_to_utf8(s, out);
-			break;
-		}
-		case ed::EXTERNAL_OTHER_INTERNAL_U8: {
-			auto& out = list->emplace_back();
-			auto ok = to_narrow(s, out, dict->external_locale);
-			if (unlikely(!ok))
-				list->pop_back();
-			break;
-		}
-		default:
-			throw logic_error(
-			    "bad internal state for encoding details");
-			break;
-		}
-		return *this;
-	}
-};
-
-void Basic_Dictionary::suggest(const string& word, List_Strings& out) const
+auto Basic_Dictionary::suggest(const string& word,
+                               List_Strings<char>& out) const -> void
 {
-	out.clear();
-
 	using ed = Encoding_Details;
 	auto static thread_local wide_word = wstring();
 	auto static thread_local narrow_word = string();
+	auto static thread_local wide_list = List_Strings<wchar_t>();
+
+	out.clear();
 	auto ok_enc =
 	    external_to_internal_encoding(word, wide_word, narrow_word);
-	auto out_it = List_Strings_Back_Inserter{this, &out};
 	switch (enc_details) {
 	case ed::EXTERNAL_U8_INTERNAL_U8:
 	case ed::EXTERNAL_OTHER_INTERNAL_U8:
@@ -2257,7 +2223,12 @@ void Basic_Dictionary::suggest(const string& word, List_Strings& out) const
 		}
 		if (unlikely(!ok_enc))
 			return;
-		suggest_priv(wide_word, out_it);
+		wide_list.clear();
+		suggest_priv(wide_word, back_inserter(wide_list));
+		for (auto& w : wide_list) {
+			auto& o = out.emplace_back();
+			internal_to_external_encoding(o, w);
+		}
 		break;
 	default:
 		if (unlikely(narrow_word.size() > 180)) {
@@ -2269,7 +2240,10 @@ void Basic_Dictionary::suggest(const string& word, List_Strings& out) const
 		}
 		if (unlikely(!ok_enc))
 			return;
-		suggest_priv(narrow_word, out_it);
+		suggest_priv(narrow_word, back_inserter(out));
+		for (auto& nw : out) {
+			internal_to_external_encoding(nw, wide_word);
+		}
 		break;
 	}
 }

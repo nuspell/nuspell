@@ -343,7 +343,7 @@ auto list_dictionaries(const Finder& f) -> void
 auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto word = string();
-	auto suggestions = List_Strings();
+	auto suggestions = List_Strings<char>();
 	while (in >> word) {
 		auto correct = dic.spell(word);
 		if (correct) {

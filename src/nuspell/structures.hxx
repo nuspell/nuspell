@@ -901,13 +901,14 @@ class Compound_Rule_Table {
 /**
  * @brief Vector of strings that recycles erased strings
  */
+template <class CharT>
 class List_Strings {
-	using VecT = std::vector<std::string>;
-	std::vector<std::string> d;
+	using VecT = std::vector<std::basic_string<CharT>>;
+	VecT d;
 	size_t sz = 0;
 
       public:
-	using value_type = VecT::value_type;
+	using value_type = typename VecT::value_type;
 	using allocator_type = typename VecT::allocator_type;
 	using size_type = typename VecT::size_type;
 	using difference_type = typename VecT::difference_type;
@@ -1243,7 +1244,11 @@ class List_Strings {
 		return !(*this > other);
 	}
 };
-auto inline swap(List_Strings& a, List_Strings& b) { a.swap(b); }
+template <class CharT>
+auto swap(List_Strings<CharT>& a, List_Strings<CharT>& b)
+{
+	a.swap(b);
+}
 
 template <class CharT>
 class Replacement_Table {
