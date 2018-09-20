@@ -2048,24 +2048,24 @@ auto Dict_Base::keyboard_suggest(std::basic_string<CharT>& word,
 {
 	auto& ct = use_facet<ctype<CharT>>(internal_locale);
 	auto& kb = get_structures<CharT>().keyboard_closeness;
-	for (auto& c : word) {
-		auto old_c = c;
+	for (size_t j = 0; j != word.size(); ++j) {
+		auto c = word[j];
 		auto upp_c = ct.toupper(c);
 		if (upp_c != c) {
-			c = upp_c;
+			word[j] = upp_c;
 			add_sug_if_correct(word, out);
-			c = old_c;
+			word[j] = c;
 		}
 		for (auto i = kb.find(c); i != kb.npos; i = kb.find(c, i + 1)) {
 			if (i != 0 && kb[i - 1] != '|') {
-				c = kb[i - 1];
+				word[j] = kb[i - 1];
 				add_sug_if_correct(word, out);
-				c = old_c;
+				word[j] = c;
 			}
 			if (i + 1 != kb.size() && kb[i + 1] != '|') {
-				c = kb[i + 1];
+				word[j] = kb[i + 1];
 				add_sug_if_correct(word, out);
-				c = old_c;
+				word[j] = c;
 			}
 		}
 	}
@@ -2078,13 +2078,13 @@ auto Dict_Base::bad_char_suggest(std::basic_string<CharT>& word,
 {
 	auto& try_chars = get_structures<CharT>().try_chars;
 	for (auto new_c : try_chars) {
-		for (auto& c : boost::adaptors::reverse(word)) {
+		for (size_t i = 0; i != word.size(); ++i) {
+			auto c = word[i];
 			if (c == new_c)
 				continue;
-			auto old_c = c;
-			c = new_c;
+			word[i] = new_c;
 			add_sug_if_correct(word, out);
-			c = old_c;
+			word[i] = c;
 		}
 	}
 	return out;
