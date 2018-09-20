@@ -289,6 +289,14 @@ class Basic_Dictionary : protected Dict_Base {
 	Encoding_Details enc_details;
 
       public:
+	/**
+	 * Loads dictionary from provided affix and dictionary input streams.
+	 *
+	 * @param aff affix input stream to parse.
+	 * @param dic dictionary stream to parse.
+	 * @throws std::ios_base::failure
+	 * @return The created dictionary laoded with the parsed data.
+	 */
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	{
 		auto ret = Basic_Dictionary();
@@ -298,6 +306,15 @@ class Basic_Dictionary : protected Dict_Base {
 		}
 		return ret;
 	}
+	/**
+	 * Loads dictionary from affix and dictionary file path without
+	 * extension.
+	 *
+	 * @param file_path_without_extension file path without
+	 * extension to find the affix and dictionary files.
+	 * @throws std::ios_base::failure
+	 * @return The created dictionary laoded with the parsed data.
+	 */
 	auto static load_from_aff_dic(const string& file_path_without_extension)
 	{
 		auto& path = file_path_without_extension;

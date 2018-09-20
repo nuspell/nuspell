@@ -509,7 +509,7 @@ auto suffix(basic_string<CharT>&& word, size_t len) = delete;
 /**
  * @brief Iterator of prefix entres that match a word.
  *
- * Iterates all prefix entries where the .appending member is prefix of a given
+ * Iterates all prefix entries where the appending member is prefix of a given
  * word.
  */
 template <class CharT>
@@ -560,7 +560,7 @@ class Prefix_Iter {
 /**
  * @brief Iterator of suffix entres that match a word.
  *
- * Iterates all suffix entries where the .appending member is suffix of a given
+ * Iterates all suffix entries where the appending member is suffix of a given
  * word.
  */
 template <class CharT>

@@ -771,6 +771,14 @@ class String_Pair {
       public:
 	String_Pair() = default;
 	template <class Str1>
+	/**
+	 * Constructs a string pair from a single string containing a pair of
+	 * strings and an index where the split resides.
+	 *
+	 * @param str the string that can be split into a pair.
+	 * @param i the index where the string is split.
+	 * @throws std::out_of_range
+	 */
 	String_Pair(Str1&& str, size_t i) : i(i), s(std::forward<Str1>(str))
 	{
 		if (i > s.size()) {

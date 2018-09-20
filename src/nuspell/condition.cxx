@@ -31,6 +31,11 @@ namespace nuspell {
 using namespace std;
 
 template <class CharT>
+/**
+ * Constructs a condition.
+ *
+ * @throws invalid_argument
+ */
 auto Condition<CharT>::construct() -> void
 {
 	size_t i = 0;
@@ -91,9 +96,15 @@ auto Condition<CharT>::construct() -> void
 /**
  * Checks if provided string matched the condition.
  *
+ * Complexity is unspecified, but worst-case scenario it is quadratic
+ * <em>O</em>(<em>n</em><sup>2</sup>). This originates from the iteration over
+ * the condition and for each iteration possibly calling a find or match
+ * operation on the string that is being checked.
+ *
  * @param s string to check if it matches the condition.
  * @param pos start position for string, default is 0.
  * @param len length of string counting from the start position.
+ * @throws out_of_range
  * @return The valueof true when string matched condition.
  */
 template <class CharT>
