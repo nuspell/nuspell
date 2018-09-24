@@ -537,6 +537,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<Affix> prefixes;
 	vector<Affix> suffixes;
 	vector<string> break_patterns;
+	bool break_exists = false;
 	vector<pair<string, string>> input_conversion;
 	vector<pair<string, string>> output_conversion;
 	vector<vector<string>> morphological_aliases;
@@ -544,7 +545,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<u16string> rules;
 	vector<pair<string, string>> replacements;
 	vector<string> map_related_chars;
-	bool break_exists = false;
+	vector<pair<string, string>> phonetic_replacements;
 
 	flag_type = FLAG_SINGLE_CHAR;
 
@@ -839,6 +840,9 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		wide_structures.similarities.assign(begin(maps), end(maps));
 		wide_structures.keyboard_closeness = u_to_u(keyboard_layout);
 		wide_structures.try_chars = u_to_u(try_chars);
+		auto phone = boost::adaptors::transform(phonetic_replacements,
+		                                        u_to_u_pair);
+		wide_structures.phonetic_table = phone;
 	}
 	else {
 		structures.input_substr_replacer = input_conversion;
@@ -874,6 +878,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		                               end(map_related_chars));
 		structures.keyboard_closeness = move(keyboard_layout);
 		structures.try_chars = move(try_chars);
+		structures.phonetic_table = move(phonetic_replacements);
 	}
 
 	cerr.flush();

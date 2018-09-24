@@ -27,8 +27,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/locale.hpp>
-#include <boost/range/adaptors.hpp>
 #include <boost/scope_exit.hpp>
 
 namespace nuspell {
@@ -1894,6 +1894,7 @@ auto Dict_Base::suggest_priv(std::basic_string<CharT>& word, OutIter out) const
 	out = keyboard_suggest(word, out);
 	out = bad_char_suggest(word, out);
 	out = forgotten_char_suggest(word, out);
+	out = phonetic_suggest(word, out);
 	return out;
 }
 
@@ -2102,6 +2103,23 @@ auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
 			word.erase(i, 1);
 		}
 	}
+	return out;
+}
+
+template <class CharT, class OutIter>
+auto Dict_Base::phonetic_suggest(std::basic_string<CharT>& word,
+                                 OutIter out) const -> OutIter
+{
+	using ShortStr = boost::container::small_vector<CharT, 64>;
+	auto backup = ShortStr(&word[0], &word[word.size()]);
+	boost::algorithm::to_upper(word, internal_locale);
+	auto phonetic_table = get_structures<CharT>().phonetic_table;
+	auto changed = phonetic_table.replace(word);
+	if (changed) {
+		boost::algorithm::to_lower(word, internal_locale);
+		add_sug_if_correct(word, out);
+	}
+	word.assign(&backup[0], backup.size());
 	return out;
 }
 

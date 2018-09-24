@@ -379,4 +379,158 @@ auto Similarity_Group<CharT>::parse(const StrT& s) -> void
 template struct Similarity_Group<char>;
 template struct Similarity_Group<wchar_t>;
 
+template <class CharT>
+auto Phonetic_Table<CharT>::order() -> void
+{
+	stable_sort(begin(table), end(table), [](auto& pair1, auto& pair2) {
+		if (pair2.first.empty())
+			return false;
+		if (pair1.first.empty())
+			return true;
+		return pair1.first[0] < pair2.first[0];
+	});
+	auto it = find_if_not(begin(table), end(table),
+	                      [](auto& p) { return p.first.empty(); });
+	table.erase(begin(table), it);
+	for (auto& r : table) {
+		if (r.second == LITERAL(CharT, "_"))
+			r.second.clear();
+	}
+}
+
+template <class CharT>
+auto Phonetic_Table<CharT>::match(const StrT& data, size_t i,
+                                  const StrT& pattern, bool at_begin)
+    -> Phonet_Match_Result
+{
+	auto ret = Phonet_Match_Result();
+	auto j = pattern.find_first_of(LITERAL(CharT, "(<-0123456789^$"));
+	if (j == pattern.npos)
+		j = pattern.size();
+	if (data.compare(i, j, pattern, 0, j) == 0)
+		ret.count_matched = j;
+	else
+		return {};
+	if (j == pattern.size())
+		return ret;
+	if (pattern[j] == '(') {
+		auto k = pattern.find(')', j);
+		if (k == pattern.npos)
+			return {}; // bad rule
+		auto x = char_traits<CharT>::find(&pattern[j + 1], k - (j + 1),
+		                                  data[i + j]);
+		if (!x)
+			return {};
+		j = k + 1;
+		ret.count_matched += 1;
+	}
+	if (j == pattern.size())
+		return ret;
+	if (pattern[j] == '<') {
+		ret.go_back_after_replace = true;
+		++j;
+	}
+	auto k = pattern.find_first_not_of('-', j);
+	if (k == pattern.npos) {
+		k = pattern.size();
+		ret.go_back_before_replace = k - j;
+		if (ret.go_back_before_replace >= ret.count_matched)
+			return {}; // bad rule
+		return ret;
+	}
+	else {
+		ret.go_back_before_replace = k - j;
+		if (ret.go_back_before_replace >= ret.count_matched)
+			return {}; // bad rule
+	}
+	j = k;
+	if (pattern[j] >= '0' && pattern[j] <= '9') {
+		ret.priority = pattern[j] - '0';
+		++j;
+	}
+	if (j == pattern.size())
+		return ret;
+	if (pattern[j] == '^') {
+		if (!at_begin)
+			return {};
+		++j;
+	}
+	if (j == pattern.size())
+		return ret;
+	if (pattern[j] == '^') {
+		ret.treat_next_as_begin = true;
+		++j;
+	}
+	if (j == pattern.size())
+		return ret;
+	if (pattern[j] != '$')
+		return {}; // bad rule, no other char is allowed at this point
+	if (i + ret.count_matched == data.size())
+		return ret;
+	return {};
+}
+
+template <class CharT>
+auto Phonetic_Table<CharT>::replace(StrT& word) const -> bool
+{
+	using boost::make_iterator_range;
+	struct Cmp {
+		auto operator()(CharT c, const pair<StrT, StrT>& s)
+		{
+			return c < s.first[0];
+		}
+		auto operator()(const pair<StrT, StrT>& s, CharT c)
+		{
+			return s.first[0] < c;
+		}
+	};
+	if (table.empty())
+		return false;
+	auto ret = false;
+	auto treat_next_as_begin = true;
+	size_t count_go_backs_after_repalce = 0; // avoid infinite loop
+	for (size_t i = 0; i != word.size(); ++i) {
+		auto rules =
+		    equal_range(begin(table), end(table), word[i], Cmp());
+		for (auto& r : make_iterator_range(rules)) {
+			auto rule = &r;
+			auto m1 = match(word, i, r.first, treat_next_as_begin);
+			if (!m1)
+				continue;
+			if (!m1.go_back_before_replace) {
+				auto j = i + m1.count_matched - 1;
+				auto rules2 = equal_range(
+				    begin(table), end(table), word[j], Cmp());
+				for (auto& r2 : make_iterator_range(rules2)) {
+					auto m2 =
+					    match(word, j, r2.first, false);
+					if (m2 && m2.priority >= m1.priority) {
+						i = j;
+						rule = &r2;
+						m1 = m2;
+						break;
+					}
+				}
+			}
+			word.replace(
+			    i, m1.count_matched - m1.go_back_before_replace,
+			    rule->second);
+			treat_next_as_begin = m1.treat_next_as_begin;
+			if (m1.go_back_after_replace &&
+			    count_go_backs_after_repalce < 100) {
+				count_go_backs_after_repalce++;
+			}
+			else {
+				i += rule->second.size();
+			}
+			--i;
+			ret = true;
+			break;
+		}
+	}
+	return ret;
+}
+template class Phonetic_Table<char>;
+template class Phonetic_Table<wchar_t>;
+
 } // namespace nuspell

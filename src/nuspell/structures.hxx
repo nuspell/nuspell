@@ -1335,5 +1335,55 @@ struct Similarity_Group {
 	}
 };
 
+template <class CharT>
+class Phonetic_Table {
+	using StrT = std::basic_string<CharT>;
+
+	struct Phonet_Match_Result {
+		size_t count_matched = 0;
+		size_t go_back_before_replace = 0;
+		size_t priority = 5;
+		bool go_back_after_replace = false;
+		bool treat_next_as_begin = false;
+		operator bool() { return count_matched; }
+	};
+
+	std::vector<std::pair<StrT, StrT>> table;
+	auto order() -> void;
+	auto static match(const StrT& data, size_t i, const StrT& pattern,
+	                  bool at_begin) -> Phonet_Match_Result;
+
+      public:
+	Phonetic_Table() = default;
+	Phonetic_Table(const std::vector<std::pair<StrT, StrT>>& v) : table(v)
+	{
+		order();
+	}
+	Phonetic_Table(std::vector<std::pair<StrT, StrT>>&& v) : table(move(v))
+	{
+		order();
+	}
+	auto& operator=(const std::vector<std::pair<StrT, StrT>>& v)
+	{
+		table = v;
+		order();
+		return *this;
+	}
+	auto& operator=(std::vector<std::pair<StrT, StrT>>&& v)
+	{
+		table = move(v);
+		order();
+		return *this;
+	}
+	template <class Range>
+	auto& operator=(const Range& range)
+	{
+		table.assign(std::begin(range), std::end(range));
+		order();
+		return *this;
+	}
+	auto replace(StrT& word) const -> bool;
+};
+
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX

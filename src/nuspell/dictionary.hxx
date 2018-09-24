@@ -307,6 +307,10 @@ struct Dict_Base : public Aff_Data {
 	auto forgotten_char_suggest(std::basic_string<CharT>& word,
 	                            OutIter out) const -> OutIter;
 
+	template <class CharT, class OutIter>
+	auto phonetic_suggest(std::basic_string<CharT>& word, OutIter out) const
+	    -> OutIter;
+
       public:
 	Dict_Base()
 	    : Aff_Data() // we explicity do value init so content is zeroed

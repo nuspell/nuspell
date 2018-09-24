@@ -55,6 +55,7 @@ struct Aff_Structures {
 	std::vector<Similarity_Group<CharT>> similarities;
 	std::basic_string<CharT> keyboard_closeness;
 	std::basic_string<CharT> try_chars;
+	Phonetic_Table<CharT> phonetic_table;
 };
 
 struct Affix {
@@ -144,7 +145,6 @@ struct Aff_Data {
 	bool only_max_diff;
 	bool no_split_suggestions;
 	bool suggest_with_dots;
-	vector<pair<string, string>> phonetic_replacements;
 
 	// compounding options
 	unsigned short compound_min_length;
