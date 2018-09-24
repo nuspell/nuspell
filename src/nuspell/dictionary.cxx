@@ -46,6 +46,28 @@ using boost::make_iterator_range;
 using boost::locale::to_lower;
 using boost::locale::to_title;
 
+template <class L>
+class At_Scope_Exit {
+	L& lambda;
+
+      public:
+	At_Scope_Exit(L& action) : lambda(action) {}
+	~At_Scope_Exit() { lambda(); }
+};
+
+#define CONCAT_IMPL(x, y) x##y
+#define MACRO_CONCAT(x, y) CONCAT_IMPL(x, y)
+
+#define ASE_INTERNAL1(lname, aname, ...)                                       \
+	auto lname = [&]() { __VA_ARGS__; };                                   \
+	At_Scope_Exit<decltype(lname)> aname(lname);
+
+#define ASE_INTERNAL2(ctr, ...)                                                \
+	ASE_INTERNAL1(MACRO_CONCAT(Auto_func_, ctr),                           \
+	              MACRO_CONCAT(Auto_instance_, ctr), __VA_ARGS__)
+
+#define AT_SCOPE_EXIT(...) ASE_INTERNAL2(__COUNTER__, __VA_ARGS__)
+
 template <class CharT>
 auto Dict_Base::spell_priv(const std::basic_string<CharT>& s) const -> bool
 {
@@ -1646,7 +1668,7 @@ try_simplified_triple:
 	if (!(i >= 2 && word[i - 1] == word[i - 2]))
 		return {};
 	word.insert(i, 1, word[i - 1]);
-	BOOST_SCOPE_EXIT_ALL(&) { word.erase(i, 1); };
+	AT_SCOPE_EXIT(word.erase(i, 1));
 	part.assign(word, i, word.npos);
 	part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
 	if (!part2_entry)
@@ -1690,12 +1712,11 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		// at this point p.replacement is substring in word
 		word.replace(i, p.replacement.size(), p.begin_end_chars.str());
 		i += p.begin_end_chars.idx();
-		BOOST_SCOPE_EXIT_ALL(&)
-		{
+		AT_SCOPE_EXIT({
 			i -= p.begin_end_chars.idx();
 			word.replace(i, p.begin_end_chars.str().size(),
 			             p.replacement);
-		};
+		});
 
 		part.assign(word, start_pos, i - start_pos);
 		auto part1_entry = check_word_in_compound<m>(part);
@@ -1748,7 +1769,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		if (!(i >= 2 && word[i - 1] == word[i - 2]))
 			return {};
 		word.insert(i, 1, word[i - 1]);
-		BOOST_SCOPE_EXIT_ALL(&) { word.erase(i, 1); };
+		AT_SCOPE_EXIT(word.erase(i, 1));
 		part.assign(word, i, word.npos);
 		part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
 		if (!part2_entry)
@@ -1850,7 +1871,7 @@ auto Dict_Base::check_compound_with_rules(
 		if (!part1_entry)
 			continue;
 		words_data.push_back(&part1_entry->second);
-		BOOST_SCOPE_EXIT_ALL(&) { words_data.pop_back(); };
+		AT_SCOPE_EXIT(words_data.pop_back());
 
 		part.assign(word, i, word.npos);
 		auto part2_entry = Word_List::const_pointer();
@@ -1869,7 +1890,7 @@ auto Dict_Base::check_compound_with_rules(
 
 		{
 			words_data.push_back(&part2_entry->second);
-			BOOST_SCOPE_EXIT_ALL(&) { words_data.pop_back(); };
+			AT_SCOPE_EXIT(words_data.pop_back());
 
 			auto m = compound_rules.match_any_rule(words_data);
 			if (m)
