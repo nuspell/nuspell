@@ -25,8 +25,8 @@ bin_PROGRAMS = nuspell
 nuspell_SOURCES = main.cxx
 LDADD = libnuspell.a $(LIBADD)
 
-noinst_PROGRAMS = regress
-regress_SOURCES = regress.cxx
-regress_CPPFLAGS = $(AM_CPPFLAGS) -DHUNSPELL_STATIC \
+noinst_PROGRAMS = verify
+verify_SOURCES = verify.cxx
+verify_CPPFLAGS = $(AM_CPPFLAGS) -DHUNSPELL_STATIC \
                    -I$(top_builddir)/src/hunspell
-regress_LDADD = libnuspell.a ../hunspell/libhunspell.a $(LIBADD)
+verify_LDADD = libnuspell.a ../hunspell/libhunspell.a $(LIBADD)

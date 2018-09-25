@@ -17,8 +17,8 @@
  */
 
 /**
- * @file regress.cxx
- * Command line spell check regression testing.
+ * @file verify.cxx
+ * Command line spell check for verification testing.
  */
 
 #include "dictionary.hxx"
@@ -40,10 +40,10 @@
 #else
 // manually define
 #ifndef PACKAGE_STRING
-#define PACKAGE_STRING "regress 2.0.0"
+#define PACKAGE_STRING "verify 2.0.0"
 #endif
 #ifndef PACKAGE
-#define PACKAGE "regress"
+#define PACKAGE "verify"
 #endif
 #endif
 
@@ -59,7 +59,7 @@ using namespace std;
 using namespace nuspell;
 
 enum Mode {
-	DEFAULT_MODE /**< regression test */,
+	DEFAULT_MODE /**< verification test */,
 	HELP_MODE /**< printing help information */,
 	VERSION_MODE /**< printing version information */,
 	ERROR_MODE /**< where the arguments used caused an error */
@@ -162,7 +162,8 @@ auto print_help(const string& program_name) -> void
 	o << p << " [-d dict_NAME] [-i enc] [file_name]...\n";
 	o << p << " -h|--help|-v|--version\n";
 	o << "\n"
-	     "Regression testing spell check of each FILE. Without FILE, check "
+	     "Verification testing spell check of each FILE. Without FILE, "
+	     "check "
 	     "standard "
 	     "input.\n"
 	     "For simple test, use /usr/share/dict/american-english for FILE.\n"
