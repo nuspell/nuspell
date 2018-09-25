@@ -1,14 +1,8 @@
 # About Nuspell
 
-NOTICE: Nuspell is currently under development. For contributing see
-[version 2
-specification](https://github.com/nuspell/nuspell/wiki/Version-2-Specification).
-
-Nuspell is a spell checker library and
-program designed for languages with rich morphology and complex word
-compounding or character encoding. Nuspell interfaces: Ispell pipe
-interface and C++ API. Nuspell is a pure C++
-reimplementation of Hunspell.
+Nuspell is a spell checker library and command-line program designed
+for languages with rich morphology and complex word compounding.
+Nuspell is a pure C++ reimplementation of Hunspell.
 
 Main features of Nuspell spell checker and morphological analyzer:
 
@@ -23,7 +17,9 @@ Main features of Nuspell spell checker and morphological analyzer:
     words, pseudoroots and homonyms.
   - Free software. Licenced under GNU LGPL.
 
-# Dependencies
+# Building Nuspell
+
+## Dependencies
 
 Build-only dependencies:
 
@@ -36,10 +32,10 @@ Runtime dependencies:
 Recommended tools for developers:
 
 ```
-qtcreator clang-format gdb vim cppcheck doxygen plantuml
+qtcreator clang-format gdb vim doxygen
 ```
 
-# Building on GNU/Linux and Unixes
+## Building on GNU/Linux and Unixes
 
 We first need to download the dependencies. Some may already be preinstalled.
 
@@ -54,11 +50,12 @@ Then run the following commands:
     ./configure
     make
     sudo make install
-    sudo ldconfig
+
+<!--sudo ldconfig-->
 
 For speeding up the build process, see also the -j option of make.
 
-<!-- hunspell v1 stuff
+<!-- old hunspell v1 stuff
 For dictionary development, use the `--with-warnings` option of
 configure.
 
@@ -76,7 +73,7 @@ In Ubuntu, the packages are:
     libncurses5-dev libreadline-dev
 -->
 
-# Building on OSX and macOS
+## Building on OSX and macOS
 
 1. Install Apple's Command-line tools
 2. Install Homebrew package manager
@@ -92,9 +89,9 @@ Then run the standard trio of autoreconf, configure and make. See above.
 If you want to build with GCC instead of Clang, you need to pull GCC with
 Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
 
-# Building on Windows
+## Building on Windows
 
-## 1\. Compiling with Mingw64 and MSYS2
+### 1\. Compiling with Mingw64 and MSYS2
 
 Download Msys2, update everything and install the following
     packages:
@@ -105,13 +102,13 @@ Download Msys2, update everything and install the following
 Open Mingw-w64 Win64 prompt and compile the same way as on Linux, see
 above.
 
-## 2\. Building in Cygwin environment
+### 2\. Building in Cygwin environment
 
 Download the above mentioned dependencies with Cygwin package manager.
 Then compile the same way as on Linux. Cygwin builds depend on
 Cygwin1.dll.
 
-# Building on FreeBSD (experimental)
+## Building on FreeBSD (experimental)
 
 Install the following required packages
 
@@ -119,7 +116,7 @@ Install the following required packages
 
 Then run the standard trio of autoreconf, configure and make. See above.
 
-# Debugging
+# Debugging Nuspell
 
 First, always install the debugger:
 
@@ -132,7 +129,7 @@ It is recomended to install a debug build of the standard library:
 For debugging we need to create a debug build and then we need to start
 `gdb`.
 
-    ./configure CXXFLAGS='-g -O0 -Wall -Wextra'
+    ./configure CXXFLAGS='-g -O0 -Wall -Wextra -Werror'
     make
     gdb src/nuspell/nuspell
 
@@ -161,30 +158,18 @@ For example:
 
 # Documentation
 
-Short documentation in man-pages:
-
-    man nuspell
-    nuspell -h
-
-Full documentation in the
-[wiki](https://github.com/nuspell/nuspell/wiki).
-
-Documentation for developers can be generated from the source files by
-running:
-
-    doxygen
-
-The result can be viewed by opening `doxygen/html/index.html` in a web
-browser. Doxygen will use Graphviz for generating all sorts of graphs
-and PlantUML for generating UML diagrams. Make sure that the packages
-plantuml and graphviz are installed before running Doxygen. The latter
-is usually installed automatically when installing Doxygen.
-
-# Usage
+## Using the command-line tool
 
 The main executable is located in `src/nuspell`.
 
-<!--
+After compiling and installing you can run the Nuspell
+spell checker with a Nuspell, Hunspell or Myspell dictionary:
+
+    nuspell -d en_US text.txt
+
+For more details see the [man-page](docs/nuspell.1.md).
+
+<!-- old hunspell v1 stuff
 The src/tools directory contains ten executables after compiling.
 
   - The main executable:
@@ -209,13 +194,7 @@ The src/tools directory contains ten executables after compiling.
         of a MySpell dictionary
 -->
 
-After compiling and installing (see INSTALL) you can run the Nuspell
-spell checker (compiled with user interface) with a Nuspell, Hunspell or
-Myspell dictionary:
-
-    nuspell -d en_US text.txt
-
-# Using Nuspell library with GCC
+## Using the Library
 
 Including in your program:
 
@@ -227,7 +206,23 @@ Linking with Nuspell static library:
     # or better, use pkg-config
     g++ example.cxx $(pkg-config --cflags --libs nuspell)
 
-## Dictionaries
+## See also
+
+Full documentation in the
+[wiki](https://github.com/nuspell/nuspell/wiki).
+
+API Documentation for developers can be generated from the source files by
+running:
+
+    doxygen
+
+The result can be viewed by opening `doxygen/html/index.html` in a web
+browser. Doxygen will use Graphviz for generating all sorts of graphs
+and PlantUML for generating UML diagrams. Make sure that the packages
+plantuml and graphviz are installed before running Doxygen. The latter
+is usually installed automatically when installing Doxygen.
+
+# Dictionaries
 
 Myspell, Hunspell and Nuspell dictionaries:
 
