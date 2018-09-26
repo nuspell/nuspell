@@ -37,7 +37,7 @@
 
 #ifndef ATYPES_HXX_
 #define ATYPES_HXX_
-#define HUNSPELL_WARNING_ON
+
 #ifndef HUNSPELL_WARNING
 #include <stdio.h>
 #ifdef HUNSPELL_WARNING_ON

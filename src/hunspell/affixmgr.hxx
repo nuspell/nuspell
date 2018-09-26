@@ -332,6 +332,7 @@ class AffixMgr {
   int get_checksharps(void) const;
   char* encode_flag(unsigned short aflag) const;
   int get_fullstrip() const;
+
  private:
   int parse_file(const char* affpath, const char* key);
   bool parse_flag(const std::string& line, unsigned short* out, FileMgr* af);
