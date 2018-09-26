@@ -2,7 +2,7 @@
 
 autoreconf -vfi
 if [ $? -eq 0 ]; then
-	./configure --with-warnings CXXFLAGS='-g -O0 -Wall -Wextra'
+	./configure --with-warnings CXXFLAGS='-g -O0 -Wall -Wextra -Werror'
 else
 	echo FAILED
 	exit $?
