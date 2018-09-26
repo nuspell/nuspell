@@ -369,8 +369,20 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 	}
 }
 
+auto normal_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
+{
+	auto word = string();
+	while (in >> word) {
+		auto correct = dic.spell(word);
+		if (correct)
+			out << '*' << '\n';
+		else
+			out << '&' << '\n';
+	}
+}
+
 /**
- * Prints misspelled words from an input stream to an output stream.
+ * Prints misspelled words from @p in to @p out.
  *
  * @param in the input stream with a word on each line.
  * @param out the output stream with on each line only misspelled words.
@@ -558,8 +570,7 @@ int main(int argc, char* argv[])
 		// loop_function = normal_loop;
 		break;
 	case NO_SUGGEST_MODE:
-		// This will differ from normal loop once suggestion has been
-		// implemented. loop_function = normal_loop;
+		loop_function = normal_nosuggest_loop;
 		break;
 	case CRUDE_PARSE_MODE:
 		loop_function = crude_parse_loop;
