@@ -149,9 +149,9 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 }
 
 /**
- * Prints help information.
+ * Prints help information to standard output.
+ *
  * @param program_name pass argv[0] here.
- * @param out stream, standard output by default.
  */
 auto print_help(const string& program_name) -> void
 {

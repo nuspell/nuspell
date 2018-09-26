@@ -592,8 +592,8 @@ class Hash_Multiset {
  * A class providing implementation for limited regular expression matching
  * used in affix entries.
  *
- * This results in increase of performance over an implementation with <regex>
- * use.
+ * This implementation increases performance over the regex implementation in
+ * the standard library.
  */
 template <class CharT>
 class Condition {

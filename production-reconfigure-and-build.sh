@@ -7,7 +7,7 @@ if [ $? -ne 0 ]; then
 fi
 ./configure CXXFLAGS='-O2 -fno-omit-frame-pointer'
 if [ $? -ne 0 ]; then
-	echo 'ERROR: Failed to configure nuspell'
+	echo 'ERROR: Failed to configure nuspell for production'
 	exit 1
 fi
 make -j clean

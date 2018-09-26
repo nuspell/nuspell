@@ -245,7 +245,7 @@ auto split_on_whitespace(const std::basic_string<CharT>& s, OutIt out,
  *
  * @param s string to split.
  * @param[out] v vector with separated strings. The vector is first cleared.
- * @param loc input locale.
+ * @param loc locale object that takes care of what is whitespace.
  */
 template <class CharT>
 auto split_on_whitespace_v(const std::basic_string<CharT>& s,
@@ -283,8 +283,8 @@ auto& replace_char(std::basic_string<CharT>& s, CharT from, CharT to)
  * Tests if word is a number.
  *
  * Allow numbers with dots ".", dashes "-" and commas ",", but forbids double
- * separators such as "..", "--" and ".,".  This results in increase of
- * performance over an implementation with <regex> use.
+ * separators such as "..", "--" and ".,".  This implementation increases
+ * performance over the regex implementation in the standard library.
  */
 template <class CharT>
 auto is_number(const std::basic_string<CharT>& s) -> bool

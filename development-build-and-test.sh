@@ -5,11 +5,13 @@ cd src/nuspell
 cd ../../tests
 ./clang-format.sh
 cd ..
-make -j clean
 make -j
-if [ $? -eq 0 ]; then
-	make -j check
-else
-	echo FAILED
-	exit $?
+if [ $? -ne 0 ]; then
+	echo 'ERROR: Failed to build nuspell for development'
+	exit 1
+fi
+make -j check
+if [ $? -ne 0 ]; then
+	echo 'ERROR: Failed to test nuspell for development'
+	exit 1
 fi

@@ -828,6 +828,7 @@ auto analyze_encodings(const locale& external, const locale& internal)
  * Casing is sometimes referred to as capitalization.
  *
  * @param s word for which casing is determined.
+ * @param loc locale object that takes care of case detection.
  * @return The casing type.
  */
 template <class CharT>

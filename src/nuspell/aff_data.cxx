@@ -344,7 +344,7 @@ auto parse_morhological_fields(istream& in, vector<string>& vecOut) -> void
  * @param enc
  * @param flag_aliases
  * @param[in,out] vec
- * @param[in,out] cmd_affix.
+ * @param[in,out] cmd_affix
  */
 auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
                  const Encoding& enc, const vector<Flag_Set>& flag_aliases,
