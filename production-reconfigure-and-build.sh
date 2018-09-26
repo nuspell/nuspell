@@ -10,7 +10,7 @@ if [ $? -ne 0 ]; then
 	echo 'ERROR: Failed to configure nuspell'
 	exit 1
 fi
-make clean
+make -j clean
 if [ $? -ne 0 ]; then
 	echo 'ERROR: Failed to clean nuspell'
 	exit 1

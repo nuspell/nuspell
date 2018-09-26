@@ -5,10 +5,10 @@ cd src/nuspell
 cd ../../tests
 ./clang-format.sh
 cd ..
-make clean
-make
+make -j clean
+make -j
 if [ $? -eq 0 ]; then
-	make check
+	make -j check
 else
 	echo FAILED
 	exit $?
