@@ -20,10 +20,7 @@
 
 #include <iostream>
 
-#include <boost/locale.hpp>
-
 #include "../src/nuspell/dictionary.hxx"
-#include "../src/nuspell/structures.hxx"
 
 using namespace std;
 using namespace std::literals::string_literals;
@@ -31,7 +28,6 @@ using namespace nuspell;
 
 TEST_CASE("simple", "[dictionary]")
 {
-	boost::locale::generator gen;
 	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
@@ -51,7 +47,6 @@ TEST_CASE("simple", "[dictionary]")
 
 TEST_CASE("suffixes", "[dictionary]")
 {
-	boost::locale::generator gen;
 	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
@@ -59,8 +54,8 @@ TEST_CASE("suffixes", "[dictionary]")
 	d.words.emplace("May", u"T");
 	d.words.emplace("vary", u"");
 
-	d.wide_structures.suffixes.emplace(u'T', true, L"y"s, L"ies"s,
-	                                   Flag_Set(), L".[^aeiou]y"s);
+	d.wide_structures.suffixes.emplace(u'T', true, L"y", L"ies", Flag_Set(),
+	                                   L".[^aeiou]y");
 
 	auto good = {L"berry", L"Berry", L"berries", L"BERRIES",
 	             L"May",   L"MAY",   L"vary"};
@@ -74,7 +69,6 @@ TEST_CASE("suffixes", "[dictionary]")
 
 TEST_CASE("break_pattern", "[dictionary]")
 {
-	boost::locale::generator gen;
 	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
@@ -98,12 +92,11 @@ TEST_CASE("rep_suggest", "[dictionary]") {}
 
 TEST_CASE("extra_char_suggest", "[dictionary]")
 {
-	boost::locale::generator gen;
 	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"abcd";
-	d.wide_structures.try_chars = {good};
+	d.wide_structures.try_chars = good;
 	d.words.emplace("abcd", u"");
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 
@@ -121,13 +114,12 @@ TEST_CASE("map_suggest", "[dictionary]") {}
 
 TEST_CASE("keyboard_suggest", "[dictionary]")
 {
-	boost::locale::generator gen;
 	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"abcd";
 	d.words.emplace("abcd", u"");
-	d.wide_structures.keyboard_closeness = {L"uiop|df|nm"};
+	d.wide_structures.keyboard_closeness = L"uiop|df|nm";
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 
 	auto w = wstring(L"abcf");
@@ -142,13 +134,12 @@ TEST_CASE("keyboard_suggest", "[dictionary]")
 
 TEST_CASE("bad_char_suggest", "[dictionary]")
 {
-	boost::locale::generator gen;
 	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"abcd";
 	d.words.emplace("abcd", u"");
-	d.wide_structures.try_chars = {good};
+	d.wide_structures.try_chars = good;
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 
 	auto w = wstring(L"abce");
@@ -163,13 +154,12 @@ TEST_CASE("bad_char_suggest", "[dictionary]")
 
 TEST_CASE("forgotten_char_suggest", "[dictionary]")
 {
-	boost::locale::generator gen;
 	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"abcd";
 	d.words.emplace("abcd", u"");
-	d.wide_structures.try_chars = {good};
+	d.wide_structures.try_chars = good;
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 
 	auto w = wstring(L"abd");

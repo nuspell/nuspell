@@ -1925,6 +1925,13 @@ auto Dict_Base::suggest_priv(std::basic_string<CharT>& word, OutIter out) const
 	out = phonetic_suggest(word, out);
 	return out;
 }
+template auto
+Dict_Base::suggest_priv(string&, back_insert_iterator<List_Strings<char>>) const
+    -> back_insert_iterator<List_Strings<char>>;
+template auto
+Dict_Base::suggest_priv(wstring&,
+                        back_insert_iterator<List_Strings<wchar_t>>) const
+    -> back_insert_iterator<List_Strings<wchar_t>>;
 
 template <class CharT, class OutIter>
 auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
@@ -2021,6 +2028,14 @@ auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
 	}
 	return out;
 }
+template auto
+Dict_Base::extra_char_suggest(string&,
+                              back_insert_iterator<List_Strings<char>>) const
+    -> back_insert_iterator<List_Strings<char>>;
+template auto
+Dict_Base::extra_char_suggest(wstring&,
+                              back_insert_iterator<List_Strings<wchar_t>>) const
+    -> back_insert_iterator<List_Strings<wchar_t>>;
 
 template <class CharT, class OutIter>
 auto Dict_Base::map_suggest(std::basic_string<CharT>& word, OutIter out,
@@ -2118,6 +2133,14 @@ auto Dict_Base::bad_char_suggest(std::basic_string<CharT>& word,
 	}
 	return out;
 }
+template auto
+Dict_Base::bad_char_suggest(string&,
+                            back_insert_iterator<List_Strings<char>>) const
+    -> back_insert_iterator<List_Strings<char>>;
+template auto
+Dict_Base::bad_char_suggest(wstring&,
+                            back_insert_iterator<List_Strings<wchar_t>>) const
+    -> back_insert_iterator<List_Strings<wchar_t>>;
 
 template <class CharT, class OutIter>
 auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
@@ -2133,6 +2156,12 @@ auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
 	}
 	return out;
 }
+template auto Dict_Base::forgotten_char_suggest(
+    string&, back_insert_iterator<List_Strings<char>>) const
+    -> back_insert_iterator<List_Strings<char>>;
+template auto Dict_Base::forgotten_char_suggest(
+    wstring&, back_insert_iterator<List_Strings<wchar_t>>) const
+    -> back_insert_iterator<List_Strings<wchar_t>>;
 
 template <class CharT, class OutIter>
 auto Dict_Base::phonetic_suggest(std::basic_string<CharT>& word,
