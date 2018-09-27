@@ -1,4 +1,4 @@
-/* Copyright 2016-2018 Dimitrij Mijoski
+/* Copyright 2016-2018 Dimitrij Mijoski, Sander van Geloven
  *
  * This file is part of Nuspell.
  *
@@ -24,6 +24,7 @@
 #include "dictionary.hxx"
 #include "finder.hxx"
 #include "string_utils.hxx"
+
 #include <clocale>
 #include <fstream>
 #include <iostream>
@@ -392,8 +393,8 @@ auto misspelled_word_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto word = string();
 	while (in >> word) {
-		auto res = dic.spell(word);
-		if (res == false)
+		auto correct = dic.spell(word);
+		if (correct == false)
 			out << word << '\n';
 	}
 }
@@ -402,8 +403,8 @@ auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto word = string();
 	while (in >> word) {
-		auto res = dic.spell(word);
-		if (res != false)
+		auto correct = dic.spell(word);
+		if (correct != false)
 			out << word << '\n';
 	}
 }
@@ -412,16 +413,53 @@ auto crude_parse_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto line = string();
 	auto words = vector<string>();
+	auto suggestions = List_Strings<char>();
 	auto loc = in.getloc();
 	while (getline(in, line)) {
 		parse_on_whitespace_v(line, words, loc);
 		for (auto& word : words) {
-			auto res = dic.spell(word);
-			if (res)
+			auto correct = dic.spell(word);
+			if (correct) {
+				out << "*\t" << word << "\t\n";
+				continue;
+			}
+			dic.suggest(word, suggestions);
+			auto offset = in.tellg();
+			if (offset < 0)
+				offset = 0;
+			else
+				offset -= streamoff(word.size());
+			if (suggestions.empty()) {
+				out << "#\t" << word << '\t' << offset << '\n';
+				continue;
+			}
+			out << "&\t" << word << '\t' << suggestions.size()
+			    << ' ' << offset << ": ";
+			out << suggestions[0];
+			for_each(begin(suggestions) + 1, end(suggestions),
+			         [&](auto& sug) { out << ", " << sug; });
+			out << '\n';
+		}
+		// always two tab characters for proper TSV format
+		out << "$\t\t\n";
+	}
+}
+
+auto crude_parse_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
+{
+	auto line = string();
+	auto words = vector<string>();
+	auto loc = in.getloc();
+	while (getline(in, line)) {
+		parse_on_whitespace_v(line, words, loc);
+		for (auto& word : words) {
+			auto correct = dic.spell(word);
+			if (correct)
 				out << "*\t" << word << '\n';
 			else
 				out << "&\t" << word << '\n';
 		}
+		// always one tab character for proper TSV format
 		out << "$\t\n";
 	}
 }
@@ -435,8 +473,8 @@ auto misspelled_line_loop(istream& in, ostream& out, Dictionary& dic)
 		auto print = false;
 		split_on_whitespace_v(line, words, loc);
 		for (auto& word : words) {
-			auto res = dic.spell(word);
-			if (res == false) {
+			auto correct = dic.spell(word);
+			if (correct == false) {
 				print = true;
 				break;
 			}
@@ -455,8 +493,8 @@ auto correct_line_loop(istream& in, ostream& out, Dictionary& dic)
 		auto print = true;
 		split_on_whitespace_v(line, words, loc);
 		for (auto& word : words) {
-			auto res = dic.spell(word);
-			if (res == false) {
+			auto correct = dic.spell(word);
+			if (correct == false) {
 				print = false;
 				break;
 			}
@@ -576,8 +614,7 @@ int main(int argc, char* argv[])
 		loop_function = crude_parse_loop;
 		break;
 	case CRUDE_PARSE_NO_SUGGEST_MODE:
-		// This will differ from normal loop once suggestion has been
-		// implemented. loop_function = normal_loop;
+		loop_function = crude_parse_nosuggest_loop;
 		break;
 	case MISSPELLED_WORDS_MODE:
 		loop_function = misspelled_word_loop;

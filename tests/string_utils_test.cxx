@@ -1,4 +1,4 @@
-/* Copyright 2017 Sander van Geloven
+/* Copyright 2017-2018 Sander van Geloven
  *
  * This file is part of Nuspell.
  *

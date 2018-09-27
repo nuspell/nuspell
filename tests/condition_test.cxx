@@ -1,4 +1,4 @@
-/* Copyright 2018 Dimitrij Mijoski and Sander van Geloven
+/* Copyright 2018 Dimitrij Mijoski, Sander van Geloven
  *
  * This file is part of Nuspell.
  *
@@ -20,8 +20,9 @@
 
 #include <iostream>
 
-#include "../src/nuspell/structures.hxx"
 #include <boost/locale.hpp>
+
+#include "../src/nuspell/structures.hxx"
 
 using namespace std;
 using namespace std::literals;

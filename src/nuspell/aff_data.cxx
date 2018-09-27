@@ -22,7 +22,6 @@
  */
 
 #include "aff_data.hxx"
-
 #include "locale_utils.hxx"
 #include "string_utils.hxx"
 

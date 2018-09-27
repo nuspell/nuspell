@@ -20,9 +20,10 @@
 
 #include <iostream>
 
+#include <boost/locale.hpp>
+
 #include "../src/nuspell/dictionary.hxx"
 #include "../src/nuspell/structures.hxx"
-#include <boost/locale.hpp>
 
 using namespace std;
 using namespace std::literals::string_literals;
@@ -92,3 +93,93 @@ TEST_CASE("break_pattern", "[dictionary]")
 	for (auto& w : wrong)
 		CHECK(d.spell_priv<wchar_t>(w) == false);
 }
+
+TEST_CASE("rep_suggest", "[dictionary]") {}
+
+TEST_CASE("extra_char_suggest", "[dictionary]")
+{
+	boost::locale::generator gen;
+	auto d = Dict_Base();
+	d.set_encoding_and_language("UTF-8");
+
+	auto good = L"abcd";
+	d.wide_structures.try_chars = {good};
+	d.words.emplace("abcd", u"");
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+
+	auto w = wstring(L"abxcd");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+
+	auto out = List_Strings<wchar_t>();
+	auto sug = List_Strings<wchar_t>();
+	sug.push_back(good);
+	d.extra_char_suggest(w, back_inserter(out));
+	CHECK(out == sug);
+}
+
+TEST_CASE("map_suggest", "[dictionary]") {}
+
+TEST_CASE("keyboard_suggest", "[dictionary]")
+{
+	boost::locale::generator gen;
+	auto d = Dict_Base();
+	d.set_encoding_and_language("UTF-8");
+
+	auto good = L"abcd";
+	d.words.emplace("abcd", u"");
+	d.wide_structures.keyboard_closeness = {L"uiop|df|nm"};
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+
+	auto w = wstring(L"abcf");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+
+	auto out = List_Strings<wchar_t>();
+	auto sug = List_Strings<wchar_t>();
+	sug.push_back(good);
+	d.keyboard_suggest(w, back_inserter(out));
+	CHECK(out == sug);
+}
+
+TEST_CASE("bad_char_suggest", "[dictionary]")
+{
+	boost::locale::generator gen;
+	auto d = Dict_Base();
+	d.set_encoding_and_language("UTF-8");
+
+	auto good = L"abcd";
+	d.words.emplace("abcd", u"");
+	d.wide_structures.try_chars = {good};
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+
+	auto w = wstring(L"abce");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+
+	auto out = List_Strings<wchar_t>();
+	auto sug = List_Strings<wchar_t>();
+	sug.push_back(good);
+	d.bad_char_suggest(w, back_inserter(out));
+	CHECK(out == sug);
+}
+
+TEST_CASE("forgotten_char_suggest", "[dictionary]")
+{
+	boost::locale::generator gen;
+	auto d = Dict_Base();
+	d.set_encoding_and_language("UTF-8");
+
+	auto good = L"abcd";
+	d.words.emplace("abcd", u"");
+	d.wide_structures.try_chars = {good};
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+
+	auto w = wstring(L"abd");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+
+	auto out = List_Strings<wchar_t>();
+	auto sug = List_Strings<wchar_t>();
+	sug.push_back(good);
+	d.forgotten_char_suggest(w, back_inserter(out));
+	CHECK(out == sug);
+}
+
+TEST_CASE("phonetic_suggest", "[dictionary]") {}

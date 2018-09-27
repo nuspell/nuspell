@@ -1905,6 +1905,13 @@ auto Dict_Base::check_compound_with_rules(
 	return {};
 }
 
+/** Get suggestions for a word.
+ *
+ * @param word string to get suggestions for.
+ * @param out list to which suggestions are added
+ *
+ * @return The list of suggestions.
+ */
 template <class CharT, class OutIter>
 auto Dict_Base::suggest_priv(std::basic_string<CharT>& word, OutIter out) const
     -> OutIter

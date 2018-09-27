@@ -1,4 +1,4 @@
-/* Copyright 2018 Dimitrij Mijoski and Sander van Geloven
+/* Copyright 2018 Dimitrij Mijoski, Sander van Geloven
  *
  * This file is part of Nuspell.
  *
@@ -24,6 +24,7 @@
 #include "dictionary.hxx"
 #include "finder.hxx"
 #include "string_utils.hxx"
+
 #include <chrono>
 #include <clocale>
 #include <fstream>

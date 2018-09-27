@@ -1,4 +1,4 @@
-/* Copyright 2017 Sander van Geloven
+/* Copyright 2017-2018 Sander van Geloven
  *
  * This file is part of Nuspell.
  *
@@ -21,9 +21,9 @@
 #include <algorithm>
 #include <iostream>
 
-#include "../src/nuspell/locale_utils.hxx"
-
 #include <boost/locale.hpp>
+
+#include "../src/nuspell/locale_utils.hxx"
 
 using namespace std;
 using namespace std::literals::string_literals;
