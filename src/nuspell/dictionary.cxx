@@ -1923,6 +1923,11 @@ auto Dict_Base::suggest_priv(std::basic_string<CharT>& word,
 	phonetic_suggest(word, out);
 }
 
+template auto Dict_Base::suggest_priv(string&, List_Strings<char>&) const
+    -> void;
+template auto Dict_Base::suggest_priv(wstring&, List_Strings<wchar_t>&) const
+    -> void;
+
 template <class CharT>
 auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
                                    List_Strings<CharT>& out) const -> bool
@@ -2015,6 +2020,11 @@ auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
 		word.insert(i, 1, c);
 	}
 }
+template auto Dict_Base::extra_char_suggest(string&, List_Strings<char>&) const
+    -> void;
+template auto Dict_Base::extra_char_suggest(wstring&,
+                                            List_Strings<wchar_t>&) const
+    -> void;
 
 template <class CharT>
 auto Dict_Base::map_suggest(std::basic_string<CharT>& word,
@@ -2108,6 +2118,10 @@ auto Dict_Base::bad_char_suggest(std::basic_string<CharT>& word,
 		}
 	}
 }
+template auto Dict_Base::bad_char_suggest(string&, List_Strings<char>&) const
+    -> void;
+template auto Dict_Base::bad_char_suggest(wstring&,
+                                          List_Strings<wchar_t>&) const -> void;
 
 template <class CharT>
 auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
@@ -2122,6 +2136,12 @@ auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
 		}
 	}
 }
+template auto Dict_Base::forgotten_char_suggest(string&,
+                                                List_Strings<char>&) const
+    -> void;
+template auto Dict_Base::forgotten_char_suggest(wstring&,
+                                                List_Strings<wchar_t>&) const
+    -> void;
 
 template <class CharT>
 auto Dict_Base::phonetic_suggest(std::basic_string<CharT>& word,
