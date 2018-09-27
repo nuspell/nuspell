@@ -271,45 +271,45 @@ struct Dict_Base : public Aff_Data {
 	auto check_word_in_compound(std::basic_string<CharT>& s) const
 	    -> Compounding_Result;
 
-	template <class CharT, class OutIter>
-	auto suggest_priv(std::basic_string<CharT>& word, OutIter out) const
-	    -> OutIter;
+	template <class CharT>
+	auto suggest_priv(std::basic_string<CharT>& word,
+	                  List_Strings<CharT>& out) const -> void;
 
-	template <class CharT, class OutIter>
+	template <class CharT>
 	auto add_sug_if_correct(std::basic_string<CharT>& word,
-	                        OutIter& out) const -> bool;
+	                        List_Strings<CharT>& out) const -> bool;
 
-	template <class CharT, class OutIter>
+	template <class CharT>
 	auto try_rep_suggestion(std::basic_string<CharT>& word,
-	                        OutIter out) const -> OutIter;
+	                        List_Strings<CharT>& out) const -> void;
 
-	template <class CharT, class OutIter>
-	auto rep_suggest(std::basic_string<CharT>& word, OutIter out) const
-	    -> OutIter;
+	template <class CharT>
+	auto rep_suggest(std::basic_string<CharT>& word,
+	                 List_Strings<CharT>& out) const -> void;
 
-	template <class CharT, class OutIter>
+	template <class CharT>
 	auto extra_char_suggest(std::basic_string<CharT>& word,
-	                        OutIter out) const -> OutIter;
+	                        List_Strings<CharT>& out) const -> void;
 
-	template <class CharT, class OutIter>
-	auto map_suggest(std::basic_string<CharT>& word, OutIter out,
-	                 size_t i = 0) const -> OutIter;
+	template <class CharT>
+	auto map_suggest(std::basic_string<CharT>& word,
+	                 List_Strings<CharT>& out, size_t i = 0) const -> void;
 
-	template <class CharT, class OutIter>
-	auto keyboard_suggest(std::basic_string<CharT>& word, OutIter out) const
-	    -> OutIter;
+	template <class CharT>
+	auto keyboard_suggest(std::basic_string<CharT>& word,
+	                      List_Strings<CharT>& out) const -> void;
 
-	template <class CharT, class OutIter>
-	auto bad_char_suggest(std::basic_string<CharT>& word, OutIter out) const
-	    -> OutIter;
+	template <class CharT>
+	auto bad_char_suggest(std::basic_string<CharT>& word,
+	                      List_Strings<CharT>& out) const -> void;
 
-	template <class CharT, class OutIter>
+	template <class CharT>
 	auto forgotten_char_suggest(std::basic_string<CharT>& word,
-	                            OutIter out) const -> OutIter;
+	                            List_Strings<CharT>& out) const -> void;
 
-	template <class CharT, class OutIter>
-	auto phonetic_suggest(std::basic_string<CharT>& word, OutIter out) const
-	    -> OutIter;
+	template <class CharT>
+	auto phonetic_suggest(std::basic_string<CharT>& word,
+	                      List_Strings<CharT>& out) const -> void;
 
       public:
 	Dict_Base()

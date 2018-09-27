@@ -106,7 +106,7 @@ TEST_CASE("extra_char_suggest", "[dictionary]")
 	auto out = List_Strings<wchar_t>();
 	auto sug = List_Strings<wchar_t>();
 	sug.push_back(good);
-	d.extra_char_suggest(w, back_inserter(out));
+	d.extra_char_suggest(w, out);
 	CHECK(out == sug);
 }
 
@@ -128,7 +128,7 @@ TEST_CASE("keyboard_suggest", "[dictionary]")
 	auto out = List_Strings<wchar_t>();
 	auto sug = List_Strings<wchar_t>();
 	sug.push_back(good);
-	d.keyboard_suggest(w, back_inserter(out));
+	d.keyboard_suggest(w, out);
 	CHECK(out == sug);
 }
 
@@ -148,7 +148,7 @@ TEST_CASE("bad_char_suggest", "[dictionary]")
 	auto out = List_Strings<wchar_t>();
 	auto sug = List_Strings<wchar_t>();
 	sug.push_back(good);
-	d.bad_char_suggest(w, back_inserter(out));
+	d.bad_char_suggest(w, out);
 	CHECK(out == sug);
 }
 
@@ -168,7 +168,7 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 	auto out = List_Strings<wchar_t>();
 	auto sug = List_Strings<wchar_t>();
 	sug.push_back(good);
-	d.forgotten_char_suggest(w, back_inserter(out));
+	d.forgotten_char_suggest(w, out);
 	CHECK(out == sug);
 }
 

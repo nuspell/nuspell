@@ -1909,33 +1909,23 @@ auto Dict_Base::check_compound_with_rules(
  *
  * @param word string to get suggestions for.
  * @param out list to which suggestions are added
- *
- * @return The list of suggestions.
  */
-template <class CharT, class OutIter>
-auto Dict_Base::suggest_priv(std::basic_string<CharT>& word, OutIter out) const
-    -> OutIter
+template <class CharT>
+auto Dict_Base::suggest_priv(std::basic_string<CharT>& word,
+                             List_Strings<CharT>& out) const -> void
 {
-	out = rep_suggest(word, out);
-	out = map_suggest(word, out);
-	out = extra_char_suggest(word, out);
-	out = keyboard_suggest(word, out);
-	out = bad_char_suggest(word, out);
-	out = forgotten_char_suggest(word, out);
-	out = phonetic_suggest(word, out);
-	return out;
+	rep_suggest(word, out);
+	map_suggest(word, out);
+	extra_char_suggest(word, out);
+	keyboard_suggest(word, out);
+	bad_char_suggest(word, out);
+	forgotten_char_suggest(word, out);
+	phonetic_suggest(word, out);
 }
-template auto
-Dict_Base::suggest_priv(string&, back_insert_iterator<List_Strings<char>>) const
-    -> back_insert_iterator<List_Strings<char>>;
-template auto
-Dict_Base::suggest_priv(wstring&,
-                        back_insert_iterator<List_Strings<wchar_t>>) const
-    -> back_insert_iterator<List_Strings<wchar_t>>;
 
-template <class CharT, class OutIter>
+template <class CharT>
 auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
-                                   OutIter& out) const -> bool
+                                   List_Strings<CharT>& out) const -> bool
 {
 	auto res = check_word(word);
 	if (!res)
@@ -1944,34 +1934,33 @@ auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
 		return false;
 	if (forbid_warn && res->contains(warn_flag))
 		return false;
-	*out++ = word;
+	out.push_back(word);
 	return true;
 }
 
-template <class CharT, class OutIter>
+template <class CharT>
 auto Dict_Base::try_rep_suggestion(std::basic_string<CharT>& word,
-                                   OutIter out) const -> OutIter
+                                   List_Strings<CharT>& out) const -> void
 {
 	if (add_sug_if_correct(word, out))
-		return out;
+		return;
 
 	auto i = size_t(0);
 	auto j = word.find(' ');
 	if (j == word.npos)
-		return out;
+		return;
 	auto part = basic_string<CharT>();
 	for (; j != word.npos; i = j + 1, j = word.find(' ', i)) {
 		part.assign(word, i, j - i);
 		if (!check_word(part))
-			return out;
+			return;
 	}
-	*out++ = word;
-	return out;
+	out.push_back(word);
 }
 
-template <class CharT, class OutIter>
-auto Dict_Base::rep_suggest(std::basic_string<CharT>& word, OutIter out) const
-    -> OutIter
+template <class CharT>
+auto Dict_Base::rep_suggest(std::basic_string<CharT>& word,
+                            List_Strings<CharT>& out) const -> void
 {
 	auto& reps = get_structures<CharT>().replacements;
 	for (auto& r : reps.whole_word_replacements()) {
@@ -1979,7 +1968,7 @@ auto Dict_Base::rep_suggest(std::basic_string<CharT>& word, OutIter out) const
 		auto& to = r.second;
 		if (word == from) {
 			word = to;
-			out = try_rep_suggestion(word, out);
+			try_rep_suggestion(word, out);
 			word = from;
 		}
 	}
@@ -1988,7 +1977,7 @@ auto Dict_Base::rep_suggest(std::basic_string<CharT>& word, OutIter out) const
 		auto& to = r.second;
 		if (word.compare(0, from.size(), from) == 0) {
 			word.replace(0, from.size(), to);
-			out = try_rep_suggestion(word, out);
+			try_rep_suggestion(word, out);
 			word.replace(0, to.size(), from);
 		}
 	}
@@ -1999,7 +1988,7 @@ auto Dict_Base::rep_suggest(std::basic_string<CharT>& word, OutIter out) const
 		if (from.size() <= word.size() &&
 		    word.compare(pos, word.npos, from) == 0) {
 			word.replace(pos, word.npos, to);
-			out = try_rep_suggestion(word, out);
+			try_rep_suggestion(word, out);
 			word.replace(pos, word.npos, from);
 		}
 	}
@@ -2009,16 +1998,15 @@ auto Dict_Base::rep_suggest(std::basic_string<CharT>& word, OutIter out) const
 		for (auto i = word.find(from); i != word.npos;
 		     i = word.find(from, i + 1)) {
 			word.replace(i, from.size(), to);
-			out = try_rep_suggestion(word, out);
+			try_rep_suggestion(word, out);
 			word.replace(i, to.size(), from);
 		}
 	}
-	return out;
 }
 
-template <class CharT, class OutIter>
+template <class CharT>
 auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
-                                   OutIter out) const -> OutIter
+                                   List_Strings<CharT>& out) const -> void
 {
 	for (auto i = word.size() - 1; i != size_t(-1); --i) {
 		auto c = word[i];
@@ -2026,20 +2014,11 @@ auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
 		add_sug_if_correct(word, out);
 		word.insert(i, 1, c);
 	}
-	return out;
 }
-template auto
-Dict_Base::extra_char_suggest(string&,
-                              back_insert_iterator<List_Strings<char>>) const
-    -> back_insert_iterator<List_Strings<char>>;
-template auto
-Dict_Base::extra_char_suggest(wstring&,
-                              back_insert_iterator<List_Strings<wchar_t>>) const
-    -> back_insert_iterator<List_Strings<wchar_t>>;
 
-template <class CharT, class OutIter>
-auto Dict_Base::map_suggest(std::basic_string<CharT>& word, OutIter out,
-                            size_t i) const -> OutIter
+template <class CharT>
+auto Dict_Base::map_suggest(std::basic_string<CharT>& word,
+                            List_Strings<CharT>& out, size_t i) const -> void
 {
 	auto& similarities = get_structures<CharT>().similarities;
 	for (; i != word.size(); ++i) {
@@ -2052,13 +2031,13 @@ auto Dict_Base::map_suggest(std::basic_string<CharT>& word, OutIter out,
 					continue;
 				word[i] = c;
 				add_sug_if_correct(word, out);
-				out = map_suggest(word, out, i + 1);
+				map_suggest(word, out, i + 1);
 				word[i] = e.chars[j];
 			}
 			for (auto& r : e.strings) {
 				word.replace(i, 1, r);
 				add_sug_if_correct(word, out);
-				out = map_suggest(word, out, i + r.size());
+				map_suggest(word, out, i + r.size());
 				word.replace(i, r.size(), 1, e.chars[j]);
 			}
 		try_find_strings:
@@ -2068,7 +2047,7 @@ auto Dict_Base::map_suggest(std::basic_string<CharT>& word, OutIter out,
 				for (auto c : e.chars) {
 					word.replace(i, f.size(), 1, c);
 					add_sug_if_correct(word, out);
-					out = map_suggest(word, out, i + 1);
+					map_suggest(word, out, i + 1);
 					word.replace(i, 1, f);
 				}
 				for (auto& r : e.strings) {
@@ -2076,19 +2055,17 @@ auto Dict_Base::map_suggest(std::basic_string<CharT>& word, OutIter out,
 						continue;
 					word.replace(i, f.size(), r);
 					add_sug_if_correct(word, out);
-					out = map_suggest(word, out,
-					                  i + r.size());
+					map_suggest(word, out, i + r.size());
 					word.replace(i, r.size(), f);
 				}
 			}
 		}
 	}
-	return out;
 }
 
-template <class CharT, class OutIter>
+template <class CharT>
 auto Dict_Base::keyboard_suggest(std::basic_string<CharT>& word,
-                                 OutIter out) const -> OutIter
+                                 List_Strings<CharT>& out) const -> void
 {
 	auto& ct = use_facet<ctype<CharT>>(internal_locale);
 	auto& kb = get_structures<CharT>().keyboard_closeness;
@@ -2113,12 +2090,11 @@ auto Dict_Base::keyboard_suggest(std::basic_string<CharT>& word,
 			}
 		}
 	}
-	return out;
 }
 
-template <class CharT, class OutIter>
+template <class CharT>
 auto Dict_Base::bad_char_suggest(std::basic_string<CharT>& word,
-                                 OutIter out) const -> OutIter
+                                 List_Strings<CharT>& out) const -> void
 {
 	auto& try_chars = get_structures<CharT>().try_chars;
 	for (auto new_c : try_chars) {
@@ -2131,20 +2107,11 @@ auto Dict_Base::bad_char_suggest(std::basic_string<CharT>& word,
 			word[i] = c;
 		}
 	}
-	return out;
 }
-template auto
-Dict_Base::bad_char_suggest(string&,
-                            back_insert_iterator<List_Strings<char>>) const
-    -> back_insert_iterator<List_Strings<char>>;
-template auto
-Dict_Base::bad_char_suggest(wstring&,
-                            back_insert_iterator<List_Strings<wchar_t>>) const
-    -> back_insert_iterator<List_Strings<wchar_t>>;
 
-template <class CharT, class OutIter>
+template <class CharT>
 auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
-                                       OutIter out) const -> OutIter
+                                       List_Strings<CharT>& out) const -> void
 {
 	auto& try_chars = get_structures<CharT>().try_chars;
 	for (auto new_c : try_chars) {
@@ -2154,18 +2121,11 @@ auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
 			word.erase(i, 1);
 		}
 	}
-	return out;
 }
-template auto Dict_Base::forgotten_char_suggest(
-    string&, back_insert_iterator<List_Strings<char>>) const
-    -> back_insert_iterator<List_Strings<char>>;
-template auto Dict_Base::forgotten_char_suggest(
-    wstring&, back_insert_iterator<List_Strings<wchar_t>>) const
-    -> back_insert_iterator<List_Strings<wchar_t>>;
 
-template <class CharT, class OutIter>
+template <class CharT>
 auto Dict_Base::phonetic_suggest(std::basic_string<CharT>& word,
-                                 OutIter out) const -> OutIter
+                                 List_Strings<CharT>& out) const -> void
 {
 	using ShortStr = boost::container::small_vector<CharT, 64>;
 	auto backup = ShortStr(&word[0], &word[word.size()]);
@@ -2177,7 +2137,6 @@ auto Dict_Base::phonetic_suggest(std::basic_string<CharT>& word,
 		add_sug_if_correct(word, out);
 	}
 	word.assign(&backup[0], backup.size());
-	return out;
 }
 
 auto Basic_Dictionary::imbue(const locale& loc) -> void
@@ -2299,7 +2258,7 @@ auto Basic_Dictionary::suggest(const string& word,
 		if (unlikely(!ok_enc))
 			return;
 		wide_list.clear();
-		suggest_priv(wide_word, back_inserter(wide_list));
+		suggest_priv(wide_word, wide_list);
 		for (auto& w : wide_list) {
 			auto& o = out.emplace_back();
 			internal_to_external_encoding(o, w);
@@ -2315,7 +2274,7 @@ auto Basic_Dictionary::suggest(const string& word,
 		}
 		if (unlikely(!ok_enc))
 			return;
-		suggest_priv(narrow_word, back_inserter(out));
+		suggest_priv(narrow_word, out);
 		for (auto& nw : out) {
 			internal_to_external_encoding(nw, wide_word);
 		}
