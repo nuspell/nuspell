@@ -1,8 +1,8 @@
-The issues can be of three types (put an X between the brackets):
+The issues can be of three types (delete two rows and leave only one):
 
-- [ ] Bug reports
-- [ ] Change request or feature request
-- [ ] Others, questions
+- Bug reports
+- Change request or feature request
+- Others, questions
 
 # Reporting bugs
 

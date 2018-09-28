@@ -350,17 +350,17 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 			continue;
 		}
 		dic.suggest(word, suggestions);
-		auto offset = in.tellg();
-		if (offset < 0)
-			offset = 0;
+		auto pos = in.tellg();
+		if (pos < 0)
+			pos = 0;
 		else
-			offset -= streamoff(word.size());
+			pos -= streamoff(word.size());
 		if (suggestions.empty()) {
-			out << "# " << word << ' ' << offset << '\n';
+			out << "# " << word << ' ' << pos << '\n';
 			continue;
 		}
-		out << "& " << word << ' ' << suggestions.size() << ' '
-		    << offset << ": ";
+		out << "& " << word << ' ' << suggestions.size() << ' ' << pos
+		    << ": ";
 		out << suggestions[0];
 		for_each(begin(suggestions) + 1, end(suggestions),
 		         [&](auto& sug) { out << ", " << sug; });
@@ -382,12 +382,19 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 auto normal_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto word = string();
+	auto suggestions = List_Strings<char>();
 	while (in >> word) {
 		auto correct = dic.spell(word);
-		if (correct)
+		if (correct) {
 			out << '*' << '\n';
+			continue;
+		}
+		auto pos = in.tellg();
+		if (pos < 0)
+			pos = 0;
 		else
-			out << '&' << '\n'; // perhaps # ?
+			pos -= streamoff(word.size());
+		out << "# " << word << ' ' << pos << '\n';
 	}
 }
 
@@ -442,41 +449,42 @@ auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
  */
 auto segment_loop(istream& in, ostream& out, Dictionary& dic)
 {
+	namespace b = boost::locale::boundary;
 	auto line = string();
-	auto words = vector<string>();
+	auto word = string();
 	auto suggestions = List_Strings<char>();
 	auto loc = in.getloc();
-	// auto position = line.begin() - line.begin();
+	auto pos = in.tellg();
+	if (pos < 0)
+		pos = 0;
 	while (getline(in, line)) {
-		auto offset = in.tellg();
-		if (offset < 0)
-			offset = 0;
-		else
-			offset -= streamoff(line.size() + 1);
-		using namespace boost::locale::boundary;
-		ssegment_index map(word, line.begin(), line.end(),
-		                   loc); // Is this a Boost locale?
-		map.rule(word_any);
-		for (ssegment_index::iterator it = map.begin(), e = map.end();
-		     it != e; ++it) {
-			auto correct = dic.spell(*it);
+		auto map =
+		    b::ssegment_index(b::word, begin(line), end(line), loc);
+		map.rule(b::word_any);
+		for (auto& segment : map) {
+			word = segment;
+			auto correct = dic.spell(word);
 			if (correct) {
-				out << "* " << *it << " \n";
+				out << "* " << word << " \n";
 				continue;
 			}
-			dic.suggest(*it, suggestions);
-			offset += streamoff(it->begin() - line.begin());
+			dic.suggest(word, suggestions);
+			auto pos2 =
+			    pos + streamoff(begin(segment) - begin(line));
 			if (suggestions.empty()) {
-				out << "# " << *it << ' ' << offset << '\n';
+				out << "# " << word << ' ' << pos2 << '\n';
 				continue;
 			}
-			out << "& " << *it << ' ' << suggestions.size() << ' '
-			    << offset << ": ";
+			out << "& " << word << ' ' << suggestions.size() << ' '
+			    << pos2 << ": ";
 			out << suggestions[0];
 			for_each(begin(suggestions) + 1, end(suggestions),
 			         [&](auto& sug) { out << ", " << sug; });
 			out << '\n';
 		}
+		pos = in.tellg();
+		if (pos < 0)
+			pos = 0;
 	}
 }
 
@@ -493,22 +501,33 @@ auto segment_loop(istream& in, ostream& out, Dictionary& dic)
  */
 auto segment_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
 {
+	namespace b = boost::locale::boundary;
 	auto line = string();
-	auto words = vector<string>();
+	auto word = string();
+	auto suggestions = List_Strings<char>();
 	auto loc = in.getloc();
+	auto pos = in.tellg();
+	if (pos < 0)
+		pos = 0;
 	while (getline(in, line)) {
-		using namespace boost::locale::boundary;
-		ssegment_index map(word, line.begin(), line.end(),
-		                   loc); // Is this a Boost locale?
-		map.rule(word_any);
-		for (ssegment_index::iterator it = map.begin(), e = map.end();
-		     it != e; ++it) {
-			auto correct = dic.spell(*it);
-			if (correct)
-				out << "* " << *it << '\n';
-			else
-				out << "& " << *it << '\n'; // perhaps # ?
+		auto map =
+		    b::ssegment_index(b::word, begin(line), end(line), loc);
+		map.rule(b::word_any);
+		for (auto& segment : map) {
+			word = segment;
+			auto correct = dic.spell(word);
+			if (correct) {
+				out << "* " << word << " \n";
+				continue;
+			}
+			dic.suggest(word, suggestions);
+			auto pos2 =
+			    pos + streamoff(begin(segment) - begin(line));
+			out << "# " << word << ' ' << pos2 << '\n';
 		}
+		pos = in.tellg();
+		if (pos < 0)
+			pos = 0;
 	}
 }
 

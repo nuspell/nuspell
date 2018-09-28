@@ -29,7 +29,6 @@
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/locale.hpp>
-#include <boost/scope_exit.hpp>
 
 namespace nuspell {
 
