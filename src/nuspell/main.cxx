@@ -59,15 +59,15 @@ enum Mode {
 	DEFAULT_MODE /**< printing correct and misspelled words with
 	                suggestions */
 	,
-	NO_SUGGEST_MODE /**< printing correct and misspelled words without
+	NOSUGGEST_MODE /**< printing correct and misspelled words without
 	                   suggestions */
 	,
 	MISSPELLED_WORDS_MODE /**< printing only misspelled words */,
 	MISSPELLED_LINES_MODE /**< printing only misspelled lines */,
 	CORRECT_WORDS_MODE /**< printing only correct words */,
 	CORRECT_LINES_MODE /**< printing only correct lines */,
-	CRUDE_PARSE_MODE /**< use crude pasring for running text */,
-	CRUDE_PARSE_NO_SUGGEST_MODE /**< use crude pasring for running text
+	SEGMENT_MODE /**< use crude pasring for running text */,
+	SEGMENT_NOSUGGEST_MODE /**< use crude pasring for running text
 	                               without suggestions*/
 	,
 	LINES_MODE /**< where correctness is based on entire line */,
@@ -107,7 +107,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	int c;
 	// The program can run in various modes depending on the
 	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:aCDGLUlhv";
+	const char* shortopts = ":d:i:aDGLSUlhv";
 	const struct option longopts[] = {
 	    {"version", 0, nullptr, 'v'},
 	    {"help", 0, nullptr, 'h'},
@@ -133,15 +133,6 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 			break;
 		case 'i':
 			encoding = optarg;
-
-			break;
-		case 'C':
-			if (mode == DEFAULT_MODE)
-				mode = CRUDE_PARSE_MODE;
-			else if (mode == NO_SUGGEST_MODE)
-				mode = CRUDE_PARSE_NO_SUGGEST_MODE;
-			else
-				mode = ERROR_MODE;
 
 			break;
 		case 'D':
@@ -180,11 +171,20 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 				mode = ERROR_MODE;
 
 			break;
+		case 'S':
+			if (mode == DEFAULT_MODE)
+				mode = SEGMENT_MODE;
+			else if (mode == NOSUGGEST_MODE)
+				mode = SEGMENT_NOSUGGEST_MODE;
+			else
+				mode = ERROR_MODE;
+
+			break;
 		case 'U':
 			if (mode == DEFAULT_MODE)
-				mode = NO_SUGGEST_MODE;
-			else if (mode == CRUDE_PARSE_MODE)
-				mode = CRUDE_PARSE_NO_SUGGEST_MODE;
+				mode = NOSUGGEST_MODE;
+			else if (mode == SEGMENT_MODE)
+				mode = SEGMENT_NOSUGGEST_MODE;
 			else
 				mode = ERROR_MODE;
 
@@ -246,15 +246,13 @@ auto print_help(const string& program_name) -> void
 	     "\n"
 	     "  -d di_CT      use di_CT dictionary. Only one dictionary at a\n"
 	     "                time is currently supported\n"
-	     "  -C            crude parsing of plain running text, prints\n"
-	     "                spelling correctness, tab and tokenized word\n"
-	     "                or prints a $ and tab for end of input line\n"
 	     "  -D            print search paths and available dictionaries "
 	     "                and exit\n"
 	     "  -i enc        input/output encoding, default is active locale\n"
 	     "  -l            print only misspelled words or lines\n"
 	     "  -G            print only correct words or lines\n"
 	     "  -L            lines mode\n"
+	     "  -S            segmentation from Boost boundary analysis\n"
 	     "  -U            do not suggest, increases performance\n"
 	     "  -h, --help    print this help and exit\n"
 	     "  -v, --version print version number and exit\n"
@@ -334,7 +332,7 @@ auto list_dictionaries(const Finder& f) -> void
  * Normal loop, tokenize and check spelling.
  *
  * Tokenizes words from @p in by whitespace, checks spelling and outputs
- * result to @p out.
+ * result and suggestions to @p out.
  *
  * @param in the input stream to check spelling for with a word on each line.
  * @param out the output stream to report spelling correctness on the respective
@@ -370,6 +368,17 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 	}
 }
 
+/**
+ * Normal loop, tokenize and check spelling.
+ *
+ * Tokenizes words from @p in by whitespace, checks spelling and outputs
+ * result but no suggestions to @p out.
+ *
+ * @param in the input stream to check spelling for with a word on each line.
+ * @param out the output stream to report spelling correctness on the respective
+ * lines.
+ * @param dic the dictionary to use.
+ */
 auto normal_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto word = string();
@@ -378,12 +387,14 @@ auto normal_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
 		if (correct)
 			out << '*' << '\n';
 		else
-			out << '&' << '\n';
+			out << '&' << '\n'; // perhaps # ?
 	}
 }
 
 /**
  * Prints misspelled words from @p in to @p out.
+ *
+ * Tokenizes words from @p in by whitespace
  *
  * @param in the input stream with a word on each line.
  * @param out the output stream with on each line only misspelled words.
@@ -399,6 +410,15 @@ auto misspelled_word_loop(istream& in, ostream& out, Dictionary& dic)
 	}
 }
 
+/**
+ * Prints correct words from @p in to @p out.
+ *
+ * Tokenizes words from @p in by whitespace
+ *
+ * @param in the input stream with a word on each line.
+ * @param out the output stream with on each line only correct words.
+ * @param dic the dictionary to use.
+ */
 auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto word = string();
@@ -409,58 +429,86 @@ auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
 	}
 }
 
-auto crude_parse_loop(istream& in, ostream& out, Dictionary& dic)
+/**
+ * Normal loop, tokenize and check spelling.
+ *
+ * Tokenizes words from @p in by segmentation from Boost boundary analysis,
+ * checks spelling and outputs result and suggestions to @p out.
+ *
+ * @param in the input stream to check spelling for with a word on each line.
+ * @param out the output stream to report spelling correctness on the respective
+ * lines.
+ * @param dic the dictionary to use.
+ */
+auto segment_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto line = string();
 	auto words = vector<string>();
 	auto suggestions = List_Strings<char>();
 	auto loc = in.getloc();
+	// auto position = line.begin() - line.begin();
 	while (getline(in, line)) {
-		parse_on_whitespace_v(line, words, loc);
-		for (auto& word : words) {
-			auto correct = dic.spell(word);
+		auto offset = in.tellg();
+		if (offset < 0)
+			offset = 0;
+		else
+			offset -= streamoff(line.size() + 1);
+		using namespace boost::locale::boundary;
+		ssegment_index map(word, line.begin(), line.end(),
+		                   loc); // Is this a Boost locale?
+		map.rule(word_any);
+		for (ssegment_index::iterator it = map.begin(), e = map.end();
+		     it != e; ++it) {
+			auto correct = dic.spell(*it);
 			if (correct) {
-				out << "*\t" << word << "\t\n";
+				out << "* " << *it << " \n";
 				continue;
 			}
-			dic.suggest(word, suggestions);
-			auto offset = in.tellg();
-			if (offset < 0)
-				offset = 0;
-			else
-				offset -= streamoff(word.size());
+			dic.suggest(*it, suggestions);
+			offset += streamoff(it->begin() - line.begin());
 			if (suggestions.empty()) {
-				out << "#\t" << word << '\t' << offset << '\n';
+				out << "# " << *it << ' ' << offset << '\n';
 				continue;
 			}
-			out << "&\t" << word << '\t' << suggestions.size()
-			    << ' ' << offset << ": ";
+			out << "& " << *it << ' ' << suggestions.size() << ' '
+			    << offset << ": ";
 			out << suggestions[0];
 			for_each(begin(suggestions) + 1, end(suggestions),
 			         [&](auto& sug) { out << ", " << sug; });
 			out << '\n';
 		}
-		// always two tab characters for proper TSV format
-		out << "$\t\t\n";
 	}
 }
 
-auto crude_parse_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
+/**
+ * Normal loop, tokenize and check spelling.
+ *
+ * Tokenizes words from @p in by segmentation from Boost boundary analysis,
+ * checks spelling and outputs result but no suggestions to @p out.
+ *
+ * @param in the input stream to check spelling for with a word on each line.
+ * @param out the output stream to report spelling correctness on the respective
+ * lines.
+ * @param dic the dictionary to use.
+ */
+auto segment_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
 {
 	auto line = string();
 	auto words = vector<string>();
 	auto loc = in.getloc();
 	while (getline(in, line)) {
-		parse_on_whitespace_v(line, words, loc);
-		for (auto& word : words) {
-			auto correct = dic.spell(word);
+		using namespace boost::locale::boundary;
+		ssegment_index map(word, line.begin(), line.end(),
+		                   loc); // Is this a Boost locale?
+		map.rule(word_any);
+		for (ssegment_index::iterator it = map.begin(), e = map.end();
+		     it != e; ++it) {
+			auto correct = dic.spell(*it);
 			if (correct)
-				out << "*\t" << word << '\n';
+				out << "* " << *it << '\n';
 			else
-				out << "&\t" << word << '\n';
+				out << "& " << *it << '\n'; // perhaps # ?
 		}
-		// always one tab character for proper TSV format
-		out << "$\t\n";
 	}
 }
 
@@ -607,14 +655,14 @@ int main(int argc, char* argv[])
 	case DEFAULT_MODE:
 		// loop_function = normal_loop;
 		break;
-	case NO_SUGGEST_MODE:
+	case NOSUGGEST_MODE:
 		loop_function = normal_nosuggest_loop;
 		break;
-	case CRUDE_PARSE_MODE:
-		loop_function = crude_parse_loop;
+	case SEGMENT_MODE:
+		loop_function = segment_loop;
 		break;
-	case CRUDE_PARSE_NO_SUGGEST_MODE:
-		loop_function = crude_parse_nosuggest_loop;
+	case SEGMENT_NOSUGGEST_MODE:
+		loop_function = segment_nosuggest_loop;
 		break;
 	case MISSPELLED_WORDS_MODE:
 		loop_function = misspelled_word_loop;
