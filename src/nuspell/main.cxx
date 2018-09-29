@@ -63,23 +63,25 @@ enum Mode {
 	                   suggestions */
 	,
 	MISSPELLED_WORDS_MODE /**< printing only misspelled words */,
-	MISSPELLED_LINES_MODE /**< printing only misspelled lines */,
-	CORRECT_WORDS_MODE /**< printing only correct words */,
-	CORRECT_LINES_MODE /**< printing only correct lines */,
-	SEGMENT_MODE /**< use crude pasring for running text */,
-	SEGMENT_NOSUGGEST_MODE /**< use crude pasring for running text
-	                               without suggestions*/
+	MISSPELLED_LINES_MODE /**< printing only lines with misspelled word(s)*/
 	,
-	LINES_MODE /**< where correctness is based on entire line */,
+	CORRECT_WORDS_MODE /**< printing only correct words */,
+	CORRECT_LINES_MODE /**< printing only fully correct lines */,
+	SEGMENT_MODE /**< Same as normal except text is parsed using Unicode
+			text segmentation */
+	,
+	SEGMENT_NOSUGGEST_MODE,
+	LINES_MODE, /**< intermediate mode used while parsing command line
+		       arguments, otherwise unused */
 	LIST_DICTIONARIES_MODE /**< printing available dictionaries */,
 	HELP_MODE /**< printing help information */,
 	VERSION_MODE /**< printing version information */,
-	ERROR_MODE /**< where the arguments used caused an error */
+	ERROR_MODE
 };
 
 struct Args_t {
 	Mode mode = DEFAULT_MODE;
-	string program_name = PACKAGE; // ignore warning padding struct
+	string program_name = PACKAGE;
 	string dictionary;
 	string encoding;
 	vector<string> other_dicts;
@@ -94,8 +96,8 @@ struct Args_t {
  * Parses command line arguments and result is stored in mode, dictionary,
  * other_dicts and files.
  *
- * @param argc the total number of command line arguments.
- * @param argv all the individual command linen arguments.
+ * @param argc command-line argument count.
+ * @param argv command-line argument vector.
  */
 auto Args_t::parse_args(int argc, char* argv[]) -> void
 {
@@ -334,9 +336,8 @@ auto list_dictionaries(const Finder& f) -> void
  * Tokenizes words from @p in by whitespace, checks spelling and outputs
  * result and suggestions to @p out.
  *
- * @param in the input stream to check spelling for with a word on each line.
- * @param out the output stream to report spelling correctness on the respective
- * lines.
+ * @param in the input stream with plain text.
+ * @param out the output stream to report spelling correctness
  * @param dic the dictionary to use.
  */
 auto normal_loop(istream& in, ostream& out, Dictionary& dic)
@@ -346,7 +347,7 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
 	while (in >> word) {
 		auto correct = dic.spell(word);
 		if (correct) {
-			out << '*' << '\n';
+			out << "*\n";
 			continue;
 		}
 		dic.suggest(word, suggestions);
@@ -374,9 +375,8 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
  * Tokenizes words from @p in by whitespace, checks spelling and outputs
  * result but no suggestions to @p out.
  *
- * @param in the input stream to check spelling for with a word on each line.
- * @param out the output stream to report spelling correctness on the respective
- * lines.
+ * @param in the input stream with plain text.
+ * @param out the output stream to report spelling correctness
  * @param dic the dictionary to use.
  */
 auto normal_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
@@ -386,7 +386,7 @@ auto normal_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
 	while (in >> word) {
 		auto correct = dic.spell(word);
 		if (correct) {
-			out << '*' << '\n';
+			out << "*\n";
 			continue;
 		}
 		auto pos = in.tellg();
@@ -403,7 +403,7 @@ auto normal_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
  *
  * Tokenizes words from @p in by whitespace
  *
- * @param in the input stream with a word on each line.
+ * @param in the input stream with plain text.
  * @param out the output stream with on each line only misspelled words.
  * @param dic the dictionary to use.
  */
@@ -422,7 +422,7 @@ auto misspelled_word_loop(istream& in, ostream& out, Dictionary& dic)
  *
  * Tokenizes words from @p in by whitespace
  *
- * @param in the input stream with a word on each line.
+ * @param in the input stream with plain text.
  * @param out the output stream with on each line only correct words.
  * @param dic the dictionary to use.
  */
@@ -442,9 +442,8 @@ auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
  * Tokenizes words from @p in by segmentation from Boost boundary analysis,
  * checks spelling and outputs result and suggestions to @p out.
  *
- * @param in the input stream to check spelling for with a word on each line.
- * @param out the output stream to report spelling correctness on the respective
- * lines.
+ * @param in the input stream with plain text.
+ * @param out the output stream to report spelling correctness
  * @param dic the dictionary to use.
  */
 auto segment_loop(istream& in, ostream& out, Dictionary& dic)
@@ -457,15 +456,15 @@ auto segment_loop(istream& in, ostream& out, Dictionary& dic)
 	auto pos = in.tellg();
 	if (pos < 0)
 		pos = 0;
+	auto index = b::ssegment_index();
+	index.rule(b::word_any);
 	while (getline(in, line)) {
-		auto map =
-		    b::ssegment_index(b::word, begin(line), end(line), loc);
-		map.rule(b::word_any);
-		for (auto& segment : map) {
+		index.map(b::word, begin(line), end(line), loc);
+		for (auto& segment : index) {
 			word = segment;
 			auto correct = dic.spell(word);
 			if (correct) {
-				out << "* " << word << " \n";
+				out << "*\n";
 				continue;
 			}
 			dic.suggest(word, suggestions);
@@ -494,9 +493,8 @@ auto segment_loop(istream& in, ostream& out, Dictionary& dic)
  * Tokenizes words from @p in by segmentation from Boost boundary analysis,
  * checks spelling and outputs result but no suggestions to @p out.
  *
- * @param in the input stream to check spelling for with a word on each line.
- * @param out the output stream to report spelling correctness on the respective
- * lines.
+ * @param in the input stream with plain text.
+ * @param out the output stream to report spelling correctness
  * @param dic the dictionary to use.
  */
 auto segment_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
@@ -509,15 +507,15 @@ auto segment_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
 	auto pos = in.tellg();
 	if (pos < 0)
 		pos = 0;
+	auto index = b::ssegment_index();
+	index.rule(b::word_any);
 	while (getline(in, line)) {
-		auto map =
-		    b::ssegment_index(b::word, begin(line), end(line), loc);
-		map.rule(b::word_any);
-		for (auto& segment : map) {
+		index.map(b::word, begin(line), end(line), loc);
+		for (auto& segment : index) {
 			word = segment;
 			auto correct = dic.spell(word);
 			if (correct) {
-				out << "* " << word << " \n";
+				out << "*\n";
 				continue;
 			}
 			dic.suggest(word, suggestions);
