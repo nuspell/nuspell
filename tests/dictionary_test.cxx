@@ -88,7 +88,31 @@ TEST_CASE("break_pattern", "[dictionary]")
 		CHECK(d.spell_priv<wchar_t>(w) == false);
 }
 
-TEST_CASE("rep_suggest", "[dictionary]") {}
+#if 0
+TEST_CASE("rep_suggest", "[dictionary]") {
+	auto d = Dict_Base();
+	d.set_encoding_and_language("UTF-8");
+
+	auto good = L"äbcd";
+	d.words.emplace("äbcd", u"");
+	auto table = vector<pair<wstring, wstring>>();
+	table.push_back(pair<wstring, wstring>(L"f", L"ph"));
+	table.push_back(pair<wstring, wstring>(L"shun$", L"tion"));
+	table.push_back(pair<wstring, wstring>(L"^alot$", L"a_lot"));
+	table.push_back(pair<wstring, wstring>(L"^foo", L"bar"));
+	d.wide_structures.replacements = Replacement_Table<wchar_t>(table);
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+
+	auto w = wstring(L"abcd");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+
+	auto out = List_Strings<wchar_t>();
+	auto sug = List_Strings<wchar_t>();
+	sug.push_back(good);
+	d.rep_suggest(w, out);
+	CHECK(out == sug);
+}
+#endif
 
 TEST_CASE("extra_char_suggest", "[dictionary]")
 {
@@ -110,24 +134,71 @@ TEST_CASE("extra_char_suggest", "[dictionary]")
 	CHECK(out == sug);
 }
 
-TEST_CASE("map_suggest", "[dictionary]") {}
+TEST_CASE("map_suggest", "[dictionary]")
+{
+	auto d = Dict_Base();
+	d.set_encoding_and_language("UTF-8");
+
+	auto good = L"äbcd";
+	d.words.emplace("äbcd", u"");
+	d.wide_structures.similarities.push_back(
+	    Similarity_Group<wchar_t>(L"aäâ"));
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+
+	auto w = wstring(L"abcd");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+
+	auto out = List_Strings<wchar_t>();
+	auto sug = List_Strings<wchar_t>();
+	sug.push_back(good);
+	d.map_suggest(w, out);
+	CHECK(out == sug);
+}
 
 TEST_CASE("keyboard_suggest", "[dictionary]")
 {
 	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
-	auto good = L"abcd";
+	auto good1 = L"abcd";
+	auto good2 = L"Abb";
 	d.words.emplace("abcd", u"");
-	d.wide_structures.keyboard_closeness = L"uiop|df|nm";
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	d.words.emplace("Abb", u"");
+	d.wide_structures.keyboard_closeness = L"uiop|xdf|nm";
+	CHECK(d.spell_priv<wchar_t>(good1) == true);
 
 	auto w = wstring(L"abcf");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
 	auto out = List_Strings<wchar_t>();
 	auto sug = List_Strings<wchar_t>();
-	sug.push_back(good);
+	sug.push_back(good1);
+	d.keyboard_suggest(w, out);
+	CHECK(out == sug);
+
+	w = wstring(L"abcx");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+
+	out.clear();
+	sug.clear();
+	sug.push_back(good1);
+	d.keyboard_suggest(w, out);
+	CHECK(out == sug);
+
+	w = wstring(L"abcg");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+
+	out.clear();
+	sug.clear();
+	d.keyboard_suggest(w, out);
+	CHECK(out == sug);
+
+	w = wstring(L"abb");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+
+	out.clear();
+	sug.clear();
+	sug.push_back(good2);
 	d.keyboard_suggest(w, out);
 	CHECK(out == sug);
 }
@@ -172,4 +243,6 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 	CHECK(out == sug);
 }
 
+#if 0
 TEST_CASE("phonetic_suggest", "[dictionary]") {}
+#endif
