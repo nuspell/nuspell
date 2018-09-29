@@ -7,34 +7,29 @@
 \fBnuspell\fR \- spell checker
 .
 .SH "SYNOPSIS"
+\fBnuspell\fR [\-d \fIdict_NAME\fR] [\-i \fIENCODING\fR] [\fIFILE\fR]\.\.\.
 .
-.nf
-
-nuspell [\-d dict_NAME] [\-i enc] [file_name]\.\.\.
-nuspell \-l|\-G [\-L] [\-d dict_NAME] [\-i enc] [file_name]\.\.\.
-nuspell \-D|\-h|\-\-help|\-v|\-\-version
+.br
+\fBnuspell\fR \-l|\-G [\-L] [\-d \fIdict_NAME\fR] [\-i \fIENCODING\fR] [\fIFILE\fR]\.\.\.
 .
-.fi
+.br
+\fBnuspell\fR \-D|\-h|\-\-help|\-v|\-\-version
 .
 .SH "DESCRIPTION"
-Check spelling of each FILE\. Without FILE, check standard input\.
+Nuspell checks spelling of each \fIFILE\fR\. Without \fIFILE\fR, checks standard input\.
 .
 .SH "OPTIONS"
 .
 .TP
-\fB\-d <di_CT>\fR
-use di_CT dictionary\. Only one dictionary is currently supported\.
-.
-.TP
-\fB\-C\fR
-crude parsing of plain running text, prints spelling correctness, tab and tokenized word or prints a $ and tab for end of input line
+\fB\-d\fR \fIdi_CT\fR
+use \fIdi_CT\fR dictionary\. Only one dictionary is currently supported\.
 .
 .TP
 \fB\-D\fR
 print search paths and available dictionaries and exit
 .
 .TP
-\fB\-i <enc>\fR
+\fB\-i\fR \fIENCODING\fR
 input/output encoding, default is active locale
 .
 .TP
@@ -48,6 +43,10 @@ print only correct words or lines
 .TP
 \fB\-L\fR
 lines mode
+.
+.TP
+\fB\-S\fR
+use Unicode text segmentation to extract words
 .
 .TP
 \fB\-U\fR

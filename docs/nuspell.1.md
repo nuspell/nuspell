@@ -3,28 +3,24 @@ nuspell(1) -- spell checker
 
 ## SYNOPSIS
 
-```
-nuspell [-d dict_NAME] [-i enc] [file_name]...
-nuspell -l|-G [-L] [-d dict_NAME] [-i enc] [file_name]...
-nuspell -D|-h|--help|-v|--version
-```
+
+`nuspell` [-d _dict_NAME_] [-i _ENCODING_] [_FILE_]...  
+`nuspell` -l|-G [-L] [-d _dict_NAME_] [-i _ENCODING_] [_FILE_]...  
+`nuspell` -D|-h|--help|-v|--version
+
 
 ## DESCRIPTION
 
-Check spelling of each FILE. Without FILE, check standard 
-input.
+Nuspell checks spelling of each _FILE_.
+Without _FILE_, checks standard input.
 
 ## OPTIONS
 
-  - `-d <di_CT>`:
-    use di_CT dictionary. Only one dictionary is currently supported.
-  - `-C`:
-    crude parsing of plain running text, prints
-    spelling correctness, tab and tokenized word
-    or prints a $ and tab for end of input line
+  - `-d` _di\_CT_:
+    use _di\_CT_ dictionary. Only one dictionary is currently supported.
   - `-D`:
     print search paths and available dictionaries and exit
-  - `-i <enc>`:
+  - `-i` _ENCODING_:
     input/output encoding, default is active locale
   - `-l`:
     print only misspelled words or lines
@@ -32,6 +28,8 @@ input.
     print only correct words or lines
   - `-L`:
     lines mode
+  - `-S`:
+    use Unicode text segmentation to extract words
   - `-U`:
     do not suggest, increases performance
   - `-h, --help`:

@@ -252,7 +252,7 @@ auto print_help(const string& program_name) -> void
 	     "  -l            print only misspelled words or lines\n"
 	     "  -G            print only correct words or lines\n"
 	     "  -L            lines mode\n"
-	     "  -S            segmentation from Boost boundary analysis\n"
+	     "  -S            use Unicode text segmentation to extract words\n"
 	     "  -U            do not suggest, increases performance\n"
 	     "  -h, --help    print this help and exit\n"
 	     "  -v, --version print version number and exit\n"
