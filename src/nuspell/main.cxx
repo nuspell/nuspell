@@ -68,11 +68,11 @@ enum Mode {
 	CORRECT_WORDS_MODE /**< printing only correct words */,
 	CORRECT_LINES_MODE /**< printing only fully correct lines */,
 	SEGMENT_MODE /**< Same as normal except text is parsed using Unicode
-			text segmentation */
+	                text segmentation */
 	,
 	SEGMENT_NOSUGGEST_MODE,
 	LINES_MODE, /**< intermediate mode used while parsing command line
-		       arguments, otherwise unused */
+	               arguments, otherwise unused */
 	LIST_DICTIONARIES_MODE /**< printing available dictionaries */,
 	HELP_MODE /**< printing help information */,
 	VERSION_MODE /**< printing version information */,

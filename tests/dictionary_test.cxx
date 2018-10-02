@@ -35,7 +35,8 @@ TEST_CASE("simple", "[dictionary]")
 	for (auto& x : words)
 		d.words.insert({x, {}});
 
-	auto good = {L"table", L"chair", L"book", L"fóóáár", L"áárfóóĳ"};
+	auto good = {L"",      L".",    L"..",     L"table",
+	             L"chair", L"book", L"fóóáár", L"áárfóóĳ"};
 	for (auto& g : good)
 		CHECK(d.spell_priv<wchar_t>(g) == true);
 
@@ -71,21 +72,36 @@ TEST_CASE("break_pattern", "[dictionary]")
 {
 	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
+	d.forbid_warn = true;
+	d.warn_flag = *u"W";
 
 	d.words.emplace("user", u"");
 	d.words.emplace("interface", u"");
+	d.words.emplace("interface-interface", u"W");
 
-	d.wide_structures.break_table = {L"-"};
+	d.wide_structures.break_table = {L"-", L"++++++$"};
 
-	auto good = {L"user",           L"interface", L"user-interface",
-	             L"interface-user", L"user-user", L"interface-interface"};
+	auto good = {L"user", L"interface", L"user-interface",
+	             L"interface-user", L"user-user"};
 	for (auto& g : good)
 		CHECK(d.spell_priv<wchar_t>(g) == true);
 
 	auto wrong = {L"user--interface", L"user interface",
-	              L"user - interface"};
+	              L"user - interface", L"interface-interface"};
 	for (auto& w : wrong)
 		CHECK(d.spell_priv<wchar_t>(w) == false);
+}
+
+TEST_CASE("spell_casing_upper", "[dictionary]")
+{
+	auto d = Dict_Base();
+	d.set_encoding_and_language("UTF-8");
+	d.words.emplace("Sant'Elia", u"");
+	d.words.emplace("d'Osormort", u"");
+
+	auto good = {L"SANT'ELIA", L"D'OSORMORT"};
+	for (auto& g : good)
+		CHECK(d.spell_priv<wchar_t>(g) == true);
 }
 
 #if 0
@@ -245,4 +261,36 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 
 #if 0
 TEST_CASE("phonetic_suggest", "[dictionary]") {}
+#endif
+
+#if 0
+TEST_CASE("long word", "[dictionary]")
+{
+	auto d = Dict_Base();
+	d.set_encoding_and_language("UTF-8");
+
+	// 18 times abcdefghij (10 characters) = 180 characters
+	auto good =
+	    L"abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcde"
+	    L"fghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij"
+	    L"abcdefghijabcdefghijabcdefghijabcdefghijabcdefghij";
+	// 18 times abcdefghij (10 characters) + THISISEXTRA = 191 characters
+	auto toolong =
+	    L"abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcde"
+	    L"fghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij"
+	    L"abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijTHISISEXTRA";
+	// 18 times abcdefghij (10 characters) = 180 characters
+	d.words.emplace(
+	    "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdef"
+	    "ghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijab"
+	    "cdefghijabcdefghijabcdefghijabcdefghijabcdefghij",
+	    u"");
+	CHECK(d.spell(good) == true);
+	CHECK(d.spell(toolong) == true);
+
+	auto out = List_Strings<wchar_t>();
+	auto sug = List_Strings<wchar_t>();
+	d.suggest(toolong, out);
+	CHECK(out == sug);
+}
 #endif

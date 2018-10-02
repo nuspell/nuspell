@@ -13,6 +13,11 @@ This is a tool to format C/C++/Obj-C code. In all source directories, `nuspell` 
 This tool counts, and computes differences of, lines of source code and comments. Install with `sudo apt-get install cloc` and run via `./cloc.sh`. The results are in `cloc.txt` and `cloc.xml`. See also https://github.com/AlDanial/cloc
 
 
+## cldoc
+
+This tool is a clang based documentation generator. Install with `sudo pip3 install cldoc` and run via `./cldoc.sh`. The results are in `cld` directory. See also https://github.com/jessevdk/cldoc
+
+
 ## cppcheck
 
 This is a tool for static C/C++ code analysis. Install with `sudo apt-get install cppcheck`, and run via `/.cppcheck.sh`. The results are in `cppcheck.txt` and `cppcheck.xml`. See also http://cppcheck.sourceforge.net

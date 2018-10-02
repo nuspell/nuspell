@@ -16,7 +16,5 @@
 # https://github.com/psycofdj/coverxygen
 /coverxygen
 
-# hpp2plantuml
-/hpp2plantuml.puml
-/hpp2plantuml.svg
-/hpp2plantuml.png
+# https://github.com/jessevdk/cldoc
+/cldoc
