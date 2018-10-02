@@ -68,6 +68,53 @@ TEST_CASE("suffixes", "[dictionary]")
 		CHECK(d.spell_priv<wchar_t>(w) == false);
 }
 
+TEST_CASE("complex_prefixes", "[dictionary]")
+{
+	auto d = Dict_Base();
+	d.set_encoding_and_language("UTF-8");
+
+	d.words.emplace("drink", u"X");
+	d.wide_structures.suffixes.emplace(u'Y', true, L"", L"s", Flag_Set(),
+	                                   L".");
+	d.wide_structures.suffixes.emplace(u'X', true, L"", L"able",
+	                                   Flag_Set(u"Y"), L".");
+
+	auto good = {L"drink", L"drinkable", L"drinkables"};
+	for (auto& g : good)
+		CHECK(d.spell_priv<wchar_t>(g) == true);
+
+	auto wrong = {L"drinks"};
+	for (auto& w : wrong)
+		CHECK(d.spell_priv<wchar_t>(w) == false);
+}
+
+TEST_CASE("extra_stripping", "[dictionary]")
+{
+	auto d = Dict_Base();
+	d.set_encoding_and_language("UTF-8");
+	d.complex_prefixes = true;
+
+	d.words.emplace("aa", u"ABC");
+	d.words.emplace("bb", u"XYZ");
+
+	d.wide_structures.prefixes.emplace(u'A', true, L"", L"W",
+	                                   Flag_Set(u"B"), L"aa");
+	d.wide_structures.prefixes.emplace(u'B', true, L"", L"Q",
+	                                   Flag_Set(u"C"), L"Wa");
+	d.wide_structures.suffixes.emplace(u'C', true, L"", L"E", Flag_Set(),
+	                                   L"a");
+	d.wide_structures.prefixes.emplace(u'X', true, L"b", L"1",
+	                                   Flag_Set(u"Y"), L"b");
+	d.wide_structures.suffixes.emplace(u'Y', true, L"", L"2",
+	                                   Flag_Set(u"Z"), L"b");
+	d.wide_structures.prefixes.emplace(u'Z', true, L"", L"3", Flag_Set(),
+	                                   L"1");
+	// complex strip suffix prefix prefix
+	CHECK(d.spell_priv<wchar_t>(L"QWaaE") == true);
+	// complex strip prefix suffix prefix
+	CHECK(d.spell_priv<wchar_t>(L"31b2") == true);
+}
+
 TEST_CASE("break_pattern", "[dictionary]")
 {
 	auto d = Dict_Base();
@@ -156,7 +203,7 @@ TEST_CASE("map_suggest", "[dictionary]")
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"äbcd";
-	d.words.emplace("äbcd", u"");
+	d.words.emplace("äbcd", u"æt");
 	d.wide_structures.similarities.push_back(
 	    Similarity_Group<wchar_t>(L"aäâ"));
 	CHECK(d.spell_priv<wchar_t>(good) == true);
@@ -169,6 +216,18 @@ TEST_CASE("map_suggest", "[dictionary]")
 	sug.push_back(good);
 	d.map_suggest(w, out);
 	CHECK(out == sug);
+
+	/*	d.wide_structures.similarities.push_back(
+		    Similarity_Group<wchar_t>(L"æ(ae)"));
+		good = L"æt";
+		CHECK(d.spell_priv<wchar_t>(good) == true);
+		w = wstring(L"aet");
+		CHECK(d.spell_priv<wchar_t>(w) == false);
+		out.clear();
+		sug.clear();
+		sug.push_back(good);
+		d.map_suggest(w, out);
+		CHECK(out == sug);*/
 }
 
 TEST_CASE("keyboard_suggest", "[dictionary]")
