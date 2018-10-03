@@ -67,15 +67,6 @@ class At_Scope_Exit {
 
 #define AT_SCOPE_EXIT(...) ASE_INTERNAL2(__COUNTER__, __VA_ARGS__)
 
-template <class CharT>
-auto Dict_Base::spell_priv(const std::basic_string<CharT>& s) const -> bool
-{
-	auto s2 = s;
-	return spell_priv<CharT>(s2);
-}
-template auto Dict_Base::spell_priv(const string& s) const -> bool;
-template auto Dict_Base::spell_priv(const wstring& s) const -> bool;
-
 /** Check spelling for a word.
  *
  * @param s string to check spelling for.

@@ -26,16 +26,23 @@ using namespace std;
 using namespace std::literals::string_literals;
 using namespace nuspell;
 
+struct Dict_Test : public nuspell::Dict_Base {
+	using Dict_Base::spell_priv;
+	template <class CharT>
+	auto spell_priv(std::basic_string<CharT>&& s)
+	{
+		return Dict_Base::spell_priv(s);
+	}
+};
+
 TEST_CASE("parse", "[dictionary]")
 {
 	CHECK_THROWS_AS(Dictionary::load_from_aff_dic(""),
 	                std::ios_base::failure);
-	// FIXME	CHECK_THROWS_WITH(Dictionary::load_from_aff_dic(""), "aff
-	// file not found: iostream error");
 }
 TEST_CASE("simple", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
 	auto words = {"table", "chair", "book", "fóóáár", "áárfóóĳ"};
@@ -55,7 +62,7 @@ TEST_CASE("simple", "[dictionary]")
 
 TEST_CASE("suffixes", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
 	d.words.emplace("berry", u"T");
@@ -77,7 +84,7 @@ TEST_CASE("suffixes", "[dictionary]")
 
 TEST_CASE("complex_prefixes", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
 	d.words.emplace("drink", u"X");
@@ -97,7 +104,7 @@ TEST_CASE("complex_prefixes", "[dictionary]")
 
 TEST_CASE("extra_stripping", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 	d.complex_prefixes = true;
 
@@ -124,7 +131,7 @@ TEST_CASE("extra_stripping", "[dictionary]")
 
 TEST_CASE("break_pattern", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 	d.forbid_warn = true;
 	d.warn_flag = *u"W";
@@ -148,7 +155,7 @@ TEST_CASE("break_pattern", "[dictionary]")
 
 TEST_CASE("spell_casing_upper", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 	d.words.emplace("Sant'Elia", u"");
 	d.words.emplace("d'Osormort", u"");
@@ -160,93 +167,85 @@ TEST_CASE("spell_casing_upper", "[dictionary]")
 
 TEST_CASE("rep_suggest", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
-
-	auto table = vector<pair<wstring, wstring>>();
-	table.push_back(pair<wstring, wstring>(L"ph", L"f"));
-	table.push_back(pair<wstring, wstring>(L"shun$", L"tion"));
-	table.push_back(pair<wstring, wstring>(L"^voo", L"foo"));
-	table.push_back(pair<wstring, wstring>(L"^alot$", L"a lot"));
-	d.wide_structures.replacements = Replacement_Table<wchar_t>(table);
-
+	d.wide_structures.replacements = {{L"ph", L"f"},
+	                                  {L"shun$", L"tion"},
+	                                  {L"^voo", L"foo"},
+	                                  {L"^alot$", L"a lot"}};
 	auto good = L"fat";
 	d.words.emplace("fat", u"");
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 	auto w = wstring(L"phat");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	auto out = List_Strings<wchar_t>();
-	auto sug = List_Strings<wchar_t>();
-	sug.push_back(good);
-	d.rep_suggest(w, out);
-	CHECK(out == sug);
-	out.clear();
-	sug.clear();
-	auto g = wstring(good);
-	d.rep_suggest(g, out);
+	auto out_sug = List_Strings<wchar_t>();
+	auto expected_sug = List_Strings<wchar_t>{good};
+	d.rep_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 
 	good = L"station";
 	d.words.emplace("station", u"");
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 	w = wstring(L"stashun");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	out.clear();
-	sug.clear();
-	sug.push_back(good);
-	d.rep_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug = {good};
+	d.rep_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
+
 	d.words.emplace("stations", u"");
 	w = wstring(L"stashuns");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	out.clear();
-	sug.clear();
-	d.rep_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug.clear();
+	d.rep_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 
 	good = L"food";
 	d.words.emplace("food", u"");
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 	w = wstring(L"vood");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	out.clear();
-	sug.clear();
-	sug.push_back(good);
-	d.rep_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug = {good};
+	d.rep_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
+
 	w = wstring(L"vvood");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	out.clear();
-	sug.clear();
-	d.rep_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug.clear();
+	d.rep_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 
 	good = L"a lot";
 	d.words.emplace("a lot", u"");
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 	w = wstring(L"alot");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	out.clear();
-	sug.clear();
-	sug.push_back(good);
-	d.rep_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug = {good};
+	d.rep_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
+
 	w = wstring(L"aalot");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	out.clear();
-	sug.clear();
-	d.rep_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug.clear();
+	d.rep_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
+
 	w = wstring(L"alott");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	out.clear();
-	sug.clear();
-	d.rep_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug.clear();
+	d.rep_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 }
 
 TEST_CASE("extra_char_suggest", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"abcd";
@@ -257,32 +256,29 @@ TEST_CASE("extra_char_suggest", "[dictionary]")
 	auto w = wstring(L"abxcd");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out = List_Strings<wchar_t>();
-	auto sug = List_Strings<wchar_t>();
-	sug.push_back(good);
-	d.extra_char_suggest(w, out);
-	CHECK(out == sug);
+	auto out_sug = List_Strings<wchar_t>();
+	auto expected_sug = List_Strings<wchar_t>{good};
+	d.extra_char_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 }
 
 TEST_CASE("map_suggest", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"äbcd";
 	d.words.emplace("äbcd", u"");
-	d.wide_structures.similarities.push_back(
-	    Similarity_Group<wchar_t>(L"aäâ"));
+	d.wide_structures.similarities = {Similarity_Group<wchar_t>(L"aäâ")};
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 
 	auto w = wstring(L"abcd");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out = List_Strings<wchar_t>();
-	auto sug = List_Strings<wchar_t>();
-	sug.push_back(good);
-	d.map_suggest(w, out);
-	CHECK(out == sug);
+	auto out_sug = List_Strings<wchar_t>();
+	auto expected_sug = List_Strings<wchar_t>{good};
+	d.map_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 
 	d.words.emplace("æon", u"");
 	d.wide_structures.similarities.push_back(
@@ -291,11 +287,10 @@ TEST_CASE("map_suggest", "[dictionary]")
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 	w = wstring(L"aeon");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	out.clear();
-	sug.clear();
-	sug.push_back(good);
-	d.map_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug = {good};
+	d.map_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 
 	d.words.emplace("zijn", u"");
 	d.wide_structures.similarities.push_back(
@@ -304,16 +299,15 @@ TEST_CASE("map_suggest", "[dictionary]")
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 	w = wstring(L"zĳn");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	out.clear();
-	sug.clear();
-	sug.push_back(good);
-	d.map_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug = {good};
+	d.map_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 }
 
 TEST_CASE("keyboard_suggest", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
 	auto good1 = L"abcd";
@@ -326,42 +320,37 @@ TEST_CASE("keyboard_suggest", "[dictionary]")
 	auto w = wstring(L"abcf");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out = List_Strings<wchar_t>();
-	auto sug = List_Strings<wchar_t>();
-	sug.push_back(good1);
-	d.keyboard_suggest(w, out);
-	CHECK(out == sug);
+	auto out_sug = List_Strings<wchar_t>();
+	auto expected_sug = List_Strings<wchar_t>{good1};
+	d.keyboard_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 
 	w = wstring(L"abcx");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-
-	out.clear();
-	sug.clear();
-	sug.push_back(good1);
-	d.keyboard_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug = {good1};
+	d.keyboard_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 
 	w = wstring(L"abcg");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-
-	out.clear();
-	sug.clear();
-	d.keyboard_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug.clear();
+	d.keyboard_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 
 	w = wstring(L"abb");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-
-	out.clear();
-	sug.clear();
-	sug.push_back(good2);
-	d.keyboard_suggest(w, out);
-	CHECK(out == sug);
+	out_sug.clear();
+	expected_sug.clear();
+	expected_sug = {good2};
+	d.keyboard_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 }
 
 TEST_CASE("bad_char_suggest", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"abcd";
@@ -372,16 +361,15 @@ TEST_CASE("bad_char_suggest", "[dictionary]")
 	auto w = wstring(L"abce");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out = List_Strings<wchar_t>();
-	auto sug = List_Strings<wchar_t>();
-	sug.push_back(good);
-	d.bad_char_suggest(w, out);
-	CHECK(out == sug);
+	auto out_sug = List_Strings<wchar_t>();
+	auto expected_sug = List_Strings<wchar_t>{good};
+	d.bad_char_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 }
 
 TEST_CASE("forgotten_char_suggest", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"abcd";
@@ -392,11 +380,10 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 	auto w = wstring(L"abd");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out = List_Strings<wchar_t>();
-	auto sug = List_Strings<wchar_t>();
-	sug.push_back(good);
-	d.forgotten_char_suggest(w, out);
-	CHECK(out == sug);
+	auto out_sug = List_Strings<wchar_t>();
+	auto expected_sug = List_Strings<wchar_t>{good};
+	d.forgotten_char_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 }
 
 #if 0
@@ -406,7 +393,7 @@ TEST_CASE("phonetic_suggest", "[dictionary]") {}
 #if 0
 TEST_CASE("long word", "[dictionary]")
 {
-	auto d = Dict_Base();
+	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
 	// 18 times abcdefghij (10 characters) = 180 characters

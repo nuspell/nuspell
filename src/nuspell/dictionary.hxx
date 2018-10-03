@@ -67,8 +67,6 @@ struct Compounding_Result {
 struct Dict_Base : public Aff_Data {
 
 	template <class CharT>
-	auto spell_priv(const std::basic_string<CharT>& s) const -> bool;
-	template <class CharT>
 	auto spell_priv(std::basic_string<CharT>& s) const -> bool;
 	template <class CharT>
 	auto spell_break(std::basic_string<CharT>& s, size_t depth = 0) const
