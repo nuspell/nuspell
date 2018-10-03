@@ -26,6 +26,13 @@ using namespace std;
 using namespace std::literals::string_literals;
 using namespace nuspell;
 
+TEST_CASE("parse", "[dictionary]")
+{
+	CHECK_THROWS_AS(Dictionary::load_from_aff_dic(""),
+	                std::ios_base::failure);
+	CHECK_THROWS_WITH(Dictionary::load_from_aff_dic(""),
+	                  "aff file not found: iostream error");
+}
 TEST_CASE("simple", "[dictionary]")
 {
 	auto d = Dict_Base();
@@ -151,31 +158,91 @@ TEST_CASE("spell_casing_upper", "[dictionary]")
 		CHECK(d.spell_priv<wchar_t>(g) == true);
 }
 
-#if 0
-TEST_CASE("rep_suggest", "[dictionary]") {
+TEST_CASE("rep_suggest", "[dictionary]")
+{
 	auto d = Dict_Base();
 	d.set_encoding_and_language("UTF-8");
 
-	auto good = L"äbcd";
-	d.words.emplace("äbcd", u"");
 	auto table = vector<pair<wstring, wstring>>();
-	table.push_back(pair<wstring, wstring>(L"f", L"ph"));
+	table.push_back(pair<wstring, wstring>(L"ph", L"f"));
 	table.push_back(pair<wstring, wstring>(L"shun$", L"tion"));
-	table.push_back(pair<wstring, wstring>(L"^alot$", L"a_lot"));
-	table.push_back(pair<wstring, wstring>(L"^foo", L"bar"));
+	table.push_back(pair<wstring, wstring>(L"^voo", L"foo"));
+	table.push_back(pair<wstring, wstring>(L"^alot$", L"a lot"));
 	d.wide_structures.replacements = Replacement_Table<wchar_t>(table);
+
+	auto good = L"fat";
+	d.words.emplace("fat", u"");
 	CHECK(d.spell_priv<wchar_t>(good) == true);
-
-	auto w = wstring(L"abcd");
+	auto w = wstring(L"phat");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-
 	auto out = List_Strings<wchar_t>();
 	auto sug = List_Strings<wchar_t>();
 	sug.push_back(good);
 	d.rep_suggest(w, out);
 	CHECK(out == sug);
+	out.clear();
+	sug.clear();
+	auto g = wstring(good);
+	d.rep_suggest(g, out);
+
+	good = L"station";
+	d.words.emplace("station", u"");
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+	w = wstring(L"stashun");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+	out.clear();
+	sug.clear();
+	sug.push_back(good);
+	d.rep_suggest(w, out);
+	CHECK(out == sug);
+	d.words.emplace("stations", u"");
+	w = wstring(L"stashuns");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+	out.clear();
+	sug.clear();
+	d.rep_suggest(w, out);
+	CHECK(out == sug);
+
+	good = L"food";
+	d.words.emplace("food", u"");
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+	w = wstring(L"vood");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+	out.clear();
+	sug.clear();
+	sug.push_back(good);
+	d.rep_suggest(w, out);
+	CHECK(out == sug);
+	w = wstring(L"vvood");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+	out.clear();
+	sug.clear();
+	d.rep_suggest(w, out);
+	CHECK(out == sug);
+
+	good = L"a lot";
+	d.words.emplace("a lot", u"");
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+	w = wstring(L"alot");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+	out.clear();
+	sug.clear();
+	sug.push_back(good);
+	d.rep_suggest(w, out);
+	CHECK(out == sug);
+	w = wstring(L"aalot");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+	out.clear();
+	sug.clear();
+	d.rep_suggest(w, out);
+	CHECK(out == sug);
+	w = wstring(L"alott");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+	out.clear();
+	sug.clear();
+	d.rep_suggest(w, out);
+	CHECK(out == sug);
 }
-#endif
 
 TEST_CASE("extra_char_suggest", "[dictionary]")
 {
@@ -203,7 +270,7 @@ TEST_CASE("map_suggest", "[dictionary]")
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"äbcd";
-	d.words.emplace("äbcd", u"æt");
+	d.words.emplace("äbcd", u"");
 	d.wide_structures.similarities.push_back(
 	    Similarity_Group<wchar_t>(L"aäâ"));
 	CHECK(d.spell_priv<wchar_t>(good) == true);
@@ -217,17 +284,31 @@ TEST_CASE("map_suggest", "[dictionary]")
 	d.map_suggest(w, out);
 	CHECK(out == sug);
 
-	/*	d.wide_structures.similarities.push_back(
-		    Similarity_Group<wchar_t>(L"æ(ae)"));
-		good = L"æt";
-		CHECK(d.spell_priv<wchar_t>(good) == true);
-		w = wstring(L"aet");
-		CHECK(d.spell_priv<wchar_t>(w) == false);
-		out.clear();
-		sug.clear();
-		sug.push_back(good);
-		d.map_suggest(w, out);
-		CHECK(out == sug);*/
+	d.words.emplace("æon", u"");
+	d.wide_structures.similarities.push_back(
+	    Similarity_Group<wchar_t>(L"æ(ae)"));
+	good = L"æon";
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+	w = wstring(L"aeon");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+	out.clear();
+	sug.clear();
+	sug.push_back(good);
+	d.map_suggest(w, out);
+	CHECK(out == sug);
+
+	d.words.emplace("zijn", u"");
+	d.wide_structures.similarities.push_back(
+	    Similarity_Group<wchar_t>(L"(ij)ĳ"));
+	good = L"zijn";
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+	w = wstring(L"zĳn");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+	out.clear();
+	sug.clear();
+	sug.push_back(good);
+	d.map_suggest(w, out);
+	CHECK(out == sug);
 }
 
 TEST_CASE("keyboard_suggest", "[dictionary]")

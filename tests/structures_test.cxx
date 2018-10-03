@@ -198,7 +198,7 @@ TEST_CASE("class String_Pair", "[structures]")
 	CHECK_NOTHROW(String_Pair<char>("6789"s, 4));
 	CHECK_THROWS_AS(String_Pair<char>("6789", 5), std::out_of_range);
 	CHECK_THROWS_WITH(String_Pair<char>("6789", 5),
-	                  "Word split is too long.");
+	                  "word split is too long");
 }
 
 TEST_CASE("class List_Strings", "[structures]")

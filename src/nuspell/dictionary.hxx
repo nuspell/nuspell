@@ -328,7 +328,7 @@ class Basic_Dictionary : protected Dict_Base {
 	Basic_Dictionary(std::istream& aff, std::istream& dic)
 	{
 		if (!parse_aff_dic(aff, dic))
-			throw std::ios_base::failure("Error parsing.");
+			throw std::ios_base::failure("error parsing");
 		enc_details =
 		    analyze_encodings(external_locale, internal_locale);
 	}
@@ -358,10 +358,10 @@ class Basic_Dictionary : protected Dict_Base {
 		auto& path = file_path_without_extension;
 		std::ifstream aff_file(path + ".aff");
 		if (aff_file.fail())
-			throw std::ios_base::failure("Aff file not found.");
+			throw std::ios_base::failure("aff file not found");
 		std::ifstream dic_file(path + ".dic");
 		if (dic_file.fail())
-			throw std::ios_base::failure("Dic file not found.");
+			throw std::ios_base::failure("dic file not found");
 		return load_from_aff_dic(aff_file, dic_file);
 	}
 	auto imbue(const std::locale& loc) -> void;

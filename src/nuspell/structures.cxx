@@ -179,14 +179,14 @@ auto Condition<CharT>::construct() -> void
 		}
 		if (cond[i] == ']') {
 			auto what =
-			    "Closing bracket has no matching opening bracket.";
+			    "closing bracket has no matching opening bracket";
 			throw invalid_argument(what);
 		}
 		if (cond[i] == '[') {
 			++i;
 			if (i == cond.size()) {
-				auto what = "Opening bracket has no matching "
-				            "closing bracket.";
+				auto what = "opening bracket has no matching "
+				            "closing bracket";
 				throw invalid_argument(what);
 			}
 			Span_Type type;
@@ -199,12 +199,12 @@ auto Condition<CharT>::construct() -> void
 			}
 			j = cond.find(']', i);
 			if (j == i) {
-				auto what = "Empty bracket expression.";
+				auto what = "empty bracket expression";
 				throw invalid_argument(what);
 			}
 			if (j == cond.npos) {
-				auto what = "Opening bracket has no matching "
-				            "closing bracket.";
+				auto what = "opening bracket has no matching "
+				            "closing bracket";
 				throw invalid_argument(what);
 			}
 			spans.emplace_back(i, j - i, type);
@@ -227,7 +227,7 @@ auto Condition<CharT>::match(const StrT& s, size_t pos, size_t len) const
     -> bool
 {
 	if (pos > s.size()) {
-		throw out_of_range("pos out of bounds on s");
+		throw out_of_range("position on the string is out of bounds");
 	}
 	if (s.size() - pos < len)
 		len = s.size() - pos;

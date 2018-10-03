@@ -75,17 +75,17 @@ a.out
 # make dist
 nuspell-*.tar.gz
 
-# https://www.stack.nl/~dimitri/doxygen/
+# Doxygen https://www.stack.nl/~dimitri/doxygen/
 /doxygen/
 /Doxyfile.bak
 
-# QtCreator
+# QtCreator https://qt.io
 /Makefile.am.user
 
 # https://vim.sourceforge.io/
 .?*.swp
 
-# temporaries during ./configure
+# Temporary files during ./configure
 /confdefs.h
 /confinc
 /confmf
@@ -98,15 +98,13 @@ nuspell-*.tar.gz
 /conftest.err
 /conftest.er1
 
-# Code coverage
-# Gcov
+# Gcov https://gcc.gnu.org/onlinedocs/gcc/Gcov.html
 *.gcno
 *.gcda
-# Lcov
-/nuspell-*-*coverage*
+# Lcov http://ltp.sourceforge.net/coverage/lcov.php
+/lcov*
 
-
-# Sourcetrail
+# Sourcetrail https://sourcetrail.com
 /Nuspell.srctrlbm
 /Nuspell.srctrldb
 /Nuspell.srctrlprj

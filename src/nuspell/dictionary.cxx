@@ -1904,6 +1904,7 @@ auto Dict_Base::check_compound_with_rules(
 	return {};
 }
 
+// LCOV_EXCL_START
 /** Get suggestions for a word.
  *
  * @param word string to get suggestions for.
@@ -1921,6 +1922,7 @@ auto Dict_Base::suggest_priv(std::basic_string<CharT>& word,
 	forgotten_char_suggest(word, out);
 	phonetic_suggest(word, out);
 }
+// LCOV_EXCL_STOP
 
 template auto Dict_Base::suggest_priv(string&, List_Strings<char>&) const
     -> void;
@@ -2164,6 +2166,7 @@ auto Basic_Dictionary::imbue(const locale& loc) -> void
 	enc_details = analyze_encodings(external_locale, internal_locale);
 }
 
+// LCOV_EXCL_START
 auto Basic_Dictionary::external_to_internal_encoding(const string& in,
                                                      wstring& wide_out,
                                                      string& narrow_out) const
@@ -2300,5 +2303,6 @@ auto Basic_Dictionary::suggest(const string& word,
 		break;
 	}
 }
+// LCOV_EXCL_STOP
 
 } // namespace nuspell

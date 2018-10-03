@@ -8,7 +8,7 @@ LDADD = ../src/nuspell/libnuspell.a $(BOOST_LOCALE_LIBS) $(ICU_LIBS) \
 
 
 BUILT_SOURCES = catch.hpp catch_reporter_tap.hpp
-catch_url = https://github.com/catchorg/Catch2/releases/download/v2.4.0
+catch_url = https://github.com/catchorg/Catch2/releases/download/v2.4.1
 
 catch.hpp:
 	wget -nc $(catch_url)/catch.hpp
@@ -39,10 +39,5 @@ dictionary_test.cxx \
 catch_main.cxx
 
 nodist_ch_catch_SOURCES = catch.hpp catch_reporter_tap.hpp
-
-
-# to run coverage, cd to root
-# ./configure --enable-code-coverage
-# make check-code-coverage
 
 EXTRA_DIST = test.sh catch-runner.sh

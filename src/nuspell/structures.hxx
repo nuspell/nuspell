@@ -822,7 +822,7 @@ class String_Pair {
 	String_Pair(Str1&& str, size_t i) : i(i), s(std::forward<Str1>(str))
 	{
 		if (i > s.size()) {
-			throw std::out_of_range("Word split is too long.");
+			throw std::out_of_range("word split is too long");
 		}
 	}
 	template <
@@ -1045,14 +1045,14 @@ class List_Strings {
 		if (n < sz)
 			return d[n];
 		else
-			throw std::out_of_range("out of range");
+			throw std::out_of_range("index is out of range");
 	}
 	auto& at(size_type n) const
 	{
 		if (n < sz)
 			return d[n];
 		else
-			throw std::out_of_range("out of range");
+			throw std::out_of_range("index is out of range");
 	}
 	auto& front() { return d.front(); }
 	auto& front() const { return d.front(); }
