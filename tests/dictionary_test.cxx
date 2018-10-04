@@ -267,12 +267,12 @@ TEST_CASE("map_suggest", "[dictionary]")
 	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
-	auto good = L"äbcd";
-	d.words.emplace("äbcd", u"");
-	d.wide_structures.similarities = {Similarity_Group<wchar_t>(L"aäâ")};
+	auto good = L"naïve";
+	d.words.emplace("naïve", u"");
+	d.wide_structures.similarities = {Similarity_Group<wchar_t>(L"iíìîï")};
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 
-	auto w = wstring(L"abcd");
+	auto w = wstring(L"naive");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
 	auto out_sug = List_Strings<wchar_t>();
@@ -353,12 +353,12 @@ TEST_CASE("bad_char_suggest", "[dictionary]")
 	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
-	auto good = L"abcd";
-	d.words.emplace("abcd", u"");
+	auto good = L"chair";
+	d.words.emplace("chair", u"");
 	d.wide_structures.try_chars = good;
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 
-	auto w = wstring(L"abce");
+	auto w = wstring(L"cháir");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
 	auto out_sug = List_Strings<wchar_t>();
@@ -387,7 +387,143 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 }
 
 #if 0
-TEST_CASE("phonetic_suggest", "[dictionary]") {}
+TEST_CASE("phonetic_suggest", "[dictionary]")
+{
+	auto d = Dict_Test();
+	d.set_encoding_and_language("UTF-8");
+
+	d.words.emplace("Brasilia", u"");
+	d.words.emplace("brassily", u"");
+	d.words.emplace("Brazilian", u"");
+	d.words.emplace("brilliance", u"");
+	d.words.emplace("brilliancy", u"");
+	d.words.emplace("brilliant", u"");
+	d.words.emplace("brain", u"");
+	d.words.emplace("brass", u"");
+	d.words.emplace("Churchillian", u"");
+	d.words.emplace("xxxxxxxxxx", u""); // needs adding of ph:Brasilia to
+	// its morph data, but this is pending enabling of
+	// parse_morhological_fields when reading aff file.
+
+	d.wide_structures.phonetic_table = {{L"AH(AEIOUY)-^", L"*H"},
+	                                    {L"AR(AEIOUY)-^", L"*R"},
+	                                    {L"A(HR)^", L"*"},
+	                                    {L"A^", L"*"},
+	                                    {L"AH(AEIOUY)-", L"H"},
+	                                    {L"AR(AEIOUY)-", L"R"},
+	                                    {L"A(HR)", L"_"},
+	                                    {L"BB-", L"_"},
+	                                    {L"B", L"B"},
+	                                    {L"CQ-", L"_"},
+	                                    {L"CIA", L"X"},
+	                                    {L"CH", L"X"},
+	                                    {L"C(EIY)-", L"S"},
+	                                    {L"CK", L"K"},
+	                                    {L"COUGH^", L"KF"},
+	                                    {L"CC<", L"C"},
+	                                    {L"C", L"K"},
+	                                    {L"DG(EIY)", L"K"},
+	                                    {L"DD-", L"_"},
+	                                    {L"D", L"T"},
+	                                    {L"É<", L"E"},
+	                                    {L"EH(AEIOUY)-^", L"*H"},
+	                                    {L"ER(AEIOUY)-^", L"*R"},
+	                                    {L"E(HR)^", L"*"},
+	                                    {L"ENOUGH^$", L"*NF"},
+	                                    {L"E^", L"*"},
+	                                    {L"EH(AEIOUY)-", L"H"},
+	                                    {L"ER(AEIOUY)-", L"R"},
+	                                    {L"E(HR)", L"_"},
+	                                    {L"FF-", L"_"},
+	                                    {L"F", L"F"},
+	                                    {L"GN^", L"N"},
+	                                    {L"GN$", L"N"},
+	                                    {L"GNS$", L"NS"},
+	                                    {L"GNED$", L"N"},
+	                                    {L"GH(AEIOUY)-", L"K"},
+	                                    {L"GH", L"_"},
+	                                    {L"GG9", L"K"},
+	                                    {L"G", L"K"},
+	                                    {L"H", L"H"},
+	                                    {L"IH(AEIOUY)-^", L"*H"},
+	                                    {L"IR(AEIOUY)-^", L"*R"},
+	                                    {L"I(HR)^", L"*"},
+	                                    {L"I^", L"*"},
+	                                    {L"ING6", L"N"},
+	                                    {L"IH(AEIOUY)-", L"H"},
+	                                    {L"IR(AEIOUY)-", L"R"},
+	                                    {L"I(HR)", L"_"},
+	                                    {L"J", L"K"},
+	                                    {L"KN^", L"N"},
+	                                    {L"KK-", L"_"},
+	                                    {L"K", L"K"},
+	                                    {L"LAUGH^", L"LF"},
+	                                    {L"LL-", L"_"},
+	                                    {L"L", L"L"},
+	                                    {L"MB$", L"M"},
+	                                    {L"MM", L"M"},
+	                                    {L"M", L"M"},
+	                                    {L"NN-", L"_"},
+	                                    {L"N", L"N"},
+	                                    {L"OH(AEIOUY)-^", L"*H"},
+	                                    {L"OR(AEIOUY)-^", L"*R"},
+	                                    {L"O(HR)^", L"*"},
+	                                    {L"O^", L"*"},
+	                                    {L"OH(AEIOUY)-", L"H"},
+	                                    {L"OR(AEIOUY)-", L"R"},
+	                                    {L"O(HR)", L"_"},
+	                                    {L"PH", L"F"},
+	                                    {L"PN^", L"N"},
+	                                    {L"PP-", L"_"},
+	                                    {L"P", L"P"},
+	                                    {L"Q", L"K"},
+	                                    {L"RH^", L"R"},
+	                                    {L"ROUGH^", L"RF"},
+	                                    {L"RR-", L"_"},
+	                                    {L"R", L"R"},
+	                                    {L"SCH(EOU)-", L"SK"},
+	                                    {L"SC(IEY)-", L"S"},
+	                                    {L"SH", L"X"},
+	                                    {L"SI(AO)-", L"X"},
+	                                    {L"SS-", L"_"},
+	                                    {L"S", L"S"},
+	                                    {L"TI(AO)-", L"X"},
+	                                    {L"TH", L"@"},
+	                                    {L"TCH--", L"_"},
+	                                    {L"TOUGH^", L"TF"},
+	                                    {L"TT-", L"_"},
+	                                    {L"T", L"T"},
+	                                    {L"UH(AEIOUY)-^", L"*H"},
+	                                    {L"UR(AEIOUY)-^", L"*R"},
+	                                    {L"U(HR)^", L"*"},
+	                                    {L"U^", L"*"},
+	                                    {L"UH(AEIOUY)-", L"H"},
+	                                    {L"UR(AEIOUY)-", L"R"},
+	                                    {L"U(HR)", L"_"},
+	                                    {L"V^", L"W"},
+	                                    {L"V", L"F"},
+	                                    {L"WR^", L"R"},
+	                                    {L"WH^", L"W"},
+	                                    {L"W(AEIOU)-", L"W"},
+	                                    {L"X^", L"S"},
+	                                    {L"X", L"KS"},
+	                                    {L"Y(AEIOU)-", L"Y"},
+	                                    {L"ZZ-", L"_"},
+	                                    {L"Z", L"S"}};
+
+	auto w = wstring(L"Brasillian");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+
+	auto out_sug = List_Strings<wchar_t>();
+	auto expected_sug = List_Strings<wchar_t>();
+	auto sugs = {L"Brasilia",  L"Xxxxxxxxxx", L"Brilliant",
+	             L"Brazilian", L"Brassily",   L"Brilliance"};
+	for (auto& s : sugs)
+		expected_sug.push_back(s);
+
+	d.phonetic_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
+}
 #endif
 
 #if 0
@@ -415,9 +551,9 @@ TEST_CASE("long word", "[dictionary]")
 	CHECK(d.spell(good) == true);
 	CHECK(d.spell(toolong) == true);
 
-	auto out = List_Strings<wchar_t>();
-	auto sug = List_Strings<wchar_t>();
-	d.suggest(toolong, out);
-	CHECK(out == sug);
+	auto out_sug = List_Strings<wchar_t>();
+	auto expected_sug = List_Strings<wchar_t>();
+	d.suggest(toolong, out_sug);
+	CHECK(out_sug == expected_sug);
 }
 #endif

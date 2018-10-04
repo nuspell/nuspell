@@ -1924,6 +1924,9 @@ template <class CharT>
 auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
                                    List_Strings<CharT>& out) const -> bool
 {
+	for (auto& o : out)
+		if (o == word)
+			return true;
 	auto res = check_word(word);
 	if (!res)
 		return false;

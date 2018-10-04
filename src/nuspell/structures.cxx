@@ -488,7 +488,7 @@ auto Phonetic_Table<CharT>::replace(StrT& word) const -> bool
 		return false;
 	auto ret = false;
 	auto treat_next_as_begin = true;
-	size_t count_go_backs_after_repalce = 0; // avoid infinite loop
+	size_t count_go_backs_after_replace = 0; // avoid infinite loop
 	for (size_t i = 0; i != word.size(); ++i) {
 		auto rules =
 		    equal_range(begin(table), end(table), word[i], Cmp());
@@ -517,8 +517,8 @@ auto Phonetic_Table<CharT>::replace(StrT& word) const -> bool
 			    rule->second);
 			treat_next_as_begin = m1.treat_next_as_begin;
 			if (m1.go_back_after_replace &&
-			    count_go_backs_after_repalce < 100) {
-				count_go_backs_after_repalce++;
+			    count_go_backs_after_replace < 100) {
+				count_go_backs_after_replace++;
 			}
 			else {
 				i += rule->second.size();
