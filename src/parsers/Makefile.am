@@ -1,6 +1,4 @@
-AM_CPPFLAGS=-I${top_builddir}/src/hunspell -DHUNSPELL_STATIC \
-	    $(CODE_COVERAGE_CPPFLAGS)
-AM_CXXFLAGS=$(CODE_COVERAGE_CXXFLAGS)
+AM_CPPFLAGS=-I${top_builddir}/src/hunspell -DHUNSPELL_STATIC
 
 noinst_LIBRARIES=libparsers.a
 libparsers_a_SOURCES=firstparser.cxx firstparser.hxx xmlparser.cxx \
@@ -12,4 +10,4 @@ libparsers_a_SOURCES=firstparser.cxx firstparser.hxx xmlparser.cxx \
 
 #noinst_PROGRAMS=testparser
 #testparser_SOURCES=testparser.cxx
-#LDADD = libparsers.a ../hunspell/libhunspell.a $(CODE_COVERAGE_LIBS)
+#LDADD = libparsers.a ../hunspell/libhunspell.a
