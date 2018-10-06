@@ -2,8 +2,10 @@
 noinst_PROGRAMS=hunspell
 
 AM_CPPFLAGS = -I${top_builddir}/src/hunspell -I${top_srcdir}/src/hunspell \
-              -I${top_srcdir}/src/parsers -DHUNSPELL_STATIC
-AM_CXXFLAGS = -std=c++14
+              -I${top_srcdir}/src/parsers -DHUNSPELL_STATIC \
+	      $(CODE_COVERAGE_CPPFLAGS)
+AM_CXXFLAGS = -std=c++14 $(CODE_COVERAGE_CXXFLAGS)
+LDADD      = $(CODE_COVERAGE_LIBS)
 
 #hzip_SOURCES=hzip.cxx
 #hunzip_SOURCES=hunzip.cxx

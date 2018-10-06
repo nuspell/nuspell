@@ -92,7 +92,6 @@ struct Args_t {
 	auto parse_args(int argc, char* argv[]) -> void;
 };
 
-// LCOV_EXCL_START
 /**
  * Parses command line arguments and result is stored in mode, dictionary,
  * other_dicts and files.
@@ -714,4 +713,3 @@ int main(int argc, char* argv[])
 	}
 	return 0;
 }
-// LCOV_EXCL_STOP

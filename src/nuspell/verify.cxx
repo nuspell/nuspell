@@ -80,7 +80,6 @@ struct Args_t {
 	auto parse_args(int argc, char* argv[]) -> void;
 };
 
-// LCOV_EXCL_START
 auto Args_t::parse_args(int argc, char* argv[]) -> void
 {
 	if (argc != 0 && argv[0] && argv[0][0] != '\0')
@@ -478,4 +477,3 @@ int main(int argc, char* argv[])
 	}
 	return 0;
 }
-// LCOV_EXCL_STOP

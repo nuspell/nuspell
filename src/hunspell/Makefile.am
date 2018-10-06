@@ -15,4 +15,6 @@ nodist_libhunspell_a_SOURCES=hunvisapi.h
 
 # libhunspell_a_LDFLAGS=-no-undefined -version-info 0:1:0
 
-AM_CPPFLAGS = -DHUNSPELL_STATIC
+AM_CPPFLAGS = -DHUNSPELL_STATIC $(CODE_COVERAGE_CPPFLAGS)
+AM_CXXFLAGS = $(CODE_COVERAGE_CXXFLAGS)
+LIBADD      = $(CODE_COVERAGE_LIBS)

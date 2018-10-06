@@ -33,14 +33,6 @@ struct Dict_Test : public nuspell::Dict_Base {
 	{
 		return Dict_Base::spell_priv(s);
 	}
-
-	using Dict_Base::suggest_priv;
-	template <class CharT>
-	auto suggest_priv(std::basic_string<CharT>&& s,
-	                  List_Strings<CharT>&& out)
-	{
-		return Dict_Base::suggest_priv(s, out);
-	}
 };
 
 TEST_CASE("parse", "[dictionary]")
