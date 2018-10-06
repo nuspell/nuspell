@@ -409,3 +409,24 @@ TEST_CASE("boost locale to_title", "[string_utils]")
 	CHECK("Ĳsselmeer"s == to_title("Ĳsselmeer"s, l));
 	CHECK("Ĳsselmeer"s == to_title("ĲSSELMEER"s, l));
 }
+
+TEST_CASE("Encoding", "[locale_utils]")
+{
+	auto e = Encoding();
+	auto v = e.value_or_default();
+	auto i = e.is_utf8();
+	CHECK("ISO8859-1"s == v);
+	CHECK(false == i);
+
+	e = Encoding("UTF8");
+	v = e.value();
+	i = e.is_utf8();
+	CHECK("UTF-8"s == v);
+	CHECK(true == i);
+
+	e = "MICROSOFT-CP1251"s;
+	v = e.value();
+	i = e.is_utf8();
+	CHECK("CP1251"s == v);
+	CHECK(false == i);
+}

@@ -1895,7 +1895,6 @@ auto Dict_Base::check_compound_with_rules(
 	return {};
 }
 
-// LCOV_EXCL_START
 /** Get suggestions for a word.
  *
  * @param word string to get suggestions for.
@@ -1913,7 +1912,6 @@ auto Dict_Base::suggest_priv(std::basic_string<CharT>& word,
 	forgotten_char_suggest(word, out);
 	phonetic_suggest(word, out);
 }
-// LCOV_EXCL_STOP
 
 template auto Dict_Base::suggest_priv(string&, List_Strings<char>&) const
     -> void;

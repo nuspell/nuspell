@@ -33,6 +33,14 @@ struct Dict_Test : public nuspell::Dict_Base {
 	{
 		return Dict_Base::spell_priv(s);
 	}
+
+	using Dict_Base::suggest_priv;
+	template <class CharT>
+	auto suggest_priv(std::basic_string<CharT>&& s,
+	                  List_Strings<CharT>&& out)
+	{
+		return Dict_Base::suggest_priv(s, out);
+	}
 };
 
 TEST_CASE("parse", "[dictionary]")
@@ -182,6 +190,11 @@ TEST_CASE("rep_suggest", "[dictionary]")
 	auto expected_sug = List_Strings<wchar_t>{good};
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
+	w = wstring(L"fad phat");
+	out_sug.clear();
+	expected_sug.clear();
+	d.rep_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
 
 	good = L"station";
 	d.words.emplace("station", u"");
@@ -248,16 +261,25 @@ TEST_CASE("extra_char_suggest", "[dictionary]")
 	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
 
-	auto good = L"abcd";
+	auto good = L"table";
 	d.wide_structures.try_chars = good;
-	d.words.emplace("abcd", u"");
+	d.words.emplace("table", u"");
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 
-	auto w = wstring(L"abxcd");
+	auto w = wstring(L"tabble");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
 	auto out_sug = List_Strings<wchar_t>();
 	auto expected_sug = List_Strings<wchar_t>{good};
+	d.extra_char_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
+
+	d.forbid_warn = true;
+	d.warn_flag = *u"W";
+	d.words.emplace("late", u"W");
+	w = wstring(L"laate");
+	out_sug.clear();
+	expected_sug.clear();
 	d.extra_char_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 }
@@ -298,6 +320,18 @@ TEST_CASE("map_suggest", "[dictionary]")
 	good = L"zijn";
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 	w = wstring(L"zĳn");
+	CHECK(d.spell_priv<wchar_t>(w) == false);
+	out_sug.clear();
+	expected_sug = {good};
+	d.map_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
+
+	d.words.emplace("hear", u"");
+	d.wide_structures.similarities.push_back(
+	    Similarity_Group<wchar_t>(L"(ae)(ea)"));
+	good = L"hear";
+	CHECK(d.spell_priv<wchar_t>(good) == true);
+	w = wstring(L"haer");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
@@ -557,3 +591,20 @@ TEST_CASE("long word", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 }
 #endif
+
+TEST_CASE("suggest_priv", "[dictionary]")
+{
+	auto d = Dict_Test();
+	d.set_encoding_and_language("UTF-8");
+	d.wide_structures.try_chars = L"ailrt";
+
+	// extra char, bad char, bad char, forgotten char
+	auto words = {"tral", "trial", "trail", "traalt"};
+	for (auto& x : words)
+		d.words.insert({x, {}});
+
+	auto w = wstring(L"traal");
+	auto out_sug = List_Strings<wchar_t>();
+	d.suggest_priv(w, out_sug);
+	CHECK(words.size() == out_sug.size());
+}

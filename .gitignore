@@ -102,7 +102,7 @@ nuspell-*.tar.gz
 *.gcno
 *.gcda
 # Lcov http://ltp.sourceforge.net/coverage/lcov.php
-/lcov*
+/*coverage*
 
 # Sourcetrail https://sourcetrail.com
 /Nuspell.srctrlbm
