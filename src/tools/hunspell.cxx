@@ -99,7 +99,6 @@
 #include "../parsers/firstparser.hxx"
 #include "../parsers/xmlparser.hxx"
 #include "../parsers/odfparser.hxx"
-#include "../parsers/noparser.hxx"
 
 #else
 
@@ -115,7 +114,6 @@
 #include "../parsers/firstparser.hxx"
 #include "../parsers/xmlparser.hxx"
 #include "../parsers/odfparser.hxx"
-#include "../parsers/noparser.hxx"
 
 #define LIBDIR                \
   "/usr/share/hunspell:"      \
@@ -185,7 +183,7 @@ char text_conv[MAXLNLEN];
 
 // file formats:
 
-enum { FMT_TEXT, FMT_LATEX, FMT_HTML, FMT_MAN, FMT_FIRST, FMT_XML, FMT_ODF, FMT_NO };
+enum { FMT_TEXT, FMT_LATEX, FMT_HTML, FMT_MAN, FMT_FIRST, FMT_XML, FMT_ODF };
 
 // global variables
 
@@ -221,7 +219,7 @@ int checkapos = 0;  // force typographic apostrophe
 int warn = 0;  // warn potential mistakes (dictionary words with WARN flags)
 const char* ui_enc = NULL;  // locale character encoding (default for I/O)
 const char* io_enc = NULL;  // I/O character encoding
-int omit_suggestion = 0; // ONLY FOR TEMPORARILY SPEEDING UP TESTS
+
 #define DMAX 10  // maximal count of loaded dictionaries
 
 const char* dic_enc[DMAX];  // dictionary encoding
@@ -421,9 +419,6 @@ TextParser* get_parser(int format, const char* extension, Hunspell* pMS) {
         break;
       case FMT_FIRST:
         p = new FirstParser(wordchars.c_str());
-        break;
-      case FMT_NO:
-        p = new NoParser(wordchars.c_str());
     }
   } else {
     switch (format) {
@@ -444,9 +439,6 @@ TextParser* get_parser(int format, const char* extension, Hunspell* pMS) {
         break;
       case FMT_FIRST:
         p = new FirstParser(wordchars.c_str());
-        break;
-      case FMT_NO:
-        p = new NoParser(wordchars.c_str());
     }
   }
 
@@ -916,7 +908,7 @@ nextline:
                 if (verbose_mode)
                   fprintf(stdout, "* %s\n", token.c_str());
                 else
-		  if (omit_suggestion && info & SPELL_COMPOUND) { fprintf(stdout, "-\t%s\n", token.c_str()); } else if (omit_suggestion && !root.empty() ) { fprintf(stdout, "+\t%s\n", token.c_str()); } else if (omit_suggestion) { fprintf(stdout, "*\t%s\n", token.c_str()); } else {fprintf(stdout, "*\n"); }
+                  fprintf(stdout, "*\n");
               }
               fflush(stdout);
             } else {
@@ -930,17 +922,17 @@ nextline:
               } else {
                 char_offset = byte_offset;
               }
-          std::vector<std::string> wlst;
-          if (!omit_suggestion) { wlst = pMS[d]->suggest(chenc(token, io_enc, dic_enc[d])); }
-          if (wlst.empty()) {
-		if (omit_suggestion) { fprintf(stdout, "#\t%s\t%d", token.c_str(), char_offset); } else { fprintf(stdout, "# %s %d", token.c_str(), char_offset); }
+              std::vector<std::string> wlst =
+                pMS[d]->suggest(chenc(token, io_enc, dic_enc[d]));
+              if (wlst.empty()) {
+                fprintf(stdout, "# %s %d", token.c_str(), char_offset);
               } else {
                 fprintf(stdout, "& %s %u %d: ", token.c_str(), static_cast<unsigned int>(wlst.size()), char_offset);
                 fprintf(stdout, "%s", chenc(wlst[0], dic_enc[d], io_enc).c_str());
               }
               for (size_t j = 1; j < wlst.size(); ++j) {
                   fprintf(stdout, ", %s", chenc(wlst[j], dic_enc[d], io_enc).c_str());
-	      }
+              }
               fprintf(stdout, "\n");
               fflush(stdout);
             }
@@ -969,9 +961,9 @@ nextline:
               } else {
                 char_offset = byte_offset;
               }
-	      std::vector<std::string> wlst;
-	      if (!omit_suggestion) { wlst = pMS[d]->suggest(chenc(token, io_enc, dic_enc[d])); }
-	      if (wlst.empty()) {
+              std::vector<std::string> wlst =
+                pMS[d]->suggest(chenc(token, io_enc, dic_enc[d]));
+              if (wlst.empty()) {
                 fprintf(stdout, "# %s %d", chenc(token, io_enc, ui_enc).c_str(),
                         char_offset);
               } else {
@@ -1816,7 +1808,6 @@ int main(int argc, char** argv) {
                               "check standard input.\n\n"));
       fprintf(stderr, "%s", gettext("  -1\t\tcheck only first field in lines "
                               "(delimiter = tabulator)\n"));
-      fprintf(stderr, "%s", gettext("  -2\t\tcheck line as word\n"));
       fprintf(stderr, "%s", gettext("  -a\t\tIspell's pipe interface\n"));
       fprintf(stderr, "%s", gettext("  --check-url\tcheck URLs, e-mail addresses and "
                               "directory paths\n"));
@@ -1980,12 +1971,10 @@ int main(int argc, char** argv) {
       printgood = 1;
     } else if ((strcmp(argv[i], "-1") == 0)) {
       format = FMT_FIRST;
-    } else if ((strcmp(argv[i], "-2") == 0)) {
-      format = FMT_NO;
     } else if ((strcmp(argv[i], "-D") == 0)) {
       showpath = 1;
     } else if ((strcmp(argv[i], "-r") == 0)) {
-      warn = 1; } else if ((strcmp(argv[i], "-Y") == 0)) { omit_suggestion = 1; //ONLY TEMPORARILY
+      warn = 1;
     } else if ((strcmp(argv[i], "--check-url") == 0)) {
       checkurl = 1;
     } else if ((strcmp(argv[i], "--check-apostrophe") == 0)) {
