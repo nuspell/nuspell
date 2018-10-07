@@ -3,17 +3,26 @@
 
 AC_PREREQ([2.69])
 AC_INIT([nuspell],[2.0.0],[https://github.com/nuspell/nuspell/issues],,
-        [https://nuspell.org])
+        [https://nuspell.github.io/])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIRS([m4])
 AM_INIT_AUTOMAKE
 
-AX_CODE_COVERAGE
-AS_IF([test x$enable_code_coverage = xyes],[
-	: ${CXXFLAGS=""}; : ${CFLAGS=""}
-])
 AX_GENERATE_CHANGELOG
+AX_CODE_COVERAGE
+# The following few lines default-initialize the shell variable CXXFLAGS
+# e.g. abc=text normal assingment, overwrites previous
+#      ${abc=text} sets abc to text only if abc was not defined previously
+# We do this before calling AC_PROG_CXX because that does ${CXXFLAGS="-g -O2"}
+AS_IF([test x$enable_code_coverage = xyes],[
+	: ${CXXFLAGS=""}; : ${CFLAGS=""}])
+AC_ARG_ENABLE([debug],
+	[AS_HELP_STRING([--enable-debug],[Enable debug build])],
+	[: ${CXXFLAGS="-g -O0 -Wall -Wextra -Werror"}])
+AC_ARG_ENABLE([profile],
+	[AS_HELP_STRING([--enable-profile],[Enable build for profiling])],
+	[: ${CXXFLAGS="-O2 -fno-omit-frame-pointer"}])
 
 # Checks for programs.
 AC_PROG_CXX
@@ -38,64 +47,7 @@ AC_CHECK_HEADERS([locale.h langinfo.h])
 gl_VISIBILITY
 
 # Checks for library functions.
-
-AC_ARG_WITH(warnings,[  --with-warnings         compile with warning messages],[
-	AC_DEFINE(HUNSPELL_WARNING_ON,1,"Define if you need warning messages")
-])
-
-CURSESLIB=""
-AC_ARG_WITH(
-	[ui],
-	[AS_HELP_STRING([--with-ui],[support Curses user interface])],
-	[],
-	[with_ui=no]
-)
-AS_IF([test "x$with_ui" != xno], [
-	AC_CHECK_LIB([ncursesw],[tparm],[
-		CURSESLIB=-lncursesw
-	],[AC_CHECK_LIB([curses],[tparm],[
-		CURSESLIB=-lcurses
-	],[AC_CHECK_LIB([ncurses],[tparm],[
-		CURSESLIB=-lncurses
-	])])])
-   if test "$CURSESLIB" != "" ; then
-	echo Compiling with curses user interface.
-	AC_CHECK_HEADERS([curses.h])
-	if test "$CURSESLIB" = "-lncursesw" ; then
-		AC_CHECK_HEADERS([ncursesw/curses.h])
-	else
-		echo "No Unicode support on interactive console. (Install Ncursesw library.)"
-	fi
-	AC_DEFINE(HUNSPELL_WARNING_ON,1,"Define if you need warning messages")
-   fi
-])
-AC_SUBST(CURSESLIB)
-
-AC_ARG_WITH(
-	[readline],
-	[AS_HELP_STRING([--with-readline],[support fancy command input editing])],
-	[],
-	[with_readline=no]
-)
-READLINELIB=""
-AS_IF([test "x$with_readline" != xno],
-	[AC_CHECK_LIB([curses],[tparm],[
-		TERMLIB=-lncurses
-	],[AC_CHECK_LIB([termcap],[tgetent],[
-		TERMLIB=-ltermcap
-	])])
-	LDSAVE=$LDFLAGS
-	LDFLAGS="$LDFLAGS $TERMLIB"
-	AC_CHECK_LIB([readline],[readline],[
-		AC_CHECK_HEADER([readline/readline.h],[
-			READLINELIB="-lreadline $TERMLIB"
-			echo Using the readline library.
-			AC_DEFINE([HAVE_READLINE],[1],
-			["Define if you have fancy command input editing with Readline"])
-		])
-	])
-])
-AC_SUBST(READLINELIB)
+# maybe check here if Boost Locale was build with ICU as backend
 
 AC_CONFIG_FILES([
 	Makefile
