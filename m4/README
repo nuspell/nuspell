@@ -3,7 +3,7 @@ package).  aclocal uses these files to create aclocal.m4 which is in turn
 used by autoconf to create the configure script at the the top level in
 this distribution.
 
-For the building the executable hunspell the following m4 files are needed:
+For the building the `hunspell` executable the following m4 files are needed:
 
 * iconv.m4
 * lib-link.m4
@@ -13,10 +13,10 @@ For the building the executable hunspell the following m4 files are needed:
 These originate from the package `gettext` from the path `/usr/share/aclocal/`.
 These files used to be found automatically, but with the removal of gettext they
 need to be added manually. Once the executable nuspell completely replaces the
-executable hunspell, these three files will not be needed anymore and need to
+executable `hunspell`, these three files will not be needed anymore and need to
 get removed here.
 
-For nuspell the following is needed:
+For the `nuspell` executable, the following is needed:
 
 * boost.m4
 * ax_code_coverage.m4

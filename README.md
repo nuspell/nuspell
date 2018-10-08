@@ -93,7 +93,7 @@ Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
 
 ### 1\. Compiling with Mingw64 and MSYS2
 
-Download Msys2, update everything and install the following
+Download MSYS2, update everything and install the following
     packages:
 
     pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-libtool \

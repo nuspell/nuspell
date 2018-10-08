@@ -9,12 +9,12 @@ The issues can be of three types (delete two rows and leave only one):
 When reporting a bug you must tell us the state of your system and the
 steps to reproduce the bug. For the state please specify the following:
 
-| key                               | value |
-|-----------------------------------|-------|
-| OS, distro, version             = |       |
-| Hunspell version                = |       |
-| Dictionary,package name,version = |       |
-| Command line tool or GUI app    = |       |
+| key                                       | value |
+|-------------------------------------------|-------|
+| Operating system, distribution, version = |       |
+| Nuspell version                         = |       |
+| Dictionary, package name, version       = |       |
+| Command-line tool or GUI application    = |       |
 
 
 ## Steps to reproduce
@@ -24,8 +24,6 @@ steps to reproduce the bug. For the state please specify the following:
 
 
 ## Expected behavior (output)
-
-
 
 
 # Change/feature request
