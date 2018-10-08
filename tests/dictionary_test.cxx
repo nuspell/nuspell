@@ -600,3 +600,41 @@ TEST_CASE("suggest_priv", "[dictionary]")
 	d.suggest_priv(w, out_sug);
 	CHECK(words.size() == out_sug.size());
 }
+
+TEST_CASE("suggest_priv_max", "[dictionary]")
+{
+	auto d = Dict_Test();
+	d.set_encoding_and_language("UTF-8");
+	d.wide_structures.replacements = {
+	    {L"x", L"a"}, {L"x", L"b"}, {L"x", L"c"}, {L"x", L"d"},
+	    {L"x", L"e"}, {L"x", L"f"}, {L"x", L"g"}, {L"x", L"h"}};
+	d.wide_structures.similarities = {
+	    Similarity_Group<wchar_t>(L"xabcdefgh")};
+	d.wide_structures.keyboard_closeness = L"axb|cxd|exf|gxh";
+	d.wide_structures.try_chars = L"abcdefgh";
+
+	auto chars = string("abcdefgh");
+	auto word = string();
+	for (auto& w : chars) {
+		word.push_back(w);
+		for (auto& x : chars) {
+			word.push_back(x);
+			for (auto& y : chars) {
+				word.push_back(y);
+				for (auto& z : chars) {
+					word.push_back(z);
+					d.words.insert({word, {}});
+					word.pop_back();
+				}
+				word.pop_back();
+			}
+			word.pop_back();
+		}
+		word.pop_back();
+	}
+
+	auto w = wstring(L"xxxx");
+	auto out_sug = List_Strings<wchar_t>();
+	d.suggest_priv(w, out_sug);
+	CHECK(d.words.size() == out_sug.size());
+}
