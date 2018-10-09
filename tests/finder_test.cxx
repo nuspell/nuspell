@@ -25,79 +25,44 @@
 using namespace std;
 using namespace nuspell;
 
-TEST_CASE("get_all_paths", "[finder]")
+TEST_CASE("class finder", "[finder]")
 {
-	// values are highly system dependent!
-	// use only for debugging or code coverage
-	auto f = Finder::search_dictionaries_in_all_paths();
-	auto ps = f.get_all_paths();
-	if (ps.empty()) {
-		CHECK(0 == ps.size());
-        }
-        else {
-		auto amount = 0;
-                for (auto& p : ps) {
-			auto dummy = string(p);
-			dummy.clear();
-			++amount;
-                }
-		CHECK(amount == ps.size());
-        }
-}
+	// Values of all sections below are highly system dependent!
+	// Therefore, it is not possible to test these automatically.
+	// Use this only for debugging and manual inspection.
 
-TEST_CASE("get_all_dictionaries", "[finder]")
-{
-	// values are highly system dependent!
-	// use only for debugging or code coverage
 	auto f = Finder::search_dictionaries_in_all_paths();
-	auto ds = f.get_all_dictionaries();
-	if (ds.empty()) {
-		CHECK(0 == ds.size());
-        }
-        else {
-		auto amount = 0;
-                for (auto& d : ds) {
-			auto dummy = string(d.first);
-			dummy.clear();
-			dummy = string(d.second);
-			dummy.clear();
-			++amount;
-                }
-		CHECK(amount == ds.size());
-        }
-}
 
-TEST_CASE("find", "[finder]")
-{
-	// values are highly system dependent!
-	// use only for debugging or code coverage
-	auto f = Finder::search_dictionaries_in_all_paths();
-	auto res = f.find("");
-	CHECK(0 != typeid(res).name());
-	res = f.find("64852985806485298580");
-	CHECK(0 != typeid(res).name());
-}
+	SECTION("get_all_paths")
+	{
+		auto ps = f.get_all_paths();
+		(void)ps;
+	}
 
-TEST_CASE("equal_range", "[finder]")
-{
-	// values are highly system dependent!
-	// use only for debugging or code coverage
-	auto f = Finder::search_dictionaries_in_all_paths();
-	auto res = f.equal_range("");
-	CHECK(0 != typeid(res.first).name());
-	CHECK(0 != typeid(res.second).name());
-	res = f.equal_range("64852985806485298580");
-	CHECK(0 != typeid(res.first).name());
-	CHECK(0 != typeid(res.second).name());
-}
+	SECTION("get_all_dictionaries")
+	{
+		auto ds = f.get_all_dictionaries();
+		(void)ds;
+	}
 
-TEST_CASE("get_dictionary", "[finder]")
-{
-	// values are highly system dependent!
-	// use only for debugging or code coverage
-	auto f = Finder::search_dictionaries_in_all_paths();
-	auto res = f.get_dictionary("");
-	CHECK(0 == res.size());
-	res = f.get_dictionary("64852985806485298580");
-	CHECK(0 == res.size());
+	SECTION("find")
+	{
+		auto i = f.find("");
+		i = f.find("64852985806485298580");
+		(void)i;
+	}
+
+	SECTION("equal_range")
+	{
+		auto r = f.equal_range("");
+		r = f.equal_range("64852985806485298580");
+		(void)r;
+	}
+
+	SECTION("get_dictionary")
+	{
+		auto s = f.get_dictionary("");
+		s = f.get_dictionary("64852985806485298580");
+		(void)s;
+	}
 }
