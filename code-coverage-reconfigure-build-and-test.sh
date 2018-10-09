@@ -17,7 +17,7 @@ if [ $? -ne 0 ]; then
 fi
 make -j
 make -j check-code-coverage CODE_COVERAGE_LCOV_OPTIONS=--no-external \
-        CODE_COVERAGE_GENHTML_OPTIONS=--prefix' $(abs_top_builddir)' \
+        CODE_COVERAGE_GENHTML_OPTIONS=--prefix' $(abs_top_builddir) --precision 2' \
         CODE_COVERAGE_IGNORE_PATTERN='"*/tests/*"'
 if [ $? -ne 0 ]; then
 	echo 'ERROR: Failed to report code coverage nuspell'
