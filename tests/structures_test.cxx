@@ -29,19 +29,17 @@ using namespace nuspell;
 TEST_CASE("method substring replace copy", "[structures]")
 {
 	using Substring_Replacer = Substr_Replacer<char>;
-	auto rep = Substring_Replacer({{"asd", "zxc"},
-	                               {"as", "rtt"},
-	                               {"a", "A"},
-	                               {"abbb", "ABBB"},
-	                               {"asd  ", ""},
-	                               {"asd ZXC", "YES"},
-	                               {"sd ZXC as", "NO"},
-	                               {"", "123"},
-	                               {" TT", ""}});
-	CHECK(rep.replace_copy("QWE asd ZXC as TT"s) == "QWE YES rtt");
+	auto rep = Substring_Replacer({{"aa", "bb"},
+	                               {"c", "d"},
+	                               {"ee", "f"},
+	                               {"g", "hh"},
+	                               {"ii  ", ""},
+	                               {"jj kk", "ll"},
+	                               {"", "mm"},
+	                               {" nn", ""}});
+	CHECK(rep.replace_copy("aa XYZ c ee g ii jj kk nn"s) ==
+	      "bb XYZ d f hh ii ll");
 }
-
-// See also tests/v1cmdline/condition.* and individual language support.
 
 // TODO add a third TEXT_CASE for twofold suffix stripping
 
@@ -142,25 +140,103 @@ TEST_CASE("class Suffix", "[structures]")
 		CHECK(false == sfx_tests.check_condition("wries"s));
 	}
 }
+
 TEST_CASE("class String_Set", "[structures]")
 {
-	auto ss1 = String_Set<char>();
-	auto ss2 = String_Set<char>();
-	auto ss3 = String_Set<char>();
-	ss1.insert("one");
-	ss1.insert("two");
-	ss1.insert("three");
-	ss2.insert("one");
-	ss2.insert("two");
-	ss2.insert("three");
-	ss3.insert("one");
-	ss3.insert("two");
-
-	SECTION("method insert")
+	SECTION("initialization")
 	{
-		CHECK(ss1 == ss2);
-		CHECK(ss1 != ss3);
+		auto ss1 = String_Set<char16_t>();
+		auto ss2 = String_Set<char16_t>(u"abc"s);
+		auto ss3 = String_Set<char16_t>(u"abc");
+
+		CHECK(0 == ss1.size());
+		CHECK(ss2 == ss3);
+		CHECK(u"abc"s == ss2.data());
 	}
+
+	SECTION("assignment")
+	{
+		auto ss1 = String_Set<char16_t>();
+		auto ss2 = String_Set<char16_t>(u"abc");
+		ss1 = u"abc"s;
+		CHECK(ss1 == ss2);
+		auto s = u16string(u"abc"s);
+		ss1 = s;
+		CHECK(ss1 == ss2);
+	}
+
+	SECTION("size")
+	{
+		auto ss1 = String_Set<char16_t>();
+		CHECK(true == ss1.empty());
+		ss1.insert(u"abc");
+		ss1.insert(u"def");
+		ss1.insert(u"ghi");
+		CHECK(false == ss1.empty());
+		CHECK(9 == ss1.size());
+		CHECK(1024 < ss1.max_size());
+		ss1.clear();
+		CHECK(true == ss1.empty());
+	}
+
+
+	SECTION("manipulation")
+	{
+		auto ss1 = String_Set<char16_t>();
+		auto ss2 = String_Set<char16_t>(u"abc");
+		ss1 = u"abc"s;
+		CHECK(ss1 == ss2);
+		ss1.erase(ss1.begin());
+		auto ss3 = String_Set<char16_t>(u"bc");
+		CHECK(ss1 == ss3);
+		ss1.clear();
+		CHECK(ss1 != ss3);
+		CHECK(true == ss1.empty());
+	}
+
+	SECTION("comparison")
+	{
+		auto ss1 = String_Set<char16_t>();
+		auto ss2 = String_Set<char16_t>();
+		auto ss3 = String_Set<char16_t>();
+		auto ss4 = String_Set<char16_t>();
+		ss1.insert(u"abc");
+		ss2.insert(u"abc");
+		ss3.insert(u"abcd");
+		ss4.insert(u"abcd");
+		CHECK(ss1 == ss2);
+		CHECK(ss3 == ss4);
+		CHECK(ss1 != ss4);
+		CHECK(ss3 != ss2);
+		CHECK(ss1 < ss3);
+		CHECK(ss4 > ss2);
+		CHECK(ss1 <= ss2);
+		CHECK(ss1 <= ss3);
+		CHECK(ss3 >= ss4);
+		CHECK(ss3 >= ss1);
+		ss1.swap(ss3);
+		CHECK(ss1 == ss4);
+		CHECK(ss2 == ss3);
+		CHECK(ss1 != ss2);
+		CHECK(ss3 != ss4);
+		CHECK(1 == ss3.count('c')); 
+		ss3.insert(u"c");
+		ss3.insert(u"c");
+		CHECK(1 == ss3.count('c')); 
+		CHECK(0 == ss3.count('z')); 
+	}
+}
+
+TEST_CASE("class Break_Table", "[structures]")
+{
+	auto a = Break_Table<char>();
+	auto b = Break_Table<char>({"--"s, "-"s});
+	auto c = Break_Table<char>({"--", "-"});
+	auto d = Break_Table<char>();
+	d = {"-", "--"};
+	auto e = Break_Table<char>();
+	e = {"-"s, "--"s};
+	a = d;
 }
 
 TEST_CASE("class String_Pair", "[structures]")
@@ -199,6 +275,51 @@ TEST_CASE("class String_Pair", "[structures]")
 	CHECK_THROWS_AS(String_Pair<char>("6789", 5), std::out_of_range);
 	CHECK_THROWS_WITH(String_Pair<char>("6789", 5),
 	                  "word split is too long");
+}
+
+TEST_CASE("class Phonetic_Table", "[structures]")
+{
+	auto p = pair<string, string>({"aa", "bb"});
+	auto v = vector<pair<string, string>>({p});
+	auto f1 = Phonetic_Table<char>(v);
+	auto f2 = Phonetic_Table<char>();
+	f2 = v;
+	auto f3 = Phonetic_Table<char>(v);
+	auto f4 = Phonetic_Table<char>();
+	f4 = v;
+	auto word = string("aa");
+	auto exp = string("bb");
+	CHECK(true == f4.replace(word));
+	CHECK(exp == word);
+	word = string("aabb");
+	exp = string("bbbb");
+	CHECK(true == f4.replace(word));
+	CHECK(exp == word);
+	word = string("abba");
+	exp = string(word);
+	CHECK(false == f4.replace(word));
+	CHECK(exp == word);
+}
+
+TEST_CASE("class Similarity_Group", "[structures]")
+{
+	auto s1 = Similarity_Group<char>();
+	s1.parse("a(bb)");
+	s1.parse("c(dd"); // non-regular
+	s1.parse("e(f)");
+	s1.parse(")"); // non-regular
+	auto s2 = Similarity_Group<char>();
+	s2 = "(bb)a";
+	s2 = "c(dd"; // non-regular
+	s2 = "e";
+	s2 = "f)"; // non-regular
+	CHECK(s2.strings == s1.strings);
+	CHECK(s2.chars == s1.chars);
+	auto exp = string("acef)");
+	CHECK(exp == s1.chars);
+	auto v = vector<string>();
+	v.push_back("bb");
+	CHECK(v == s1.strings);
 }
 
 TEST_CASE("class List_Strings", "[structures]")

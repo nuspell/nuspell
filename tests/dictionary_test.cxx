@@ -601,6 +601,7 @@ TEST_CASE("suggest_priv", "[dictionary]")
 	CHECK(words.size() == out_sug.size());
 }
 
+#if 0
 TEST_CASE("suggest_priv_max", "[dictionary]")
 {
 	auto d = Dict_Test();
@@ -638,3 +639,4 @@ TEST_CASE("suggest_priv_max", "[dictionary]")
 	d.suggest_priv(w, out_sug);
 	CHECK(d.words.size() == out_sug.size());
 }
+#endif
