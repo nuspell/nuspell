@@ -165,6 +165,68 @@ TEST_CASE("spell_casing_upper", "[dictionary]")
 		CHECK(d.spell_priv<wchar_t>(g) == true);
 }
 
+TEST_CASE("compounding", "[dictionary]")
+{
+	auto d = Dict_Test();
+	d.set_encoding_and_language("UTF-8");
+	d.compound_begin_flag = *u"B";
+	d.compound_last_flag = *u"L";
+
+	SECTION("begin_last")
+	{
+		d.compound_min_length = 4;
+		d.words.emplace("car", u"B");
+		d.words.emplace("cook", u"B");
+		d.words.emplace("photo", u"B");
+		d.words.emplace("book", u"L");
+
+		auto good = {L"cookbook", L"photobook"};
+		for (auto& g : good)
+			CHECK(d.spell_priv<wchar_t>(g) == true);
+		auto wrong = {L"carbook", L"bookcook", L"bookphoto",
+		              L"cookphoto", L"photocook"};
+		for (auto& w : wrong)
+			CHECK(d.spell_priv<wchar_t>(w) == false);
+	}
+
+	SECTION("compound_middle")
+	{
+		d.compound_flag = *u"C";
+		d.compound_middle_flag = *u"M";
+		d.compound_check_duplicate = true;
+		d.words.emplace("goederen", u"C");
+		d.words.emplace("trein", u"M");
+		d.words.emplace("wagon", u"C");
+
+		auto good = {L"goederentreinwagon", L"wagontreingoederen",
+		             L"goederenwagon", L"wagongoederen"};
+		for (auto& g : good)
+			CHECK(d.spell_priv<wchar_t>(g) == true);
+		auto wrong = {L"goederentrein", L"treingoederen",
+		              L"treinwagon",    L"wagontrein",
+		              L"treintrein",    L"goederengoederen",
+		              L"wagonwagon"};
+		for (auto& w : wrong)
+			CHECK(d.spell_priv<wchar_t>(w) == false);
+	}
+
+	SECTION("triple")
+	{
+		d.compound_check_triple = true;
+		d.compound_simplified_triple = true;
+		d.words.emplace("schiff", u"B");
+		d.words.emplace("fahrt", u"L");
+
+		auto good = {L"Schiffahrt", L"schiffahrt"};
+		for (auto& g : good)
+			CHECK(d.spell_priv<wchar_t>(g) == true);
+		auto wrong = {L"Schifffahrt", L"schifffahrt", L"SchiffFahrt",
+		              L"SchifFahrt",  L"schiffFahrt", L"schifFahrt"};
+		for (auto& w : wrong)
+			CHECK(d.spell_priv<wchar_t>(w) == false);
+	}
+}
+
 TEST_CASE("rep_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
