@@ -117,9 +117,9 @@ auto get_default_search_paths(OutIt out) -> OutIt
 }
 
 /**
- * Adds the default search paths which have been found to the paths.
+ * Adds the default directory paths which may containt dictionaries.
  */
-auto Finder::add_default_paths() -> void
+auto Finder::add_default_dir_paths() -> void
 {
 	get_default_search_paths(back_inserter(paths));
 }
@@ -433,9 +433,9 @@ auto get_mozilla_paths(OutIt out) -> OutIt
 }
 
 /**
- * Adds the Mozilla search paths which have been found to the paths.
+ * Adds the Mozilla directory paths which may containt dictionaries.
  */
-auto Finder::add_mozilla_paths() -> void
+auto Finder::add_mozilla_dir_paths() -> void
 {
 	get_mozilla_paths(back_inserter(paths));
 }
@@ -508,9 +508,9 @@ auto get_libreoffice_paths(OutIt out) -> OutIt
 }
 
 /**
- * Adds the LibreOffice search paths which have been found to the paths.
+ * Adds the LibreOffice directory paths which may containt dictionaries.
  */
-auto Finder::add_libreoffice_paths() -> void
+auto Finder::add_libreoffice_dir_paths() -> void
 {
 	get_libreoffice_paths(back_inserter(paths));
 }
@@ -522,7 +522,7 @@ auto Finder::add_libreoffice_paths() -> void
  * @return End of the output range.
  */
 template <class OutIt>
-auto get_apacheopenoffice_paths(OutIt out) -> OutIt
+auto get_openoffice_paths(OutIt out) -> OutIt
 {
 	// Note that Apache OpenOffice is no longer available on Debian and
 	// Ubuntu. For legacy reasons, all paths are still supported.
@@ -585,15 +585,15 @@ auto get_apacheopenoffice_paths(OutIt out) -> OutIt
 }
 
 /**
- * Adds the Apache OpenOffice search paths which have been found to the paths.
+ * Adds the OpenOffice directory paths which may containt dictionaries.
  */
-auto Finder::add_apacheopenoffice_paths() -> void
+auto Finder::add_openoffice_dir_paths() -> void
 {
-	get_apacheopenoffice_paths(back_inserter(paths));
+	get_openoffice_paths(back_inserter(paths));
 }
 
 /**
- * Searches path for dictionaries.
+ * Searches directory for dictionaries.
  *
  * @param dir directory path.
  * @param out output iter where to append the found dictionary names.
@@ -644,9 +644,9 @@ auto search_path_for_dicts(const string& dir, OutIt out) -> OutIt
 }
 
 /**
- * Searches for dictionaries in paths which have been found and added.
+ * Searches the added directories for dictionaries.
  */
-auto Finder::search_dictionaries() -> void
+auto Finder::search_for_dictionaries() -> void
 {
 	dictionaries.clear();
 	for (auto& path : paths) {
@@ -656,14 +656,18 @@ auto Finder::search_dictionaries() -> void
 	            [](auto& a, auto& b) { return a.first < b.first; });
 }
 
-auto Finder::search_dictionaries_in_all_paths() -> Finder
+/**
+ * Creates Finder object with all possible dictionaries found.
+ * @return Finder object
+ */
+auto Finder::search_all_dirs_for_dicts() -> Finder
 {
 	auto ret = Finder();
-	ret.add_default_paths();
-	ret.add_mozilla_paths();
-	ret.add_libreoffice_paths();
-	ret.add_apacheopenoffice_paths();
-	ret.search_dictionaries();
+	ret.add_default_dir_paths();
+	ret.add_mozilla_dir_paths();
+	ret.add_libreoffice_dir_paths();
+	ret.add_openoffice_dir_paths();
+	ret.search_for_dictionaries();
 	return ret;
 }
 

@@ -31,17 +31,17 @@ TEST_CASE("class finder", "[finder]")
 	// Therefore, it is not possible to test these automatically.
 	// Use this only for debugging and manual inspection.
 
-	auto f = Finder::search_dictionaries_in_all_paths();
+	auto f = Finder::search_all_dirs_for_dicts();
 
-	SECTION("get_all_paths")
+	SECTION("get_paths")
 	{
-		auto ps = f.get_all_paths();
+		auto ps = f.get_dir_paths();
 		(void)ps;
 	}
 
-	SECTION("get_all_dictionaries")
+	SECTION("get_dictionaries")
 	{
-		auto ds = f.get_all_dictionaries();
+		auto ds = f.get_dictionaries();
 		(void)ds;
 	}
 

@@ -38,16 +38,16 @@ class Finder {
       public:
 	using const_iterator = Dict_List::const_iterator;
 
-	auto add_default_paths() -> void;
-	auto add_mozilla_paths() -> void;
-	auto add_libreoffice_paths() -> void;
-	auto add_apacheopenoffice_paths() -> void;
-	auto search_dictionaries() -> void;
+	auto add_default_dir_paths() -> void;
+	auto add_mozilla_dir_paths() -> void;
+	auto add_libreoffice_dir_paths() -> void;
+	auto add_openoffice_dir_paths() -> void;
+	auto search_for_dictionaries() -> void;
 
-	auto static search_dictionaries_in_all_paths() -> Finder;
+	auto static search_all_dirs_for_dicts() -> Finder;
 
-	auto& get_all_paths() const { return paths; }
-	auto& get_all_dictionaries() const { return dictionaries; }
+	auto& get_dir_paths() const { return paths; }
+	auto& get_dictionaries() const { return dictionaries; }
 	auto begin() const { return dictionaries.begin(); }
 	auto end() const { return dictionaries.end(); }
 	auto find(const std::string& dict) const -> const_iterator;

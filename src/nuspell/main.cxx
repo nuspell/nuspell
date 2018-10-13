@@ -354,24 +354,24 @@ auto print_version() -> void
  */
 auto list_dictionaries(const Finder& f) -> void
 {
-	if (f.get_all_paths().empty()) {
+	if (f.get_dir_paths().empty()) {
 		cout << "No search paths available" << '\n';
 	}
 	else {
 		cout << "Search paths:" << '\n';
-		for (auto& p : f.get_all_paths()) {
+		for (auto& p : f.get_dir_paths()) {
 			cout << p << '\n';
 		}
 	}
 
 	// Even if no search paths are available, still report on available
 	// dictionaries.
-	if (f.get_all_dictionaries().empty()) {
+	if (f.get_dictionaries().empty()) {
 		cout << "No dictionaries available\n";
 	}
 	else {
 		cout << "Available dictionaries:\n";
-		for (auto& d : f.get_all_dictionaries()) {
+		for (auto& d : f.get_dictionaries()) {
 			cout << d.first;
 			// The longest basenames of .dic and .aff files are
 			// "ca_ES-valencia" with 14 characters and "de_DE_frami"
@@ -692,7 +692,7 @@ int main(int argc, char* argv[])
 	clog << "INFO: Input  locale " << cin.getloc() << '\n';
 	clog << "INFO: Output locale " << cout.getloc() << '\n';
 
-	auto f = Finder::search_dictionaries_in_all_paths();
+	auto f = Finder::search_all_dirs_for_dicts();
 
 	if (args.mode == LIST_DICTIONARIES_MODE) {
 		list_dictionaries(f);
