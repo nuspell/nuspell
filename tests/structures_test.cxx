@@ -274,11 +274,11 @@ TEST_CASE("class String_Set", "[structures]")
 		CHECK(ss2 == ss3);
 		CHECK(ss1 != ss2);
 		CHECK(ss3 != ss4);
-		CHECK(1 == ss3.count('c')); 
+		CHECK(1 == ss3.count('c'));
 		ss3.insert(u"c");
 		ss3.insert(u"c");
-		CHECK(1 == ss3.count('c')); 
-		CHECK(0 == ss3.count('z')); 
+		CHECK(1 == ss3.count('c'));
+		CHECK(0 == ss3.count('z'));
 	}
 }
 
@@ -342,7 +342,8 @@ TEST_CASE("class Phonetic_Table", "[structures]")
 	auto p6 = pair<string, string>({"", "BB"});
 	auto p7 = pair<string, string>({"MB$", "M"});
 	auto p8 = pair<string, string>({"GG9", "K"});
-	auto v1 = vector<pair<string, string>>({p1, p2, p3, p4, p5, p6, p7, p8});
+	auto v1 =
+	    vector<pair<string, string>>({p1, p2, p3, p4, p5, p6, p7, p8});
 	auto f1 = Phonetic_Table<char>(v1);
 	auto f2 = Phonetic_Table<char>();
 	f2 = v1;

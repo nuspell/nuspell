@@ -228,6 +228,67 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 #endif
 }
 
+class My_Dictionary : public Dictionary {
+	Hash_Multiset<string> personal;
+
+      public:
+	auto& operator=(const Dictionary& d)
+	{
+		static_cast<Dictionary&>(*this) = d;
+		return *this;
+	}
+	auto& operator=(Dictionary&& d)
+	{
+		static_cast<Dictionary&>(*this) = move(d);
+		return *this;
+	}
+	auto spell(const string& word)
+	{
+		auto correct = Dictionary::spell(word);
+		if (correct)
+			return true;
+		auto r = personal.equal_range(word);
+		correct = r.first != r.second;
+		return correct;
+	}
+	auto parse_personal_dict(istream& in, const locale& external_locale)
+	{
+		auto word = string();
+		auto wide_word = wstring();
+		while (getline(in, word)) {
+			auto ok = utf8_to_wide(word, wide_word);
+			ok &= to_narrow(wide_word, word, external_locale);
+			if (!ok)
+				continue;
+			personal.insert(word);
+		}
+		return in.eof();
+	}
+	auto parse_personal_dict(std::string name,
+	                         const locale& external_locale)
+	{
+#ifdef _WIN32
+		auto const PATH_SEPS = "\\/";
+#else
+		auto const PATH_SEPS = '/';
+#endif
+		auto file = ifstream();
+		auto path_sep_idx = name.find_last_of(PATH_SEPS);
+		if (path_sep_idx != name.npos)
+			name.erase(0, path_sep_idx + 1);
+		name.insert(0, ".nuspell_");
+		auto home = getenv("HOME");
+		if (home) {
+			name.insert(0, "/");
+			name.insert(0, home);
+		}
+		file.open(name);
+		if (file.is_open())
+			return parse_personal_dict(file, external_locale);
+		return true;
+	}
+};
+
 /**
  * Prints help information to standard output.
  *
@@ -340,7 +401,7 @@ auto list_dictionaries(const Finder& f) -> void
  * @param out the output stream to report spelling correctness
  * @param dic the dictionary to use.
  */
-auto normal_loop(istream& in, ostream& out, Dictionary& dic)
+auto normal_loop(istream& in, ostream& out, My_Dictionary& dic)
 {
 	auto word = string();
 	auto suggestions = List_Strings<char>();
@@ -379,7 +440,7 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic)
  * @param out the output stream to report spelling correctness
  * @param dic the dictionary to use.
  */
-auto normal_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
+auto normal_nosuggest_loop(istream& in, ostream& out, My_Dictionary& dic)
 {
 	auto word = string();
 	auto suggestions = List_Strings<char>();
@@ -407,7 +468,7 @@ auto normal_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
  * @param out the output stream with on each line only misspelled words.
  * @param dic the dictionary to use.
  */
-auto misspelled_word_loop(istream& in, ostream& out, Dictionary& dic)
+auto misspelled_word_loop(istream& in, ostream& out, My_Dictionary& dic)
 {
 	auto word = string();
 	while (in >> word) {
@@ -426,7 +487,7 @@ auto misspelled_word_loop(istream& in, ostream& out, Dictionary& dic)
  * @param out the output stream with on each line only correct words.
  * @param dic the dictionary to use.
  */
-auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
+auto correct_word_loop(istream& in, ostream& out, My_Dictionary& dic)
 {
 	auto word = string();
 	while (in >> word) {
@@ -446,7 +507,7 @@ auto correct_word_loop(istream& in, ostream& out, Dictionary& dic)
  * @param out the output stream to report spelling correctness
  * @param dic the dictionary to use.
  */
-auto segment_loop(istream& in, ostream& out, Dictionary& dic)
+auto segment_loop(istream& in, ostream& out, My_Dictionary& dic)
 {
 	namespace b = boost::locale::boundary;
 	auto line = string();
@@ -497,7 +558,7 @@ auto segment_loop(istream& in, ostream& out, Dictionary& dic)
  * @param out the output stream to report spelling correctness
  * @param dic the dictionary to use.
  */
-auto segment_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
+auto segment_nosuggest_loop(istream& in, ostream& out, My_Dictionary& dic)
 {
 	namespace b = boost::locale::boundary;
 	auto line = string();
@@ -529,7 +590,7 @@ auto segment_nosuggest_loop(istream& in, ostream& out, Dictionary& dic)
 	}
 }
 
-auto misspelled_line_loop(istream& in, ostream& out, Dictionary& dic)
+auto misspelled_line_loop(istream& in, ostream& out, My_Dictionary& dic)
 {
 	auto line = string();
 	auto words = vector<string>();
@@ -549,7 +610,7 @@ auto misspelled_line_loop(istream& in, ostream& out, Dictionary& dic)
 	}
 }
 
-auto correct_line_loop(istream& in, ostream& out, Dictionary& dic)
+auto correct_line_loop(istream& in, ostream& out, My_Dictionary& dic)
 {
 	auto line = string();
 	auto words = vector<string>();
@@ -658,15 +719,16 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
-	auto dic = Dictionary();
+	auto dic = My_Dictionary();
 	try {
 		dic = Dictionary::load_from_aff_dic(filename);
+		dic.parse_personal_dict(args.dictionary, loc);
 	}
 	catch (const std::ios_base::failure& e) {
 		cerr << e.what() << '\n';
 		return 1;
 	}
-	dic.imbue(cin.getloc());
+	dic.imbue(loc);
 	auto loop_function = normal_loop;
 	switch (args.mode) {
 	case DEFAULT_MODE:
@@ -707,7 +769,7 @@ int main(int argc, char* argv[])
 				cerr << "Can't open " << file_name << '\n';
 				return 1;
 			}
-			in.imbue(cin.getloc());
+			in.imbue(loc);
 			loop_function(in, cout, dic);
 		}
 	}

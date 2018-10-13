@@ -416,7 +416,7 @@ extern template class Break_Table<wchar_t>;
 
 struct identity {
 	template <class T>
-	constexpr auto&& operator()(T&& t)
+	constexpr auto operator()(T&& t) const noexcept -> T&&
 	{
 		return std::forward<T>(t);
 	}

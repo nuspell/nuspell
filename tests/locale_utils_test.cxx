@@ -95,7 +95,8 @@ TEST_CASE("to_wide", "[locale_utils]")
 	loc = g("en_US.UTF-8");
 	in = u8"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59"s;
 	auto out = wstring();
-	auto exp = wstring(L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59");
+	auto exp =
+	    wstring(L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59");
 	CHECK(true == to_wide(in, loc, out));
 	CHECK(exp == out);
 }
