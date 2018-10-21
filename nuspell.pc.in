@@ -1,12 +1,12 @@
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-libdir=@libdir@
-includedir=@includedir@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
 
-Name: @PACKAGE@
+Name: @PROJECT_NAME@
 Description: Nuspell spellchecking library
-URL: @PACKAGE_URL@
-Version: @VERSION@
-Libs: -L${libdir} -lnuspell @BOOST_LOCALE_LDFLAGS@ @BOOST_LOCALE_LIBS@
+URL: @PROJECT_HOMEPAGE_URL@
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lnuspell @Boost_LOCALE_LIBRARY@
 Requires: icu-uc
-Cflags: -I${includedir} @BOOST_CPPFLAGS@
+Cflags: -I${includedir} -I@Boost_INCLUDE_DIRS@

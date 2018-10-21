@@ -23,7 +23,7 @@ Main features of Nuspell spell checker and morphological analyzer:
 
 Build-only dependencies:
 
-    g++ make autoconf automake libtool pkg-config wget libiconv
+    g++ make cmake pkg-config git
 
 Runtime dependencies:
 
@@ -32,7 +32,7 @@ Runtime dependencies:
 Recommended tools for developers:
 
 ```
-qtcreator clang-format gdb vim doxygen
+qtcreator ninja clang-format gdb vim doxygen
 ```
 
 ## Building on GNU/Linux and Unixes
@@ -41,37 +41,20 @@ We first need to download the dependencies. Some may already be preinstalled.
 
 For Ubuntu and Debian:
 
-    sudo apt install g++ autoconf automake make libtool pkg-config \
+    sudo apt install g++ make cmake pkg-config \
                      libboost-locale-dev libboost-system-dev libicu-dev
 
 Then run the following commands:
 
-    autoreconf -vfi
-    ./configure
+    mkdir build
+    cd build
+    cmake ..
     make
     sudo make install
 
 <!--sudo ldconfig-->
 
-For speeding up the build process, see also the -j option of make.
-
-<!-- old hunspell v1 stuff
-For dictionary development, use the `--with-warnings` option of
-configure.
-
-For interactive user interface of Nuspell executable, use the `--with-ui
-option`.
-
-Optional developer packages:
-
-  - ncurses (need for --with-ui), eg. libncursesw5 for UTF-8
-  - readline (for fancy input line editing, configure parameter:
-    --with-readline)
-
-In Ubuntu, the packages are:
-
-    libncurses5-dev libreadline-dev
--->
+For speeding up the build process, run `make -j`, or use Ninja instead of Make.
 
 ## Building on OSX and macOS
 
@@ -80,11 +63,11 @@ In Ubuntu, the packages are:
 3. Install dependencies
 
 ```
-brew install autoconf automake libtool pkg-config wget
+brew install cmake pkg-config
 brew install boost --with-icu4c
 ```
 
-Then run the standard trio of autoreconf, configure and make. See above.
+Then run the standard cmake and make. See above.
 
 If you want to build with GCC instead of Clang, you need to pull GCC with
 Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
@@ -94,13 +77,18 @@ Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
 ### 1\. Compiling with Mingw64 and MSYS2
 
 Download MSYS2, update everything and install the following
-    packages:
+packages:
 
-    pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-libtool \
-              mingw-w64-x86_64-boost
+    pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-boost \
+              mingw-w64-x86_64-cmake
 
-Open Mingw-w64 Win64 prompt and compile the same way as on Linux, see
-above.
+Then from inside the nuspell folder run:
+
+    mkdir build
+    cd build
+    cmake .. -G "Unix Makefiles"
+    make
+    sudo make install
 
 ### 2\. Building in Cygwin environment
 
@@ -112,9 +100,9 @@ Cygwin1.dll.
 
 Install the following required packages
 
-    autoconf automake libtool pkgconf icu boost-libs
+    cmake pkgconf icu boost-libs
 
-Then run the standard trio of autoreconf, configure and make. See above.
+Then run the standard cmake and make. See above.
 
 # Debugging Nuspell
 
@@ -129,13 +117,11 @@ It is recomended to install a debug build of the standard library:
 For debugging we need to create a debug build and then we need to start
 `gdb`.
 
-    ./configure CXXFLAGS='-g -O0 -Wall -Wextra -Werror'
-    make
+    mkdir debug
+    cd debug
+    cmake .. -DCMAKE_BUILD_TYPE=Debug
+    make -j
     gdb src/nuspell/nuspell
-
-You can also pass the `CXXFLAGS` directly to `make` without calling
-`./configure`, but we don't recommend this way during long development
-sessions.
 
 If you like to develop and debug with an IDE, see documentation at
 https://github.com/nuspell/nuspell/wiki/IDE-Setup
@@ -144,16 +130,16 @@ https://github.com/nuspell/nuspell/wiki/IDE-Setup
 
 Testing Nuspell (see tests in tests/ subdirectory):
 
-    make check
+    make test
 
 or with Valgrind debugger:
 
-    make check
+    make test
     VALGRIND=[Valgrind_tool] make check
 
 For example:
 
-    make check
+    make test
     VALGRIND=memcheck make check
 
 # Documentation
@@ -218,13 +204,10 @@ running:
     doxygen
 
 The result can be viewed by opening `doxygen/html/index.html` in a web
-browser. Doxygen will use Graphviz for generating all sorts of graphs
-and PlantUML for generating UML diagrams. Make sure that the packages
-plantuml and graphviz are installed before running Doxygen. The latter
-is usually installed automatically when installing Doxygen.
+browser.
 
 # Dictionaries
 
 Myspell, Hunspell and Nuspell dictionaries:
 
-https://github.com/nuspell/nuspell/wiki/Dictionaries-and-Contacts
+<https://github.com/nuspell/nuspell/wiki/Dictionaries-and-Contacts>

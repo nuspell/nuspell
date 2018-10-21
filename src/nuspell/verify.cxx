@@ -45,7 +45,7 @@
 #include <unistd.h>
 #endif
 
-#include "../hunspell/hunspell.hxx"
+#include <hunspell/hunspell.hxx>
 
 using namespace std;
 using namespace nuspell;

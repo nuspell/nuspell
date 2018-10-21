@@ -129,7 +129,6 @@ fi
 
 [[ "$HUNSPELL" = "" ]] && HUNSPELL="$(dirname $0)"/../src/nuspell/nuspell
 [[ "$ANALYZE" = "" ]] && ANALYZE="$(dirname $0)"/../src/tools/analyze
-[[ "$LIBTOOL" = "" ]] && LIBTOOL="$(dirname $0)"/../libtool
 shopt -s expand_aliases
 alias hunspell='"$HUNSPELL"'
 alias analyze='"$ANALYZE"'
@@ -138,8 +137,8 @@ if [[ "$VALGRIND" != "" ]]; then
 	mkdir $temp_dir 2> /dev/null || :
 	rm -f $temp_dir/test.pid* || :
 	mkdir $temp_dir/badlogs 2> /dev/null || :
-	alias hunspell='"$LIBTOOL" --mode=execute valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$temp_dir/test.pid "$HUNSPELL"'
-	alias analyze='"$LIBTOOL" --mode=execute valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$temp_dir/test.pid "$ANALYZE"'
+	alias hunspell='valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$temp_dir/test.pid "$HUNSPELL"'
+	alias analyze='valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$temp_dir/test.pid "$ANALYZE"'
 fi
 
 case $test_name in

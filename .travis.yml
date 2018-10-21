@@ -12,7 +12,7 @@ os:
 
 before_install: |
   cd ~ &&
-  wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.bz2 -O - |
+  wget https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.tar.bz2 -O - |
   tar -xj &&
   cd -
 
@@ -25,39 +25,35 @@ install:
   if [ "$TRAVIS_OS_NAME" = "linux" ]; then
     echo 'using gcc : : g++-7 : ;' > ~/user-config.jam
   fi
-- export BOOST_ROOT=~/.local
+- export BOOST_ROOT=~/boost_1_64_0
 - |
-  cd ~/boost_1_67_0 &&
-    ./bootstrap.sh --prefix=$BOOST_ROOT --with-libraries=locale --with-toolset="$CC" &&
-    ./b2 install -d0 -j 4 cxxflags=-std=c++14 define=BOOST_LOCALE_HIDE_AUTO_PTR &&
+  cd ~/boost_1_64_0 &&
+    ./bootstrap.sh --with-libraries=locale --with-toolset="$CC" &&
+    ./b2 -d0 -j 4 cxxflags=-std=c++14 define=BOOST_LOCALE_HIDE_AUTO_PTR &&
   cd -
 
 before_script:
 - |
   case $TRAVIS_OS_NAME in
-    linux) export LD_LIBRARY_PATH=$BOOST_ROOT/lib ;;
-    osx) export DYLD_LIBRARY_PATH=$BOOST_ROOT/lib ;;
+    linux) export LD_LIBRARY_PATH=$BOOST_ROOT/stage/lib ;;
+    osx) export DYLD_LIBRARY_PATH=$BOOST_ROOT/stage/lib ;;
   esac
 - |
   # On Linux Use gcc-7. On OS X always use clang, dont download gcc from Homebrew.
   if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then
     export CXX="g++-7" CC="gcc-7";
   fi
-- export CPPFLAGS='-DBOOST_LOCALE_HIDE_AUTO_PTR'
+#- export CPPFLAGS='-DBOOST_LOCALE_HIDE_AUTO_PTR'
 
-script: autoreconf -i && ./configure && make -j 4 && make check -j 4
+script: mkdir build && cd build && cmake .. && make -j 4 && ctest -j 4
 
 after_failure:
-- cat tests/v1cmdline/test-suite.log
-- cat tests/test-suite.log
+- cat Testing/Temporary/LastTest.log
 
 addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
     packages:
-    - autoconf
-    - automake
-    - gcc-7
     - g++-7
     - libicu-dev

@@ -81,6 +81,7 @@ nuspell-*.tar.gz
 
 # QtCreator https://qt.io
 /Makefile.am.user
+/CMakeLists.txt.user
 
 # https://vim.sourceforge.io/
 .?*.swp

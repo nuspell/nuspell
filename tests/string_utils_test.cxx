@@ -16,7 +16,7 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catch.hpp"
+#include <catch2/catch.hpp>
 
 #include "../src/nuspell/string_utils.hxx"
 
