@@ -6,6 +6,16 @@ locale_utils.cxx locale_utils.hxx
                  string_utils.hxx
 structures.cxx   structures.hxx)
 
+set(nuspell_headers
+    aff_data.hxx
+    dictionary.hxx
+    finder.hxx
+    locale_utils.hxx
+    string_utils.hxx
+    structures.hxx)
+set_target_properties(nuspell PROPERTIES
+    PUBLIC_HEADER "${nuspell_headers}")
+
 target_compile_features(nuspell PUBLIC
     cxx_aggregate_default_initializers
     cxx_auto_type
@@ -43,22 +53,20 @@ target_compile_features(nuspell PUBLIC
 
 target_include_directories(nuspell
     PRIVATE ${ICU_INCLUDE_DIRS}
-    INTERFACE ${PROJECT_SOURCE_DIR}/src)
+    INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
 target_link_libraries(nuspell
     PUBLIC Boost::boost
     PRIVATE Boost::locale
     PRIVATE ${ICU_LIBRARIES})
 
-install(TARGETS nuspell DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(FILES
-aff_data.hxx
-dictionary.hxx
-finder.hxx
-locale_utils.hxx
-string_utils.hxx
-structures.hxx
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nuspell)
+install(TARGETS nuspell
+    EXPORT NuspellTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nuspell)
+install(EXPORT NuspellTargets
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/nuspell)
 
 add_executable(nuspell-bin main.cxx)
 set_target_properties(nuspell-bin PROPERTIES
