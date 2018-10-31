@@ -427,7 +427,7 @@ int main(int argc, char* argv[])
 			args.dictionary += c;
 		}
 	}
-	auto filename = f.get_dictionary(args.dictionary);
+	auto filename = f.get_dictionary_path(args.dictionary);
 	if (filename.empty()) {
 		if (args.dictionary.empty())
 			cerr << "No dictionary provided\n";
@@ -440,7 +440,7 @@ int main(int argc, char* argv[])
 	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
 	auto dic = Dictionary();
 	try {
-		dic = Dictionary::load_from_aff_dic(filename);
+		dic = Dictionary::load_from_path(filename);
 	}
 	catch (const std::ios_base::failure& e) {
 		cerr << e.what() << '\n';

@@ -37,8 +37,7 @@ struct Dict_Test : public nuspell::Dict_Base {
 
 TEST_CASE("parse", "[dictionary]")
 {
-	CHECK_THROWS_AS(Dictionary::load_from_aff_dic(""),
-	                std::ios_base::failure);
+	CHECK_THROWS_AS(Dictionary::load_from_path(""), std::ios_base::failure);
 }
 TEST_CASE("simple", "[dictionary]")
 {

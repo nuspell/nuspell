@@ -687,12 +687,16 @@ auto Finder::equal_range(const string& dict) const
 }
 
 /**
- * Gets the dictionary.
+ * Gets the dictionary path.
+ *
+ * If path is given (contains slash) it returns the input argument,
+ * otherwise searches the found dictionaries by their name and returns their
+ * path.
  *
  * @param dict name or path of dictionary without the trailing .aff/.dic.
- * @return the full path to dictionary or empty if does not exists.
+ * @return the path to dictionary or empty if does not exists.
  */
-auto Finder::get_dictionary(const std::string& dict) const -> string
+auto Finder::get_dictionary_path(const std::string& dict) const -> string
 {
 	// first check if it is a path
 	if (dict.find_first_of(SEPARATORS) != dict.npos) {

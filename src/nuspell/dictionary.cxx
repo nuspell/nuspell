@@ -2152,16 +2152,16 @@ auto Dict_Base::phonetic_suggest(std::basic_string<CharT>& word,
 	word.assign(&backup[0], backup.size());
 }
 
-auto Basic_Dictionary::imbue(const locale& loc) -> void
+Dictionary::Dictionary(std::istream& aff, std::istream& dic)
 {
-	external_locale = loc;
+	if (!parse_aff_dic(aff, dic))
+		throw std::ios_base::failure("error parsing");
 	enc_details = analyze_encodings(external_locale, internal_locale);
 }
 
-auto Basic_Dictionary::external_to_internal_encoding(const string& in,
-                                                     wstring& wide_out,
-                                                     string& narrow_out) const
-    -> bool
+auto Dictionary::external_to_internal_encoding(const string& in,
+                                               wstring& wide_out,
+                                               string& narrow_out) const -> bool
 {
 	using ed = Encoding_Details;
 	auto ok = true;
@@ -2188,8 +2188,8 @@ auto Basic_Dictionary::external_to_internal_encoding(const string& in,
 	return ok;
 }
 
-auto Basic_Dictionary::internal_to_external_encoding(string& in_out,
-                                                     wstring& wide_in_out) const
+auto Dictionary::internal_to_external_encoding(string& in_out,
+                                               wstring& wide_in_out) const
     -> bool
 {
 	using ed = Encoding_Details;
@@ -2215,7 +2215,45 @@ auto Basic_Dictionary::internal_to_external_encoding(string& in_out,
 	return ok;
 }
 
-auto Basic_Dictionary::spell(const std::string& word) const -> bool
+Dictionary::Dictionary()
+{
+	// ensures the internal locale is boost locale
+	set_encoding_and_language("");
+	enc_details = analyze_encodings(external_locale, internal_locale);
+}
+
+auto Dictionary::load_from_aff_dic(std::istream& aff, std::istream& dic)
+    -> Dictionary
+{
+	return Dictionary(aff, dic);
+}
+
+auto Dictionary::load_from_path(const std::string& file_path_without_extension)
+    -> Dictionary
+{
+	auto path = file_path_without_extension;
+	path += ".aff";
+	std::ifstream aff_file(path);
+	if (aff_file.fail()) {
+		auto err = "Aff file " + path + " not found";
+		throw std::ios_base::failure(err);
+	}
+	path.replace(path.size() - 3, 3, "dic");
+	std::ifstream dic_file(path);
+	if (dic_file.fail()) {
+		auto err = "Dic file " + path + " not found";
+		throw std::ios_base::failure(err);
+	}
+	return load_from_aff_dic(aff_file, dic_file);
+}
+
+auto Dictionary::imbue(const locale& loc) -> void
+{
+	external_locale = loc;
+	enc_details = analyze_encodings(external_locale, internal_locale);
+}
+
+auto Dictionary::spell(const std::string& word) const -> bool
 {
 	using ed = Encoding_Details;
 	auto static thread_local wide_word = wstring();
@@ -2249,8 +2287,8 @@ auto Basic_Dictionary::spell(const std::string& word) const -> bool
 	}
 }
 
-auto Basic_Dictionary::suggest(const string& word,
-                               List_Strings<char>& out) const -> void
+auto Dictionary::suggest(const string& word, List_Strings<char>& out) const
+    -> void
 {
 	using ed = Encoding_Details;
 	auto static thread_local wide_word = wstring();

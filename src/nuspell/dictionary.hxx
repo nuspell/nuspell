@@ -316,20 +316,12 @@ struct Dict_Base : public Aff_Data {
 	}
 };
 
-class Basic_Dictionary : protected Dict_Base {
+class Dictionary : protected Dict_Base {
       protected:
 	std::locale external_locale;
 	Encoding_Details enc_details;
 
-	friend struct List_Strings_Back_Inserter;
-
-	Basic_Dictionary(std::istream& aff, std::istream& dic)
-	{
-		if (!parse_aff_dic(aff, dic))
-			throw std::ios_base::failure("error parsing");
-		enc_details =
-		    analyze_encodings(external_locale, internal_locale);
-	}
+	Dictionary(std::istream& aff, std::istream& dic);
 	auto external_to_internal_encoding(const std::string& in,
 	                                   std::wstring& wide_out,
 	                                   std::string& narrow_out) const
@@ -340,35 +332,15 @@ class Basic_Dictionary : protected Dict_Base {
 	    -> bool;
 
       public:
-	Basic_Dictionary()
-	{
-		// ensures the internal locale is boost locale
-		set_encoding_and_language("");
-		enc_details =
-		    analyze_encodings(external_locale, internal_locale);
-	}
+	Dictionary();
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
-	{
-		return Basic_Dictionary(aff, dic);
-	}
-	auto static load_from_aff_dic(const string& file_path_without_extension)
-	{
-		auto& path = file_path_without_extension;
-		std::ifstream aff_file(path + ".aff");
-		if (aff_file.fail())
-			throw std::ios_base::failure("aff file not found");
-		std::ifstream dic_file(path + ".dic");
-		if (dic_file.fail())
-			throw std::ios_base::failure("dic file not found");
-		return load_from_aff_dic(aff_file, dic_file);
-	}
+	    -> Dictionary;
+	auto static load_from_path(const string& file_path_without_extension)
+	    -> Dictionary;
 	auto imbue(const std::locale& loc) -> void;
 	auto spell(const std::string& word) const -> bool;
 	auto suggest(const std::string& word, List_Strings<char>& out) const
 	    -> void;
 };
-
-using Dictionary = Basic_Dictionary;
-
 } // namespace nuspell
 #endif // NUSPELL_DICTIONARY_HXX

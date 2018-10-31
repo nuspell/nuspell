@@ -61,8 +61,8 @@ TEST_CASE("class finder", "[finder]")
 
 	SECTION("get_dictionary")
 	{
-		auto s = f.get_dictionary("");
-		s = f.get_dictionary("64852985806485298580");
+		auto s = f.get_dictionary_path("");
+		s = f.get_dictionary_path("64852985806485298580");
 		(void)s;
 	}
 }
