@@ -14,7 +14,10 @@ set(nuspell_headers
     string_utils.hxx
     structures.hxx)
 set_target_properties(nuspell PROPERTIES
-    PUBLIC_HEADER "${nuspell_headers}")
+    PUBLIC_HEADER "${nuspell_headers}"
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+    WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 target_compile_features(nuspell PUBLIC
     cxx_aggregate_default_initializers
@@ -71,9 +74,9 @@ install(EXPORT NuspellTargets
 add_executable(nuspell-bin main.cxx)
 set_target_properties(nuspell-bin PROPERTIES
     OUTPUT_NAME nuspell)
-target_link_libraries(nuspell-bin nuspell)
+target_link_libraries(nuspell-bin nuspell Boost::locale)
 
 install(TARGETS nuspell-bin DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_executable(verify verify.cxx)
-target_link_libraries(verify nuspell hunspell)
+target_link_libraries(verify nuspell hunspell Boost::locale)

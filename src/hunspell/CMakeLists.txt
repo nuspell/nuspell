@@ -1,4 +1,4 @@
-add_library(hunspell affentry.cxx affentry.hxx affixmgr.cxx affixmgr.hxx
+add_library(hunspell STATIC affentry.cxx affentry.hxx affixmgr.cxx affixmgr.hxx
     atypes.hxx baseaffix.hxx csutil.cxx csutil.hxx
     filemgr.cxx filemgr.hxx hashmgr.cxx hashmgr.hxx
     htypes.hxx hunspell.cxx hunspell.h hunspell.hxx
