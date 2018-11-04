@@ -6,13 +6,8 @@ locale_utils.cxx locale_utils.hxx
                  string_utils.hxx
 structures.cxx   structures.hxx)
 
-set(nuspell_headers
-    aff_data.hxx
-    dictionary.hxx
-    finder.hxx
-    locale_utils.hxx
-    string_utils.hxx
-    structures.hxx)
+get_target_property(nuspell_headers nuspell SOURCES)
+list(FILTER nuspell_headers INCLUDE REGEX [=[.*\.hxx$]=])
 set_target_properties(nuspell PROPERTIES
     PUBLIC_HEADER "${nuspell_headers}"
     VERSION ${PROJECT_VERSION}
@@ -55,13 +50,11 @@ target_compile_features(nuspell PUBLIC
     cxx_variadic_templates)
 
 target_include_directories(nuspell
-    PRIVATE ${ICU_INCLUDE_DIRS}
     INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
 target_link_libraries(nuspell
     PUBLIC Boost::boost
-    PRIVATE Boost::locale
-    PRIVATE ${ICU_LIBRARIES})
+    PRIVATE Boost::locale ICU::uc ICU::data)
 
 install(TARGETS nuspell
     EXPORT NuspellTargets

@@ -1,11 +1,10 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.7)
 project(nuspell VERSION 2.2.0)
 set(PROJECT_HOMEPAGE_URL "https://nuspell.github.io/")
-include(FindPkgConfig)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-pkg_check_modules(ICU REQUIRED icu-uc)
+find_package(ICU REQUIRED COMPONENTS uc data)
 find_package(Boost 1.62.0 REQUIRED COMPONENTS locale)
 
 add_subdirectory(src/hunspell)
@@ -18,6 +17,10 @@ add_subdirectory(external/Catch2)
 add_subdirectory(tests)
 
 add_subdirectory(docs)
+if (NOT BUILD_SHARED_LIBS)
+    set(pkgconf_public_libs ${Boost_LIBRARIES})
+    set(pkgconf_public_requires icu-uc)
+endif()
 configure_file(nuspell.pc.in nuspell.pc @ONLY)
 #configure_file(NuspellConfig.cmake NuspellConfig.cmake COPYONLY)
 write_basic_package_version_file(NuspellConfigVersion.cmake

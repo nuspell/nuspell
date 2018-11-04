@@ -23,7 +23,7 @@ Main features of Nuspell spell checker and morphological analyzer:
 
 Build-only dependencies:
 
-    g++ make cmake pkg-config git
+    g++ make cmake git
 
 Runtime dependencies:
 
@@ -41,8 +41,7 @@ We first need to download the dependencies. Some may already be preinstalled.
 
 For Ubuntu and Debian:
 
-    sudo apt install g++ make cmake pkg-config \
-                     libboost-locale-dev libboost-system-dev libicu-dev
+    sudo apt install g++ make cmake libboost-locale-dev libicu-dev
 
 Then run the following commands:
 
@@ -63,7 +62,7 @@ For speeding up the build process, run `make -j`, or use Ninja instead of Make.
 3. Install dependencies
 
 ```
-brew install cmake pkg-config
+brew install cmake
 brew install boost --with-icu4c
 ```
 
@@ -88,7 +87,7 @@ Then from inside the nuspell folder run:
     cd build
     cmake .. -G "Unix Makefiles"
     make
-    sudo make install
+    make install
 
 ### 2\. Building in Cygwin environment
 
@@ -100,9 +99,9 @@ Cygwin1.dll.
 
 Install the following required packages
 
-    cmake pkgconf icu boost-libs
+    pkg cmake icu boost-libs
 
-Then run the standard cmake and make. See above.
+Then run the standard cmake and make as on Linux. See above.
 
 # Debugging Nuspell
 
@@ -112,7 +111,7 @@ First, always install the debugger:
 
 It is recomended to install a debug build of the standard library:
 
-    sudo apt install libstdc++6-7-dbg
+    sudo apt install libstdc++6-8-dbg
 
 For debugging we need to create a debug build and then we need to start
 `gdb`.
@@ -135,12 +134,12 @@ Testing Nuspell (see tests in tests/ subdirectory):
 or with Valgrind debugger:
 
     make test
-    VALGRIND=[Valgrind_tool] make check
+    VALGRIND=[Valgrind_tool] make test
 
 For example:
 
     make test
-    VALGRIND=memcheck make check
+    VALGRIND=memcheck make test
 
 # Documentation
 

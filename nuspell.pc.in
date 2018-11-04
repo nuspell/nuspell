@@ -7,6 +7,6 @@ Name: @PROJECT_NAME@
 Description: Nuspell spellchecking library
 URL: @PROJECT_HOMEPAGE_URL@
 Version: @PROJECT_VERSION@
-Libs: -L${libdir} -lnuspell @Boost_LOCALE_LIBRARY@
-Requires: icu-uc
+Libs: -L${libdir} -lnuspell @pkgconf_public_libs@
+Requires: @pkgconf_public_requires@
 Cflags: -I${includedir} -I@Boost_INCLUDE_DIRS@
