@@ -41,7 +41,7 @@ function test-good {
 in_file="$in_dict.good"
 
 if [[ -f $in_file ]]; then
-	out=$(hunspell -l -i "$encoding" "$@" -d "$in_dict" < "$in_file" \
+	out=$(nuspell -l -i utf8 -d "$in_dict" < "$in_file" \
 	      | tr -d $'\r')
 	if [[ $? -ne 0 ]]; then exit 2; fi
 	if [[ "$out" != "" ]]; then
@@ -59,7 +59,7 @@ function test-bad {
 in_file="$in_dict.wrong"
 
 if [[ -f $in_file ]]; then
-	out=$(hunspell -G -i "$encoding" "$@" -d "$in_dict" < "$in_file" \
+	out=$(nuspell -G -i utf8 -d "$in_dict" < "$in_file" \
 	      | tr -d $'\r') #strip carige return for mingw builds
 	if [[ $? -ne 0 ]]; then exit 2; fi
 	if [[ "$out" != "" ]]; then
@@ -77,18 +77,16 @@ function test-morph {
 in_file="$in_dict.good"
 expected_file="$in_dict.morph"
 
-if [[ -f $expected_file ]]; then
-	#in=$(sed 's/	$//' "$in_file") #passes without this.
-	out=$(analyze "$in_dict.aff" "$in_dict.dic" "$in_file" \
-	      | tr -d $'\r') #strip carige return for mingw builds
-	if [[ $? -ne 0 ]]; then exit 2; fi
-	expected=$(<"$expected_file")
-	if [[ "$out" != "$expected" ]]; then
-		echo "============================================="
-		echo "Fail in $in_dict.morph. Bad analysis?"
-		diff "$expected_file" <(echo "$out") | grep '^<' | sed 's/^..//'
-		exit 1
-	fi
+#in=$(sed 's/	$//' "$in_file") #passes without this.
+out=$(analyze "$in_dict.aff" "$in_dict.dic" "$in_file" \
+      | tr -d $'\r') #strip carige return for mingw builds
+if [[ $? -ne 0 ]]; then exit 2; fi
+expected=$(<"$expected_file")
+if [[ "$out" != "$expected" ]]; then
+	echo "============================================="
+	echo "Fail in $in_dict.morph. Bad analysis?"
+	diff "$expected_file" <(echo "$out") | grep '^<' | sed 's/^..//'
+	exit 1
 fi
 check_valgrind_log "morphological analysis"
 }
@@ -98,17 +96,15 @@ function test-sug {
 in_file=$in_dict.wrong
 expected_file=$in_dict.sug
 
-if [[ -f $expected_file ]]; then
-	out=$(hunspell -i "$encoding" "$@" -a -d "$in_dict" <"$in_file" | \
-	      { grep -a '^&' || true; } | sed 's/^[^:]*: //')
-	if [[ $? -ne 0 ]]; then exit 2; fi
-	expected=$(<"$expected_file")
-	if [[ "$out" != "$expected" ]]; then
-		echo "============================================="
-		echo "Fail in $in_dict.sug. Bad suggestion?"
-		diff "$expected_file" <(echo "$out")
-		exit 1
-	fi
+out=$(nuspell -i utf8 -a -d "$in_dict" <"$in_file" | \
+      { grep -a '^&' || true; } | sed 's/^[^:]*: //')
+if [[ $? -ne 0 ]]; then exit 2; fi
+expected=$(<"$expected_file")
+if [[ "$out" != "$expected" ]]; then
+	echo "============================================="
+	echo "Fail in $in_dict.sug. Bad suggestion?"
+	diff "$expected_file" <(echo "$out")
+	exit 1
 fi
 check_valgrind_log "suggestion"
 }
@@ -120,25 +116,23 @@ set -o pipefail
 export LC_ALL="C"
 temp_dir=./testSubDir
 test_name="$1"
-shift
-encoding=UTF-8 #io encoding passed with -i
-if [[ "$1" == "-i" && -n "$2" ]]; then
-	encoding="$2"
-	shift 2
-fi
-
-[[ "$HUNSPELL" = "" ]] && HUNSPELL="$(dirname $0)"/../src/nuspell/nuspell
+[[ "$NUSPELL" = "" ]] && NUSPELL="$(dirname $0)"/../src/nuspell/nuspell
 [[ "$ANALYZE" = "" ]] && ANALYZE="$(dirname $0)"/../src/tools/analyze
 shopt -s expand_aliases
-alias hunspell='"$HUNSPELL"'
+alias nuspell='"$NUSPELL"'
 alias analyze='"$ANALYZE"'
 
 if [[ "$VALGRIND" != "" ]]; then
 	mkdir $temp_dir 2> /dev/null || :
 	rm -f $temp_dir/test.pid* || :
 	mkdir $temp_dir/badlogs 2> /dev/null || :
-	alias hunspell='valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$temp_dir/test.pid "$HUNSPELL"'
+	alias nuspell='valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$temp_dir/test.pid "$NUSPELL"'
 	alias analyze='valgrind --tool=$VALGRIND --leak-check=yes --show-reachable=yes --log-file=$temp_dir/test.pid "$ANALYZE"'
+fi
+
+if [[ ! -f "$test_name" ]]; then
+	echo "Test file $test_name does not exist."
+	exit 3
 fi
 
 case $test_name in
@@ -152,7 +146,11 @@ case $test_name in
 	test-sug
 	;;
 *.morph)
-	in_dict=${test_name%.sug}
+	in_dict=${test_name%.morph}
 	test-morph
+	;;
+*)
+	echo "Unsupported test type, only .sug and .dic are supported"
+	exit 3
 	;;
 esac

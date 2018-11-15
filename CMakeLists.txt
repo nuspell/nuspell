@@ -3,6 +3,7 @@ project(nuspell VERSION 2.2.0)
 set(PROJECT_HOMEPAGE_URL "https://nuspell.github.io/")
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
+include(CTest)
 
 find_package(ICU REQUIRED COMPONENTS uc data)
 find_package(Boost 1.62.0 REQUIRED COMPONENTS locale)
@@ -10,11 +11,12 @@ find_package(Boost 1.62.0 REQUIRED COMPONENTS locale)
 add_subdirectory(src/hunspell)
 add_subdirectory(src/nuspell)
 
-include(CTest)
-execute_process(COMMAND git submodule update --init -- external/Catch2
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_subdirectory(external/Catch2)
-add_subdirectory(tests)
+if (BUILD_TESTING)
+    execute_process(COMMAND git submodule update --init -- external/Catch2
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    add_subdirectory(external/Catch2)
+    add_subdirectory(tests)
+endif()
 
 add_subdirectory(docs)
 if (NOT BUILD_SHARED_LIBS)

@@ -8,22 +8,35 @@ add_executable(ch.catch
     catch_main.cxx)
 target_link_libraries(ch.catch nuspell Catch2 Boost::locale)
 
+add_executable(nuspell_legacy_tests legacy_test.cxx)
+target_link_libraries(nuspell_legacy_tests nuspell Boost::locale)
+
 list(APPEND CMAKE_MODULE_PATH
     "${PROJECT_SOURCE_DIR}/external/Catch2/contrib")
 include(Catch)
 catch_discover_tests(ch.catch)
 
+find_program(BASH bash)
 file(GLOB v1tests
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline
     "v1cmdline/*.dic"
     "v1cmdline/*.sug")
-foreach(t ${v1tests})
-  add_test(NAME ${t}
-      COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
-              ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/${t})
-  set_tests_properties(${t} PROPERTIES
-      ENVIRONMENT HUNSPELL=$<TARGET_FILE:nuspell-bin>)
-endforeach()
+if (BASH)
+    foreach(t ${v1tests})
+        add_test(NAME ${t}
+            COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
+                    ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/${t})
+        set_tests_properties(${t} PROPERTIES
+            ENVIRONMENT NUSPELL=$<TARGET_FILE:nuspell-bin>)
+    endforeach()
+else()
+    # alternative test runner wriiten in C++, mostly for Windows
+    foreach(t ${v1tests})
+        add_test(NAME ${t}
+            COMMAND nuspell_legacy_tests
+                    ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/${t})
+    endforeach()
+endif()
 
 set_tests_properties(
 allcaps.dic
