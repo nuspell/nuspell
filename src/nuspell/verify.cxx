@@ -27,17 +27,11 @@
 
 #include <boost/locale.hpp>
 
-#ifdef HAVE_CONFIG_H
-#include "../../config.h"
-#else
-// manually define
-#ifndef PACKAGE_STRING
-#define PACKAGE_STRING "verify 2.0.0"
+// manually define if not supplied by the build system
+#ifndef PROJECT_VERSION
+#define PROJECT_VERSION "unknown.version"
 #endif
-#ifndef PACKAGE
-#define PACKAGE "verify"
-#endif
-#endif
+#define PACKAGE_STRING "nuspell " PROJECT_VERSION
 
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
     (defined(__APPLE__) && defined(__MACH__))
@@ -59,7 +53,7 @@ enum Mode {
 
 struct Args_t {
 	Mode mode = DEFAULT_MODE;
-	string program_name = PACKAGE; // ignore warning padding struct
+	string program_name = "verify";
 	string dictionary;
 	string encoding;
 	bool print_false = false;

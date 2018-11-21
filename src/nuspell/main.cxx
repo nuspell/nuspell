@@ -25,17 +25,11 @@
 
 #include <boost/locale.hpp>
 
-#ifdef HAVE_CONFIG_H
-#include "../../config.h"
-#else
-// manually define
-#ifndef PACKAGE_STRING
-#define PACKAGE_STRING "nuspell 2.0.0"
+// manually define if not supplied by the build system
+#ifndef PROJECT_VERSION
+#define PROJECT_VERSION "unknown.version"
 #endif
-#ifndef PACKAGE
-#define PACKAGE "nuspell"
-#endif
-#endif
+#define PACKAGE_STRING "nuspell " PROJECT_VERSION
 
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
     (defined(__APPLE__) && defined(__MACH__))
@@ -72,7 +66,7 @@ enum Mode {
 
 struct Args_t {
 	Mode mode = DEFAULT_MODE;
-	string program_name = PACKAGE;
+	string program_name = "nuspell";
 	string dictionary;
 	string encoding;
 	vector<string> other_dicts;

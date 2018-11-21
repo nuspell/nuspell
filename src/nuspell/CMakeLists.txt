@@ -67,6 +67,8 @@ install(EXPORT NuspellTargets
 add_executable(nuspell-bin main.cxx)
 set_target_properties(nuspell-bin PROPERTIES
     OUTPUT_NAME nuspell)
+target_compile_definitions(nuspell-bin PRIVATE
+    PROJECT_VERSION=\"${PROJECT_VERSION}\")
 target_link_libraries(nuspell-bin nuspell Boost::locale)
 
 install(TARGETS nuspell-bin DESTINATION ${CMAKE_INSTALL_BINDIR})
