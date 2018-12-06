@@ -312,6 +312,14 @@ struct Dict_Base : public Aff_Data {
 	}
 };
 
+/**
+ * @brief Public API is inline namespace
+ */
+inline namespace v2 {
+
+/**
+ * @brief The only important public class
+ */
 class Dictionary : private Dict_Base {
 	std::locale external_locale;
 	Encoding_Details enc_details;
@@ -337,5 +345,6 @@ class Dictionary : private Dict_Base {
 	auto suggest(const std::string& word, List_Strings<char>& out) const
 	    -> void;
 };
+} // namespace v2
 } // namespace nuspell
 #endif // NUSPELL_DICTIONARY_HXX

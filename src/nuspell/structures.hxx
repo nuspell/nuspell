@@ -901,6 +901,7 @@ class Compound_Rule_Table {
 	    -> bool;
 };
 
+inline namespace v2 {
 /**
  * @brief Vector of strings that recycles erased strings
  */
@@ -1247,11 +1248,13 @@ class List_Strings {
 		return !(*this > other);
 	}
 };
+
 template <class CharT>
 auto swap(List_Strings<CharT>& a, List_Strings<CharT>& b)
 {
 	a.swap(b);
 }
+} // namespace v2
 
 template <class CharT>
 class Replacement_Table {
