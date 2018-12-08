@@ -54,7 +54,27 @@
 #endif
 
 #ifndef NUSPELL_STR_VIEW_NS
+#include <boost/functional/hash.hpp>
 #include <boost/utility/string_view.hpp>
+#endif
+
+#ifdef NUSPELL_STR_VIEW_NS
+namespace nuspell {
+template <class CharT>
+using my_string_view = NUSPELL_STR_VIEW_NS::basic_string_view<CharT>;
+}
+#else
+namespace nuspell {
+template <class CharT>
+using my_string_view = boost::basic_string_view<CharT>;
+}
+template <class CharT>
+struct std::hash<boost::basic_string_view<CharT>> {
+	auto operator()(boost::basic_string_view<CharT> s) const
+	{
+		return boost::hash_range(begin(s), end(s));
+	}
+};
 #endif
 
 namespace nuspell {
@@ -424,7 +444,7 @@ struct identity {
 };
 
 template <class Value, class Key = Value, class KeyExtract = identity,
-          class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>>
+          class Hash = std::hash<Key>, class KeyEqual = std::equal_to<>>
 class Hash_Multiset {
       private:
 	using bucket_type = boost::container::small_vector<Value, 1>;
@@ -522,8 +542,7 @@ class Hash_Multiset {
 
 	// Note, leaks non-const iterator. do not modify
 	// the key part of the returned value(s).
-	template <class CompatibleKey>
-	auto equal_range_nonconst_unsafe(const CompatibleKey& key)
+	auto equal_range_nonconst_unsafe(const key_type& key)
 	    -> std::pair<local_iterator, local_iterator>
 	{
 		using namespace std;
@@ -555,8 +574,7 @@ class Hash_Multiset {
 		return {first, last.base()};
 	}
 
-	template <class CompatibleKey>
-	auto equal_range(const CompatibleKey& key) const
+	auto equal_range(const key_type& key) const
 	    -> std::pair<local_const_iterator, local_const_iterator>
 	{
 		using namespace std;
@@ -736,36 +754,10 @@ extern template class Suffix<wchar_t>;
 
 using boost::multi_index::member;
 
-#ifdef NUSPELL_STR_VIEW_NS
-template <class CharT>
-using my_string_view = NUSPELL_STR_VIEW_NS::basic_string_view<CharT>;
-template <class CharT>
-using sv_hash = std::hash<my_string_view<CharT>>;
-#else
-template <class CharT>
-using my_string_view = boost::basic_string_view<CharT>;
-template <class CharT>
-struct sv_hash {
-	auto operator()(boost::basic_string_view<CharT> s) const
-	{
-		return boost::hash_range(begin(s), end(s));
-	}
-};
-#endif
-
-template <class CharT>
-struct sv_eq {
-	auto operator()(my_string_view<CharT> l, my_string_view<CharT> r) const
-	{
-		return l == r;
-	}
-};
-
 template <class CharT, class AffixT>
 using Affix_Table_Base =
-    Hash_Multiset<AffixT, std::basic_string<CharT>,
-                  member<AffixT, std::basic_string<CharT>, &AffixT::appending>,
-                  sv_hash<CharT>, sv_eq<CharT>>;
+    Hash_Multiset<AffixT, my_string_view<CharT>,
+                  member<AffixT, std::basic_string<CharT>, &AffixT::appending>>;
 
 template <class CharT, class AffixT>
 class Affix_Table : private Affix_Table_Base<CharT, AffixT> {
