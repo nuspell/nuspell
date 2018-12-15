@@ -16,13 +16,9 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <nuspell/structures.hxx>
+
 #include <catch2/catch.hpp>
-
-#include <iostream>
-
-#include <boost/locale.hpp>
-
-#include "../src/nuspell/structures.hxx"
 
 using namespace std;
 using namespace std::literals;

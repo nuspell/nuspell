@@ -16,11 +16,9 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <nuspell/finder.hxx>
+
 #include <catch2/catch.hpp>
-
-#include <iostream>
-
-#include "../src/nuspell/finder.hxx"
 
 using namespace std;
 using namespace nuspell;

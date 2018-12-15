@@ -16,11 +16,9 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <nuspell/dictionary.hxx>
+
 #include <catch2/catch.hpp>
-
-#include <iostream>
-
-#include "../src/nuspell/dictionary.hxx"
 
 using namespace std;
 using namespace std::literals::string_literals;

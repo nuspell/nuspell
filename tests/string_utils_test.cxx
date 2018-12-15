@@ -16,9 +16,9 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <catch2/catch.hpp>
+#include <nuspell/string_utils.hxx>
 
-#include "../src/nuspell/string_utils.hxx"
+#include <catch2/catch.hpp>
 
 using namespace std;
 using namespace std::literals::string_literals;

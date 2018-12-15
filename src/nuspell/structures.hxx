@@ -54,20 +54,9 @@
 #endif
 
 #ifndef NUSPELL_STR_VIEW_NS
+#define NUSPELL_STR_VIEW_NS boost
 #include <boost/functional/hash.hpp>
 #include <boost/utility/string_view.hpp>
-#endif
-
-#ifdef NUSPELL_STR_VIEW_NS
-namespace nuspell {
-template <class CharT>
-using my_string_view = NUSPELL_STR_VIEW_NS::basic_string_view<CharT>;
-}
-#else
-namespace nuspell {
-template <class CharT>
-using my_string_view = boost::basic_string_view<CharT>;
-}
 template <class CharT>
 struct std::hash<boost::basic_string_view<CharT>> {
 	auto operator()(boost::basic_string_view<CharT> s) const
@@ -78,6 +67,9 @@ struct std::hash<boost::basic_string_view<CharT>> {
 #endif
 
 namespace nuspell {
+
+template <class CharT>
+using my_string_view = NUSPELL_STR_VIEW_NS::basic_string_view<CharT>;
 
 /**
  * @brief A Set class backed by a string. Very useful for small sets.
@@ -623,14 +615,11 @@ class Condition {
 		NONE_OF /**< set of excluding characters */
 	};
 	using StrT = std::basic_string<CharT>;
-	template <class T, class U, class V>
-	using tuple = std::tuple<T, U, V>;
-	template <class T>
-	using vector = std::vector<T>;
 
       private:
 	StrT cond;
-	vector<tuple<size_t, size_t, Span_Type>> spans; // pos, len, type
+	std::vector<std::tuple<size_t, size_t, Span_Type>>
+	    spans; // pos, len, type
 	size_t length = 0;
 
 	auto construct() -> void; // implemented in cxx
