@@ -56,14 +56,6 @@ target_link_libraries(nuspell
     PUBLIC Boost::boost
     PRIVATE Boost::locale ICU::uc ICU::data)
 
-install(TARGETS nuspell
-    EXPORT NuspellTargets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nuspell)
-install(EXPORT NuspellTargets
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/nuspell)
-
 add_executable(nuspell-bin main.cxx)
 set_target_properties(nuspell-bin PROPERTIES
     OUTPUT_NAME nuspell)
@@ -71,7 +63,16 @@ target_compile_definitions(nuspell-bin PRIVATE
     PROJECT_VERSION=\"${PROJECT_VERSION}\")
 target_link_libraries(nuspell-bin nuspell Boost::locale)
 
-install(TARGETS nuspell-bin DESTINATION ${CMAKE_INSTALL_BINDIR})
+if (NOT subproject)
+    add_executable(verify verify.cxx)
+    target_link_libraries(verify nuspell hunspell Boost::locale)
 
-add_executable(verify verify.cxx)
-target_link_libraries(verify nuspell hunspell Boost::locale)
+    install(TARGETS nuspell
+        EXPORT NuspellTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nuspell)
+    install(EXPORT NuspellTargets
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/nuspell)
+    install(TARGETS nuspell-bin DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
