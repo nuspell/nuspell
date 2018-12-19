@@ -17,21 +17,17 @@
  */
 
 /**
- * @file aff_data.hxx
- * Affixing data structures.
+ * @file
+ * @brief Affixing data structures, private header.
  */
 
 #ifndef NUSPELL_AFF_DATA_HXX
 #define NUSPELL_AFF_DATA_HXX
 
-#include <iosfwd>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
 #include "locale_utils.hxx"
 #include "structures.hxx"
+
+#include <iosfwd>
 
 namespace nuspell {
 
@@ -59,25 +55,19 @@ struct Aff_Structures {
 };
 
 struct Affix {
-	using string = std::string;
-	template <class T>
-	using vector = std::vector<T>;
-
 	char16_t flag;
 	bool cross_product;
-	string stripping;
-	string appending;
+	std::string stripping;
+	std::string appending;
 	Flag_Set new_flags;
-	string condition;
-	vector<string> morphological_fields;
+	std::string condition;
+	std::vector<std::string> morphological_fields;
 };
 
 struct Compound_Check_Pattern {
-	using string = std::string;
-
-	string first_word_end;
-	string second_word_begin;
-	string replacement;
+	std::string first_word_end;
+	std::string second_word_begin;
+	std::string replacement;
 	char16_t first_word_flag;
 	char16_t second_word_flag;
 };
@@ -104,15 +94,6 @@ class Word_List : public Word_List_Base {
 };
 
 struct Aff_Data {
-	// types
-	using string = std::string;
-	using u16string = std::u16string;
-	using istream = std::istream;
-	template <class T>
-	using vector = std::vector<T>;
-	template <class T, class U>
-	using pair = std::pair<T, U>;
-
 	// data members
 	// word list
 	Word_List words;
@@ -134,8 +115,8 @@ struct Aff_Data {
 	char16_t substandard_flag;
 	char16_t warn_flag;
 
-	vector<Flag_Set> flag_aliases;
-	string wordchars; // deprecated?
+	std::vector<Flag_Set> flag_aliases;
+	std::string wordchars; // deprecated?
 
 	// suggestion options
 	char16_t nosuggest_flag;
@@ -168,14 +149,14 @@ struct Aff_Data {
 	Compound_Rule_Table compound_rules;
 
 	unsigned short compound_syllable_max;
-	string compound_syllable_vowels;
+	std::string compound_syllable_vowels;
 	Flag_Set compound_syllable_num;
 
 	// methods
-	auto set_encoding_and_language(const string& enc,
-	                               const string& lang = "") -> void;
-	auto parse_aff(istream& in) -> bool;
-	auto parse_dic(istream& in) -> bool;
+	auto set_encoding_and_language(const std::string& enc,
+	                               const std::string& lang = "") -> void;
+	auto parse_aff(std::istream& in) -> bool;
+	auto parse_dic(std::istream& in) -> bool;
 	auto parse_aff_dic(std::istream& aff, std::istream& dic)
 	{
 		if (parse_aff(aff))

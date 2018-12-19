@@ -16,11 +16,6 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file aff_data.cxx
- * Affixing data structures.
- */
-
 #include "aff_data.hxx"
 #include "locale_utils.hxx"
 #include "string_utils.hxx"
@@ -73,6 +68,9 @@
  * }
  */
 
+/**
+ * @brief Library main namespace
+ */
 namespace nuspell {
 
 using namespace std;

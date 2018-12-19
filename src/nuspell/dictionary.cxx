@@ -16,14 +16,10 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file dictionary.cxx
- * Dictionary spelling.
- */
-
 #include "dictionary.hxx"
 #include "string_utils.hxx"
 
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 
@@ -67,7 +63,8 @@ class At_Scope_Exit {
 
 #define AT_SCOPE_EXIT(...) ASE_INTERNAL2(__COUNTER__, __VA_ARGS__)
 
-/** Check spelling for a word.
+/**
+ * @brief Check spelling for a word.
  *
  * @param s string to check spelling for.
  * @return The spelling result.
@@ -116,7 +113,7 @@ template auto Dict_Base::spell_priv(string& s) const -> bool;
 template auto Dict_Base::spell_priv(wstring& s) const -> bool;
 
 /**
- * Checks recursively the spelling according to break patterns.
+ * @brief Checks recursively the spelling according to break patterns.
  *
  * @param s string to check spelling for.
  * @return The spelling result.
@@ -183,7 +180,7 @@ auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth) const
 }
 
 /**
- * Checks spelling according to casing of the provided word.
+ * @brief Checks spelling according to casing of the provided word.
  *
  * @param s string to check spelling for.
  * @return The spelling result.
@@ -212,7 +209,7 @@ auto Dict_Base::spell_casing(std::basic_string<CharT>& s) const
 }
 
 /**
- * Checks spelling for a word which is in all upper case.
+ * @brief Checks spelling for a word which is in all upper case.
  *
  * @param s string to check spelling for.
  * @return The flags of the corresponding dictionary word.
@@ -270,7 +267,7 @@ auto Dict_Base::spell_casing_upper(std::basic_string<CharT>& s) const
 }
 
 /**
- * Checks spelling for a word which is in title casing.
+ * @brief Checks spelling for a word which is in title casing.
  *
  * @param s string to check spelling for.
  * @return The flags of the corresponding dictionary word.
@@ -303,6 +300,8 @@ auto Dict_Base::spell_casing_title(std::basic_string<CharT>& s) const
 }
 
 /**
+ * @brief Checks german word with double SS
+ *
  * Checks recursively spelling starting on a word in title or lower case which
  * originate from a word in upper case containing the letters 'SS'. The
  * technique used is use recursion for checking all variations with repetitions
@@ -341,6 +340,8 @@ auto Dict_Base::spell_sharps(std::basic_string<CharT>& base, size_t pos,
 }
 
 /**
+ * @brief Low-level spell-cheking.
+ *
  * Checks spelling for various unaffixed versions of the provided word.
  * Unaffixing is done by combinations of zero or more unsuffixing and
  * unprefixing operations.
@@ -1895,11 +1896,6 @@ auto Dict_Base::check_compound_with_rules(
 	return {};
 }
 
-/** Get suggestions for a word.
- *
- * @param word string to get suggestions for.
- * @param out list to which suggestions are added
- */
 template <class CharT>
 auto Dict_Base::suggest_priv(std::basic_string<CharT>& word,
                              List_Strings<CharT>& out) const -> void
@@ -2222,12 +2218,27 @@ Dictionary::Dictionary()
 	enc_details = analyze_encodings(external_locale, internal_locale);
 }
 
+/**
+ * @brief Create a dictionary from opened files as iostreams
+ *
+ * Prefer using load_from_path(). Use this if you have a specific use case,
+ * like when .aff and .dic are in-memory buffers istringstream.
+ *
+ * @param aff The iostream of the .aff file
+ * @param dic The iostream of the .dic file
+ * @return Dictionary object
+ */
 auto Dictionary::load_from_aff_dic(std::istream& aff, std::istream& dic)
     -> Dictionary
 {
 	return Dictionary(aff, dic);
 }
 
+/**
+ * @brief Create a dictionary from files
+ * @param file path without extensions
+ * @return Dictionary object
+ */
 auto Dictionary::load_from_path(const std::string& file_path_without_extension)
     -> Dictionary
 {
@@ -2247,12 +2258,29 @@ auto Dictionary::load_from_path(const std::string& file_path_without_extension)
 	return load_from_aff_dic(aff_file, dic_file);
 }
 
+/**
+ * @brief Imbues external locale object to set external encoding
+ *
+ * The locale must contain codecvt<wchar_t, char, mbstate_t> facet that can
+ * convert the strings from the external locale to UTF-32 on non-Windows
+ * platforms, and to UTF-16 on Windows. By external encoding it is meant the
+ * encoding of strings in the client code that uses this library.
+ *
+ * You may safely use locales geenrated by Boost.Locale.
+ *
+ * @param loc locale object with valid codecvt<wchar_t, char, mbstate_t>
+ */
 auto Dictionary::imbue(const locale& loc) -> void
 {
 	external_locale = loc;
 	enc_details = analyze_encodings(external_locale, internal_locale);
 }
 
+/**
+ * @brief Checks if a given word is correct
+ * @param word
+ * @return true if correct, false otherwise
+ */
 auto Dictionary::spell(const std::string& word) const -> bool
 {
 	using ed = Encoding_Details;
@@ -2287,6 +2315,11 @@ auto Dictionary::spell(const std::string& word) const -> bool
 	}
 }
 
+/**
+ * @brief Suggests correct words for a given incorrect word
+ * @param word incorrect word
+ * @param[out] out this object will be populated with the suggestions
+ */
 auto Dictionary::suggest(const string& word, List_Strings<char>& out) const
     -> void
 {

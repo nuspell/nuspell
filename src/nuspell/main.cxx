@@ -16,21 +16,12 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file main.cxx
- * Command line spell checking.
- */
-
 #include "dictionary.hxx"
 #include "finder.hxx"
 #include "string_utils.hxx"
 
-#include <clocale>
 #include <fstream>
 #include <iostream>
-#include <locale>
-#include <string>
-#include <unordered_map>
 
 #include <boost/locale.hpp>
 
@@ -93,8 +84,7 @@ struct Args_t {
 };
 
 /**
- * Parses command line arguments and result is stored in mode, dictionary,
- * other_dicts and files.
+ * @brief Parses command line arguments.
  *
  * @param argc command-line argument count.
  * @param argv command-line argument vector.
@@ -290,7 +280,7 @@ class My_Dictionary : public Dictionary {
 };
 
 /**
- * Prints help information to standard output.
+ * @brief Prints help information to standard output.
  *
  * @param program_name pass argv[0] here.
  */
@@ -329,7 +319,7 @@ auto print_help(const string& program_name) -> void
 }
 
 /**
- * Prints the version number to standard output.
+ * @brief Prints the version number to standard output.
  */
 auto print_version() -> void
 {
@@ -347,8 +337,7 @@ auto print_version() -> void
 }
 
 /**
- * Lists dictionary paths and available dictionaries on the system to standard
- * output.
+ * @brief Lists dictionary paths and available dictionaries.
  *
  * @param f a finder for search paths and located dictionary.
  */
@@ -392,7 +381,7 @@ auto list_dictionaries(const Finder& f) -> void
 }
 
 /**
- * Normal loop, tokenize and check spelling.
+ * @brief Normal loop, tokenize and check spelling.
  *
  * Tokenizes words from @p in by whitespace, checks spelling and outputs
  * result and suggestions to @p out.
@@ -431,7 +420,7 @@ auto normal_loop(istream& in, ostream& out, My_Dictionary& dic)
 }
 
 /**
- * Normal loop, tokenize and check spelling.
+ * @brief Normal loop, tokenize and check spelling.
  *
  * Tokenizes words from @p in by whitespace, checks spelling and outputs
  * result but no suggestions to @p out.
@@ -460,7 +449,7 @@ auto normal_nosuggest_loop(istream& in, ostream& out, My_Dictionary& dic)
 }
 
 /**
- * Prints misspelled words from @p in to @p out.
+ * @brief Prints misspelled words from @p in to @p out.
  *
  * Tokenizes words from @p in by whitespace
  *
@@ -479,7 +468,7 @@ auto misspelled_word_loop(istream& in, ostream& out, My_Dictionary& dic)
 }
 
 /**
- * Prints correct words from @p in to @p out.
+ * @brief Prints correct words from @p in to @p out.
  *
  * Tokenizes words from @p in by whitespace
  *
@@ -498,7 +487,7 @@ auto correct_word_loop(istream& in, ostream& out, My_Dictionary& dic)
 }
 
 /**
- * Normal loop, tokenize and check spelling.
+ * @brief Normal loop, tokenize and check spelling.
  *
  * Tokenizes words from @p in by segmentation from Boost boundary analysis,
  * checks spelling and outputs result and suggestions to @p out.
@@ -549,7 +538,7 @@ auto segment_loop(istream& in, ostream& out, My_Dictionary& dic)
 }
 
 /**
- * Normal loop, tokenize and check spelling.
+ * @brief Normal loop, tokenize and check spelling.
  *
  * Tokenizes words from @p in by segmentation from Boost boundary analysis,
  * checks spelling and outputs result but no suggestions to @p out.
@@ -689,8 +678,7 @@ int main(int argc, char* argv[])
 	default:
 		break;
 	}
-	clog << "INFO: Input  locale " << cin.getloc() << '\n';
-	clog << "INFO: Output locale " << cout.getloc() << '\n';
+	clog << "INFO: I/O  locale " << loc << '\n';
 
 	auto f = Finder::search_all_dirs_for_dicts();
 

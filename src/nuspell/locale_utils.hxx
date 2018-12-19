@@ -17,8 +17,8 @@
  */
 
 /**
- * @file locale_utils.hxx
- * Encoding transformations.
+ * @file
+ * @brief Encoding transformations, private header.
  */
 
 #ifndef LOCALE_UTILS_HXX
@@ -74,7 +74,7 @@ auto analyze_encodings(const std::locale& external, const std::locale& internal)
     -> Encoding_Details;
 
 /**
- * Casing type enum, ignoring neutral case characters.
+ * @brief Casing type enum, ignoring neutral case characters.
  */
 enum class Casing {
 	SMALL /**< all lower case or neutral case, e.g. "lowercase" or "123" */,

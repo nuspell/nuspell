@@ -16,11 +16,6 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file finder.cxx
- * Finding dictionaries.
- */
-
 #include "finder.hxx"
 #include "string_utils.hxx"
 
@@ -71,7 +66,7 @@ const auto SEPARATORS = '/';
 #endif
 
 /**
- * Gets the default search paths.
+ * @brief Gets the default search paths.
  *
  * @param out Output iterator, begin of the output range.
  * @return End of the output range.
@@ -117,7 +112,7 @@ auto get_default_search_paths(OutIt out) -> OutIt
 }
 
 /**
- * Adds the default directory paths which may containt dictionaries.
+ * @brief Adds the default directory paths which may containt dictionaries.
  */
 auto Finder::add_default_dir_paths() -> void
 {
@@ -363,7 +358,7 @@ struct Globber {
 #endif
 
 /**
- * Gets the Mozilla search paths.
+ * @brief Gets the Mozilla search paths.
  *
  * @param out Output iterator, begin of the output range.
  * @return End of the output range.
@@ -441,7 +436,7 @@ auto Finder::add_mozilla_dir_paths() -> void
 }
 
 /**
- * Gets the LibreOffice search paths.
+ * @brief Gets the LibreOffice search paths.
  *
  * @param out Output iterator, begin of the output range.
  * @return End of the output range.
@@ -508,7 +503,7 @@ auto get_libreoffice_paths(OutIt out) -> OutIt
 }
 
 /**
- * Adds the LibreOffice directory paths which may containt dictionaries.
+ * @brief Adds the LibreOffice directory paths which may containt dictionaries.
  */
 auto Finder::add_libreoffice_dir_paths() -> void
 {
@@ -516,7 +511,7 @@ auto Finder::add_libreoffice_dir_paths() -> void
 }
 
 /**
- * Gets the Apache OpenOffice search paths.
+ * @brief Gets the Apache OpenOffice search paths.
  *
  * @param out Output iterator, begin of the output range.
  * @return End of the output range.
@@ -585,7 +580,7 @@ auto get_openoffice_paths(OutIt out) -> OutIt
 }
 
 /**
- * Adds the OpenOffice directory paths which may containt dictionaries.
+ * @brief Adds the OpenOffice directory paths which may containt dictionaries.
  */
 auto Finder::add_openoffice_dir_paths() -> void
 {
@@ -593,7 +588,7 @@ auto Finder::add_openoffice_dir_paths() -> void
 }
 
 /**
- * Searches directory for dictionaries.
+ * @brief Searches directory for dictionaries.
  *
  * @param dir directory path.
  * @param out output iter where to append the found dictionary names.
@@ -644,7 +639,7 @@ auto search_path_for_dicts(const string& dir, OutIt out) -> OutIt
 }
 
 /**
- * Searches the added directories for dictionaries.
+ * @brief Searches the added directories for dictionaries.
  */
 auto Finder::search_for_dictionaries() -> void
 {
@@ -657,7 +652,7 @@ auto Finder::search_for_dictionaries() -> void
 }
 
 /**
- * Creates Finder object with all possible dictionaries found.
+ * @brief Creates Finder object with all possible dictionaries found.
  * @return Finder object
  */
 auto Finder::search_all_dirs_for_dicts() -> Finder
@@ -687,7 +682,7 @@ auto Finder::equal_range(const string& dict) const
 }
 
 /**
- * Gets the dictionary path.
+ * @brief Gets the dictionary path.
  *
  * If path is given (contains slash) it returns the input argument,
  * otherwise searches the found dictionaries by their name and returns their

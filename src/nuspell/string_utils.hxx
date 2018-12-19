@@ -18,8 +18,8 @@
  */
 
 /**
- * @file string_utils.hxx
- * String algorithms.
+ * @file
+ * @brief String algorithms, private header.
  */
 
 #ifndef NUSPELL_STRING_UTILS_HXX
@@ -49,12 +49,12 @@ auto constexpr literal_choose<wchar_t>(const char*, const wchar_t* wide)
 }
 
 /**
- * Splits string on set of single char seperators.
+ * @brief Splits string on set of single char seperators.
  *
  * Consecutive separators are treated as separate and will emit empty strings.
  *
  * @param s string to split.
- * @param sep seperator to split on.
+ * @param sep seperator(s) to split on.
  * @param out start of the output range where separated strings are
  * appended.
  * @return The end of the output range where separated strings are appended.
@@ -78,7 +78,7 @@ auto split_on_any_of(const std::basic_string<CharT>& s, const SepT& sep,
 }
 
 /**
- * Splits string on single char seperator.
+ * @brief Splits string on single char seperator.
  *
  * Consecutive separators are treated as separate and will emit empty strings.
  *
@@ -95,7 +95,7 @@ auto split(const std::basic_string<CharT>& s, CharT sep, OutIt out)
 }
 
 /**
- * Splits string on string separator.
+ * @brief Splits string on string separator.
  *
  * @param s string to split.
  * @param sep seperator to split on.
@@ -119,7 +119,7 @@ auto split(const std::basic_string<CharT>& s,
 }
 
 /**
- * Splits string on string separator.
+ * @brief Splits string on string separator.
  *
  * @param s string to split.
  * @param sep seperator to split on.
@@ -134,7 +134,7 @@ auto split(const std::basic_string<CharT>& s, const CharT* sep, OutIt out)
 }
 
 /**
- * Splits string on seperator, output to vector of strings.
+ * @brief Splits string on seperator, output to vector of strings.
  *
  * See split().
  *
@@ -151,7 +151,7 @@ auto split_v(const std::basic_string<CharT>& s, const CharOrStr& sep,
 }
 
 /**
- * Gets the first token of a splitted string.
+ * @brief Gets the first token of a splitted string.
  *
  * @param s string to split.
  * @param sep char or string that acts as separator to split on.
@@ -166,49 +166,7 @@ auto split_first(const std::basic_string<CharT>& s, const CharOrStr& sep)
 }
 
 /**
- * Parses on whitespace.
- *
- * Consecutive whitespace is treated as single separator. Includes whitespace
- * in output.
- *
- * @param s string to split.
- * @param out start of the output range where separated strings are
- * appended.
- * @param loc locale object that takes care of what is whitespace.
- * @return The iterator that indicates the end of the output range.
- */
-template <class CharT, class OutIt>
-auto parse_on_whitespace(const std::basic_string<CharT>& s, OutIt out,
-                         const std::locale& loc = std::locale()) -> OutIt
-{
-	auto& f = std::use_facet<std::ctype<CharT>>(loc);
-	auto isspace = [&](auto& c) { return f.is(std::ctype_base::space, c); };
-	auto i1 = begin(s);
-	auto endd = end(s);
-	do {
-		auto i2 = std::find_if_not(i1, endd, isspace);
-		if (i2 != i1)
-			*out++ = std::basic_string<CharT>(i1, i2);
-		if (i2 == endd)
-			break;
-		auto i3 = std::find_if(i2, endd, isspace);
-		*out++ = std::basic_string<CharT>(i2, i3);
-		i1 = i3;
-	} while (i1 != endd);
-	return out;
-}
-
-template <class CharT>
-auto parse_on_whitespace_v(const std::basic_string<CharT>& s,
-                           std::vector<std::basic_string<CharT>>& v,
-                           const std::locale& loc = std::locale()) -> void
-{
-	v.clear();
-	parse_on_whitespace(s, back_inserter(v), loc);
-}
-
-/**
- * Splits on whitespace.
+ * @brief Splits on whitespace.
  *
  * Consecutive whitespace is treated as single separator. Behaves same as
  * Python's split called without separator argument.
@@ -239,7 +197,7 @@ auto split_on_whitespace(const std::basic_string<CharT>& s, OutIt out,
 }
 
 /**
- * Splits on whitespace, outputs to vector of strings.
+ * @brief Splits on whitespace, outputs to vector of strings.
  *
  * See split_on_whitespace().
  *
@@ -280,7 +238,7 @@ auto& replace_char(std::basic_string<CharT>& s, CharT from, CharT to)
 }
 
 /**
- * Tests if word is a number.
+ * @brief Tests if word is a number.
  *
  * Allow numbers with dots ".", dashes "-" and commas ",", but forbids double
  * separators such as "..", "--" and ".,".  This implementation increases

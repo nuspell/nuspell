@@ -16,11 +16,6 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file locale_utils.cxx
- * Encoding transformations.
- */
-
 #include "locale_utils.hxx"
 
 #include <algorithm>
@@ -823,7 +818,7 @@ auto analyze_encodings(const locale& external, const locale& internal)
 }
 
 /**
- * Determines casing (capitalization) type for a word.
+ * @brief Determines casing (capitalization) type for a word.
  *
  * Casing is sometimes referred to as capitalization.
  *

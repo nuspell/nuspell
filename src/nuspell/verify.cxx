@@ -16,23 +16,14 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file verify.cxx
- * Command line spell check for verification testing.
- */
-
 #include "dictionary.hxx"
 #include "finder.hxx"
 #include "string_utils.hxx"
 
 #include <chrono>
-#include <clocale>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <locale>
-#include <string>
-#include <unordered_map>
 
 #include <boost/locale.hpp>
 
@@ -150,7 +141,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 }
 
 /**
- * Prints help information to standard output.
+ * @brief Prints help information to standard output.
  *
  * @param program_name pass argv[0] here.
  */
@@ -230,7 +221,7 @@ auto print_help(const string& program_name) -> void
 }
 
 /**
- * Prints the version number to standard output.
+ * @brief Prints the version number to standard output.
  */
 auto print_version() -> void
 {
@@ -377,30 +368,27 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	boost::locale::generator gen;
-	auto loc = gen("");
-	install_ctype_facets_inplace(loc);
-	if (args.encoding.empty()) {
-		cin.imbue(loc);
-	}
-	else {
-		try {
-			auto loc2 = gen("en_US." + args.encoding);
-			install_ctype_facets_inplace(loc2);
-			cin.imbue(loc2);
+	auto loc = std::locale();
+	try {
+		if (args.encoding.empty()) {
+			loc = gen("");
+			install_ctype_facets_inplace(loc);
 		}
-		catch (const boost::locale::conv::invalid_charset_error& e) {
-			cerr << e.what() << '\n';
+		else {
+			loc = gen("en_US." + args.encoding);
+			install_ctype_facets_inplace(loc);
+		}
+	}
+	catch (const boost::locale::conv::invalid_charset_error& e) {
+		cerr << e.what() << '\n';
 #ifdef _POSIX_VERSION
-			cerr << "Nuspell error: see `locale -m` for supported "
-			        "encodings.\n";
+		cerr << "Nuspell error: see `locale -m` for supported "
+		        "encodings.\n";
 #endif
-			return 1;
-		}
+		return 1;
 	}
+	cin.imbue(loc);
 	cout.imbue(loc);
-	cerr.imbue(loc);
-	clog.imbue(loc);
-	setlocale(LC_CTYPE, "");
 
 	switch (args.mode) {
 	case HELP_MODE:
@@ -412,8 +400,7 @@ int main(int argc, char* argv[])
 	default:
 		break;
 	}
-	clog << "INFO: Input  locale " << cin.getloc() << '\n';
-	clog << "INFO: Output locale " << cout.getloc() << '\n';
+	clog << "INFO: I/O  locale " << loc << '\n';
 
 	auto f = Finder::search_all_dirs_for_dicts();
 
@@ -427,14 +414,13 @@ int main(int argc, char* argv[])
 			args.dictionary += c;
 		}
 	}
+	if (args.dictionary.empty()) {
+		cerr << "No dictionary provided and can not infer from OS "
+		        "locale\n";
+	}
 	auto filename = f.get_dictionary_path(args.dictionary);
 	if (filename.empty()) {
-		if (args.dictionary.empty())
-			cerr << "No dictionary provided\n";
-		else
-			cerr << "Dictionary " << args.dictionary
-			     << " not found\n";
-
+		cerr << "Dictionary " << args.dictionary << " not found\n";
 		return 1;
 	}
 	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
@@ -446,7 +432,7 @@ int main(int argc, char* argv[])
 		cerr << e.what() << '\n';
 		return 1;
 	}
-	dic.imbue(cin.getloc());
+	dic.imbue(loc);
 
 	auto aff_name = filename + ".aff";
 	auto dic_name = filename + ".dic";

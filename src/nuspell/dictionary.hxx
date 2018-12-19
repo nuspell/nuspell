@@ -17,18 +17,14 @@
  */
 
 /**
- * @file dictionary.hxx
- * Dictionary spelling.
+ * @file
+ * @brief Dictionary spelling, PUBLIC HEADER.
  */
 
 #ifndef NUSPELL_DICTIONARY_HXX
 #define NUSPELL_DICTIONARY_HXX
 
 #include "aff_data.hxx"
-#include "locale_utils.hxx"
-
-#include <fstream>
-#include <locale>
 
 namespace nuspell {
 
@@ -316,8 +312,7 @@ struct Dict_Base : public Aff_Data {
 	}
 };
 
-class Dictionary : protected Dict_Base {
-      protected:
+class Dictionary : private Dict_Base {
 	std::locale external_locale;
 	Encoding_Details enc_details;
 
@@ -335,8 +330,8 @@ class Dictionary : protected Dict_Base {
 	Dictionary();
 	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
 	    -> Dictionary;
-	auto static load_from_path(const string& file_path_without_extension)
-	    -> Dictionary;
+	auto static load_from_path(
+	    const std::string& file_path_without_extension) -> Dictionary;
 	auto imbue(const std::locale& loc) -> void;
 	auto spell(const std::string& word) const -> bool;
 	auto suggest(const std::string& word, List_Strings<char>& out) const

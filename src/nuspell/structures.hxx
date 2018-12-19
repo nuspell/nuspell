@@ -17,8 +17,8 @@
  */
 
 /**
- * @file structures.hxx
- * Data structures.
+ * @file
+ * @brief Data structures, private header.
  */
 
 #ifndef NUSPELL_STRUCTURES_HXX
@@ -29,6 +29,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -589,8 +590,7 @@ class Hash_Multiset {
 };
 
 /**
- * A class providing implementation for limited regular expression matching
- * used in affix entries.
+ * @brief Limited regular expression matching used in affix entries.
  *
  * This implementation increases performance over the regex implementation in
  * the standard library.
@@ -812,6 +812,8 @@ class String_Pair {
 	String_Pair() = default;
 	template <class Str1>
 	/**
+	 * @brief Construct string pair
+	 *
 	 * Constructs a string pair from a single string containing a pair of
 	 * strings and an index where the split resides.
 	 *
@@ -825,6 +827,7 @@ class String_Pair {
 			throw std::out_of_range("word split is too long");
 		}
 	}
+
 	template <
 	    class Str1, class Str2,
 	    class = std::enable_if_t<

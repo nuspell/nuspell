@@ -17,8 +17,8 @@
  */
 
 /**
- * @file finder.hxx
- * Finding dictionaries.
+ * @file
+ * @brief Finding dictionaries, PUBLIC HEADER.
  */
 
 #ifndef NUSPELL_FINDER_HXX
