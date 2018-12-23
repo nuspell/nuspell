@@ -262,13 +262,19 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 			     << line_num << endl;
 			break;
 		}
-		auto u32flags = utf8_to_32(s);
-		if (!is_all_bmp(u32flags)) {
-			cerr << "Nuspell warning: flags must be in BMP, "
-			        "skipping non-BMP\n"
-			     << "Nuspell warning in line " << line_num << endl;
+		auto ok = utf8_to_16(s, ret);
+		if (!ok) {
+			cerr << "Nuspell error: invalid UTF-8 flag in line "
+			     << line_num << endl;
+			ret.clear();
+			break;
 		}
-		u32_to_ucs2_skip_non_bmp(u32flags, ret);
+		if (!is_all_bmp(ret)) {
+			cerr << "Nuspell error: flags must be in BMP\n"
+			     << "Nuspell error in line " << line_num << endl;
+			ret.clear();
+			break;
+		}
 		break;
 	}
 	}

@@ -29,7 +29,6 @@
 
 namespace nuspell {
 
-auto utf8_to_32_alternative(const std::string& s) -> std::u32string;
 auto validate_utf8(const std::string& s) -> bool;
 
 auto wide_to_utf8(const std::wstring& in, std::string& out) -> void;
@@ -38,7 +37,8 @@ auto wide_to_utf8(const std::wstring& in) -> std::string;
 auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool;
 auto utf8_to_wide(const std::string& in) -> std::wstring;
 
-auto utf8_to_32(const std::string& in) -> std::u32string;
+auto utf8_to_16(const std::string& in) -> std::u16string;
+auto utf8_to_16(const std::string& in, std::u16string& out) -> bool;
 
 auto is_ascii(char c) -> bool;
 auto is_all_ascii(const std::string& s) -> bool;
@@ -46,11 +46,7 @@ auto is_all_ascii(const std::string& s) -> bool;
 auto latin1_to_ucs2(const std::string& s) -> std::u16string;
 auto latin1_to_ucs2(const std::string& s, std::u16string& out) -> void;
 
-auto is_bmp(char32_t c) -> bool;
-auto is_all_bmp(const std::u32string& s) -> bool;
-auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string;
-auto u32_to_ucs2_skip_non_bmp(const std::u32string& s, std::u16string& out)
-    -> void;
+auto is_all_bmp(const std::u16string& s) -> bool;
 
 auto to_wide(const std::string& in, const std::locale& inloc, std::wstring& out)
     -> bool;

@@ -27,17 +27,6 @@ using namespace std;
 using namespace std::literals::string_literals;
 using namespace nuspell;
 
-TEST_CASE("method utf8_to_32_alternative", "[locale_utils]")
-{
-	CHECK(U""s == utf8_to_32_alternative(""s));
-
-	CHECK(U"abczĳß«абвњ\U0001FFFFерњеӤ\u0801\u0912日本にреѐ"s ==
-	      utf8_to_32_alternative(
-	          u8"abczĳß«абвњ\U0001FFFFерњеӤ\u0801\u0912日本にреѐ"s));
-	CHECK(U"日  Ӥ" != utf8_to_32_alternative("Ӥ日本に"s));
-	// need counter example too
-}
-
 TEST_CASE("method validate_utf8", "[locale_utils]")
 {
 	CHECK(validate_utf8(""s));
@@ -71,12 +60,8 @@ TEST_CASE("method latin1_to_ucs2", "[locale_utils]")
 
 TEST_CASE("method is_all_bmp", "[locale_utils]")
 {
-	CHECK(true == is_all_bmp(U"abcýþÿӤ"));
-}
-
-TEST_CASE("method u32_to_ucs2_skip_non_bmp", "[locale_utils]")
-{
-	CHECK(u" ABC" == u32_to_ucs2_skip_non_bmp(U"\U0010FFFF AB\U00010000C"));
+	CHECK(true == is_all_bmp(u"abcýþÿӤ"));
+	CHECK(false == is_all_bmp(u"abcý \U00010001 þÿӤ"));
 }
 
 TEST_CASE("to_wide", "[locale_utils]")

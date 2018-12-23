@@ -49,208 +49,6 @@ using namespace std;
 #define unlikely(expr) (expr)
 #endif
 
-namespace {
-
-auto inline count_leading_ones(unsigned char c)
-{
-#ifdef __GNUC__
-	unsigned cc = c;
-	unsigned cc_shifted = cc << (numeric_limits<unsigned>::digits - 8);
-	return __builtin_clz(~cc_shifted); // gcc only.
-#elif _MSC_VER
-	using ulong = unsigned long;
-	ulong cc = c;
-	ulong cc_shifted = cc << (numeric_limits<ulong>::digits - 8);
-	ulong clz;
-	BitScanReverse(&clz, ~cc_shifted);
-	clz = numeric_limits<ulong>::digits - 1 - clz;
-	return clz;
-#else
-	unsigned cc = c;
-	int clz;
-	// note the operator presedence
-	// all parenthesis are necessary
-	if ((cc & 0x80) == 0)
-		clz = 0;
-	else if ((cc & 0x40) == 0)
-		clz = 1;
-	else if ((cc & 0x20) == 0)
-		clz = 2;
-	else if ((cc & 0x10) == 0)
-		clz = 3;
-	else if ((cc & 0x08) == 0)
-		clz = 4;
-	else
-		clz = 5;
-	return clz;
-#endif
-}
-
-auto is_not_continuation_byte(unsigned char c)
-{
-	return (c & 0b11000000) != 0b10000000;
-}
-auto update_cp_with_continuation_byte(char32_t& cp, unsigned char c)
-{
-	cp = (cp << 6) | (c & 0b00111111);
-}
-} // namespace
-
-template <class InpIter, class OutIter>
-auto decode_utf8(InpIter first, InpIter last, OutIter out) -> OutIter
-{
-	constexpr auto REP_CH = U'\uFFFD';
-	char32_t cp;
-	for (auto i = first; i != last; ++i) {
-		unsigned char c = *i;
-		switch (count_leading_ones(c)) {
-		case 0:
-			*out++ = c;
-			break;
-		case 1:
-			*out++ = REP_CH;
-			break;
-		case 2:
-			// min_rep_err
-			if (unlikely((c & 0b00011110) == 0)) {
-				*out++ = REP_CH;
-				break;
-			}
-			cp = c & 0b00011111;
-
-			// processing second byte
-			if (unlikely(++i == last)) {
-				*out++ = REP_CH;
-				goto out_of_u8_loop;
-			}
-			c = *i;
-			if (unlikely(is_not_continuation_byte(c))) {
-				// sequence too short error
-				--i;
-				*out++ = REP_CH;
-				break;
-			}
-			update_cp_with_continuation_byte(cp, c);
-			*out++ = cp;
-			break;
-		case 3:
-			cp = c & 0b00001111;
-
-			// processing second byte
-			if (unlikely(++i == last)) {
-				*out++ = REP_CH;
-				goto out_of_u8_loop;
-			}
-			c = *i;
-			if (unlikely(is_not_continuation_byte(c))) {
-				// sequence too short error
-				--i;
-				*out++ = REP_CH;
-				break;
-			}
-			update_cp_with_continuation_byte(cp, c);
-			// min_rep_err || surrogate_err
-			if (unlikely(cp <= 0x1f || (cp >> 5) == 0b11011)) {
-				*out++ = REP_CH;
-				break;
-			}
-
-			// proccesing third byte
-			if (unlikely(++i == last)) {
-				*out++ = REP_CH;
-				goto out_of_u8_loop;
-			}
-			c = *i;
-			if (unlikely(is_not_continuation_byte(c))) {
-				// sequence too short error
-				--i;
-				*out++ = REP_CH;
-				break;
-			}
-			update_cp_with_continuation_byte(cp, c);
-
-			*out++ = cp;
-			break;
-		case 4:
-			cp = c & 0b00000111;
-
-			// processing second byte
-			if (unlikely(++i == last)) {
-				*out++ = REP_CH;
-				goto out_of_u8_loop;
-			}
-			c = *i;
-			if (unlikely(is_not_continuation_byte(c))) {
-				// sequence too short error
-				--i;
-				*out++ = REP_CH;
-				break;
-			}
-			update_cp_with_continuation_byte(cp, c);
-
-			// min_rep_err
-			if (unlikely(cp <= 0x0f)) {
-				*out++ = REP_CH;
-				break;
-			}
-			// cp above 0x10ffff error
-			if (unlikely(cp > 0x10f)) {
-				if (cp > 0x13f) {
-					// error was in first byte
-					--i;
-				}
-				// else it was in the second
-				*out++ = REP_CH;
-				break;
-			}
-
-			// proccesing third byte
-			if (unlikely(++i == last)) {
-				*out++ = REP_CH;
-				goto out_of_u8_loop;
-			}
-			c = *i;
-			if (unlikely(is_not_continuation_byte(c))) {
-				// sequence too short error
-				--i;
-				*out++ = REP_CH;
-				break;
-			}
-			update_cp_with_continuation_byte(cp, c);
-
-			// proccesing fourth byte
-			if (unlikely(++i == last)) {
-				*out++ = REP_CH;
-				goto out_of_u8_loop;
-			}
-			c = *i;
-			if (unlikely(is_not_continuation_byte(c))) {
-				// sequence too short error
-				--i;
-				*out++ = REP_CH;
-				break;
-			}
-			update_cp_with_continuation_byte(cp, c);
-
-			*out++ = cp;
-			break;
-		default:
-			*out++ = REP_CH;
-			break;
-		}
-	}
-out_of_u8_loop:
-	return out;
-}
-
-auto utf8_to_32_alternative(const std::string& s) -> std::u32string
-{
-	u32string ret(s.size(), 0);
-	auto last = decode_utf8(begin(s), end(s), begin(ret));
-	ret.erase(last, end(ret));
-	return ret;
-}
-
 auto validate_utf8(const std::string& s) -> bool
 {
 	using namespace boost::locale::utf;
@@ -357,11 +155,16 @@ auto utf8_to_wide(const std::string& in) -> std::wstring
 	return out;
 }
 
-auto utf8_to_32(const std::string& in) -> std::u32string
+auto utf8_to_16(const std::string& in) -> std::u16string
 {
-	auto out = u32string();
+	auto out = u16string();
 	utf_to_utf_my(in, out);
 	return out;
+}
+
+bool utf8_to_16(const std::string& in, std::u16string& out)
+{
+	return utf_to_utf_my(in, out);
 }
 
 auto is_ascii(char c) -> bool { return static_cast<unsigned char>(c) <= 127; }
@@ -389,25 +192,13 @@ auto latin1_to_ucs2(const std::string& s, std::u16string& out) -> void
 	transform(begin(s), end(s), begin(out), widen_latin1<char16_t>);
 }
 
-auto is_bmp(char32_t c) -> bool { return c <= 0xFFFF; }
-
-auto is_all_bmp(const std::u32string& s) -> bool
+auto is_surrogate_pair(char16_t c) -> bool
 {
-	return all_of(begin(s), end(s), is_bmp);
+	return 0xD800 <= c && c <= 0xDFFF;
 }
-
-auto u32_to_ucs2_skip_non_bmp(const std::u32string& s) -> std::u16string
+auto is_all_bmp(const std::u16string& s) -> bool
 {
-	u16string ret;
-	u32_to_ucs2_skip_non_bmp(s, ret);
-	return ret;
-}
-auto u32_to_ucs2_skip_non_bmp(const std::u32string& s, std::u16string& out)
-    -> void
-{
-	out.resize(s.size());
-	auto i = copy_if(begin(s), end(s), begin(out), is_bmp);
-	out.erase(i, end(out));
+	return none_of(begin(s), end(s), is_surrogate_pair);
 }
 
 auto to_wide(const std::string& in, const std::locale& loc, std::wstring& out)
