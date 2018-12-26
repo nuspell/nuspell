@@ -21,6 +21,7 @@
 #include "string_utils.hxx"
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 
 #include <boost/locale.hpp>
@@ -44,18 +45,13 @@ enum Mode {
 	DEFAULT_MODE /**< printing correct and misspelled words with
 	                suggestions */
 	,
-	NOSUGGEST_MODE /**< printing correct and misspelled words without
-	                   suggestions */
-	,
 	MISSPELLED_WORDS_MODE /**< printing only misspelled words */,
 	MISSPELLED_LINES_MODE /**< printing only lines with misspelled word(s)*/
 	,
 	CORRECT_WORDS_MODE /**< printing only correct words */,
 	CORRECT_LINES_MODE /**< printing only fully correct lines */,
-	SEGMENT_MODE /**< Same as normal except text is parsed using Unicode
-	                text segmentation */
-	,
-	SEGMENT_NOSUGGEST_MODE,
+	UNICODE_SEGMENT_MODE, /**< Same as normal except text is parsed using
+	                        Unicode text segmentation */
 	LINES_MODE, /**< intermediate mode used while parsing command line
 	               arguments, otherwise unused */
 	LIST_DICTIONARIES_MODE /**< printing available dictionaries */,
@@ -93,7 +89,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	int c;
 	// The program can run in various modes depending on the
 	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:aDGLSUlhv";
+	const char* shortopts = ":d:i:aDGLSlhv";
 	const struct option longopts[] = {
 	    {"version", 0, nullptr, 'v'},
 	    {"help", 0, nullptr, 'h'},
@@ -159,18 +155,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 			break;
 		case 'S':
 			if (mode == DEFAULT_MODE)
-				mode = SEGMENT_MODE;
-			else if (mode == NOSUGGEST_MODE)
-				mode = SEGMENT_NOSUGGEST_MODE;
-			else
-				mode = ERROR_MODE;
-
-			break;
-		case 'U':
-			if (mode == DEFAULT_MODE)
-				mode = NOSUGGEST_MODE;
-			else if (mode == SEGMENT_MODE)
-				mode = SEGMENT_NOSUGGEST_MODE;
+				mode = UNICODE_SEGMENT_MODE;
 			else
 				mode = ERROR_MODE;
 
@@ -284,8 +269,8 @@ auto print_help(const string& program_name) -> void
 	auto& o = cout;
 	o << "Usage:\n"
 	     "\n";
-	o << p << " [-d dict_NAME] [-i enc] [file_name]...\n";
-	o << p << " -l|-G [-L] [-U] [-d dict_NAME] [-i enc] [file_name]...\n";
+	o << p << " [-S] [-d dict_NAME] [-i enc] [file_name]...\n";
+	o << p << " -l|-G [-L] [-d dict_NAME] [-i enc] [file_name]...\n";
 	o << p << " -D|-h|--help|-v|--version\n";
 	o << "\n"
 	     "Check spelling of each FILE. Without FILE, check standard "
@@ -293,14 +278,13 @@ auto print_help(const string& program_name) -> void
 	     "\n"
 	     "  -d di_CT      use di_CT dictionary. Only one dictionary at a\n"
 	     "                time is currently supported\n"
-	     "  -D            print search paths and available dictionaries "
+	     "  -D            print search paths and available dictionaries\n"
 	     "                and exit\n"
 	     "  -i enc        input/output encoding, default is active locale\n"
 	     "  -l            print only misspelled words or lines\n"
 	     "  -G            print only correct words or lines\n"
 	     "  -L            lines mode\n"
 	     "  -S            use Unicode text segmentation to extract words\n"
-	     "  -U            do not suggest, increases performance\n"
 	     "  -h, --help    print this help and exit\n"
 	     "  -v, --version print version number and exit\n"
 	     "\n";
@@ -355,21 +339,8 @@ auto list_dictionaries(const Finder& f) -> void
 	else {
 		cout << "Available dictionaries:\n";
 		for (auto& d : f.get_dictionaries()) {
-			cout << d.first;
-			// The longest basenames of .dic and .aff files are
-			// "ca_ES-valencia" with 14 characters and "de_DE_frami"
-			// with 11 characters. Most basenames are 2 or 5
-			// characters long, such as "fr" and "en_US". This
-			// variation in length proves a challenge in aligning
-			// the output with tab characters. Hence, a minimal
-			// typical columns width of 16 characters is used with
-			// always including minimally 1 space character as
-			// separater. This specific width has been chosen to
-			// allow plenty of space and to support tab width
-			// preferences of 2, 4 and 8.
-			for (size_t i = d.first.size(); i < 15; ++i)
-				cout << ' ';
-			cout << ' ' << d.second << '\n';
+			cout << left << setw(15) << d.first << ' ' << d.second
+			     << '\n';
 		}
 	}
 }
@@ -410,35 +381,6 @@ auto normal_loop(istream& in, ostream& out, My_Dictionary& dic)
 		for_each(begin(suggestions) + 1, end(suggestions),
 		         [&](auto& sug) { out << ", " << sug; });
 		out << '\n';
-	}
-}
-
-/**
- * @brief Normal loop, tokenize and check spelling.
- *
- * Tokenizes words from @p in by whitespace, checks spelling and outputs
- * result but no suggestions to @p out.
- *
- * @param in the input stream with plain text.
- * @param out the output stream to report spelling correctness
- * @param dic the dictionary to use.
- */
-auto normal_nosuggest_loop(istream& in, ostream& out, My_Dictionary& dic)
-{
-	auto word = string();
-	auto suggestions = List_Strings();
-	while (in >> word) {
-		auto correct = dic.spell(word);
-		if (correct) {
-			out << "*\n";
-			continue;
-		}
-		auto pos = in.tellg();
-		if (pos < 0)
-			pos = 0;
-		else
-			pos -= streamoff(word.size());
-		out << "# " << word << ' ' << pos << '\n';
 	}
 }
 
@@ -524,48 +466,6 @@ auto segment_loop(istream& in, ostream& out, My_Dictionary& dic)
 			for_each(begin(suggestions) + 1, end(suggestions),
 			         [&](auto& sug) { out << ", " << sug; });
 			out << '\n';
-		}
-		pos = in.tellg();
-		if (pos < 0)
-			pos = 0;
-	}
-}
-
-/**
- * @brief Normal loop, tokenize and check spelling.
- *
- * Tokenizes words from @p in by segmentation from Boost boundary analysis,
- * checks spelling and outputs result but no suggestions to @p out.
- *
- * @param in the input stream with plain text.
- * @param out the output stream to report spelling correctness
- * @param dic the dictionary to use.
- */
-auto segment_nosuggest_loop(istream& in, ostream& out, My_Dictionary& dic)
-{
-	namespace b = boost::locale::boundary;
-	auto line = string();
-	auto word = string();
-	auto suggestions = List_Strings();
-	auto loc = in.getloc();
-	auto pos = in.tellg();
-	if (pos < 0)
-		pos = 0;
-	auto index = b::ssegment_index();
-	index.rule(b::word_any);
-	while (getline(in, line)) {
-		index.map(b::word, begin(line), end(line), loc);
-		for (auto& segment : index) {
-			word = segment;
-			auto correct = dic.spell(word);
-			if (correct) {
-				out << "*\n";
-				continue;
-			}
-			dic.suggest(word, suggestions);
-			auto pos2 =
-			    pos + streamoff(begin(segment) - begin(line));
-			out << "# " << word << ' ' << pos2 << '\n';
 		}
 		pos = in.tellg();
 		if (pos < 0)
@@ -715,14 +615,8 @@ int main(int argc, char* argv[])
 	case DEFAULT_MODE:
 		// loop_function = normal_loop;
 		break;
-	case NOSUGGEST_MODE:
-		loop_function = normal_nosuggest_loop;
-		break;
-	case SEGMENT_MODE:
+	case UNICODE_SEGMENT_MODE:
 		loop_function = segment_loop;
-		break;
-	case SEGMENT_NOSUGGEST_MODE:
-		loop_function = segment_nosuggest_loop;
 		break;
 	case MISSPELLED_WORDS_MODE:
 		loop_function = misspelled_word_loop;
