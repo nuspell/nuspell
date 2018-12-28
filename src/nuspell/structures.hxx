@@ -654,7 +654,7 @@ class Prefix {
 
 	Prefix() = default;
 	Prefix(char16_t flag, bool cross_product, const StrT& strip,
-	       const StrT& append, const Flag_Set& cont_flags,
+	       const StrT& append, const std::u16string& cont_flags,
 	       const StrT& condition)
 	    : flag(flag), cross_product(cross_product), stripping(strip),
 	      appending(append), cont_flags(cont_flags), condition(condition)
@@ -702,7 +702,7 @@ class Suffix {
 
 	Suffix() = default;
 	Suffix(char16_t flag, bool cross_product, const StrT& strip,
-	       const StrT& append, const Flag_Set& cont_flags,
+	       const StrT& append, const std::u16string& cont_flags,
 	       const StrT& condition)
 	    : flag(flag), cross_product(cross_product), stripping(strip),
 	      appending(append), cont_flags(cont_flags), condition(condition)

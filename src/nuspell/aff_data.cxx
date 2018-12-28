@@ -26,6 +26,13 @@
 #include <sstream>
 #include <unordered_map>
 
+#include <clocale>
+
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) ||               \
+                         (defined(__APPLE__) && defined(__MACH__)))
+#include <unistd.h>
+#endif
+
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/locale.hpp>
 #include <boost/range/adaptors.hpp>
@@ -154,6 +161,178 @@ auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
 	}
 }
 
+enum class Flag_Parsing_Error {
+	NONUTF8_FLAGS_ABOVE_127_WARNING = -1,
+	NO_ERROR = 0,
+	MISSING_FLAGS,
+	UNPAIRED_LONG_FLAG,
+	INVALID_NUMERIC_FLAG,
+	// FLAGS_ARE_UTF8_BUT_FILE_NOT,
+	INVALID_UTF8,
+	FLAG_ABOVE_65535,
+	INVALID_NUMERIC_ALIAS
+};
+
+auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
+                  u16string& out) -> Flag_Parsing_Error
+{
+	using Err = Flag_Parsing_Error;
+	auto warn = Err();
+	out.clear();
+	if (s.empty())
+		return Err::MISSING_FLAGS;
+	switch (t) {
+	case FLAG_SINGLE_CHAR:
+		if (enc.is_utf8() && !is_all_ascii(s)) {
+			warn = Err::NONUTF8_FLAGS_ABOVE_127_WARNING;
+			// This warning will be triggered in Hungarian.
+			// Version 1 passed this, it just read a single byte
+			// even if the stream utf-8. Hungarian dictionary
+			// exploited this bug/feature, resulting it's file to be
+			// mixed utf-8 and latin2. In v2 this will eventually
+			// work, with a warning.
+		}
+		latin1_to_ucs2(s, out);
+		break;
+	case FLAG_DOUBLE_CHAR: {
+		if (enc.is_utf8() && !is_all_ascii(s))
+			warn = Err::NONUTF8_FLAGS_ABOVE_127_WARNING;
+
+		if (s.size() % 2 == 1)
+			return Err::UNPAIRED_LONG_FLAG;
+
+		auto i = s.begin();
+		auto e = s.end();
+		for (; i != e; i += 2) {
+			auto c1 = *i;
+			auto c2 = *(i + 1);
+			out.push_back((c1 << 8) | c2);
+		}
+		break;
+	}
+	case FLAG_NUMBER: {
+		auto p = s.c_str();
+		char* p2 = nullptr;
+		errno = 0;
+		auto flag = strtoul(p, &p2, 10);
+		if (p2 == p)
+			return Err::INVALID_NUMERIC_FLAG;
+		if (flag == numeric_limits<decltype(flag)>::max() &&
+		    errno == ERANGE) {
+			errno = 0;
+			return Err::FLAG_ABOVE_65535;
+		}
+		if (flag > 0xFFFF)
+			return Err::FLAG_ABOVE_65535;
+		out.push_back(flag);
+		while (p2 != &s[s.size()] && *p2 == ',') {
+			p = p2 + 1;
+			flag = strtoul(p, &p2, 10);
+			if (p2 == p)
+				return Err::INVALID_NUMERIC_FLAG;
+			if (flag == numeric_limits<decltype(flag)>::max() &&
+			    errno == ERANGE) {
+				errno = 0;
+				return Err::FLAG_ABOVE_65535;
+			}
+			if (flag > 0xFFFF)
+				return Err::FLAG_ABOVE_65535;
+			out.push_back(flag);
+		}
+		break;
+	}
+	case FLAG_UTF8: {
+		// if (!enc.is_utf8())
+		//	return Err::FLAGS_ARE_UTF8_BUT_FILE_NOT;
+
+		auto ok = utf8_to_16(s, out);
+		if (!ok) {
+			out.clear();
+			return Err::INVALID_UTF8;
+		}
+
+		if (!is_all_bmp(out)) {
+			out.clear();
+			return Err::FLAG_ABOVE_65535;
+		}
+		break;
+	}
+	}
+	return warn;
+}
+
+auto decode_flags_possible_alias(const string& s, Flag_Type t,
+                                 const Encoding& enc,
+                                 const vector<Flag_Set>& flag_aliases,
+                                 u16string& out) -> Flag_Parsing_Error
+{
+	if (flag_aliases.empty())
+		return decode_flags(s, t, enc, out);
+
+	char* p;
+	errno = 0;
+	out.clear();
+	auto i = strtoul(s.c_str(), &p, 10);
+	if (p == s.c_str())
+		return Flag_Parsing_Error::INVALID_NUMERIC_ALIAS;
+
+	if (i == numeric_limits<decltype(i)>::max() && errno == ERANGE)
+		return Flag_Parsing_Error::INVALID_NUMERIC_ALIAS;
+
+	if (0 < i && i <= flag_aliases.size()) {
+		out = flag_aliases[i - 1];
+		return {};
+	}
+	return Flag_Parsing_Error::INVALID_NUMERIC_ALIAS;
+}
+
+auto report_flag_parsing_error(Flag_Parsing_Error err, size_t line_num)
+{
+	using Err = Flag_Parsing_Error;
+	switch (err) {
+	case Err::NONUTF8_FLAGS_ABOVE_127_WARNING:
+		cerr << "Nuspell warning: bytes above 127 in flags in UTF-8 "
+		        "file are treated as lone bytes for backward "
+		        "compatibility. That means if in the flags you have "
+		        "ONE character above ASCII, it may be interpreted as "
+		        "2, 3, or 4 flags. Please update dictionary and affix "
+		        "files to use FLAG UTF-8 and make the file valid "
+		        "UTF-8 if it is not already. Warning in line "
+		     << line_num << '\n';
+		break;
+	case Err::NO_ERROR:
+		break;
+	case Err::MISSING_FLAGS:
+		cerr << "Nuspell error: missing flags in line " << line_num
+		     << '\n';
+		break;
+	case Err::UNPAIRED_LONG_FLAG:
+		cerr << "Nuspell error: the number of chars in string of long "
+		        "flags is odd, should be even. Error in line "
+		     << line_num << '\n';
+		break;
+	case Err::INVALID_NUMERIC_FLAG:
+		cerr << "Nuspell error: invalid numerical flag in line"
+		     << line_num << '\n';
+		break;
+	// case Err::FLAGS_ARE_UTF8_BUT_FILE_NOT:
+	//	cerr << "Nuspell error: flags are UTF-8 but file is not\n";
+	//	break;
+	case Err::INVALID_UTF8:
+		cerr << "Nuspell error: Invalid UTF-8 in flags in line "
+		     << line_num << '\n';
+		break;
+	case Err::FLAG_ABOVE_65535:
+		cerr << "Nuspell error: Flag above 65535 in line " << line_num
+		     << '\n';
+		break;
+	case Err::INVALID_NUMERIC_ALIAS:
+		cerr << "Nuspell error: Flag alias is invalid in line"
+		     << line_num << '\n';
+		break;
+	}
+}
+
 /**
  * Decodes flags.
  *
@@ -162,123 +341,29 @@ auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
  * or if the format of the flags is incorrect the stream failbit will be set.
  */
 auto decode_flags(istream& in, size_t line_num, Flag_Type t,
-                  const Encoding& enc) -> u16string
+                  const Encoding& enc, u16string& out) -> istream&
 {
 	string s;
-	u16string ret;
-	const auto err_message = "Nuspell warning: bytes above 127 in UTF-8 "
-	                         "stream should not be treated alone as flags, "
-	                         "please update dictionary and affix files to "
-	                         "use FLAG UTF-8 and make the file valid UTF-8";
-	switch (t) {
-	case FLAG_SINGLE_CHAR:
-		in >> s;
-		if (in.fail()) {
-			// err no flag at all
-			cerr << "Nuspell error: missing single-character flag "
-			        "in line "
-			     << line_num << endl;
-			break;
-		}
-		if (enc.is_utf8() && !is_all_ascii(s)) {
-			cerr << err_message << "\n";
-			cerr << "Nuspell warning in line " << line_num << "\n"
-			     << endl;
-			// This error will be triggered in Hungarian.
-			// Version 1 passed this, it just read a
-			// single byte even if the stream utf-8.
-			// Hungarian dictionary exploited this
-			// bug/feature, resulting it's file to be
-			// mixed utf-8 and latin2.
-			// In v2 this will eventually work, with
-			// a warning.
-		}
-		latin1_to_ucs2(s, ret);
-		break;
-	case FLAG_DOUBLE_CHAR: {
-		in >> s;
-		if (in.fail()) {
-			// err no flag at all
-			cerr << "Nuspell error: missing double-character flag "
-			        "in line "
-			     << line_num << endl;
-			break;
-		}
-		if (enc.is_utf8() && !is_all_ascii(s)) {
-			cerr << err_message << "\n";
-			cerr << "Nuspell warning in line " << line_num << endl;
-		}
-		auto i = s.begin();
-		auto e = s.end();
-		if (s.size() & 1) {
-			--e;
-		}
-		for (; i != e; i += 2) {
-			auto c1 = *i;
-			auto c2 = *(i + 1);
-			ret.push_back((c1 << 8) | c2);
-		}
-		if (i != s.end()) {
-			ret.push_back(static_cast<unsigned char>(*i));
-		}
-		break;
-	}
-	case FLAG_NUMBER:
-		unsigned short flag;
-		in >> flag;
-		if (in.fail()) {
-			// err no flag at all
-			cerr << "Nuspell error: missing numerical flag in line "
-			     << line_num << endl;
-			break;
-		}
-		ret.push_back(flag);
-		// peek can set failbit
-		while (in.good() && in.peek() == ',') {
-			in.get();
-			if (in >> flag) {
-				ret.push_back(flag);
-			}
-			else {
-				// err, comma and no number after that
-				cerr << "Nuspell error: long flag, no number "
-				        "after comma"
-				     << endl;
-				break;
-			}
-		}
-		break;
-	case FLAG_UTF8: {
-		in >> s;
-		if (!enc.is_utf8()) {
-			// err
-			cerr << "Nuspell error: file encoding is not UTF-8, "
-			        "yet flags are"
-			     << endl;
-		}
-		if (in.fail()) {
-			// err no flag at all
-			cerr << "Nuspell error: missing UTF-8 flag in line "
-			     << line_num << endl;
-			break;
-		}
-		auto ok = utf8_to_16(s, ret);
-		if (!ok) {
-			cerr << "Nuspell error: invalid UTF-8 flag in line "
-			     << line_num << endl;
-			ret.clear();
-			break;
-		}
-		if (!is_all_bmp(ret)) {
-			cerr << "Nuspell error: flags must be in BMP\n"
-			     << "Nuspell error in line " << line_num << endl;
-			ret.clear();
-			break;
-		}
-		break;
-	}
-	}
-	return ret;
+	in >> s;
+	auto err = decode_flags(s, t, enc, out);
+	if (static_cast<int>(err) > 0)
+		in.setstate(in.failbit);
+	report_flag_parsing_error(err, line_num);
+	return in;
+}
+
+auto decode_flags_possible_alias(istream& in, size_t line_num, Flag_Type t,
+                                 const Encoding& enc,
+                                 const vector<Flag_Set>& flag_aliases,
+                                 u16string& out) -> istream&
+{
+	string s;
+	in >> s;
+	auto err = decode_flags_possible_alias(s, t, enc, flag_aliases, out);
+	if (static_cast<int>(err) > 0)
+		in.setstate(in.failbit);
+	report_flag_parsing_error(err, line_num);
+	return in;
 }
 
 /**
@@ -293,29 +378,12 @@ auto decode_flags(istream& in, size_t line_num, Flag_Type t,
 auto decode_single_flag(istream& in, size_t line_num, Flag_Type t,
                         const Encoding& enc) -> char16_t
 {
-	auto flags = decode_flags(in, line_num, t, enc);
+	auto flags = u16string();
+	decode_flags(in, line_num, t, enc, flags);
 	if (!flags.empty()) {
 		return flags.front();
 	}
 	return 0;
-}
-
-auto decode_flags_possible_alias(istream& in, size_t line_num, Flag_Type t,
-                                 const Encoding& enc,
-                                 const vector<Flag_Set>& flag_aliases)
-    -> u16string
-{
-	if (flag_aliases.empty()) {
-		return decode_flags(in, line_num, t, enc);
-	}
-	else {
-		size_t i;
-		if (in >> i && 0 < i && i <= flag_aliases.size())
-			return flag_aliases[i - 1];
-		else
-			cerr << "Nuspell error: invalid flag alias index\n";
-	}
-	return {};
 }
 
 /**
@@ -390,8 +458,8 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 		if (elem.stripping == "0")
 			elem.stripping = "";
 		if (read_to_slash_or_space(in, elem.appending))
-			elem.new_flags = decode_flags_possible_alias(
-			    in, line_num, t, enc, flag_aliases);
+			decode_flags_possible_alias(
+			    in, line_num, t, enc, flag_aliases, elem.new_flags);
 		if (elem.appending == "0")
 			elem.appending = "";
 		if (in.fail()) {
@@ -444,7 +512,7 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 	switch (t) {
 	case FLAG_SINGLE_CHAR:
 	case FLAG_UTF8:
-		ret = decode_flags(in, line_num, t, enc);
+		decode_flags(in, line_num, t, enc, ret);
 		break;
 	case FLAG_DOUBLE_CHAR: {
 		auto r = regex(R"(\((..)\)([?*]?))");
@@ -477,7 +545,7 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 			auto& m = *it;
 			auto number_pos = m.position(1);
 			auto fl = strtoul(&str[number_pos], nullptr, 10);
-			if (fl <= char16_t(-1))
+			if (fl <= 0xFFFF)
 				ret.push_back(fl);
 
 			if (m[2].length() != 0)
@@ -499,6 +567,55 @@ auto strip_bom(istream& in)
 		reset_failbit_istream(in);
 	}
 }
+
+//#if _POSIX_VERSION >= 200809L
+#ifdef _POSIX_VERSION
+class Setlocale_To_C_In_Scope {
+	locale_t old_loc = nullptr;
+
+      public:
+	Setlocale_To_C_In_Scope()
+	    : old_loc{uselocale(newlocale(0, "C", nullptr))}
+	{
+	}
+	~Setlocale_To_C_In_Scope()
+	{
+		auto new_loc = uselocale(old_loc);
+		if (new_loc != old_loc)
+			freelocale(new_loc);
+	}
+	Setlocale_To_C_In_Scope(const Setlocale_To_C_In_Scope&) = delete;
+};
+#else
+class Setlocale_To_C_In_Scope {
+	std::string old_name;
+#ifdef _WIN32
+	int old_per_thread;
+#endif
+      public:
+	Setlocale_To_C_In_Scope() : old_name(setlocale(LC_ALL, nullptr))
+	{
+#ifdef _WIN32
+		old_per_thread = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+#endif
+		auto x = setlocale(LC_ALL, "C");
+		if (!x)
+			old_name.clear();
+	}
+	~Setlocale_To_C_In_Scope()
+	{
+#ifdef _WIN32
+		_configthreadlocale(old_per_thread);
+		if (old_per_thread == _ENABLE_PER_THREAD_LOCALE)
+#endif
+		{
+			if (!old_name.empty())
+				setlocale(LC_ALL, old_name.c_str());
+		}
+	}
+	Setlocale_To_C_In_Scope(const Setlocale_To_C_In_Scope&) = delete;
+};
+#endif
 
 /**
  * @brief Sets the internal encoding, and optionally, language.
@@ -549,6 +666,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<pair<string, string>> replacements;
 	vector<string> map_related_chars;
 	vector<pair<string, string>> phonetic_replacements;
+	auto flags = u16string();
 
 	flag_type = FLAG_SINGLE_CHAR;
 
@@ -624,6 +742,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	size_t line_num = 0;
 	auto ss = istringstream();
 	auto loc = locale::classic();
+	Setlocale_To_C_In_Scope setlocale_to_C;
 	// while parsing, the streams must have plain ascii locale without
 	// any special number separator otherwise istream >> int might fail
 	// due to thousands separator.
@@ -714,8 +833,9 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		else if (command == "AF") {
 			auto& vec = flag_aliases;
 			auto func = [&](istream& inn, Flag_Set& p) {
-				p = decode_flags(inn, line_num, flag_type,
-				                 encoding);
+				decode_flags(inn, line_num, flag_type, encoding,
+				             flags);
+				p = flags;
 			};
 			parse_vector_of_T(ss, line_num, command,
 			                  cmd_with_vec_cnt, vec, func);
@@ -768,8 +888,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			ss >> compound_syllable_max >> compound_syllable_vowels;
 		}
 		else if (command == "SYLLABLENUM") {
-			compound_syllable_num =
-			    decode_flags(ss, line_num, flag_type, encoding);
+			decode_flags(ss, line_num, flag_type, encoding, flags);
+			compound_syllable_num = flags;
 		}
 		if (ss.fail()) {
 			cerr
@@ -931,6 +1051,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 
 	// locale must be without thousands separator.
 	auto loc = locale::classic();
+	Setlocale_To_C_In_Scope setlocale_to_C;
 	in.imbue(loc);
 	ss.imbue(loc);
 	strip_bom(in);
@@ -983,8 +1104,9 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			// slash found, word until slash
 			word.assign(line, 0, slash_pos);
 			ss.ignore(slash_pos + 1);
-			flags = decode_flags_possible_alias(
-			    ss, line_number, flag_type, encoding, flag_aliases);
+			decode_flags_possible_alias(ss, line_number, flag_type,
+			                            encoding, flag_aliases,
+			                            flags);
 			if (ss.fail())
 				continue;
 		}

@@ -59,7 +59,7 @@ struct Affix {
 	bool cross_product;
 	std::string stripping;
 	std::string appending;
-	Flag_Set new_flags;
+	std::u16string new_flags;
 	std::string condition;
 	std::vector<std::string> morphological_fields;
 };
