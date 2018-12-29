@@ -96,24 +96,6 @@ void reset_failbit_istream(std::istream& in)
 	in.clear(in.rdstate() & ~in.failbit);
 }
 
-bool read_to_slash_or_space(std::istream& in, std::string& out)
-{
-	in >> std::ws;
-	int c;
-	bool readSomething = false;
-	auto loc = in.getloc();
-	while ((c = in.get()) != istream::traits_type::eof() &&
-	       !isspace<char>(c, loc) && c != '/') {
-		out.push_back(c);
-		readSomething = true;
-	}
-	bool slash = c == '/';
-	if (readSomething || slash) {
-		reset_failbit_istream(in);
-	}
-	return slash;
-}
-
 /**
  * Parses vector of class T from an input stream.
  *
@@ -386,6 +368,53 @@ auto decode_single_flag(istream& in, size_t line_num, Flag_Type t,
 	return 0;
 }
 
+auto parse_word_slash_flags(istream& in, size_t line_num, Flag_Type t,
+                            const Encoding& enc,
+                            const vector<Flag_Set>& flag_aliases, string& word,
+                            u16string& flags) -> istream&
+{
+	in >> word;
+	auto slash_pos = word.find('/');
+	if (slash_pos == word.npos) {
+		flags.clear();
+		return in;
+	}
+
+	auto flag_str = word.substr(slash_pos + 1);
+	word.erase(slash_pos);
+	auto err =
+	    decode_flags_possible_alias(flag_str, t, enc, flag_aliases, flags);
+	if (static_cast<int>(err) > 0)
+		in.setstate(in.failbit);
+	report_flag_parsing_error(err, line_num);
+	return in;
+}
+
+auto parse_word_slash_single_flag(istream& in, size_t line_num, Flag_Type t,
+                                  const Encoding& enc, string& word,
+                                  char16_t& flag) -> istream&
+{
+	in >> word;
+	auto slash_pos = word.find('/');
+	if (slash_pos == word.npos) {
+		flag = 0;
+		return in;
+	}
+
+	auto flags = u16string();
+	auto flag_str = word.substr(slash_pos + 1);
+	word.erase(slash_pos);
+	auto err = decode_flags(flag_str, t, enc, flags);
+	if (static_cast<int>(err) > 0)
+		in.setstate(in.failbit);
+	report_flag_parsing_error(err, line_num);
+	if (flags.empty())
+		flag = 0;
+	else
+		flag = flags.front();
+	return in;
+}
+
 /**
  * Parses morhological fields.
  *
@@ -457,9 +486,8 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
 		in >> elem.stripping;
 		if (elem.stripping == "0")
 			elem.stripping = "";
-		if (read_to_slash_or_space(in, elem.appending))
-			decode_flags_possible_alias(
-			    in, line_num, t, enc, flag_aliases, elem.new_flags);
+		parse_word_slash_flags(in, line_num, t, enc, flag_aliases,
+		                       elem.appending, elem.new_flags);
 		if (elem.appending == "0")
 			elem.appending = "";
 		if (in.fail()) {
@@ -857,16 +885,12 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			auto& vec = compound_check_patterns;
 			auto func = [&](istream& in,
 			                Compound_Check_Pattern& p) {
-				if (read_to_slash_or_space(in,
-				                           p.first_word_end)) {
-					p.first_word_flag = decode_single_flag(
-					    in, line_num, flag_type, encoding);
-				}
-				if (read_to_slash_or_space(
-				        in, p.second_word_begin)) {
-					p.second_word_flag = decode_single_flag(
-					    in, line_num, flag_type, encoding);
-				}
+				parse_word_slash_single_flag(
+				    in, line_num, flag_type, encoding,
+				    p.first_word_end, p.first_word_flag);
+				parse_word_slash_single_flag(
+				    in, line_num, flag_type, encoding,
+				    p.second_word_begin, p.second_word_flag);
 				if (in.fail()) {
 					return;
 				}
