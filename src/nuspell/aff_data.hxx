@@ -31,11 +31,11 @@
 
 namespace nuspell {
 
-enum Flag_Type {
-	FLAG_SINGLE_CHAR /**< single-character flag, e.g. for "a" */,
-	FLAG_DOUBLE_CHAR /**< double-character flag, e.g for "aa" */,
-	FLAG_NUMBER /**< numerical flag, e.g. for 61 */,
-	FLAG_UTF8 /**< UTF-8 flag, e.g. for "á" */
+enum class Flag_Type {
+	SINGLE_CHAR /**< single-character flag, e.g. for "a" */,
+	DOUBLE_CHAR /**< double-character flag, e.g for "aa" */,
+	NUMBER /**< numerical flag, e.g. for 61 */,
+	UTF8 /**< UTF-8 flag, e.g. for "á" */
 };
 
 template <class CharT>
@@ -52,24 +52,6 @@ struct Aff_Structures {
 	std::basic_string<CharT> keyboard_closeness;
 	std::basic_string<CharT> try_chars;
 	Phonetic_Table<CharT> phonetic_table;
-};
-
-struct Affix {
-	char16_t flag;
-	bool cross_product;
-	std::string stripping;
-	std::string appending;
-	std::u16string new_flags;
-	std::string condition;
-	std::vector<std::string> morphological_fields;
-};
-
-struct Compound_Check_Pattern {
-	std::string first_word_end;
-	std::string second_word_begin;
-	std::string replacement;
-	char16_t first_word_flag;
-	char16_t second_word_flag;
 };
 
 using Word_List_Base =

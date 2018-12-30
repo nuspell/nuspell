@@ -17,7 +17,6 @@
  */
 
 #include "aff_data.hxx"
-#include "locale_utils.hxx"
 #include "string_utils.hxx"
 
 #include <algorithm>
@@ -81,6 +80,24 @@
 namespace nuspell {
 
 using namespace std;
+
+struct Affix {
+	char16_t flag;
+	bool cross_product;
+	std::string stripping;
+	std::string appending;
+	std::u16string new_flags;
+	std::string condition;
+	std::vector<std::string> morphological_fields;
+};
+
+struct Compound_Check_Pattern {
+	std::string first_word_end;
+	std::string second_word_begin;
+	std::string replacement;
+	char16_t first_word_flag;
+	char16_t second_word_flag;
+};
 
 auto Word_List::equal_range(const std::wstring& word) const
     -> std::pair<Word_List_Base::local_const_iterator,
@@ -159,12 +176,13 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
                   u16string& out) -> Flag_Parsing_Error
 {
 	using Err = Flag_Parsing_Error;
+	using Ft = Flag_Type;
 	auto warn = Err();
 	out.clear();
 	if (s.empty())
 		return Err::MISSING_FLAGS;
 	switch (t) {
-	case FLAG_SINGLE_CHAR:
+	case Ft::SINGLE_CHAR:
 		if (enc.is_utf8() && !is_all_ascii(s)) {
 			warn = Err::NONUTF8_FLAGS_ABOVE_127_WARNING;
 			// This warning will be triggered in Hungarian.
@@ -176,7 +194,7 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
 		}
 		latin1_to_ucs2(s, out);
 		break;
-	case FLAG_DOUBLE_CHAR: {
+	case Ft::DOUBLE_CHAR: {
 		if (enc.is_utf8() && !is_all_ascii(s))
 			warn = Err::NONUTF8_FLAGS_ABOVE_127_WARNING;
 
@@ -192,7 +210,7 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
 		}
 		break;
 	}
-	case FLAG_NUMBER: {
+	case Ft::NUMBER: {
 		auto p = s.c_str();
 		char* p2 = nullptr;
 		errno = 0;
@@ -223,7 +241,7 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
 		}
 		break;
 	}
-	case FLAG_UTF8: {
+	case Ft::UTF8: {
 		// if (!enc.is_utf8())
 		//	return Err::FLAGS_ARE_UTF8_BUT_FILE_NOT;
 
@@ -520,16 +538,17 @@ auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
  */
 auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
 {
+	using Ft = Flag_Type;
 	(void)line_num;
 	string p;
 	in >> p;
 	boost::algorithm::to_upper(p, in.getloc());
 	if (p == "LONG")
-		flag_type = FLAG_DOUBLE_CHAR;
+		flag_type = Ft::DOUBLE_CHAR;
 	else if (p == "NUM")
-		flag_type = FLAG_NUMBER;
+		flag_type = Ft::NUMBER;
 	else if (p == "UTF-8")
-		flag_type = FLAG_UTF8;
+		flag_type = Ft::UTF8;
 	else
 		cerr << "Nuspell error: unknown FLAG type" << endl;
 }
@@ -537,12 +556,13 @@ auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
 auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
                          const Encoding& enc, u16string& ret)
 {
+	using Ft = Flag_Type;
 	switch (t) {
-	case FLAG_SINGLE_CHAR:
-	case FLAG_UTF8:
+	case Ft::SINGLE_CHAR:
+	case Ft::UTF8:
 		decode_flags(in, line_num, t, enc, ret);
 		break;
-	case FLAG_DOUBLE_CHAR: {
+	case Ft::DOUBLE_CHAR: {
 		auto r = regex(R"(\((..)\)([?*]?))");
 		auto str = string();
 		in >> str;
@@ -560,7 +580,7 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 		}
 		break;
 	}
-	case FLAG_NUMBER: {
+	case Ft::NUMBER: {
 		// Following could be replaced by non-library implementation,
 		// reducing size of binary when no regex methods are called at
 		// all.
@@ -584,15 +604,19 @@ auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
 	}
 }
 
-auto strip_bom(istream& in)
+auto strip_utf8_bom(std::istream& in) -> void
 {
+	if (!in.good())
+		return;
 	string bom(3, '\0');
 	in.read(&bom[0], 3);
-	if (in.gcount() != 3 || bom != "\xEF\xBB\xBF") {
-		for (int i = in.gcount() - 1; i >= 0; --i) {
-			in.putback(bom[i]);
-		}
+	auto cnt = in.gcount();
+	if (cnt == 3 && bom == "\xEF\xBB\xBF")
+		return;
+	if (cnt < 3)
 		reset_failbit_istream(in);
+	for (auto i = cnt - 1; i >= 0; --i) {
+		in.putback(bom[i]);
 	}
 }
 
@@ -696,7 +720,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	vector<pair<string, string>> phonetic_replacements;
 	auto flags = u16string();
 
-	flag_type = FLAG_SINGLE_CHAR;
+	flag_type = Flag_Type::SINGLE_CHAR;
 
 	unordered_map<string, string*> command_strings = {
 	    {"LANG", &language_code},
@@ -777,7 +801,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	// "C" locale can be used assuming it is US-ASCII
 	in.imbue(loc);
 	ss.imbue(loc);
-	strip_bom(in);
+	strip_utf8_bom(in);
 	while (getline(in, line)) {
 		line_num++;
 
@@ -1078,7 +1102,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	Setlocale_To_C_In_Scope setlocale_to_C;
 	in.imbue(loc);
 	ss.imbue(loc);
-	strip_bom(in);
+	strip_utf8_bom(in);
 	if (!getline(in, line)) {
 		return false;
 	}
