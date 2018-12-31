@@ -21,7 +21,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <regex>
 #include <sstream>
 #include <unordered_map>
 
@@ -169,7 +168,8 @@ enum class Flag_Parsing_Error {
 	// FLAGS_ARE_UTF8_BUT_FILE_NOT,
 	INVALID_UTF8,
 	FLAG_ABOVE_65535,
-	INVALID_NUMERIC_ALIAS
+	INVALID_NUMERIC_ALIAS,
+	COMPOUND_RULE_INVALID_FORMAT
 };
 
 auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
@@ -328,6 +328,11 @@ auto report_flag_parsing_error(Flag_Parsing_Error err, size_t line_num)
 		break;
 	case Err::INVALID_NUMERIC_ALIAS:
 		cerr << "Nuspell error: Flag alias is invalid in line"
+		     << line_num << '\n';
+		break;
+	case Err::COMPOUND_RULE_INVALID_FORMAT:
+		cerr << "Nuspell error: Compound rule is in invalid format in "
+		        "line "
 		     << line_num << '\n';
 		break;
 	}
@@ -553,55 +558,83 @@ auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
 		cerr << "Nuspell error: unknown FLAG type" << endl;
 }
 
-auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
-                         const Encoding& enc, u16string& ret)
+auto parse_compound_rule(const string& s, Flag_Type t, const Encoding& enc,
+                         u16string& out) -> Flag_Parsing_Error
 {
 	using Ft = Flag_Type;
+	using Err = Flag_Parsing_Error;
 	switch (t) {
 	case Ft::SINGLE_CHAR:
 	case Ft::UTF8:
-		decode_flags(in, line_num, t, enc, ret);
+		return decode_flags(s, t, enc, out);
 		break;
-	case Ft::DOUBLE_CHAR: {
-		auto r = regex(R"(\((..)\)([?*]?))");
-		auto str = string();
-		in >> str;
-		auto it = sregex_iterator(str.begin(), str.end(), r);
-		auto last = sregex_iterator();
-		for (; it != last; ++it) {
-			auto& m = *it;
-			auto i = m[1].first;
-			auto c1 = *i;
-			auto c2 = *(i + 1);
-			ret.push_back((c1 << 8) | c2);
-
-			if (m[2].length() != 0)
-				ret.push_back(*m[2].first);
+	case Ft::DOUBLE_CHAR:
+		out.clear();
+		if (s.empty())
+			return Err::MISSING_FLAGS;
+		for (size_t i = 0;;) {
+			if (s.size() - i < 4)
+				return Err::COMPOUND_RULE_INVALID_FORMAT;
+			if (s[i] != '(' || s[i + 3] != ')')
+				return Err::COMPOUND_RULE_INVALID_FORMAT;
+			auto c1 = s[i + 1];
+			auto c2 = s[i + 2];
+			out.push_back((c1 << 8) | c2);
+			i += 4;
+			if (i == s.size())
+				break;
+			if (s[i] == '?' || s[i] == '*') {
+				out.push_back(s[i]);
+				i += 1;
+			}
+		}
+		break;
+	case Ft::NUMBER:
+		out.clear();
+		if (s.empty())
+			return Err::MISSING_FLAGS;
+		errno = 0;
+		for (auto p = s.c_str(); *p != 0;) {
+			if (*p != '(')
+				return Err::COMPOUND_RULE_INVALID_FORMAT;
+			++p;
+			char* p2;
+			auto flag = strtoul(p, &p2, 10);
+			flag = strtoul(p, &p2, 10);
+			if (p2 == p)
+				return Err::INVALID_NUMERIC_FLAG;
+			if (flag == numeric_limits<decltype(flag)>::max() &&
+			    errno == ERANGE) {
+				errno = 0;
+				return Err::FLAG_ABOVE_65535;
+			}
+			if (flag > 0xFFFF)
+				return Err::FLAG_ABOVE_65535;
+			p = p2;
+			if (*p != ')')
+				return Err::COMPOUND_RULE_INVALID_FORMAT;
+			out.push_back(flag);
+			++p;
+			if (*p == '?' || *p == '*') {
+				out.push_back(*p);
+				++p;
+			}
 		}
 		break;
 	}
-	case Ft::NUMBER: {
-		// Following could be replaced by non-library implementation,
-		// reducing size of binary when no regex methods are called at
-		// all.
-		auto r = regex(R"(\(([0-9]+)\)([?*]?))");
-		auto str = string();
-		in >> str;
-		auto it = sregex_iterator(str.begin(), str.end(), r);
-		auto last = sregex_iterator();
-		for (; it != last; ++it) {
-			auto& m = *it;
-			auto number_pos = m.position(1);
-			auto fl = strtoul(&str[number_pos], nullptr, 10);
-			if (fl <= 0xFFFF)
-				ret.push_back(fl);
+	return {};
+}
 
-			if (m[2].length() != 0)
-				ret.push_back(*m[2].first);
-		}
-		break;
-	}
-	}
+auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
+                         const Encoding& enc, u16string& out) -> istream&
+{
+	string s;
+	in >> s;
+	auto err = parse_compound_rule(s, t, enc, out);
+	if (static_cast<int>(err) > 0)
+		in.setstate(in.failbit);
+	report_flag_parsing_error(err, line_num);
+	return in;
 }
 
 auto strip_utf8_bom(std::istream& in) -> void
