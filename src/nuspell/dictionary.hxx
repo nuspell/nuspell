@@ -267,43 +267,45 @@ struct Dict_Base : public Aff_Data {
 
 	template <class CharT>
 	auto suggest_priv(std::basic_string<CharT>& word,
-	                  List_Strings<CharT>& out) const -> void;
+	                  List_Basic_Strings<CharT>& out) const -> void;
 
 	template <class CharT>
 	auto add_sug_if_correct(std::basic_string<CharT>& word,
-	                        List_Strings<CharT>& out) const -> bool;
+	                        List_Basic_Strings<CharT>& out) const -> bool;
 
 	template <class CharT>
 	auto try_rep_suggestion(std::basic_string<CharT>& word,
-	                        List_Strings<CharT>& out) const -> void;
+	                        List_Basic_Strings<CharT>& out) const -> void;
 
 	template <class CharT>
 	auto rep_suggest(std::basic_string<CharT>& word,
-	                 List_Strings<CharT>& out) const -> void;
+	                 List_Basic_Strings<CharT>& out) const -> void;
 
 	template <class CharT>
 	auto extra_char_suggest(std::basic_string<CharT>& word,
-	                        List_Strings<CharT>& out) const -> void;
+	                        List_Basic_Strings<CharT>& out) const -> void;
 
 	template <class CharT>
 	auto map_suggest(std::basic_string<CharT>& word,
-	                 List_Strings<CharT>& out, size_t i = 0) const -> void;
+	                 List_Basic_Strings<CharT>& out, size_t i = 0) const
+	    -> void;
 
 	template <class CharT>
 	auto keyboard_suggest(std::basic_string<CharT>& word,
-	                      List_Strings<CharT>& out) const -> void;
+	                      List_Basic_Strings<CharT>& out) const -> void;
 
 	template <class CharT>
 	auto bad_char_suggest(std::basic_string<CharT>& word,
-	                      List_Strings<CharT>& out) const -> void;
+	                      List_Basic_Strings<CharT>& out) const -> void;
 
 	template <class CharT>
 	auto forgotten_char_suggest(std::basic_string<CharT>& word,
-	                            List_Strings<CharT>& out) const -> void;
+	                            List_Basic_Strings<CharT>& out) const
+	    -> void;
 
 	template <class CharT>
 	auto phonetic_suggest(std::basic_string<CharT>& word,
-	                      List_Strings<CharT>& out) const -> void;
+	                      List_Basic_Strings<CharT>& out) const -> void;
 
       public:
 	Dict_Base()
@@ -342,8 +344,7 @@ class Dictionary : private Dict_Base {
 	    const std::string& file_path_without_extension) -> Dictionary;
 	auto imbue(const std::locale& loc) -> void;
 	auto spell(const std::string& word) const -> bool;
-	auto suggest(const std::string& word, List_Strings<char>& out) const
-	    -> void;
+	auto suggest(const std::string& word, List_Strings& out) const -> void;
 };
 } // namespace v2
 } // namespace nuspell

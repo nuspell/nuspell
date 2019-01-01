@@ -405,7 +405,7 @@ TEST_CASE("class Similarity_Group", "[structures]")
 
 TEST_CASE("class List_Strings", "[structures]")
 {
-	auto l = List_Strings<char>();
+	auto l = List_Strings();
 	CHECK(l.size() == 0);
 	CHECK(begin(l) == end(l));
 	l.push_back("1");

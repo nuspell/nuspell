@@ -1898,7 +1898,7 @@ auto Dict_Base::check_compound_with_rules(
 
 template <class CharT>
 auto Dict_Base::suggest_priv(std::basic_string<CharT>& word,
-                             List_Strings<CharT>& out) const -> void
+                             List_Basic_Strings<CharT>& out) const -> void
 {
 	rep_suggest(word, out);
 	map_suggest(word, out);
@@ -1909,14 +1909,12 @@ auto Dict_Base::suggest_priv(std::basic_string<CharT>& word,
 	phonetic_suggest(word, out);
 }
 
-template auto Dict_Base::suggest_priv(string&, List_Strings<char>&) const
-    -> void;
-template auto Dict_Base::suggest_priv(wstring&, List_Strings<wchar_t>&) const
-    -> void;
+template auto Dict_Base::suggest_priv(string&, List_Strings&) const -> void;
+template auto Dict_Base::suggest_priv(wstring&, List_WStrings&) const -> void;
 
 template <class CharT>
 auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
-                                   List_Strings<CharT>& out) const -> bool
+                                   List_Basic_Strings<CharT>& out) const -> bool
 {
 	for (auto& o : out)
 		if (o == word)
@@ -1934,7 +1932,7 @@ auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
 
 template <class CharT>
 auto Dict_Base::try_rep_suggestion(std::basic_string<CharT>& word,
-                                   List_Strings<CharT>& out) const -> void
+                                   List_Basic_Strings<CharT>& out) const -> void
 {
 	if (add_sug_if_correct(word, out))
 		return;
@@ -1954,7 +1952,7 @@ auto Dict_Base::try_rep_suggestion(std::basic_string<CharT>& word,
 
 template <class CharT>
 auto Dict_Base::rep_suggest(std::basic_string<CharT>& word,
-                            List_Strings<CharT>& out) const -> void
+                            List_Basic_Strings<CharT>& out) const -> void
 {
 	auto& reps = get_structures<CharT>().replacements;
 	for (auto& r : reps.whole_word_replacements()) {
@@ -2000,7 +1998,7 @@ auto Dict_Base::rep_suggest(std::basic_string<CharT>& word,
 
 template <class CharT>
 auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
-                                   List_Strings<CharT>& out) const -> void
+                                   List_Basic_Strings<CharT>& out) const -> void
 {
 	for (auto i = word.size() - 1; i != size_t(-1); --i) {
 		auto c = word[i];
@@ -2009,15 +2007,15 @@ auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
 		word.insert(i, 1, c);
 	}
 }
-template auto Dict_Base::extra_char_suggest(string&, List_Strings<char>&) const
+template auto Dict_Base::extra_char_suggest(string&, List_Strings&) const
     -> void;
-template auto Dict_Base::extra_char_suggest(wstring&,
-                                            List_Strings<wchar_t>&) const
+template auto Dict_Base::extra_char_suggest(wstring&, List_WStrings&) const
     -> void;
 
 template <class CharT>
 auto Dict_Base::map_suggest(std::basic_string<CharT>& word,
-                            List_Strings<CharT>& out, size_t i) const -> void
+                            List_Basic_Strings<CharT>& out, size_t i) const
+    -> void
 {
 	auto& similarities = get_structures<CharT>().similarities;
 	for (; i != word.size(); ++i) {
@@ -2064,7 +2062,7 @@ auto Dict_Base::map_suggest(std::basic_string<CharT>& word,
 
 template <class CharT>
 auto Dict_Base::keyboard_suggest(std::basic_string<CharT>& word,
-                                 List_Strings<CharT>& out) const -> void
+                                 List_Basic_Strings<CharT>& out) const -> void
 {
 	auto& ct = use_facet<ctype<CharT>>(internal_locale);
 	auto& kb = get_structures<CharT>().keyboard_closeness;
@@ -2093,7 +2091,7 @@ auto Dict_Base::keyboard_suggest(std::basic_string<CharT>& word,
 
 template <class CharT>
 auto Dict_Base::bad_char_suggest(std::basic_string<CharT>& word,
-                                 List_Strings<CharT>& out) const -> void
+                                 List_Basic_Strings<CharT>& out) const -> void
 {
 	auto& try_chars = get_structures<CharT>().try_chars;
 	for (auto new_c : try_chars) {
@@ -2107,14 +2105,14 @@ auto Dict_Base::bad_char_suggest(std::basic_string<CharT>& word,
 		}
 	}
 }
-template auto Dict_Base::bad_char_suggest(string&, List_Strings<char>&) const
+template auto Dict_Base::bad_char_suggest(string&, List_Strings&) const -> void;
+template auto Dict_Base::bad_char_suggest(wstring&, List_WStrings&) const
     -> void;
-template auto Dict_Base::bad_char_suggest(wstring&,
-                                          List_Strings<wchar_t>&) const -> void;
 
 template <class CharT>
 auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
-                                       List_Strings<CharT>& out) const -> void
+                                       List_Basic_Strings<CharT>& out) const
+    -> void
 {
 	auto& try_chars = get_structures<CharT>().try_chars;
 	for (auto new_c : try_chars) {
@@ -2125,16 +2123,14 @@ auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
 		}
 	}
 }
-template auto Dict_Base::forgotten_char_suggest(string&,
-                                                List_Strings<char>&) const
+template auto Dict_Base::forgotten_char_suggest(string&, List_Strings&) const
     -> void;
-template auto Dict_Base::forgotten_char_suggest(wstring&,
-                                                List_Strings<wchar_t>&) const
+template auto Dict_Base::forgotten_char_suggest(wstring&, List_WStrings&) const
     -> void;
 
 template <class CharT>
 auto Dict_Base::phonetic_suggest(std::basic_string<CharT>& word,
-                                 List_Strings<CharT>& out) const -> void
+                                 List_Basic_Strings<CharT>& out) const -> void
 {
 	using ShortStr = boost::container::small_vector<CharT, 64>;
 	auto backup = ShortStr(&word[0], &word[word.size()]);
@@ -2320,13 +2316,12 @@ auto Dictionary::spell(const std::string& word) const -> bool
  * @param word incorrect word
  * @param[out] out this object will be populated with the suggestions
  */
-auto Dictionary::suggest(const string& word, List_Strings<char>& out) const
-    -> void
+auto Dictionary::suggest(const string& word, List_Strings& out) const -> void
 {
 	using ed = Encoding_Details;
 	auto static thread_local wide_word = wstring();
 	auto static thread_local narrow_word = string();
-	auto static thread_local wide_list = List_Strings<wchar_t>();
+	auto static thread_local wide_list = List_WStrings();
 
 	out.clear();
 	auto ok_enc =

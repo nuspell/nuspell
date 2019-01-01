@@ -901,12 +901,11 @@ class Compound_Rule_Table {
 	    -> bool;
 };
 
-inline namespace v2 {
 /**
  * @brief Vector of strings that recycles erased strings
  */
 template <class CharT>
-class List_Strings {
+class List_Basic_Strings {
 	using VecT = std::vector<std::basic_string<CharT>>;
 	VecT d;
 	size_t sz = 0;
@@ -925,30 +924,35 @@ class List_Strings {
 	using reverse_iterator = typename VecT::reverse_iterator;
 	using const_reverse_iterator = typename VecT::const_reverse_iterator;
 
-	List_Strings() = default;
-	explicit List_Strings(size_type n) : d(n), sz(n) {}
-	List_Strings(size_type n, const_reference value) : d(n, value), sz(n) {}
+	List_Basic_Strings() = default;
+	explicit List_Basic_Strings(size_type n) : d(n), sz(n) {}
+	List_Basic_Strings(size_type n, const_reference value)
+	    : d(n, value), sz(n)
+	{
+	}
 	template <class InputIterator>
-	List_Strings(InputIterator first, InputIterator last)
+	List_Basic_Strings(InputIterator first, InputIterator last)
 	    : d(first, last), sz(d.size())
 	{
 	}
-	List_Strings(std::initializer_list<value_type> il) : d(il), sz(d.size())
+	List_Basic_Strings(std::initializer_list<value_type> il)
+	    : d(il), sz(d.size())
 	{
 	}
 
-	List_Strings(const List_Strings& other) = default;
-	List_Strings(List_Strings&& other) : d(move(other.d)), sz(other.sz)
+	List_Basic_Strings(const List_Basic_Strings& other) = default;
+	List_Basic_Strings(List_Basic_Strings&& other)
+	    : d(move(other.d)), sz(other.sz)
 	{
 		other.sz = 0;
 	}
-	auto& operator=(const List_Strings& other)
+	auto& operator=(const List_Basic_Strings& other)
 	{
 		clear();
 		insert(begin(), other.begin(), other.end());
 		return *this;
 	}
-	auto& operator=(List_Strings&& other)
+	auto& operator=(List_Basic_Strings&& other)
 	{
 		d = move(other.d);
 		sz = other.sz;
@@ -1214,47 +1218,51 @@ class List_Strings {
 		sz -= last - first;
 		return i1;
 	}
-	auto swap(List_Strings& other)
+	auto swap(List_Basic_Strings& other)
 	{
 		d.swap(other.d);
 		std::swap(sz, other.sz);
 	}
 	auto clear() noexcept -> void { sz = 0; }
 
-	auto operator==(const List_Strings& other) const
+	auto operator==(const List_Basic_Strings& other) const
 	{
 		return std::equal(begin(), end(), other.begin(), other.end());
 	}
-	auto operator!=(const List_Strings& other) const
+	auto operator!=(const List_Basic_Strings& other) const
 	{
 		return !(*this == other);
 	}
-	auto operator<(const List_Strings& other) const
+	auto operator<(const List_Basic_Strings& other) const
 	{
 		return std::lexicographical_compare(begin(), end(),
 		                                    other.begin(), other.end());
 	}
-	auto operator>=(const List_Strings& other) const
+	auto operator>=(const List_Basic_Strings& other) const
 	{
 		return !(*this < other);
 	}
-	auto operator>(const List_Strings& other) const
+	auto operator>(const List_Basic_Strings& other) const
 	{
 		return std::lexicographical_compare(other.begin(), other.end(),
 		                                    begin(), end());
 	}
-	auto operator<=(const List_Strings& other) const
+	auto operator<=(const List_Basic_Strings& other) const
 	{
 		return !(*this > other);
 	}
 };
 
 template <class CharT>
-auto swap(List_Strings<CharT>& a, List_Strings<CharT>& b)
+auto swap(List_Basic_Strings<CharT>& a, List_Basic_Strings<CharT>& b)
 {
 	a.swap(b);
 }
-} // namespace v2
+
+inline namespace v2 {
+using List_Strings = List_Basic_Strings<char>;
+}
+using List_WStrings = List_Basic_Strings<wchar_t>;
 
 template <class CharT>
 class Replacement_Table {

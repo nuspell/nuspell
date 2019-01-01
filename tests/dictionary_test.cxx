@@ -239,8 +239,8 @@ TEST_CASE("rep_suggest", "[dictionary]")
 	CHECK(d.spell_priv<wchar_t>(good) == true);
 	auto w = wstring(L"phat");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
-	auto out_sug = List_Strings<wchar_t>();
-	auto expected_sug = List_Strings<wchar_t>{good};
+	auto out_sug = List_WStrings();
+	auto expected_sug = List_WStrings{good};
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 	w = wstring(L"fad phat");
@@ -322,8 +322,8 @@ TEST_CASE("extra_char_suggest", "[dictionary]")
 	auto w = wstring(L"tabble");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out_sug = List_Strings<wchar_t>();
-	auto expected_sug = List_Strings<wchar_t>{good};
+	auto out_sug = List_WStrings();
+	auto expected_sug = List_WStrings{good};
 	d.extra_char_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
@@ -350,8 +350,8 @@ TEST_CASE("map_suggest", "[dictionary]")
 	auto w = wstring(L"naive");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out_sug = List_Strings<wchar_t>();
-	auto expected_sug = List_Strings<wchar_t>{good};
+	auto out_sug = List_WStrings();
+	auto expected_sug = List_WStrings{good};
 	d.map_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
@@ -407,8 +407,8 @@ TEST_CASE("keyboard_suggest", "[dictionary]")
 	auto w = wstring(L"abcf");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out_sug = List_Strings<wchar_t>();
-	auto expected_sug = List_Strings<wchar_t>{good1};
+	auto out_sug = List_WStrings();
+	auto expected_sug = List_WStrings{good1};
 	d.keyboard_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
@@ -448,8 +448,8 @@ TEST_CASE("bad_char_suggest", "[dictionary]")
 	auto w = wstring(L"cháir");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out_sug = List_Strings<wchar_t>();
-	auto expected_sug = List_Strings<wchar_t>{good};
+	auto out_sug = List_WStrings();
+	auto expected_sug = List_WStrings{good};
 	d.bad_char_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 }
@@ -467,8 +467,8 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 	auto w = wstring(L"abd");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out_sug = List_Strings<wchar_t>();
-	auto expected_sug = List_Strings<wchar_t>{good};
+	auto out_sug = List_WStrings();
+	auto expected_sug = List_WStrings{good};
 	d.forgotten_char_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 }
@@ -601,8 +601,8 @@ TEST_CASE("phonetic_suggest", "[dictionary]")
 	auto w = wstring(L"Brasillian");
 	CHECK(d.spell_priv<wchar_t>(w) == false);
 
-	auto out_sug = List_Strings<wchar_t>();
-	auto expected_sug = List_Strings<wchar_t>();
+	auto out_sug = List_WStrings();
+	auto expected_sug = List_WStrings();
 	auto sugs = {L"Brasilia",  L"Xxxxxxxxxx", L"Brilliant",
 	             L"Brazilian", L"Brassily",   L"Brilliance"};
 	for (auto& s : sugs)
@@ -638,8 +638,8 @@ TEST_CASE("long word", "[dictionary]")
 	CHECK(d.spell(good) == true);
 	CHECK(d.spell(toolong) == true);
 
-	auto out_sug = List_Strings<wchar_t>();
-	auto expected_sug = List_Strings<wchar_t>();
+	auto out_sug = List_WStrings();
+	auto expected_sug = List_WStrings();
 	d.suggest(toolong, out_sug);
 	CHECK(out_sug == expected_sug);
 }
@@ -657,7 +657,7 @@ TEST_CASE("suggest_priv", "[dictionary]")
 		d.words.insert({x, {}});
 
 	auto w = wstring(L"traal");
-	auto out_sug = List_Strings<wchar_t>();
+	auto out_sug = List_WStrings();
 	d.suggest_priv(w, out_sug);
 	CHECK(words.size() == out_sug.size());
 }
@@ -696,7 +696,7 @@ TEST_CASE("suggest_priv_max", "[dictionary]")
 	}
 
 	auto w = wstring(L"xxxx");
-	auto out_sug = List_Strings<wchar_t>();
+	auto out_sug = List_WStrings();
 	d.suggest_priv(w, out_sug);
 	CHECK(d.words.size() == out_sug.size());
 }
