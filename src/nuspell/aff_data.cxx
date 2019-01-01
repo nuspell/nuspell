@@ -1156,6 +1156,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	string morph;
 	vector<string> morphs;
 	u16string flags;
+	wstring wide_word;
 
 	while (getline(in, line)) {
 		line_number++;
@@ -1206,17 +1207,23 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		}
 		// parse_morhological_fields(ss, morphs);
 
-		if (encoding.is_utf8() &&
-		    !wide_structures.ignored_chars.empty()) {
-			auto ustr = utf8_to_wide(word);
-			erase_chars(ustr, wide_structures.ignored_chars);
-			word = wide_to_utf8(ustr);
+		auto casing = Casing();
+		if (encoding.is_utf8()) {
+			auto ok = utf8_to_wide(word, wide_word);
+			if (!ok)
+				continue;
+			if (!wide_structures.ignored_chars.empty()) {
+				erase_chars(wide_word,
+				            wide_structures.ignored_chars);
+				wide_to_utf8(wide_word, word);
+			}
+			casing = classify_casing(wide_word, internal_locale);
 		}
-		if (!encoding.is_utf8()) {
+		else {
 			erase_chars(word, structures.ignored_chars);
+			casing = classify_casing(word, internal_locale);
 		}
 
-		auto casing = classify_casing(word, internal_locale);
 		const char16_t HIDDEN_HOMONYM_FLAG = -1;
 		switch (casing) {
 		case Casing::ALL_CAPITAL: {
