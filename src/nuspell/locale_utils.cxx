@@ -581,33 +581,14 @@ auto install_ctype_facets_inplace(std::locale& boost_loc) -> void
 	boost_loc = locale(boost_loc, new my_ctype<wchar_t>(enc));
 }
 
-auto analyze_encodings(const locale& external, const locale& internal)
-    -> Encoding_Details
+auto is_locale_known_utf8(const locale& loc) -> bool
 {
 	using namespace boost::locale;
-	using ed = nuspell::Encoding_Details;
-
-	auto& int_info = use_facet<info>(internal);
-	if (has_facet<info>(external)) {
-		auto& ext_info = use_facet<info>(external);
-		if (ext_info.utf8() && int_info.utf8())
-			return ed::EXTERNAL_U8_INTERNAL_U8;
-		if (ext_info.utf8() && !int_info.utf8())
-			return ed::EXTERNAL_U8_INTERNAL_OTHER;
-		if (int_info.utf8())
-			return ed::EXTERNAL_OTHER_INTERNAL_U8;
-		auto int_enc = int_info.encoding();
-		auto ext_enc = ext_info.encoding();
-		auto& cvt =
-		    use_facet<codecvt<wchar_t, char, mbstate_t>>(internal);
-		if (int_enc == ext_enc && cvt.encoding() >= 0 &&
-		    cvt.max_length() == 1)
-			return ed::EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE;
-		return ed::EXTERNAL_OTHER_INTERNAL_OTHER;
+	if (has_facet<info>(loc)) {
+		auto& ext_info = use_facet<info>(loc);
+		return ext_info.utf8();
 	}
-	if (int_info.utf8())
-		return ed::EXTERNAL_OTHER_INTERNAL_U8;
-	return ed::EXTERNAL_OTHER_INTERNAL_OTHER;
+	return false;
 }
 
 /**

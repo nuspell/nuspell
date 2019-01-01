@@ -324,17 +324,15 @@ inline namespace v2 {
  */
 class Dictionary : private Dict_Base {
 	std::locale external_locale;
-	Encoding_Details enc_details;
+	bool external_locale_known_utf8;
 
 	Dictionary(std::istream& aff, std::istream& dic);
 	auto external_to_internal_encoding(const std::string& in,
-	                                   std::wstring& wide_out,
-	                                   std::string& narrow_out) const
+	                                   std::wstring& wide_out) const
 	    -> bool;
 
-	auto internal_to_external_encoding(std::string& in_out,
-	                                   std::wstring& wide_in_out) const
-	    -> bool;
+	auto internal_to_external_encoding(std::string& out,
+	                                   std::wstring& wide_in) const -> bool;
 
       public:
 	Dictionary();

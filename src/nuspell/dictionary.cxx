@@ -2148,70 +2148,33 @@ Dictionary::Dictionary(std::istream& aff, std::istream& dic)
 {
 	if (!parse_aff_dic(aff, dic))
 		throw std::ios_base::failure("error parsing");
-	enc_details = analyze_encodings(external_locale, internal_locale);
+	external_locale_known_utf8 = is_locale_known_utf8(external_locale);
 }
 
 auto Dictionary::external_to_internal_encoding(const string& in,
-                                               wstring& wide_out,
-                                               string& narrow_out) const -> bool
+                                               wstring& wide_out) const -> bool
 {
-	using ed = Encoding_Details;
-	auto ok = true;
-	switch (enc_details) {
-	case ed::EXTERNAL_U8_INTERNAL_U8:
-		ok = utf8_to_wide(in, wide_out);
-		break;
-	case ed::EXTERNAL_OTHER_INTERNAL_U8:
-		ok = to_wide(in, external_locale, wide_out);
-		break;
-	case ed::EXTERNAL_U8_INTERNAL_OTHER:
-		ok = utf8_to_wide(in, wide_out);
-		ok &= to_narrow(wide_out, narrow_out, internal_locale);
-		break;
-	case ed::EXTERNAL_OTHER_INTERNAL_OTHER:
-		ok = to_wide(in, external_locale, wide_out);
-		ok &= to_narrow(wide_out, narrow_out, internal_locale);
-		break;
-	case ed::EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE:
-		narrow_out = in;
-		ok = true;
-		break;
-	}
-	return ok;
+	if (external_locale_known_utf8)
+		return utf8_to_wide(in, wide_out);
+	else
+		return to_wide(in, external_locale, wide_out);
 }
 
-auto Dictionary::internal_to_external_encoding(string& in_out,
-                                               wstring& wide_in_out) const
-    -> bool
+auto Dictionary::internal_to_external_encoding(string& out,
+                                               wstring& wide_in) const -> bool
 {
-	using ed = Encoding_Details;
-	auto ok = true;
-	switch (enc_details) {
-	case ed::EXTERNAL_U8_INTERNAL_U8:
-		wide_to_utf8(wide_in_out, in_out);
-		break;
-	case ed::EXTERNAL_OTHER_INTERNAL_U8:
-		ok = to_narrow(wide_in_out, in_out, external_locale);
-		break;
-	case ed::EXTERNAL_U8_INTERNAL_OTHER:
-		ok = to_wide(in_out, internal_locale, wide_in_out);
-		wide_to_utf8(wide_in_out, in_out);
-		break;
-	case ed::EXTERNAL_OTHER_INTERNAL_OTHER:
-		ok = to_wide(in_out, internal_locale, wide_in_out);
-		ok &= to_narrow(wide_in_out, in_out, external_locale);
-		break;
-	case ed::EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE:
-		break;
-	}
-	return ok;
+	if (external_locale_known_utf8)
+		wide_to_utf8(wide_in, out);
+	else
+		return to_narrow(wide_in, out, external_locale);
+	return true;
 }
 
 Dictionary::Dictionary()
 {
 	// ensures the internal locale is boost locale
 	set_encoding_and_language("");
-	enc_details = analyze_encodings(external_locale, internal_locale);
+	external_locale_known_utf8 = is_locale_known_utf8(external_locale);
 }
 
 /**
@@ -2269,7 +2232,7 @@ auto Dictionary::load_from_path(const std::string& file_path_without_extension)
 auto Dictionary::imbue(const locale& loc) -> void
 {
 	external_locale = loc;
-	enc_details = analyze_encodings(external_locale, internal_locale);
+	external_locale_known_utf8 = is_locale_known_utf8(external_locale);
 }
 
 /**
@@ -2279,36 +2242,17 @@ auto Dictionary::imbue(const locale& loc) -> void
  */
 auto Dictionary::spell(const std::string& word) const -> bool
 {
-	using ed = Encoding_Details;
 	auto static thread_local wide_word = wstring();
 	auto static thread_local narrow_word = string();
-	auto ok_enc =
-	    external_to_internal_encoding(word, wide_word, narrow_word);
-	switch (enc_details) {
-	case ed::EXTERNAL_U8_INTERNAL_U8:
-	case ed::EXTERNAL_OTHER_INTERNAL_U8:
-		if (unlikely(wide_word.size() > 180)) {
-			wide_word.resize(180);
-			wide_word.shrink_to_fit();
-			return false;
-		}
-		if (unlikely(!ok_enc))
-			return false;
-		return spell_priv(wide_word);
-		break;
-	default:
-		if (unlikely(narrow_word.size() > 180)) {
-			narrow_word.resize(180);
-			narrow_word.shrink_to_fit();
-			wide_word.resize(180);
-			wide_word.shrink_to_fit();
-			return false;
-		}
-		if (unlikely(!ok_enc))
-			return false;
-		return spell_priv(narrow_word);
-		break;
+	auto ok_enc = external_to_internal_encoding(word, wide_word);
+	if (unlikely(wide_word.size() > 180)) {
+		wide_word.resize(180);
+		wide_word.shrink_to_fit();
+		return false;
 	}
+	if (unlikely(!ok_enc))
+		return false;
+	return spell_priv(wide_word);
 }
 
 /**
@@ -2318,46 +2262,23 @@ auto Dictionary::spell(const std::string& word) const -> bool
  */
 auto Dictionary::suggest(const string& word, List_Strings& out) const -> void
 {
-	using ed = Encoding_Details;
 	auto static thread_local wide_word = wstring();
-	auto static thread_local narrow_word = string();
 	auto static thread_local wide_list = List_WStrings();
 
 	out.clear();
-	auto ok_enc =
-	    external_to_internal_encoding(word, wide_word, narrow_word);
-	switch (enc_details) {
-	case ed::EXTERNAL_U8_INTERNAL_U8:
-	case ed::EXTERNAL_OTHER_INTERNAL_U8:
-		if (unlikely(wide_word.size() > 180)) {
-			wide_word.resize(180);
-			wide_word.shrink_to_fit();
-			return;
-		}
-		if (unlikely(!ok_enc))
-			return;
-		wide_list.clear();
-		suggest_priv(wide_word, wide_list);
-		for (auto& w : wide_list) {
-			auto& o = out.emplace_back();
-			internal_to_external_encoding(o, w);
-		}
-		break;
-	default:
-		if (unlikely(narrow_word.size() > 180)) {
-			narrow_word.resize(180);
-			narrow_word.shrink_to_fit();
-			wide_word.resize(180);
-			wide_word.shrink_to_fit();
-			return;
-		}
-		if (unlikely(!ok_enc))
-			return;
-		suggest_priv(narrow_word, out);
-		for (auto& nw : out) {
-			internal_to_external_encoding(nw, wide_word);
-		}
-		break;
+	auto ok_enc = external_to_internal_encoding(word, wide_word);
+	if (unlikely(wide_word.size() > 180)) {
+		wide_word.resize(180);
+		wide_word.shrink_to_fit();
+		return;
+	}
+	if (unlikely(!ok_enc))
+		return;
+	wide_list.clear();
+	suggest_priv(wide_word, wide_list);
+	for (auto& w : wide_list) {
+		auto& o = out.emplace_back();
+		internal_to_external_encoding(o, w);
 	}
 }
 } // namespace nuspell

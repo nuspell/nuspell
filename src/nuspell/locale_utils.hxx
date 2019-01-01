@@ -58,16 +58,7 @@ auto to_narrow(const std::wstring& in, const std::locale& outloc)
 
 auto install_ctype_facets_inplace(std::locale& boost_loc) -> void;
 
-enum class Encoding_Details {
-	EXTERNAL_U8_INTERNAL_U8,
-	EXTERNAL_OTHER_INTERNAL_U8,
-	EXTERNAL_U8_INTERNAL_OTHER,
-	EXTERNAL_OTHER_INTERNAL_OTHER,
-	EXTERNAL_SAME_INTERNAL_AND_SINGLEBYTE
-};
-
-auto analyze_encodings(const std::locale& external, const std::locale& internal)
-    -> Encoding_Details;
+auto is_locale_known_utf8(const std::locale& loc) -> bool;
 
 /**
  * @brief Casing type enum, ignoring neutral case characters.
