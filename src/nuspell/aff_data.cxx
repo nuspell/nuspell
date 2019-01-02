@@ -998,27 +998,27 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		};
 		auto iconv =
 		    boost::adaptors::transform(input_conversion, u8_to_w_pair);
-		wide_structures.input_substr_replacer = iconv;
+		input_substr_replacer = iconv;
 		auto oconv =
 		    boost::adaptors::transform(output_conversion, u8_to_w_pair);
-		wide_structures.output_substr_replacer = oconv;
+		output_substr_replacer = oconv;
 
 		auto break_pat =
 		    boost::adaptors::transform(break_patterns, u8_to_w);
-		wide_structures.break_table = break_pat;
-		wide_structures.ignored_chars = u8_to_w(ignore_chars);
+		break_table = break_pat;
+		ignored_chars = u8_to_w(ignore_chars);
 
 		for (auto& x : prefixes) {
 			auto appending = u8_to_w(x.appending);
-			erase_chars(appending, wide_structures.ignored_chars);
-			wide_structures.prefixes.emplace(
+			erase_chars(appending, ignored_chars);
+			this->prefixes.emplace(
 			    x.flag, x.cross_product, u8_to_w(x.stripping),
 			    appending, x.new_flags, u8_to_w(x.condition));
 		}
 		for (auto& x : suffixes) {
 			auto appending = u8_to_w(x.appending);
-			erase_chars(appending, wide_structures.ignored_chars);
-			wide_structures.suffixes.emplace(
+			erase_chars(appending, ignored_chars);
+			this->suffixes.emplace(
 			    x.flag, x.cross_product, u8_to_w(x.stripping),
 			    appending, x.new_flags, u8_to_w(x.condition));
 		}
@@ -1026,7 +1026,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			auto forbid_unaffixed = x.first_word_end == "0";
 			if (forbid_unaffixed)
 				x.first_word_end.clear();
-			wide_structures.compound_patterns.push_back(
+			compound_patterns.push_back(
 			    {{u8_to_w(x.first_word_end),
 			      u8_to_w(x.second_word_begin)},
 			     u8_to_w(x.replacement),
@@ -1036,16 +1036,16 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		}
 		auto reps =
 		    boost::adaptors::transform(replacements, u8_to_w_pair);
-		wide_structures.replacements = reps;
+		this->replacements = reps;
 
 		auto maps =
 		    boost::adaptors::transform(map_related_chars, u8_to_w);
-		wide_structures.similarities.assign(begin(maps), end(maps));
-		wide_structures.keyboard_closeness = u8_to_w(keyboard_layout);
-		wide_structures.try_chars = u8_to_w(try_chars);
+		similarities.assign(begin(maps), end(maps));
+		keyboard_closeness = u8_to_w(keyboard_layout);
+		this->try_chars = u8_to_w(try_chars);
 		auto phone = boost::adaptors::transform(phonetic_replacements,
 		                                        u8_to_w_pair);
-		wide_structures.phonetic_table = phone;
+		phonetic_table = phone;
 	}
 	else {
 		// convert non-unicode dicts to unicode
@@ -1059,27 +1059,27 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		};
 		auto iconv =
 		    boost::adaptors::transform(input_conversion, n_to_w_pair);
-		wide_structures.input_substr_replacer = iconv;
+		input_substr_replacer = iconv;
 		auto oconv =
 		    boost::adaptors::transform(output_conversion, n_to_w_pair);
-		wide_structures.output_substr_replacer = oconv;
+		output_substr_replacer = oconv;
 
 		auto break_pat =
 		    boost::adaptors::transform(break_patterns, n_to_w);
-		wide_structures.break_table = break_pat;
-		wide_structures.ignored_chars = n_to_w(ignore_chars);
+		break_table = break_pat;
+		ignored_chars = n_to_w(ignore_chars);
 
 		for (auto& x : prefixes) {
 			auto appending = n_to_w(x.appending);
-			erase_chars(appending, wide_structures.ignored_chars);
-			wide_structures.prefixes.emplace(
+			erase_chars(appending, ignored_chars);
+			this->prefixes.emplace(
 			    x.flag, x.cross_product, n_to_w(x.stripping),
 			    appending, x.new_flags, n_to_w(x.condition));
 		}
 		for (auto& x : suffixes) {
 			auto appending = n_to_w(x.appending);
-			erase_chars(appending, wide_structures.ignored_chars);
-			wide_structures.suffixes.emplace(
+			erase_chars(appending, ignored_chars);
+			this->suffixes.emplace(
 			    x.flag, x.cross_product, n_to_w(x.stripping),
 			    appending, x.new_flags, n_to_w(x.condition));
 		}
@@ -1087,7 +1087,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			auto forbid_unaffixed = x.first_word_end == "0";
 			if (forbid_unaffixed)
 				x.first_word_end.clear();
-			wide_structures.compound_patterns.push_back(
+			compound_patterns.push_back(
 			    {{n_to_w(x.first_word_end),
 			      n_to_w(x.second_word_begin)},
 			     n_to_w(x.replacement),
@@ -1097,16 +1097,16 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		}
 		auto reps =
 		    boost::adaptors::transform(replacements, n_to_w_pair);
-		wide_structures.replacements = reps;
+		this->replacements = reps;
 
 		auto maps =
 		    boost::adaptors::transform(map_related_chars, n_to_w);
-		wide_structures.similarities.assign(begin(maps), end(maps));
-		wide_structures.keyboard_closeness = n_to_w(keyboard_layout);
-		wide_structures.try_chars = n_to_w(try_chars);
+		similarities.assign(begin(maps), end(maps));
+		keyboard_closeness = n_to_w(keyboard_layout);
+		this->try_chars = n_to_w(try_chars);
 		auto phone = boost::adaptors::transform(phonetic_replacements,
 		                                        n_to_w_pair);
-		wide_structures.phonetic_table = phone;
+		phonetic_table = phone;
 
 		// set_encoding_and_language("UTF-8", language_code);
 		// No need to set the internal locale to utf-8, keep it to
@@ -1249,8 +1249,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		}
 		if (!ok)
 			continue;
-		if (!wide_structures.ignored_chars.empty()) {
-			erase_chars(wide_word, wide_structures.ignored_chars);
+		if (!ignored_chars.empty()) {
+			erase_chars(wide_word, ignored_chars);
 			wide_to_utf8(wide_word, word);
 		}
 		casing = classify_casing(wide_word, internal_locale);

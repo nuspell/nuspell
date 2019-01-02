@@ -38,22 +38,6 @@ enum class Flag_Type {
 	UTF8 /**< UTF-8 flag, e.g. for "á" */
 };
 
-template <class CharT>
-struct Aff_Structures {
-	Substr_Replacer<CharT> input_substr_replacer;
-	Substr_Replacer<CharT> output_substr_replacer;
-	Break_Table<CharT> break_table;
-	std::basic_string<CharT> ignored_chars;
-	Prefix_Table<CharT> prefixes;
-	Suffix_Table<CharT> suffixes;
-	std::vector<Compound_Pattern<CharT>> compound_patterns;
-	Replacement_Table<CharT> replacements;
-	std::vector<Similarity_Group<CharT>> similarities;
-	std::basic_string<CharT> keyboard_closeness;
-	std::basic_string<CharT> try_chars;
-	Phonetic_Table<CharT> phonetic_table;
-};
-
 using Word_List_Base =
     Hash_Multiset<std::pair<std::string, Flag_Set>, std::string,
                   member<std::pair<std::string, Flag_Set>, std::string,
@@ -80,8 +64,18 @@ struct Aff_Data {
 	// word list
 	Word_List words;
 
-	Aff_Structures<char> structures;
-	Aff_Structures<wchar_t> wide_structures;
+	Substr_Replacer<wchar_t> input_substr_replacer;
+	Substr_Replacer<wchar_t> output_substr_replacer;
+	Break_Table<wchar_t> break_table;
+	std::basic_string<wchar_t> ignored_chars;
+	Prefix_Table<wchar_t> prefixes;
+	Suffix_Table<wchar_t> suffixes;
+	std::vector<Compound_Pattern<wchar_t>> compound_patterns;
+	Replacement_Table<wchar_t> replacements;
+	std::vector<Similarity_Group<wchar_t>> similarities;
+	std::basic_string<wchar_t> keyboard_closeness;
+	std::basic_string<wchar_t> try_chars;
+	Phonetic_Table<wchar_t> phonetic_table;
 
 	// general options
 	std::locale internal_locale;
@@ -145,22 +139,7 @@ struct Aff_Data {
 			return parse_dic(dic);
 		return false;
 	}
-	template <class CharT>
-	auto get_structures() const -> const Aff_Structures<CharT>&;
 };
-
-template <>
-auto inline Aff_Data::get_structures<char>() const
-    -> const Aff_Structures<char>&
-{
-	return structures;
-}
-template <>
-auto inline Aff_Data::get_structures<wchar_t>() const
-    -> const Aff_Structures<wchar_t>&
-{
-	return wide_structures;
-}
 } // namespace nuspell
 
 #endif // NUSPELL_AFF_DATA_HXX

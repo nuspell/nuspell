@@ -69,13 +69,10 @@ class At_Scope_Exit {
  * @param s string to check spelling for.
  * @return The spelling result.
  */
-template <class CharT>
-auto Dict_Base::spell_priv(std::basic_string<CharT>& s) const -> bool
+auto Dict_Base::spell_priv(std::wstring& s) const -> bool
 {
-	auto& d = get_structures<CharT>();
-
 	// do input conversion (iconv)
-	d.input_substr_replacer.replace(s);
+	input_substr_replacer.replace(s);
 
 	// triming whitespace should be part of tokenization, not here
 	// boost::trim(s, locale_aff);
@@ -95,22 +92,18 @@ auto Dict_Base::spell_priv(std::basic_string<CharT>& s) const -> bool
 	if (is_number(s))
 		return true;
 
-	erase_chars(s, d.ignored_chars);
+	erase_chars(s, ignored_chars);
 
 	// handle break patterns
 	auto copy = s;
-	auto ret = spell_break<CharT>(s);
+	auto ret = spell_break(s);
 	assert(s == copy);
 	if (!ret && abbreviation) {
 		s += '.';
-		ret = spell_break<CharT>(s);
+		ret = spell_break(s);
 	}
 	return ret;
 }
-// only these explicit template instantiations are needed for the spell_*
-// functions.
-template auto Dict_Base::spell_priv(string& s) const -> bool;
-template auto Dict_Base::spell_priv(wstring& s) const -> bool;
 
 /**
  * @brief Checks recursively the spelling according to break patterns.
@@ -118,12 +111,10 @@ template auto Dict_Base::spell_priv(wstring& s) const -> bool;
  * @param s string to check spelling for.
  * @return The spelling result.
  */
-template <class CharT>
-auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth) const
-    -> bool
+auto Dict_Base::spell_break(std::wstring& s, size_t depth) const -> bool
 {
 	// check spelling accoring to case
-	auto res = spell_casing<CharT>(s);
+	auto res = spell_casing(s);
 	if (res) {
 		// handle forbidden words
 		if (res->contains(forbiddenword_flag)) {
@@ -137,13 +128,11 @@ auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth) const
 	if (depth == 9)
 		return false;
 
-	auto& break_table = get_structures<CharT>().break_table;
-
 	// handle break pattern at start of a word
 	for (auto& pat : break_table.start_word_breaks()) {
 		if (s.compare(0, pat.size(), pat) == 0) {
 			auto substr = s.substr(pat.size());
-			auto res = spell_break<CharT>(substr);
+			auto res = spell_break(substr);
 			if (res)
 				return res;
 		}
@@ -155,7 +144,7 @@ auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth) const
 			continue;
 		if (s.compare(s.size() - pat.size(), pat.size(), pat) == 0) {
 			auto substr = s.substr(0, s.size() - pat.size());
-			auto res = spell_break<CharT>(substr);
+			auto res = spell_break(substr);
 			if (res)
 				return res;
 		}
@@ -167,10 +156,10 @@ auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth) const
 		if (i > 0 && i < s.size() - pat.size()) {
 			auto part1 = s.substr(0, i);
 			auto part2 = s.substr(i + pat.size());
-			auto res1 = spell_break<CharT>(part1, depth + 1);
+			auto res1 = spell_break(part1, depth + 1);
 			if (!res1)
 				continue;
-			auto res2 = spell_break<CharT>(part2, depth + 1);
+			auto res2 = spell_break(part2, depth + 1);
 			if (res2)
 				return res2;
 		}
@@ -185,9 +174,7 @@ auto Dict_Base::spell_break(std::basic_string<CharT>& s, size_t depth) const
  * @param s string to check spelling for.
  * @return The spelling result.
  */
-template <class CharT>
-auto Dict_Base::spell_casing(std::basic_string<CharT>& s) const
-    -> const Flag_Set*
+auto Dict_Base::spell_casing(std::wstring& s) const -> const Flag_Set*
 {
 	auto casing_type = classify_casing(s, internal_locale);
 	const Flag_Set* res = nullptr;
@@ -214,9 +201,7 @@ auto Dict_Base::spell_casing(std::basic_string<CharT>& s) const
  * @param s string to check spelling for.
  * @return The flags of the corresponding dictionary word.
  */
-template <class CharT>
-auto Dict_Base::spell_casing_upper(std::basic_string<CharT>& s) const
-    -> const Flag_Set*
+auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
 {
 	auto& loc = internal_locale;
 
@@ -245,7 +230,7 @@ auto Dict_Base::spell_casing_upper(std::basic_string<CharT>& s) const
 	}
 
 	// handle sharp s for German
-	if (checksharps && s.find(NUSPELL_LITERAL(CharT, "SS")) != s.npos) {
+	if (checksharps && s.find(L"SS") != s.npos) {
 		auto t = to_lower(s, loc);
 		res = spell_sharps(t);
 		if (!res)
@@ -272,14 +257,12 @@ auto Dict_Base::spell_casing_upper(std::basic_string<CharT>& s) const
  * @param s string to check spelling for.
  * @return The flags of the corresponding dictionary word.
  */
-template <class CharT>
-auto Dict_Base::spell_casing_title(std::basic_string<CharT>& s) const
-    -> const Flag_Set*
+auto Dict_Base::spell_casing_title(std::wstring& s) const -> const Flag_Set*
 {
 	auto& loc = internal_locale;
 
 	// check title case
-	auto res = check_word<CharT>(s);
+	auto res = check_word(s);
 
 	// forbid bad capitalization
 	if (res && res->contains(forbiddenword_flag))
@@ -289,11 +272,11 @@ auto Dict_Base::spell_casing_title(std::basic_string<CharT>& s) const
 
 	// attempt checking lower case spelling
 	auto t = to_lower(s, loc);
-	res = check_word<CharT>(t);
+	res = check_word(t);
 
 	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
 	if (res && res->contains(keepcase_flag) &&
-	    !(checksharps && (t.find(static_cast<CharT>(223)) != t.npos))) {
+	    !(checksharps && (t.find(L'\xDF') != t.npos))) {
 		res = nullptr;
 	}
 	return res;
@@ -315,14 +298,13 @@ auto Dict_Base::spell_casing_title(std::basic_string<CharT>& s) const
  * @param rep counter for the number of replacements done.
  * @return The flags of the corresponding dictionary word.
  */
-template <class CharT>
-auto Dict_Base::spell_sharps(std::basic_string<CharT>& base, size_t pos,
-                             size_t n, size_t rep) const -> const Flag_Set*
+auto Dict_Base::spell_sharps(std::wstring& base, size_t pos, size_t n,
+                             size_t rep) const -> const Flag_Set*
 {
 	const size_t MAX_SHARPS = 5;
-	pos = base.find(NUSPELL_LITERAL(CharT, "ss"), pos);
+	pos = base.find(L"ss", pos);
 	if (pos != std::string::npos && n < MAX_SHARPS) {
-		base[pos] = static_cast<CharT>(223); // ß
+		base[pos] = L'\xDF'; // ß
 		base.erase(pos + 1, 1);
 		auto res = spell_sharps(base, pos + 1, n + 1, rep + 1);
 		base[pos] = 's';
@@ -349,8 +331,7 @@ auto Dict_Base::spell_sharps(std::basic_string<CharT>& base, size_t pos,
  * @param s string to check spelling for.
  * @return The flags of the corresponding dictionary word.
  */
-template <class CharT>
-auto Dict_Base::check_word(std::basic_string<CharT>& s) const -> const Flag_Set*
+auto Dict_Base::check_word(std::wstring& s) const -> const Flag_Set*
 {
 
 	for (auto& we : make_iterator_range(words.equal_range(s))) {
@@ -418,14 +399,15 @@ auto Dict_Base::check_word(std::basic_string<CharT>& s) const -> const Flag_Set*
 	return nullptr;
 }
 
-template <class CharT, template <class> class AffixT>
+template <class AffixT>
 class To_Root_Unroot_RAII {
       private:
-	basic_string<CharT>& word;
-	const AffixT<CharT>& affix;
+	using value_type = typename AffixT::value_type;
+	basic_string<value_type>& word;
+	const AffixT& affix;
 
       public:
-	To_Root_Unroot_RAII(basic_string<CharT>& w, const AffixT<CharT>& a)
+	To_Root_Unroot_RAII(basic_string<value_type>& w, const AffixT& a)
 	    : word(w), affix(a)
 	{
 		affix.to_root(word);
@@ -433,8 +415,8 @@ class To_Root_Unroot_RAII {
 	~To_Root_Unroot_RAII() { affix.to_derived(word); }
 };
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::affix_NOT_valid(const Prefix<CharT>& e) const
+template <Affixing_Mode m>
+auto Dict_Base::affix_NOT_valid(const Prefix<wchar_t>& e) const
 {
 	if (m == FULL_WORD && e.cont_flags.contains(compound_onlyin_flag))
 		return true;
@@ -445,8 +427,8 @@ auto Dict_Base::affix_NOT_valid(const Prefix<CharT>& e) const
 		return true;
 	return false;
 }
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::affix_NOT_valid(const Suffix<CharT>& e) const
+template <Affixing_Mode m>
+auto Dict_Base::affix_NOT_valid(const Suffix<wchar_t>& e) const
 {
 	if (m == FULL_WORD && e.cont_flags.contains(compound_onlyin_flag))
 		return true;
@@ -499,21 +481,16 @@ auto Dict_Base::is_valid_inside_compound(const Flag_Set& flags) const
 	return true;
 }
 
-template <class CharT>
-auto prefix(const basic_string<CharT>& word, size_t len)
+auto prefix(const wstring& word, size_t len)
 {
-	return my_string_view<CharT>(word).substr(0, len);
+	return my_string_view<wchar_t>(word).substr(0, len);
 }
-template <class CharT>
-auto prefix(basic_string<CharT>&& word, size_t len) = delete;
-
-template <class CharT>
-auto suffix(const basic_string<CharT>& word, size_t len)
+auto prefix(wstring&& word, size_t len) = delete;
+auto suffix(const wstring& word, size_t len)
 {
-	return my_string_view<CharT>(word).substr(word.size() - len);
+	return my_string_view<wchar_t>(word).substr(word.size() - len);
 }
-template <class CharT>
-auto suffix(basic_string<CharT>&& word, size_t len) = delete;
+auto suffix(wstring&& word, size_t len) = delete;
 
 /**
  * @brief Iterator of prefix entres that match a word.
@@ -521,20 +498,18 @@ auto suffix(basic_string<CharT>&& word, size_t len) = delete;
  * Iterates all prefix entries where the appending member is prefix of a given
  * word.
  */
-template <class CharT>
 class Prefix_Iter {
-	const Prefix_Table<CharT>& tbl;
-	const basic_string<CharT>& word;
+	const Prefix_Table<wchar_t>& tbl;
+	const wstring& word;
 	size_t len;
-	my_string_view<CharT> pfx;
-	using iter = typename Prefix_Table<CharT>::iterator;
+	my_string_view<wchar_t> pfx;
+	using iter = typename Prefix_Table<wchar_t>::iterator;
 	iter a;
 	iter b;
 	bool valid;
 
       public:
-	Prefix_Iter(const Prefix_Table<CharT>& tbl,
-	            const basic_string<CharT>& word)
+	Prefix_Iter(const Prefix_Table<wchar_t>& tbl, const wstring& word)
 	    : tbl(tbl), word(word)
 	{
 		for (len = 0; len <= word.size(); ++len) {
@@ -572,20 +547,18 @@ class Prefix_Iter {
  * Iterates all suffix entries where the appending member is suffix of a given
  * word.
  */
-template <class CharT>
 class Suffix_Iter {
-	const Suffix_Table<CharT>& tbl;
-	const basic_string<CharT>& word;
+	const Suffix_Table<wchar_t>& tbl;
+	const wstring& word;
 	size_t len;
-	my_string_view<CharT> pfx;
-	using iter = typename Suffix_Table<CharT>::iterator;
+	my_string_view<wchar_t> pfx;
+	using iter = typename Suffix_Table<wchar_t>::iterator;
 	iter a;
 	iter b;
 	bool valid;
 
       public:
-	Suffix_Iter(const Suffix_Table<CharT>& tbl,
-	            const basic_string<CharT>& word)
+	Suffix_Iter(const Suffix_Table<wchar_t>& tbl, const wstring& word)
 	    : tbl(tbl), word(word)
 	{
 		for (len = 0; len <= word.size(); ++len) {
@@ -618,20 +591,19 @@ class Suffix_Iter {
 	auto aff_len() { return len; }
 };
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_prefix_only(std::basic_string<CharT>& word) const
-    -> Affixing_Result<Prefix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_prefix_only(std::wstring& word) const
+    -> Affixing_Result<Prefix<wchar_t>>
 {
 	auto& dic = words;
-	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
 		auto& e = *it;
 		if (outer_affix_NOT_valid<m>(e))
 			continue;
 		if (is_circumfix(e))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, e);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, e);
 		if (!e.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -653,14 +625,13 @@ auto Dict_Base::strip_prefix_only(std::basic_string<CharT>& word) const
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_suffix_only(std::basic_string<CharT>& word) const
-    -> Affixing_Result<Suffix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_suffix_only(std::wstring& word) const
+    -> Affixing_Result<Suffix<wchar_t>>
 {
 	auto& dic = words;
-	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
 		auto& e = *it;
 		if (outer_affix_NOT_valid<m>(e))
 			continue;
@@ -669,7 +640,7 @@ auto Dict_Base::strip_suffix_only(std::basic_string<CharT>& word) const
 			continue;
 		if (is_circumfix(e))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, e);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, e);
 		if (!e.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -691,19 +662,17 @@ auto Dict_Base::strip_suffix_only(std::basic_string<CharT>& word) const
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_prefix_then_suffix(std::basic_string<CharT>& word) const
-    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_prefix_then_suffix(std::wstring& word) const
+    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>
 {
-	auto& prefixes = get_structures<CharT>().prefixes;
-
-	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
 		auto& pe = *it;
 		if (pe.cross_product == false)
 			continue;
 		if (outer_affix_NOT_valid<m>(pe))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe);
 		if (!pe.check_condition(word))
 			continue;
 		auto ret = strip_pfx_then_sfx_2<m>(pe, word);
@@ -713,15 +682,14 @@ auto Dict_Base::strip_prefix_then_suffix(std::basic_string<CharT>& word) const
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
-                                     std::basic_string<CharT>& word) const
-    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<wchar_t>& pe,
+                                     std::wstring& word) const
+    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>
 {
 	auto& dic = words;
-	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
 		auto& se = *it;
 		if (se.cross_product == false)
 			continue;
@@ -729,7 +697,7 @@ auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 			continue;
 		if (is_circumfix(pe) != is_circumfix(se))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se);
 		if (!se.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -756,19 +724,17 @@ auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_suffix_then_prefix(std::basic_string<CharT>& word) const
-    -> Affixing_Result<Prefix<CharT>, Suffix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_suffix_then_prefix(std::wstring& word) const
+    -> Affixing_Result<Prefix<wchar_t>, Suffix<wchar_t>>
 {
-	auto& suffixes = get_structures<CharT>().suffixes;
-
-	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
 		auto& se = *it;
 		if (se.cross_product == false)
 			continue;
 		if (outer_affix_NOT_valid<m>(se))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se);
 		if (!se.check_condition(word))
 			continue;
 		auto ret = strip_sfx_then_pfx_2<m>(se, word);
@@ -778,15 +744,14 @@ auto Dict_Base::strip_suffix_then_prefix(std::basic_string<CharT>& word) const
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
-                                     std::basic_string<CharT>& word) const
-    -> Affixing_Result<Prefix<CharT>, Suffix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_sfx_then_pfx_2(const Suffix<wchar_t>& se,
+                                     std::wstring& word) const
+    -> Affixing_Result<Prefix<wchar_t>, Suffix<wchar_t>>
 {
 	auto& dic = words;
-	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
 		auto& pe = *it;
 		if (pe.cross_product == false)
 			continue;
@@ -794,7 +759,7 @@ auto Dict_Base::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 			continue;
 		if (is_circumfix(pe) != is_circumfix(se))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe);
 		if (!pe.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -820,20 +785,17 @@ auto Dict_Base::strip_sfx_then_pfx_2(const Suffix<CharT>& se,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_prefix_then_suffix_commutative(
-    std::basic_string<CharT>& word) const
-    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_prefix_then_suffix_commutative(std::wstring& word) const
+    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>
 {
-	auto& prefixes = get_structures<CharT>().prefixes;
-
-	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
 		auto& pe = *it;
 		if (pe.cross_product == false)
 			continue;
 		if (affix_NOT_valid<m>(pe))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe);
 		if (!pe.check_condition(word))
 			continue;
 		auto ret = strip_pfx_then_sfx_comm_2<m>(pe, word);
@@ -843,17 +805,16 @@ auto Dict_Base::strip_prefix_then_suffix_commutative(
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_pfx_then_sfx_comm_2(const Prefix<CharT>& pe,
-                                          std::basic_string<CharT>& word) const
-    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_pfx_then_sfx_comm_2(const Prefix<wchar_t>& pe,
+                                          std::wstring& word) const
+    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>
 {
 	auto& dic = words;
-	auto& suffixes = get_structures<CharT>().suffixes;
 	auto has_needaffix_pe = pe.cont_flags.contains(need_affix_flag);
 	auto is_circumfix_pe = is_circumfix(pe);
 
-	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
 		auto& se = *it;
 		if (se.cross_product == false)
 			continue;
@@ -864,7 +825,7 @@ auto Dict_Base::strip_pfx_then_sfx_comm_2(const Prefix<CharT>& pe,
 			continue;
 		if (is_circumfix_pe != is_circumfix(se))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se);
 		if (!se.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -902,18 +863,16 @@ auto Dict_Base::strip_pfx_then_sfx_comm_2(const Prefix<CharT>& pe,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
-    -> Affixing_Result<Suffix<CharT>, Suffix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_suffix_then_suffix(std::wstring& word) const
+    -> Affixing_Result<Suffix<wchar_t>, Suffix<wchar_t>>
 {
-	auto& suffixes = get_structures<CharT>().suffixes;
-
 	// The following check is purely for performance, it does not change
 	// correctness.
 	if (!suffixes.has_continuation_flags())
 		return {};
 
-	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
 		auto& se1 = *it;
 
 		// The following check is purely for performance, it does not
@@ -924,7 +883,7 @@ auto Dict_Base::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
 			continue;
 		if (is_circumfix(se1))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
 		auto ret = strip_sfx_then_sfx_2<FULL_WORD>(se1, word);
@@ -934,16 +893,15 @@ auto Dict_Base::strip_suffix_then_suffix(std::basic_string<CharT>& word) const
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
-                                     std::basic_string<CharT>& word) const
-    -> Affixing_Result<Suffix<CharT>, Suffix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_sfx_then_sfx_2(const Suffix<wchar_t>& se1,
+                                     std::wstring& word) const
+    -> Affixing_Result<Suffix<wchar_t>, Suffix<wchar_t>>
 {
 
 	auto& dic = words;
-	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
 		auto& se2 = *it;
 		if (!cross_valid_inner_outer(se2, se1))
 			continue;
@@ -951,7 +909,7 @@ auto Dict_Base::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 			continue;
 		if (is_circumfix(se2))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se2);
 		if (!se2.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -970,18 +928,16 @@ auto Dict_Base::strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
-    -> Affixing_Result<Prefix<CharT>, Prefix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_prefix_then_prefix(std::wstring& word) const
+    -> Affixing_Result<Prefix<wchar_t>, Prefix<wchar_t>>
 {
-	auto& prefixes = get_structures<CharT>().prefixes;
-
 	// The following check is purely for performance, it does not change
 	// correctness.
 	if (!prefixes.has_continuation_flags())
 		return {};
 
-	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
 		auto& pe1 = *it;
 		// The following check is purely for performance, it does not
 		// change correctness.
@@ -991,7 +947,7 @@ auto Dict_Base::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
 			continue;
 		if (is_circumfix(pe1))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
 		auto ret = strip_pfx_then_pfx_2<FULL_WORD>(pe1, word);
@@ -1001,15 +957,14 @@ auto Dict_Base::strip_prefix_then_prefix(std::basic_string<CharT>& word) const
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
-                                     std::basic_string<CharT>& word) const
-    -> Affixing_Result<Prefix<CharT>, Prefix<CharT>>
+template <Affixing_Mode m>
+auto Dict_Base::strip_pfx_then_pfx_2(const Prefix<wchar_t>& pe1,
+                                     std::wstring& word) const
+    -> Affixing_Result<Prefix<wchar_t>, Prefix<wchar_t>>
 {
 	auto& dic = words;
-	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
 		auto& pe2 = *it;
 		if (!cross_valid_inner_outer(pe2, pe1))
 			continue;
@@ -1017,7 +972,7 @@ auto Dict_Base::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 			continue;
 		if (is_circumfix(pe2))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe2);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe2);
 		if (!pe2.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -1036,26 +991,23 @@ auto Dict_Base::strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_prefix_then_2_suffixes(
-    std::basic_string<CharT>& word) const -> Affixing_Result<>
+template <Affixing_Mode m>
+auto Dict_Base::strip_prefix_then_2_suffixes(std::wstring& word) const
+    -> Affixing_Result<>
 {
-	auto& prefixes = get_structures<CharT>().prefixes;
-	auto& suffixes = get_structures<CharT>().suffixes;
-
 	if (!suffixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
+	for (auto i1 = Prefix_Iter(prefixes, word); i1; ++i1) {
 		auto& pe1 = *i1;
 		if (pe1.cross_product == false)
 			continue;
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
-		for (auto i2 = Suffix_Iter<CharT>(suffixes, word); i2; ++i2) {
+		for (auto i2 = Suffix_Iter(suffixes, word); i2; ++i2) {
 			auto& se1 = *i2;
 			if (se1.cross_product == false)
 				continue;
@@ -1063,7 +1015,7 @@ auto Dict_Base::strip_prefix_then_2_suffixes(
 				continue;
 			if (is_circumfix(pe1) != is_circumfix(se1))
 				continue;
-			To_Root_Unroot_RAII<CharT, Suffix> yyy(word, se1);
+			To_Root_Unroot_RAII<Suffix<wchar_t>> yyy(word, se1);
 			if (!se1.check_condition(word))
 				continue;
 			auto ret = strip_pfx_2_sfx_3<FULL_WORD>(pe1, se1, word);
@@ -1074,16 +1026,14 @@ auto Dict_Base::strip_prefix_then_2_suffixes(
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
-                                  const Suffix<CharT>& se1,
-                                  std::basic_string<CharT>& word) const
-    -> Affixing_Result<>
+template <Affixing_Mode m>
+auto Dict_Base::strip_pfx_2_sfx_3(const Prefix<wchar_t>& pe1,
+                                  const Suffix<wchar_t>& se1,
+                                  std::wstring& word) const -> Affixing_Result<>
 {
 	auto& dic = words;
-	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
 		auto& se2 = *it;
 		if (!cross_valid_inner_outer(se2, se1))
 			continue;
@@ -1091,7 +1041,7 @@ auto Dict_Base::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
 			continue;
 		if (is_circumfix(se2))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se2);
 		if (!se2.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -1114,33 +1064,30 @@ auto Dict_Base::strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_suffix_prefix_suffix(std::basic_string<CharT>& word) const
+template <Affixing_Mode m>
+auto Dict_Base::strip_suffix_prefix_suffix(std::wstring& word) const
     -> Affixing_Result<>
 {
-	auto& prefixes = get_structures<CharT>().prefixes;
-	auto& suffixes = get_structures<CharT>().suffixes;
-
 	if (!suffixes.has_continuation_flags() &&
 	    !prefixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Suffix_Iter<CharT>(suffixes, word); i1; ++i1) {
+	for (auto i1 = Suffix_Iter(suffixes, word); i1; ++i1) {
 		auto& se1 = *i1;
 		if (se1.cross_product == false)
 			continue;
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
-		for (auto i2 = Prefix_Iter<CharT>(prefixes, word); i2; ++i2) {
+		for (auto i2 = Prefix_Iter(prefixes, word); i2; ++i2) {
 			auto& pe1 = *i2;
 			if (pe1.cross_product == false)
 				continue;
 			if (affix_NOT_valid<m>(pe1))
 				continue;
-			To_Root_Unroot_RAII<CharT, Prefix> yyy(word, pe1);
+			To_Root_Unroot_RAII<Prefix<wchar_t>> yyy(word, pe1);
 			if (!pe1.check_condition(word))
 				continue;
 			auto ret = strip_s_p_s_3<FULL_WORD>(se1, pe1, word);
@@ -1151,16 +1098,14 @@ auto Dict_Base::strip_suffix_prefix_suffix(std::basic_string<CharT>& word) const
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_s_p_s_3(const Suffix<CharT>& se1,
-                              const Prefix<CharT>& pe1,
-                              std::basic_string<CharT>& word) const
-    -> Affixing_Result<>
+template <Affixing_Mode m>
+auto Dict_Base::strip_s_p_s_3(const Suffix<wchar_t>& se1,
+                              const Prefix<wchar_t>& pe1,
+                              std::wstring& word) const -> Affixing_Result<>
 {
 	auto& dic = words;
-	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
 		auto& se2 = *it;
 		if (se2.cross_product == false)
 			continue;
@@ -1175,7 +1120,7 @@ auto Dict_Base::strip_s_p_s_3(const Suffix<CharT>& se1,
 		               !is_circumfix(se1);
 		if (!circ1ok && !circ2ok)
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se2);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se2);
 		if (!se2.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -1198,33 +1143,30 @@ auto Dict_Base::strip_s_p_s_3(const Suffix<CharT>& se1,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_2_suffixes_then_prefix(
-    std::basic_string<CharT>& word) const -> Affixing_Result<>
+template <Affixing_Mode m>
+auto Dict_Base::strip_2_suffixes_then_prefix(std::wstring& word) const
+    -> Affixing_Result<>
 {
-	auto& suffixes = get_structures<CharT>().suffixes;
-
-	auto& prefixes = get_structures<CharT>().prefixes;
 	if (!suffixes.has_continuation_flags() &&
 	    !prefixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Suffix_Iter<CharT>(suffixes, word); i1; ++i1) {
+	for (auto i1 = Suffix_Iter(suffixes, word); i1; ++i1) {
 		auto& se1 = *i1;
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
 		if (is_circumfix(se1))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
-		for (auto i2 = Suffix_Iter<CharT>(suffixes, word); i2; ++i2) {
+		for (auto i2 = Suffix_Iter(suffixes, word); i2; ++i2) {
 			auto& se2 = *i2;
 			if (se2.cross_product == false)
 				continue;
 			if (affix_NOT_valid<m>(se2))
 				continue;
-			To_Root_Unroot_RAII<CharT, Suffix> yyy(word, se2);
+			To_Root_Unroot_RAII<Suffix<wchar_t>> yyy(word, se2);
 			if (!se2.check_condition(word))
 				continue;
 			auto ret = strip_2_sfx_pfx_3<FULL_WORD>(se1, se2, word);
@@ -1235,16 +1177,14 @@ auto Dict_Base::strip_2_suffixes_then_prefix(
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
-                                  const Suffix<CharT>& se2,
-                                  std::basic_string<CharT>& word) const
-    -> Affixing_Result<>
+template <Affixing_Mode m>
+auto Dict_Base::strip_2_sfx_pfx_3(const Suffix<wchar_t>& se1,
+                                  const Suffix<wchar_t>& se2,
+                                  std::wstring& word) const -> Affixing_Result<>
 {
 	auto& dic = words;
-	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
 		auto& pe1 = *it;
 		if (pe1.cross_product == false)
 			continue;
@@ -1255,7 +1195,7 @@ auto Dict_Base::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
 			continue;
 		if (is_circumfix(se2) != is_circumfix(pe1))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -1278,26 +1218,23 @@ auto Dict_Base::strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_suffix_then_2_prefixes(
-    std::basic_string<CharT>& word) const -> Affixing_Result<>
+template <Affixing_Mode m>
+auto Dict_Base::strip_suffix_then_2_prefixes(std::wstring& word) const
+    -> Affixing_Result<>
 {
-	auto& prefixes = get_structures<CharT>().prefixes;
-	auto& suffixes = get_structures<CharT>().suffixes;
-
 	if (!prefixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Suffix_Iter<CharT>(suffixes, word); i1; ++i1) {
+	for (auto i1 = Suffix_Iter(suffixes, word); i1; ++i1) {
 		auto& se1 = *i1;
 		if (se1.cross_product == false)
 			continue;
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
-		for (auto i2 = Prefix_Iter<CharT>(prefixes, word); i2; ++i2) {
+		for (auto i2 = Prefix_Iter(prefixes, word); i2; ++i2) {
 			auto& pe1 = *i2;
 			if (pe1.cross_product == false)
 				continue;
@@ -1305,7 +1242,7 @@ auto Dict_Base::strip_suffix_then_2_prefixes(
 				continue;
 			if (is_circumfix(se1) != is_circumfix(pe1))
 				continue;
-			To_Root_Unroot_RAII<CharT, Prefix> yyy(word, pe1);
+			To_Root_Unroot_RAII<Prefix<wchar_t>> yyy(word, pe1);
 			if (!pe1.check_condition(word))
 				continue;
 			auto ret = strip_sfx_2_pfx_3<FULL_WORD>(se1, pe1, word);
@@ -1316,16 +1253,14 @@ auto Dict_Base::strip_suffix_then_2_prefixes(
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
-                                  const Prefix<CharT>& pe1,
-                                  std::basic_string<CharT>& word) const
-    -> Affixing_Result<>
+template <Affixing_Mode m>
+auto Dict_Base::strip_sfx_2_pfx_3(const Suffix<wchar_t>& se1,
+                                  const Prefix<wchar_t>& pe1,
+                                  std::wstring& word) const -> Affixing_Result<>
 {
 	auto& dic = words;
-	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
 		auto& pe2 = *it;
 		if (!cross_valid_inner_outer(pe2, pe1))
 			continue;
@@ -1333,7 +1268,7 @@ auto Dict_Base::strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
 			continue;
 		if (is_circumfix(pe2))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe2);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe2);
 		if (!pe2.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -1355,33 +1290,30 @@ auto Dict_Base::strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_prefix_suffix_prefix(std::basic_string<CharT>& word) const
+template <Affixing_Mode m>
+auto Dict_Base::strip_prefix_suffix_prefix(std::wstring& word) const
     -> Affixing_Result<>
 {
-	auto& prefixes = get_structures<CharT>().prefixes;
-	auto& suffixes = get_structures<CharT>().suffixes;
-
 	if (!suffixes.has_continuation_flags() &&
 	    !prefixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
+	for (auto i1 = Prefix_Iter(prefixes, word); i1; ++i1) {
 		auto& pe1 = *i1;
 		if (pe1.cross_product == false)
 			continue;
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
-		for (auto i2 = Suffix_Iter<CharT>(suffixes, word); i2; ++i2) {
+		for (auto i2 = Suffix_Iter(suffixes, word); i2; ++i2) {
 			auto& se1 = *i2;
 			if (se1.cross_product == false)
 				continue;
 			if (affix_NOT_valid<m>(se1))
 				continue;
-			To_Root_Unroot_RAII<CharT, Suffix> yyy(word, se1);
+			To_Root_Unroot_RAII<Suffix<wchar_t>> yyy(word, se1);
 			if (!se1.check_condition(word))
 				continue;
 			auto ret = strip_p_s_p_3<FULL_WORD>(pe1, se1, word);
@@ -1392,16 +1324,14 @@ auto Dict_Base::strip_prefix_suffix_prefix(std::basic_string<CharT>& word) const
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_p_s_p_3(const Prefix<CharT>& pe1,
-                              const Suffix<CharT>& se1,
-                              std::basic_string<CharT>& word) const
-    -> Affixing_Result<>
+template <Affixing_Mode m>
+auto Dict_Base::strip_p_s_p_3(const Prefix<wchar_t>& pe1,
+                              const Suffix<wchar_t>& se1,
+                              std::wstring& word) const -> Affixing_Result<>
 {
 	auto& dic = words;
-	auto& prefixes = get_structures<CharT>().prefixes;
 
-	for (auto it = Prefix_Iter<CharT>(prefixes, word); it; ++it) {
+	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
 		auto& pe2 = *it;
 		if (pe2.cross_product == false)
 			continue;
@@ -1416,7 +1346,7 @@ auto Dict_Base::strip_p_s_p_3(const Prefix<CharT>& pe1,
 		               !is_circumfix(pe1);
 		if (!circ1ok && !circ2ok)
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe2);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe2);
 		if (!pe2.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -1438,33 +1368,30 @@ auto Dict_Base::strip_p_s_p_3(const Prefix<CharT>& pe1,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_2_prefixes_then_suffix(
-    std::basic_string<CharT>& word) const -> Affixing_Result<>
+template <Affixing_Mode m>
+auto Dict_Base::strip_2_prefixes_then_suffix(std::wstring& word) const
+    -> Affixing_Result<>
 {
-	auto& prefixes = get_structures<CharT>().prefixes;
-
-	auto& suffixes = get_structures<CharT>().suffixes;
 	if (!suffixes.has_continuation_flags() &&
 	    !prefixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Prefix_Iter<CharT>(prefixes, word); i1; ++i1) {
+	for (auto i1 = Prefix_Iter(prefixes, word); i1; ++i1) {
 		auto& pe1 = *i1;
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
 		if (is_circumfix(pe1))
 			continue;
-		To_Root_Unroot_RAII<CharT, Prefix> xxx(word, pe1);
+		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
-		for (auto i2 = Prefix_Iter<CharT>(prefixes, word); i2; ++i2) {
+		for (auto i2 = Prefix_Iter(prefixes, word); i2; ++i2) {
 			auto& pe2 = *i2;
 			if (pe2.cross_product == false)
 				continue;
 			if (affix_NOT_valid<m>(pe2))
 				continue;
-			To_Root_Unroot_RAII<CharT, Prefix> yyy(word, pe2);
+			To_Root_Unroot_RAII<Prefix<wchar_t>> yyy(word, pe2);
 			if (!pe2.check_condition(word))
 				continue;
 			auto ret = strip_2_pfx_sfx_3<FULL_WORD>(pe1, pe2, word);
@@ -1475,16 +1402,14 @@ auto Dict_Base::strip_2_prefixes_then_suffix(
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
-                                  const Prefix<CharT>& pe2,
-                                  std::basic_string<CharT>& word) const
-    -> Affixing_Result<>
+template <Affixing_Mode m>
+auto Dict_Base::strip_2_pfx_sfx_3(const Prefix<wchar_t>& pe1,
+                                  const Prefix<wchar_t>& pe2,
+                                  std::wstring& word) const -> Affixing_Result<>
 {
 	auto& dic = words;
-	auto& suffixes = get_structures<CharT>().suffixes;
 
-	for (auto it = Suffix_Iter<CharT>(suffixes, word); it; ++it) {
+	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
 		auto& se1 = *it;
 		if (se1.cross_product == false)
 			continue;
@@ -1495,7 +1420,7 @@ auto Dict_Base::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 			continue;
 		if (is_circumfix(pe2) != is_circumfix(se1))
 			continue;
-		To_Root_Unroot_RAII<CharT, Suffix> xxx(word, se1);
+		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
 		for (auto& word_entry :
@@ -1517,9 +1442,8 @@ auto Dict_Base::strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
 	return {};
 }
 
-template <class CharT>
-auto match_compound_pattern(const Compound_Pattern<CharT>& p,
-                            const basic_string<CharT>& word, size_t i,
+auto match_compound_pattern(const Compound_Pattern<wchar_t>& p,
+                            const wstring& word, size_t i,
                             Compounding_Result first, Compounding_Result second)
 {
 	if (i < p.begin_end_chars.idx())
@@ -1540,22 +1464,18 @@ auto match_compound_pattern(const Compound_Pattern<CharT>& p,
 	return true;
 }
 
-template <class CharT>
 auto is_compound_forbidden_by_patterns(
-    const vector<Compound_Pattern<CharT>>& patterns,
-    const basic_string<CharT>& word, size_t i, Compounding_Result first,
-    Compounding_Result second)
+    const vector<Compound_Pattern<wchar_t>>& patterns, const wstring& word,
+    size_t i, Compounding_Result first, Compounding_Result second)
 {
 	return any_of(begin(patterns), end(patterns), [&](auto& p) {
 		return match_compound_pattern(p, word, i, first, second);
 	});
 }
 
-template <class CharT>
-auto Dict_Base::check_compound(std::basic_string<CharT>& word) const
-    -> Compounding_Result
+auto Dict_Base::check_compound(std::wstring& word) const -> Compounding_Result
 {
-	auto part = std::basic_string<CharT>();
+	auto part = std::wstring();
 
 	if (compound_flag || compound_begin_flag || compound_middle_flag ||
 	    compound_last_flag) {
@@ -1571,10 +1491,9 @@ auto Dict_Base::check_compound(std::basic_string<CharT>& word) const
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::check_compound(std::basic_string<CharT>& word, size_t start_pos,
-                               size_t num_part,
-                               std::basic_string<CharT>& part) const
+template <Affixing_Mode m>
+auto Dict_Base::check_compound(std::wstring& word, size_t start_pos,
+                               size_t num_part, std::wstring& part) const
     -> Compounding_Result
 {
 	size_t min_length = 3;
@@ -1600,15 +1519,12 @@ auto Dict_Base::check_compound(std::basic_string<CharT>& word, size_t start_pos,
 	return {};
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::check_compound_classic(std::basic_string<CharT>& word,
-                                       size_t start_pos, size_t i,
-                                       size_t num_part,
-                                       std::basic_string<CharT>& part) const
+template <Affixing_Mode m>
+auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
+                                       size_t i, size_t num_part,
+                                       std::wstring& part) const
     -> Compounding_Result
 {
-	auto& compound_patterns = get_structures<CharT>().compound_patterns;
-
 	part.assign(word, start_pos, i - start_pos);
 	auto part1_entry = check_word_in_compound<m>(part);
 	if (!part1_entry)
@@ -1616,7 +1532,7 @@ auto Dict_Base::check_compound_classic(std::basic_string<CharT>& word,
 	if (part1_entry->second.contains(forbiddenword_flag))
 		return {};
 	if (compound_check_triple) {
-		auto triple = basic_string<CharT>(3, word[i]);
+		auto triple = wstring(3, word[i]);
 		if (word.compare(i - 1, 3, triple) == 0)
 			return {};
 		if (i >= 2 && word.compare(i - 2, 3, triple) == 0)
@@ -1688,12 +1604,11 @@ try_simplified_triple_recursive:
 	return part1_entry;
 }
 
-template <Affixing_Mode m, class CharT>
+template <Affixing_Mode m>
 auto Dict_Base::check_compound_with_pattern_replacements(
-    std::basic_string<CharT>& word, size_t start_pos, size_t i, size_t num_part,
-    std::basic_string<CharT>& part) const -> Compounding_Result
+    std::wstring& word, size_t start_pos, size_t i, size_t num_part,
+    std::wstring& part) const -> Compounding_Result
 {
-	auto& compound_patterns = get_structures<CharT>().compound_patterns;
 	for (auto& p : compound_patterns) {
 		if (p.replacement.empty())
 			continue;
@@ -1719,7 +1634,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		    !part1_entry->second.contains(p.first_word_flag))
 			continue;
 		if (compound_check_triple) {
-			auto triple = basic_string<CharT>(3, word[i]);
+			auto triple = wstring(3, word[i]);
 			if (word.compare(i - 1, 3, triple) == 0)
 				continue;
 			if (i >= 2 && word.compare(i - 2, 3, triple) == 0)
@@ -1797,8 +1712,8 @@ auto is_modiying_affix(const AffixT& a)
 	return !a.stripping.empty() || !a.appending.empty();
 }
 
-template <Affixing_Mode m, class CharT>
-auto Dict_Base::check_word_in_compound(std::basic_string<CharT>& word) const
+template <Affixing_Mode m>
+auto Dict_Base::check_word_in_compound(std::wstring& word) const
     -> Compounding_Result
 {
 	auto range = words.equal_range(word);
@@ -1833,11 +1748,9 @@ auto Dict_Base::check_word_in_compound(std::basic_string<CharT>& word) const
 	return {};
 }
 
-template <class CharT>
 auto Dict_Base::check_compound_with_rules(
-    std::basic_string<CharT>& word, std::vector<const Flag_Set*>& words_data,
-    size_t start_pos, std::basic_string<CharT>& part) const
-    -> Compounding_Result
+    std::wstring& word, std::vector<const Flag_Set*>& words_data,
+    size_t start_pos, std::wstring& part) const -> Compounding_Result
 {
 	size_t min_length = 3;
 	if (compound_min_length != 0)
@@ -1896,9 +1809,8 @@ auto Dict_Base::check_compound_with_rules(
 	return {};
 }
 
-template <class CharT>
-auto Dict_Base::suggest_priv(std::basic_string<CharT>& word,
-                             List_Basic_Strings<CharT>& out) const -> void
+auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
+    -> void
 {
 	rep_suggest(word, out);
 	map_suggest(word, out);
@@ -1909,12 +1821,8 @@ auto Dict_Base::suggest_priv(std::basic_string<CharT>& word,
 	phonetic_suggest(word, out);
 }
 
-template auto Dict_Base::suggest_priv(string&, List_Strings&) const -> void;
-template auto Dict_Base::suggest_priv(wstring&, List_WStrings&) const -> void;
-
-template <class CharT>
-auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
-                                   List_Basic_Strings<CharT>& out) const -> bool
+auto Dict_Base::add_sug_if_correct(std::wstring& word, List_WStrings& out) const
+    -> bool
 {
 	for (auto& o : out)
 		if (o == word)
@@ -1930,9 +1838,8 @@ auto Dict_Base::add_sug_if_correct(std::basic_string<CharT>& word,
 	return true;
 }
 
-template <class CharT>
-auto Dict_Base::try_rep_suggestion(std::basic_string<CharT>& word,
-                                   List_Basic_Strings<CharT>& out) const -> void
+auto Dict_Base::try_rep_suggestion(std::wstring& word, List_WStrings& out) const
+    -> void
 {
 	if (add_sug_if_correct(word, out))
 		return;
@@ -1941,7 +1848,7 @@ auto Dict_Base::try_rep_suggestion(std::basic_string<CharT>& word,
 	auto j = word.find(' ');
 	if (j == word.npos)
 		return;
-	auto part = basic_string<CharT>();
+	auto part = wstring();
 	for (; j != word.npos; i = j + 1, j = word.find(' ', i)) {
 		part.assign(word, i, j - i);
 		if (!check_word(part))
@@ -1950,11 +1857,10 @@ auto Dict_Base::try_rep_suggestion(std::basic_string<CharT>& word,
 	out.push_back(word);
 }
 
-template <class CharT>
-auto Dict_Base::rep_suggest(std::basic_string<CharT>& word,
-                            List_Basic_Strings<CharT>& out) const -> void
+auto Dict_Base::rep_suggest(std::wstring& word, List_WStrings& out) const
+    -> void
 {
-	auto& reps = get_structures<CharT>().replacements;
+	auto& reps = replacements;
 	for (auto& r : reps.whole_word_replacements()) {
 		auto& from = r.first;
 		auto& to = r.second;
@@ -1996,9 +1902,8 @@ auto Dict_Base::rep_suggest(std::basic_string<CharT>& word,
 	}
 }
 
-template <class CharT>
-auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
-                                   List_Basic_Strings<CharT>& out) const -> void
+auto Dict_Base::extra_char_suggest(std::wstring& word, List_WStrings& out) const
+    -> void
 {
 	for (auto i = word.size() - 1; i != size_t(-1); --i) {
 		auto c = word[i];
@@ -2007,17 +1912,10 @@ auto Dict_Base::extra_char_suggest(std::basic_string<CharT>& word,
 		word.insert(i, 1, c);
 	}
 }
-template auto Dict_Base::extra_char_suggest(string&, List_Strings&) const
-    -> void;
-template auto Dict_Base::extra_char_suggest(wstring&, List_WStrings&) const
-    -> void;
 
-template <class CharT>
-auto Dict_Base::map_suggest(std::basic_string<CharT>& word,
-                            List_Basic_Strings<CharT>& out, size_t i) const
-    -> void
+auto Dict_Base::map_suggest(std::wstring& word, List_WStrings& out,
+                            size_t i) const -> void
 {
-	auto& similarities = get_structures<CharT>().similarities;
 	for (; i != word.size(); ++i) {
 		for (auto& e : similarities) {
 			auto j = e.chars.find(word[i]);
@@ -2060,12 +1958,11 @@ auto Dict_Base::map_suggest(std::basic_string<CharT>& word,
 	}
 }
 
-template <class CharT>
-auto Dict_Base::keyboard_suggest(std::basic_string<CharT>& word,
-                                 List_Basic_Strings<CharT>& out) const -> void
+auto Dict_Base::keyboard_suggest(std::wstring& word, List_WStrings& out) const
+    -> void
 {
-	auto& ct = use_facet<ctype<CharT>>(internal_locale);
-	auto& kb = get_structures<CharT>().keyboard_closeness;
+	auto& ct = use_facet<ctype<wchar_t>>(internal_locale);
+	auto& kb = keyboard_closeness;
 	for (size_t j = 0; j != word.size(); ++j) {
 		auto c = word[j];
 		auto upp_c = ct.toupper(c);
@@ -2089,11 +1986,9 @@ auto Dict_Base::keyboard_suggest(std::basic_string<CharT>& word,
 	}
 }
 
-template <class CharT>
-auto Dict_Base::bad_char_suggest(std::basic_string<CharT>& word,
-                                 List_Basic_Strings<CharT>& out) const -> void
+auto Dict_Base::bad_char_suggest(std::wstring& word, List_WStrings& out) const
+    -> void
 {
-	auto& try_chars = get_structures<CharT>().try_chars;
 	for (auto new_c : try_chars) {
 		for (size_t i = 0; i != word.size(); ++i) {
 			auto c = word[i];
@@ -2105,16 +2000,10 @@ auto Dict_Base::bad_char_suggest(std::basic_string<CharT>& word,
 		}
 	}
 }
-template auto Dict_Base::bad_char_suggest(string&, List_Strings&) const -> void;
-template auto Dict_Base::bad_char_suggest(wstring&, List_WStrings&) const
-    -> void;
 
-template <class CharT>
-auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
-                                       List_Basic_Strings<CharT>& out) const
-    -> void
+auto Dict_Base::forgotten_char_suggest(std::wstring& word,
+                                       List_WStrings& out) const -> void
 {
-	auto& try_chars = get_structures<CharT>().try_chars;
 	for (auto new_c : try_chars) {
 		for (auto i = word.size(); i != size_t(-1); --i) {
 			word.insert(i, 1, new_c);
@@ -2123,19 +2012,13 @@ auto Dict_Base::forgotten_char_suggest(std::basic_string<CharT>& word,
 		}
 	}
 }
-template auto Dict_Base::forgotten_char_suggest(string&, List_Strings&) const
-    -> void;
-template auto Dict_Base::forgotten_char_suggest(wstring&, List_WStrings&) const
-    -> void;
 
-template <class CharT>
-auto Dict_Base::phonetic_suggest(std::basic_string<CharT>& word,
-                                 List_Basic_Strings<CharT>& out) const -> void
+auto Dict_Base::phonetic_suggest(std::wstring& word, List_WStrings& out) const
+    -> void
 {
-	using ShortStr = boost::container::small_vector<CharT, 64>;
+	using ShortStr = boost::container::small_vector<wchar_t, 64>;
 	auto backup = ShortStr(&word[0], &word[word.size()]);
 	boost::algorithm::to_upper(word, internal_locale);
-	auto phonetic_table = get_structures<CharT>().phonetic_table;
 	auto changed = phonetic_table.replace(word);
 	if (changed) {
 		boost::algorithm::to_lower(word, internal_locale);

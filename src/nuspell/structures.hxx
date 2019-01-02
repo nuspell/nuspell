@@ -838,6 +838,7 @@ class Prefix {
       public:
 	using StrT = std::basic_string<CharT>;
 	using CondT = Condition<CharT>;
+	using value_type = CharT;
 
 	char16_t flag = 0;
 	bool cross_product = false;
@@ -886,6 +887,7 @@ class Suffix {
       public:
 	using StrT = std::basic_string<CharT>;
 	using CondT = Condition<CharT>;
+	using value_type = CharT;
 
 	char16_t flag = 0;
 	bool cross_product = false;

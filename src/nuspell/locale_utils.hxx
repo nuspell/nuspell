@@ -71,14 +71,11 @@ enum class Casing {
 	PASCAL /**< pascal case, start upper case, e.g. "PascalCase" */
 };
 
-template <class CharT>
-auto classify_casing(const std::basic_string<CharT>& s,
+auto classify_casing(const std::wstring& s,
                      const std::locale& loc = std::locale()) -> Casing;
 
-template <class CharT>
-auto has_uppercase_at_compound_word_boundary(
-    const std::basic_string<CharT>& word, size_t i, const std::locale& loc)
-    -> bool;
+auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i,
+                                             const std::locale& loc) -> bool;
 
 class Encoding {
 	std::string name;

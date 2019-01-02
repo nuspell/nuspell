@@ -62,30 +62,20 @@ struct Compounding_Result {
 
 struct Dict_Base : public Aff_Data {
 
-	template <class CharT>
-	auto spell_priv(std::basic_string<CharT>& s) const -> bool;
-	template <class CharT>
-	auto spell_break(std::basic_string<CharT>& s, size_t depth = 0) const
-	    -> bool;
-	template <class CharT>
-	auto spell_casing(std::basic_string<CharT>& s) const -> const Flag_Set*;
-	template <class CharT>
-	auto spell_casing_upper(std::basic_string<CharT>& s) const
-	    -> const Flag_Set*;
-	template <class CharT>
-	auto spell_casing_title(std::basic_string<CharT>& s) const
-	    -> const Flag_Set*;
-	template <class CharT>
-	auto spell_sharps(std::basic_string<CharT>& base, size_t n_pos = 0,
-	                  size_t n = 0, size_t rep = 0) const
-	    -> const Flag_Set*;
-	template <class CharT>
-	auto check_word(std::basic_string<CharT>& s) const -> const Flag_Set*;
+	auto spell_priv(std::wstring& s) const -> bool;
+	auto spell_break(std::wstring& s, size_t depth = 0) const -> bool;
+	auto spell_casing(std::wstring& s) const -> const Flag_Set*;
+	auto spell_casing_upper(std::wstring& s) const -> const Flag_Set*;
+	auto spell_casing_title(std::wstring& s) const -> const Flag_Set*;
+	auto spell_sharps(std::wstring& base, size_t n_pos = 0, size_t n = 0,
+	                  size_t rep = 0) const -> const Flag_Set*;
 
-	template <Affixing_Mode m, class CharT>
-	auto affix_NOT_valid(const Prefix<CharT>& a) const;
-	template <Affixing_Mode m, class CharT>
-	auto affix_NOT_valid(const Suffix<CharT>& a) const;
+	auto check_word(std::wstring& s) const -> const Flag_Set*;
+
+	template <Affixing_Mode m>
+	auto affix_NOT_valid(const Prefix<wchar_t>& a) const;
+	template <Affixing_Mode m>
+	auto affix_NOT_valid(const Suffix<wchar_t>& a) const;
 	template <Affixing_Mode m, class AffixT>
 	auto outer_affix_NOT_valid(const AffixT& a) const;
 	template <class AffixT>
@@ -98,18 +88,18 @@ struct Dict_Base : public Aff_Data {
 	 * @param s derived word with affixes
 	 * @return if found, root word + prefix
 	 */
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_prefix_only(std::basic_string<CharT>& s) const
-	    -> Affixing_Result<Prefix<CharT>>;
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_prefix_only(std::wstring& s) const
+	    -> Affixing_Result<Prefix<wchar_t>>;
 
 	/**
 	 * @brief strip_suffix_only
 	 * @param s derived word with affixes
 	 * @return if found, root word + suffix
 	 */
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_suffix_only(std::basic_string<CharT>& s) const
-	    -> Affixing_Result<Suffix<CharT>>;
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_suffix_only(std::wstring& s) const
+	    -> Affixing_Result<Suffix<wchar_t>>;
 
 	/**
 	 * @brief strip_prefix_then_suffix
@@ -120,14 +110,14 @@ struct Dict_Base : public Aff_Data {
 	 * @param s derived word with affixes
 	 * @return if found, root word + suffix + prefix
 	 */
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_prefix_then_suffix(std::basic_string<CharT>& s) const
-	    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>;
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_prefix_then_suffix(std::wstring& s) const
+	    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>;
 
-	template <Affixing_Mode m, class CharT>
-	auto strip_pfx_then_sfx_2(const Prefix<CharT>& pe,
-	                          std::basic_string<CharT>& s) const
-	    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>;
+	template <Affixing_Mode m>
+	auto strip_pfx_then_sfx_2(const Prefix<wchar_t>& pe,
+	                          std::wstring& s) const
+	    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>;
 
 	/**
 	 * @brief strip_suffix_then_prefix
@@ -138,174 +128,152 @@ struct Dict_Base : public Aff_Data {
 	 * @param s derived word with prefix and suffix
 	 * @return if found, root word + prefix + suffix
 	 */
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_suffix_then_prefix(std::basic_string<CharT>& s) const
-	    -> Affixing_Result<Prefix<CharT>, Suffix<CharT>>;
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_suffix_then_prefix(std::wstring& s) const
+	    -> Affixing_Result<Prefix<wchar_t>, Suffix<wchar_t>>;
 
-	template <Affixing_Mode m, class CharT>
-	auto strip_sfx_then_pfx_2(const Suffix<CharT>& se,
-	                          std::basic_string<CharT>& s) const
-	    -> Affixing_Result<Prefix<CharT>, Suffix<CharT>>;
+	template <Affixing_Mode m>
+	auto strip_sfx_then_pfx_2(const Suffix<wchar_t>& se,
+	                          std::wstring& s) const
+	    -> Affixing_Result<Prefix<wchar_t>, Suffix<wchar_t>>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_prefix_then_suffix_commutative(
-	    std::basic_string<CharT>& word) const
-	    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>;
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_prefix_then_suffix_commutative(std::wstring& word) const
+	    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_pfx_then_sfx_comm_2(const Prefix<CharT>& pe,
-	                               std::basic_string<CharT>& word) const
-	    -> Affixing_Result<Suffix<CharT>, Prefix<CharT>>;
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_pfx_then_sfx_comm_2(const Prefix<wchar_t>& pe,
+	                               std::wstring& word) const
+	    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_suffix_then_suffix(std::basic_string<CharT>& s) const
-	    -> Affixing_Result<Suffix<CharT>, Suffix<CharT>>;
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_suffix_then_suffix(std::wstring& s) const
+	    -> Affixing_Result<Suffix<wchar_t>, Suffix<wchar_t>>;
 
-	template <Affixing_Mode m, class CharT>
-	auto strip_sfx_then_sfx_2(const Suffix<CharT>& se1,
-	                          std::basic_string<CharT>& s) const
-	    -> Affixing_Result<Suffix<CharT>, Suffix<CharT>>;
+	template <Affixing_Mode m>
+	auto strip_sfx_then_sfx_2(const Suffix<wchar_t>& se1,
+	                          std::wstring& s) const
+	    -> Affixing_Result<Suffix<wchar_t>, Suffix<wchar_t>>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_prefix_then_prefix(std::basic_string<CharT>& s) const
-	    -> Affixing_Result<Prefix<CharT>, Prefix<CharT>>;
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_prefix_then_prefix(std::wstring& s) const
+	    -> Affixing_Result<Prefix<wchar_t>, Prefix<wchar_t>>;
 
-	template <Affixing_Mode m, class CharT>
-	auto strip_pfx_then_pfx_2(const Prefix<CharT>& pe1,
-	                          std::basic_string<CharT>& s) const
-	    -> Affixing_Result<Prefix<CharT>, Prefix<CharT>>;
+	template <Affixing_Mode m>
+	auto strip_pfx_then_pfx_2(const Prefix<wchar_t>& pe1,
+	                          std::wstring& s) const
+	    -> Affixing_Result<Prefix<wchar_t>, Prefix<wchar_t>>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_prefix_then_2_suffixes(std::basic_string<CharT>& s) const
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_prefix_then_2_suffixes(std::wstring& s) const
 	    -> Affixing_Result<>;
 
-	template <Affixing_Mode m, class CharT>
-	auto strip_pfx_2_sfx_3(const Prefix<CharT>& pe1,
-	                       const Suffix<CharT>& se1,
-	                       std::basic_string<CharT>& s) const
+	template <Affixing_Mode m>
+	auto strip_pfx_2_sfx_3(const Prefix<wchar_t>& pe1,
+	                       const Suffix<wchar_t>& se1,
+	                       std::wstring& s) const -> Affixing_Result<>;
+
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_suffix_prefix_suffix(std::wstring& s) const
 	    -> Affixing_Result<>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_suffix_prefix_suffix(std::basic_string<CharT>& s) const
+	template <Affixing_Mode m>
+	auto strip_s_p_s_3(const Suffix<wchar_t>& se1,
+	                   const Prefix<wchar_t>& pe1, std::wstring& word) const
 	    -> Affixing_Result<>;
 
-	template <Affixing_Mode m, class CharT>
-	auto strip_s_p_s_3(const Suffix<CharT>& se1, const Prefix<CharT>& pe1,
-	                   std::basic_string<CharT>& word) const
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_2_suffixes_then_prefix(std::wstring& s) const
 	    -> Affixing_Result<>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_2_suffixes_then_prefix(std::basic_string<CharT>& s) const
+	template <Affixing_Mode m>
+	auto strip_2_sfx_pfx_3(const Suffix<wchar_t>& se1,
+	                       const Suffix<wchar_t>& se2,
+	                       std::wstring& word) const -> Affixing_Result<>;
+
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_suffix_then_2_prefixes(std::wstring& s) const
 	    -> Affixing_Result<>;
 
-	template <Affixing_Mode m, class CharT>
-	auto strip_2_sfx_pfx_3(const Suffix<CharT>& se1,
-	                       const Suffix<CharT>& se2,
-	                       std::basic_string<CharT>& word) const
+	template <Affixing_Mode m>
+	auto strip_sfx_2_pfx_3(const Suffix<wchar_t>& se1,
+	                       const Prefix<wchar_t>& pe1,
+	                       std::wstring& s) const -> Affixing_Result<>;
+
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_prefix_suffix_prefix(std::wstring& word) const
 	    -> Affixing_Result<>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_suffix_then_2_prefixes(std::basic_string<CharT>& s) const
+	template <Affixing_Mode m>
+	auto strip_p_s_p_3(const Prefix<wchar_t>& pe1,
+	                   const Suffix<wchar_t>& se1, std::wstring& word) const
 	    -> Affixing_Result<>;
 
-	template <Affixing_Mode m, class CharT>
-	auto strip_sfx_2_pfx_3(const Suffix<CharT>& se1,
-	                       const Prefix<CharT>& pe1,
-	                       std::basic_string<CharT>& s) const
+	template <Affixing_Mode m = FULL_WORD>
+	auto strip_2_prefixes_then_suffix(std::wstring& word) const
 	    -> Affixing_Result<>;
+	template <Affixing_Mode m>
+	auto strip_2_pfx_sfx_3(const Prefix<wchar_t>& pe1,
+	                       const Prefix<wchar_t>& pe2,
+	                       std::wstring& word) const -> Affixing_Result<>;
 
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_prefix_suffix_prefix(std::basic_string<CharT>& word) const
-	    -> Affixing_Result<>;
+	auto check_compound(std::wstring& word) const -> Compounding_Result;
 
-	template <Affixing_Mode m, class CharT>
-	auto strip_p_s_p_3(const Prefix<CharT>& pe1, const Suffix<CharT>& se1,
-	                   std::basic_string<CharT>& word) const
-	    -> Affixing_Result<>;
-
-	template <Affixing_Mode m = FULL_WORD, class CharT>
-	auto strip_2_prefixes_then_suffix(std::basic_string<CharT>& word) const
-	    -> Affixing_Result<>;
-	template <Affixing_Mode m, class CharT>
-	auto strip_2_pfx_sfx_3(const Prefix<CharT>& pe1,
-	                       const Prefix<CharT>& pe2,
-	                       std::basic_string<CharT>& word) const
-	    -> Affixing_Result<>;
-
-	template <class CharT>
-	auto check_compound(std::basic_string<CharT>& word) const
+	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
+	auto check_compound(std::wstring& word, size_t start_pos,
+	                    size_t num_part, std::wstring& part) const
 	    -> Compounding_Result;
 
-	template <Affixing_Mode m = AT_COMPOUND_BEGIN, class CharT>
-	auto check_compound(std::basic_string<CharT>& word, size_t start_pos,
-	                    size_t num_part,
-	                    std::basic_string<CharT>& part) const
+	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
+	auto check_compound_classic(std::wstring& word, size_t start_pos,
+	                            size_t i, size_t num_part,
+	                            std::wstring& part) const
 	    -> Compounding_Result;
 
-	template <Affixing_Mode m = AT_COMPOUND_BEGIN, class CharT>
-	auto check_compound_classic(std::basic_string<CharT>& word,
-	                            size_t start_pos, size_t i, size_t num_part,
-	                            std::basic_string<CharT>& part) const
+	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
+	auto check_compound_with_pattern_replacements(std::wstring& word,
+	                                              size_t start_pos,
+	                                              size_t i, size_t num_part,
+	                                              std::wstring& part) const
 	    -> Compounding_Result;
 
-	template <Affixing_Mode m = AT_COMPOUND_BEGIN, class CharT>
-	auto check_compound_with_pattern_replacements(
-	    std::basic_string<CharT>& word, size_t start_pos, size_t i,
-	    size_t num_part, std::basic_string<CharT>& part) const
-	    -> Compounding_Result;
-
-	template <class CharT>
-	auto check_compound_with_rules(std::basic_string<CharT>& word,
+	auto check_compound_with_rules(std::wstring& word,
 	                               std::vector<const Flag_Set*>& words_data,
 	                               size_t start_pos,
-	                               std::basic_string<CharT>& part) const
+	                               std::wstring& part) const
 	    -> Compounding_Result;
 
-	template <Affixing_Mode m, class CharT>
-	auto check_word_in_compound(std::basic_string<CharT>& s) const
+	template <Affixing_Mode m>
+	auto check_word_in_compound(std::wstring& s) const
 	    -> Compounding_Result;
 
-	template <class CharT>
-	auto suggest_priv(std::basic_string<CharT>& word,
-	                  List_Basic_Strings<CharT>& out) const -> void;
+	auto suggest_priv(std::wstring& word, List_WStrings& out) const -> void;
 
-	template <class CharT>
-	auto add_sug_if_correct(std::basic_string<CharT>& word,
-	                        List_Basic_Strings<CharT>& out) const -> bool;
+	auto add_sug_if_correct(std::wstring& word, List_WStrings& out) const
+	    -> bool;
 
-	template <class CharT>
-	auto try_rep_suggestion(std::basic_string<CharT>& word,
-	                        List_Basic_Strings<CharT>& out) const -> void;
-
-	template <class CharT>
-	auto rep_suggest(std::basic_string<CharT>& word,
-	                 List_Basic_Strings<CharT>& out) const -> void;
-
-	template <class CharT>
-	auto extra_char_suggest(std::basic_string<CharT>& word,
-	                        List_Basic_Strings<CharT>& out) const -> void;
-
-	template <class CharT>
-	auto map_suggest(std::basic_string<CharT>& word,
-	                 List_Basic_Strings<CharT>& out, size_t i = 0) const
+	auto try_rep_suggestion(std::wstring& word, List_WStrings& out) const
 	    -> void;
 
-	template <class CharT>
-	auto keyboard_suggest(std::basic_string<CharT>& word,
-	                      List_Basic_Strings<CharT>& out) const -> void;
+	auto rep_suggest(std::wstring& word, List_WStrings& out) const -> void;
 
-	template <class CharT>
-	auto bad_char_suggest(std::basic_string<CharT>& word,
-	                      List_Basic_Strings<CharT>& out) const -> void;
-
-	template <class CharT>
-	auto forgotten_char_suggest(std::basic_string<CharT>& word,
-	                            List_Basic_Strings<CharT>& out) const
+	auto extra_char_suggest(std::wstring& word, List_WStrings& out) const
 	    -> void;
 
-	template <class CharT>
-	auto phonetic_suggest(std::basic_string<CharT>& word,
-	                      List_Basic_Strings<CharT>& out) const -> void;
+	auto map_suggest(std::wstring& word, List_WStrings& out,
+	                 size_t i = 0) const -> void;
+
+	auto keyboard_suggest(std::wstring& word, List_WStrings& out) const
+	    -> void;
+
+	auto bad_char_suggest(std::wstring& word, List_WStrings& out) const
+	    -> void;
+
+	auto forgotten_char_suggest(std::wstring& word,
+	                            List_WStrings& out) const -> void;
+
+	auto phonetic_suggest(std::wstring& word, List_WStrings& out) const
+	    -> void;
 
       public:
 	Dict_Base()

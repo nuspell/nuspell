@@ -600,9 +600,7 @@ auto is_locale_known_utf8(const locale& loc) -> bool
  * @param loc locale object that takes care of case detection.
  * @return The casing type.
  */
-template <class CharT>
-auto classify_casing(const std::basic_string<CharT>& s, const std::locale& loc)
-    -> Casing
+auto classify_casing(const std::wstring& s, const std::locale& loc) -> Casing
 {
 	// TODO implement Default Case Detection from unicode standard
 	// https://www.unicode.org/versions/Unicode11.0.0/ch03.pdf
@@ -613,7 +611,7 @@ auto classify_casing(const std::basic_string<CharT>& s, const std::locale& loc)
 	using namespace std;
 	size_t upper = 0;
 	size_t lower = 0;
-	auto& f = use_facet<my_ctype<CharT>>(loc);
+	auto& f = use_facet<my_ctype<wchar_t>>(loc);
 	for (auto& c : s) {
 		if (f.is(ctype_base::upper, c))
 			upper++;
@@ -636,8 +634,6 @@ auto classify_casing(const std::basic_string<CharT>& s, const std::locale& loc)
 	else
 		return Casing::CAMEL;
 }
-template auto classify_casing(const string&, const locale&) -> Casing;
-template auto classify_casing(const wstring&, const locale&) -> Casing;
 
 /**
  * @brief Check if word[i] or word[i-1] are uppercase
@@ -650,12 +646,10 @@ template auto classify_casing(const wstring&, const locale&) -> Casing;
  * @param loc
  * @return true if at least one is uppercase, false otherwise.
  */
-template <class CharT>
-auto has_uppercase_at_compound_word_boundary(
-    const std::basic_string<CharT>& word, size_t i, const std::locale& loc)
-    -> bool
+auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i,
+                                             const std::locale& loc) -> bool
 {
-	auto& f = use_facet<my_ctype<CharT>>(loc);
+	auto& f = use_facet<my_ctype<wchar_t>>(loc);
 	if (f.is(f.upper, word[i])) {
 		if (f.is(f.alpha, word[i - 1]))
 			return true;
@@ -664,10 +658,6 @@ auto has_uppercase_at_compound_word_boundary(
 		return true;
 	return false;
 }
-template auto has_uppercase_at_compound_word_boundary(const string&, size_t,
-                                                      const locale&) -> bool;
-template auto has_uppercase_at_compound_word_boundary(const wstring&, size_t,
-                                                      const locale&) -> bool;
 
 auto Encoding::normalize_name() -> void
 {

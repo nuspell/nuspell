@@ -26,11 +26,7 @@ using namespace nuspell;
 
 struct Dict_Test : public nuspell::Dict_Base {
 	using Dict_Base::spell_priv;
-	template <class CharT>
-	auto spell_priv(std::basic_string<CharT>&& s)
-	{
-		return Dict_Base::spell_priv(s);
-	}
+	auto spell_priv(std::wstring&& s) { return Dict_Base::spell_priv(s); }
 };
 
 TEST_CASE("parse", "[dictionary]")
@@ -49,12 +45,12 @@ TEST_CASE("simple", "[dictionary]")
 	auto good = {L"",      L".",    L"..",     L"table",
 	             L"chair", L"book", L"fóóáár", L"áárfóóĳ"};
 	for (auto& g : good)
-		CHECK(d.spell_priv<wchar_t>(g) == true);
+		CHECK(d.spell_priv(g) == true);
 
 	auto wrong = {L"tabel", L"chiar",    L"boko", L"xyyz",  L"fooxy",
 	              L"xyfoo", L"fooxybar", L"ééőő", L"fóóéé", L"őőáár"};
 	for (auto& w : wrong)
-		CHECK(d.spell_priv<wchar_t>(w) == false);
+		CHECK(d.spell_priv(w) == false);
 }
 
 TEST_CASE("suffixes", "[dictionary]")
@@ -66,17 +62,16 @@ TEST_CASE("suffixes", "[dictionary]")
 	d.words.emplace("May", u"T");
 	d.words.emplace("vary", u"");
 
-	d.wide_structures.suffixes.emplace(u'T', true, L"y", L"ies", Flag_Set(),
-	                                   L".[^aeiou]y");
+	d.suffixes.emplace(u'T', true, L"y", L"ies", Flag_Set(), L".[^aeiou]y");
 
 	auto good = {L"berry", L"Berry", L"berries", L"BERRIES",
 	             L"May",   L"MAY",   L"vary"};
 	for (auto& g : good)
-		CHECK(d.spell_priv<wchar_t>(g) == true);
+		CHECK(d.spell_priv(g) == true);
 
 	auto wrong = {L"beRRies", L"Maies", L"MAIES", L"maies", L"varies"};
 	for (auto& w : wrong)
-		CHECK(d.spell_priv<wchar_t>(w) == false);
+		CHECK(d.spell_priv(w) == false);
 }
 
 TEST_CASE("complex_prefixes", "[dictionary]")
@@ -85,18 +80,16 @@ TEST_CASE("complex_prefixes", "[dictionary]")
 	d.set_encoding_and_language("UTF-8");
 
 	d.words.emplace("drink", u"X");
-	d.wide_structures.suffixes.emplace(u'Y', true, L"", L"s", Flag_Set(),
-	                                   L".");
-	d.wide_structures.suffixes.emplace(u'X', true, L"", L"able",
-	                                   Flag_Set(u"Y"), L".");
+	d.suffixes.emplace(u'Y', true, L"", L"s", Flag_Set(), L".");
+	d.suffixes.emplace(u'X', true, L"", L"able", Flag_Set(u"Y"), L".");
 
 	auto good = {L"drink", L"drinkable", L"drinkables"};
 	for (auto& g : good)
-		CHECK(d.spell_priv<wchar_t>(g) == true);
+		CHECK(d.spell_priv(g) == true);
 
 	auto wrong = {L"drinks"};
 	for (auto& w : wrong)
-		CHECK(d.spell_priv<wchar_t>(w) == false);
+		CHECK(d.spell_priv(w) == false);
 }
 
 TEST_CASE("extra_stripping", "[dictionary]")
@@ -108,22 +101,16 @@ TEST_CASE("extra_stripping", "[dictionary]")
 	d.words.emplace("aa", u"ABC");
 	d.words.emplace("bb", u"XYZ");
 
-	d.wide_structures.prefixes.emplace(u'A', true, L"", L"W",
-	                                   Flag_Set(u"B"), L"aa");
-	d.wide_structures.prefixes.emplace(u'B', true, L"", L"Q",
-	                                   Flag_Set(u"C"), L"Wa");
-	d.wide_structures.suffixes.emplace(u'C', true, L"", L"E", Flag_Set(),
-	                                   L"a");
-	d.wide_structures.prefixes.emplace(u'X', true, L"b", L"1",
-	                                   Flag_Set(u"Y"), L"b");
-	d.wide_structures.suffixes.emplace(u'Y', true, L"", L"2",
-	                                   Flag_Set(u"Z"), L"b");
-	d.wide_structures.prefixes.emplace(u'Z', true, L"", L"3", Flag_Set(),
-	                                   L"1");
+	d.prefixes.emplace(u'A', true, L"", L"W", Flag_Set(u"B"), L"aa");
+	d.prefixes.emplace(u'B', true, L"", L"Q", Flag_Set(u"C"), L"Wa");
+	d.suffixes.emplace(u'C', true, L"", L"E", Flag_Set(), L"a");
+	d.prefixes.emplace(u'X', true, L"b", L"1", Flag_Set(u"Y"), L"b");
+	d.suffixes.emplace(u'Y', true, L"", L"2", Flag_Set(u"Z"), L"b");
+	d.prefixes.emplace(u'Z', true, L"", L"3", Flag_Set(), L"1");
 	// complex strip suffix prefix prefix
-	CHECK(d.spell_priv<wchar_t>(L"QWaaE") == true);
+	CHECK(d.spell_priv(L"QWaaE") == true);
 	// complex strip prefix suffix prefix
-	CHECK(d.spell_priv<wchar_t>(L"31b2") == true);
+	CHECK(d.spell_priv(L"31b2") == true);
 }
 
 TEST_CASE("break_pattern", "[dictionary]")
@@ -137,17 +124,17 @@ TEST_CASE("break_pattern", "[dictionary]")
 	d.words.emplace("interface", u"");
 	d.words.emplace("interface-interface", u"W");
 
-	d.wide_structures.break_table = {L"-", L"++++++$"};
+	d.break_table = {L"-", L"++++++$"};
 
 	auto good = {L"user", L"interface", L"user-interface",
 	             L"interface-user", L"user-user"};
 	for (auto& g : good)
-		CHECK(d.spell_priv<wchar_t>(g) == true);
+		CHECK(d.spell_priv(g) == true);
 
 	auto wrong = {L"user--interface", L"user interface",
 	              L"user - interface", L"interface-interface"};
 	for (auto& w : wrong)
-		CHECK(d.spell_priv<wchar_t>(w) == false);
+		CHECK(d.spell_priv(w) == false);
 }
 
 TEST_CASE("spell_casing_upper", "[dictionary]")
@@ -159,7 +146,7 @@ TEST_CASE("spell_casing_upper", "[dictionary]")
 
 	auto good = {L"SANT'ELIA", L"D'OSORMORT"};
 	for (auto& g : good)
-		CHECK(d.spell_priv<wchar_t>(g) == true);
+		CHECK(d.spell_priv(g) == true);
 }
 
 TEST_CASE("compounding", "[dictionary]")
@@ -179,11 +166,11 @@ TEST_CASE("compounding", "[dictionary]")
 
 		auto good = {L"cookbook", L"photobook"};
 		for (auto& g : good)
-			CHECK(d.spell_priv<wchar_t>(g) == true);
+			CHECK(d.spell_priv(g) == true);
 		auto wrong = {L"carbook", L"bookcook", L"bookphoto",
 		              L"cookphoto", L"photocook"};
 		for (auto& w : wrong)
-			CHECK(d.spell_priv<wchar_t>(w) == false);
+			CHECK(d.spell_priv(w) == false);
 	}
 
 	SECTION("compound_middle")
@@ -198,13 +185,13 @@ TEST_CASE("compounding", "[dictionary]")
 		auto good = {L"goederentreinwagon", L"wagontreingoederen",
 		             L"goederenwagon", L"wagongoederen"};
 		for (auto& g : good)
-			CHECK(d.spell_priv<wchar_t>(g) == true);
+			CHECK(d.spell_priv(g) == true);
 		auto wrong = {L"goederentrein", L"treingoederen",
 		              L"treinwagon",    L"wagontrein",
 		              L"treintrein",    L"goederengoederen",
 		              L"wagonwagon"};
 		for (auto& w : wrong)
-			CHECK(d.spell_priv<wchar_t>(w) == false);
+			CHECK(d.spell_priv(w) == false);
 	}
 
 	SECTION("triple")
@@ -216,11 +203,11 @@ TEST_CASE("compounding", "[dictionary]")
 
 		auto good = {L"Schiffahrt", L"schiffahrt"};
 		for (auto& g : good)
-			CHECK(d.spell_priv<wchar_t>(g) == true);
+			CHECK(d.spell_priv(g) == true);
 		auto wrong = {L"Schifffahrt", L"schifffahrt", L"SchiffFahrt",
 		              L"SchifFahrt",  L"schiffFahrt", L"schifFahrt"};
 		for (auto& w : wrong)
-			CHECK(d.spell_priv<wchar_t>(w) == false);
+			CHECK(d.spell_priv(w) == false);
 	}
 }
 
@@ -228,15 +215,15 @@ TEST_CASE("rep_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
-	d.wide_structures.replacements = {{L"ph", L"f"},
-	                                  {L"shun$", L"tion"},
-	                                  {L"^voo", L"foo"},
-	                                  {L"^alot$", L"a lot"}};
+	d.replacements = {{L"ph", L"f"},
+	                  {L"shun$", L"tion"},
+	                  {L"^voo", L"foo"},
+	                  {L"^alot$", L"a lot"}};
 	auto good = L"fat";
 	d.words.emplace("fat", u"");
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	CHECK(d.spell_priv(good) == true);
 	auto w = wstring(L"phat");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	auto out_sug = List_WStrings();
 	auto expected_sug = List_WStrings{good};
 	d.rep_suggest(w, out_sug);
@@ -249,9 +236,9 @@ TEST_CASE("rep_suggest", "[dictionary]")
 
 	good = L"station";
 	d.words.emplace("station", u"");
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	CHECK(d.spell_priv(good) == true);
 	w = wstring(L"stashun");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
 	d.rep_suggest(w, out_sug);
@@ -259,7 +246,7 @@ TEST_CASE("rep_suggest", "[dictionary]")
 
 	d.words.emplace("stations", u"");
 	w = wstring(L"stashuns");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
 	d.rep_suggest(w, out_sug);
@@ -267,16 +254,16 @@ TEST_CASE("rep_suggest", "[dictionary]")
 
 	good = L"food";
 	d.words.emplace("food", u"");
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	CHECK(d.spell_priv(good) == true);
 	w = wstring(L"vood");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
 	w = wstring(L"vvood");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
 	d.rep_suggest(w, out_sug);
@@ -284,23 +271,23 @@ TEST_CASE("rep_suggest", "[dictionary]")
 
 	good = L"a lot";
 	d.words.emplace("a lot", u"");
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	CHECK(d.spell_priv(good) == true);
 	w = wstring(L"alot");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
 	w = wstring(L"aalot");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
 	w = wstring(L"alott");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
 	d.rep_suggest(w, out_sug);
@@ -313,12 +300,12 @@ TEST_CASE("extra_char_suggest", "[dictionary]")
 	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"table";
-	d.wide_structures.try_chars = good;
+	d.try_chars = good;
 	d.words.emplace("table", u"");
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	CHECK(d.spell_priv(good) == true);
 
 	auto w = wstring(L"tabble");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 
 	auto out_sug = List_WStrings();
 	auto expected_sug = List_WStrings{good};
@@ -342,11 +329,11 @@ TEST_CASE("map_suggest", "[dictionary]")
 
 	auto good = L"naïve";
 	d.words.emplace("naïve", u"");
-	d.wide_structures.similarities = {Similarity_Group<wchar_t>(L"iíìîï")};
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	d.similarities = {Similarity_Group<wchar_t>(L"iíìîï")};
+	CHECK(d.spell_priv(good) == true);
 
 	auto w = wstring(L"naive");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 
 	auto out_sug = List_WStrings();
 	auto expected_sug = List_WStrings{good};
@@ -354,36 +341,33 @@ TEST_CASE("map_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 
 	d.words.emplace("æon", u"");
-	d.wide_structures.similarities.push_back(
-	    Similarity_Group<wchar_t>(L"æ(ae)"));
+	d.similarities.push_back(Similarity_Group<wchar_t>(L"æ(ae)"));
 	good = L"æon";
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	CHECK(d.spell_priv(good) == true);
 	w = wstring(L"aeon");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
 	d.map_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
 	d.words.emplace("zijn", u"");
-	d.wide_structures.similarities.push_back(
-	    Similarity_Group<wchar_t>(L"(ij)ĳ"));
+	d.similarities.push_back(Similarity_Group<wchar_t>(L"(ij)ĳ"));
 	good = L"zijn";
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	CHECK(d.spell_priv(good) == true);
 	w = wstring(L"zĳn");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
 	d.map_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
 	d.words.emplace("hear", u"");
-	d.wide_structures.similarities.push_back(
-	    Similarity_Group<wchar_t>(L"(ae)(ea)"));
+	d.similarities.push_back(Similarity_Group<wchar_t>(L"(ae)(ea)"));
 	good = L"hear";
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	CHECK(d.spell_priv(good) == true);
 	w = wstring(L"haer");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
 	d.map_suggest(w, out_sug);
@@ -399,11 +383,11 @@ TEST_CASE("keyboard_suggest", "[dictionary]")
 	auto good2 = L"Abb";
 	d.words.emplace("abcd", u"");
 	d.words.emplace("Abb", u"");
-	d.wide_structures.keyboard_closeness = L"uiop|xdf|nm";
-	CHECK(d.spell_priv<wchar_t>(good1) == true);
+	d.keyboard_closeness = L"uiop|xdf|nm";
+	CHECK(d.spell_priv(good1) == true);
 
 	auto w = wstring(L"abcf");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 
 	auto out_sug = List_WStrings();
 	auto expected_sug = List_WStrings{good1};
@@ -411,21 +395,21 @@ TEST_CASE("keyboard_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 
 	w = wstring(L"abcx");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good1};
 	d.keyboard_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
 	w = wstring(L"abcg");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
 	d.keyboard_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
 	w = wstring(L"abb");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
 	expected_sug = {good2};
@@ -440,11 +424,11 @@ TEST_CASE("bad_char_suggest", "[dictionary]")
 
 	auto good = L"chair";
 	d.words.emplace("chair", u"");
-	d.wide_structures.try_chars = good;
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	d.try_chars = good;
+	CHECK(d.spell_priv(good) == true);
 
 	auto w = wstring(L"cháir");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 
 	auto out_sug = List_WStrings();
 	auto expected_sug = List_WStrings{good};
@@ -459,11 +443,11 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 
 	auto good = L"abcd";
 	d.words.emplace("abcd", u"");
-	d.wide_structures.try_chars = good;
-	CHECK(d.spell_priv<wchar_t>(good) == true);
+	d.try_chars = good;
+	CHECK(d.spell_priv(good) == true);
 
 	auto w = wstring(L"abd");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 
 	auto out_sug = List_WStrings();
 	auto expected_sug = List_WStrings{good};
@@ -490,7 +474,7 @@ TEST_CASE("phonetic_suggest", "[dictionary]")
 	// its morph data, but this is pending enabling of
 	// parse_morhological_fields when reading aff file.
 
-	d.wide_structures.phonetic_table = {{L"AH(AEIOUY)-^", L"*H"},
+	d.phonetic_table = {{L"AH(AEIOUY)-^", L"*H"},
 	                                    {L"AR(AEIOUY)-^", L"*R"},
 	                                    {L"A(HR)^", L"*"},
 	                                    {L"A^", L"*"},
@@ -597,7 +581,7 @@ TEST_CASE("phonetic_suggest", "[dictionary]")
 	                                    {L"Z", L"S"}};
 
 	auto w = wstring(L"Brasillian");
-	CHECK(d.spell_priv<wchar_t>(w) == false);
+	CHECK(d.spell_priv(w) == false);
 
 	auto out_sug = List_WStrings();
 	auto expected_sug = List_WStrings();
@@ -647,7 +631,7 @@ TEST_CASE("suggest_priv", "[dictionary]")
 {
 	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
-	d.wide_structures.try_chars = L"ailrt";
+	d.try_chars = L"ailrt";
 
 	// extra char, bad char, bad char, forgotten char
 	auto words = {"tral", "trial", "trail", "traalt"};
@@ -665,13 +649,13 @@ TEST_CASE("suggest_priv_max", "[dictionary]")
 {
 	auto d = Dict_Test();
 	d.set_encoding_and_language("UTF-8");
-	d.wide_structures.replacements = {
+	d.replacements = {
 	    {L"x", L"a"}, {L"x", L"b"}, {L"x", L"c"}, {L"x", L"d"},
 	    {L"x", L"e"}, {L"x", L"f"}, {L"x", L"g"}, {L"x", L"h"}};
-	d.wide_structures.similarities = {
+	d.similarities = {
 	    Similarity_Group<wchar_t>(L"xabcdefgh")};
-	d.wide_structures.keyboard_closeness = L"axb|cxd|exf|gxh";
-	d.wide_structures.try_chars = L"abcdefgh";
+	d.keyboard_closeness = L"axb|cxd|exf|gxh";
+	d.try_chars = L"abcdefgh";
 
 	auto chars = string("abcdefgh");
 	auto word = string();
