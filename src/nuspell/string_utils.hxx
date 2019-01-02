@@ -33,7 +33,7 @@
 #include <vector>
 
 namespace nuspell {
-#define LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
+#define NUSPELL_LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
 
 template <class CharT>
 auto constexpr literal_choose(const char* narrow, const wchar_t* wide);

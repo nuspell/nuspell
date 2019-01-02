@@ -245,7 +245,7 @@ auto Dict_Base::spell_casing_upper(std::basic_string<CharT>& s) const
 	}
 
 	// handle sharp s for German
-	if (checksharps && s.find(LITERAL(CharT, "SS")) != s.npos) {
+	if (checksharps && s.find(NUSPELL_LITERAL(CharT, "SS")) != s.npos) {
 		auto t = to_lower(s, loc);
 		res = spell_sharps(t);
 		if (!res)
@@ -320,7 +320,7 @@ auto Dict_Base::spell_sharps(std::basic_string<CharT>& base, size_t pos,
                              size_t n, size_t rep) const -> const Flag_Set*
 {
 	const size_t MAX_SHARPS = 5;
-	pos = base.find(LITERAL(CharT, "ss"), pos);
+	pos = base.find(NUSPELL_LITERAL(CharT, "ss"), pos);
 	if (pos != std::string::npos && n < MAX_SHARPS) {
 		base[pos] = static_cast<CharT>(223); // ß
 		base.erase(pos + 1, 1);

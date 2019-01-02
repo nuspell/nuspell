@@ -4,7 +4,7 @@ dictionary.cxx   dictionary.hxx
 finder.cxx       finder.hxx
 locale_utils.cxx locale_utils.hxx
                  string_utils.hxx
-structures.cxx   structures.hxx)
+                 structures.hxx)
 
 get_target_property(nuspell_headers nuspell SOURCES)
 list(FILTER nuspell_headers INCLUDE REGEX [=[.*\.hxx$]=])

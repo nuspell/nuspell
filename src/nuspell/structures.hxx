@@ -24,6 +24,8 @@
 #ifndef NUSPELL_STRUCTURES_HXX
 #define NUSPELL_STRUCTURES_HXX
 
+#include "string_utils.hxx"
+
 #include <algorithm>
 #include <cmath>
 #include <iterator>
@@ -118,6 +120,7 @@ class String_Set {
 	String_Set() = default;
 	String_Set(const StrT& s) : d(s) { sort_uniq(); }
 	String_Set(StrT&& s) : d(move(s)) { sort_uniq(); }
+	String_Set(const CharT* s) : d(s) { sort_uniq(); }
 	template <class InputIterator>
 	String_Set(InputIterator first, InputIterator last) : d(first, last)
 	{
@@ -143,6 +146,12 @@ class String_Set {
 	auto& operator=(std::initializer_list<value_type> il)
 	{
 		d = il;
+		sort_uniq();
+		return *this;
+	}
+	auto& operator=(const CharT* s)
+	{
+		d = s;
 		sort_uniq();
 		return *this;
 	}
@@ -309,9 +318,6 @@ class String_Set {
 	bool operator>=(const String_Set& rhs) const { return d >= rhs.d; }
 	bool operator>(const String_Set& rhs) const { return d > rhs.d; }
 };
-// extern template class String_Set<char>;
-// extern template class String_Set<wchar_t>;
-extern template class String_Set<char16_t>;
 
 template <class CharT>
 auto swap(String_Set<CharT>& a, String_Set<CharT>& b)
@@ -325,11 +331,14 @@ template <class CharT>
 class Substr_Replacer {
       public:
 	using StrT = std::basic_string<CharT>;
-	using Table_Pairs = std::vector<std::pair<StrT, StrT>>;
+	using StrViewT = my_string_view<CharT>;
+	using Pair_StrT = std::pair<StrT, StrT>;
+	using Table_Pairs = std::vector<Pair_StrT>;
 
       private:
 	Table_Pairs table;
-	void sort_uniq(); // implemented in cxx
+	auto sort_uniq() -> void; // implemented in cxx
+	auto find_match(my_string_view<CharT> s) const;
 
       public:
 	Substr_Replacer() = default;
@@ -364,8 +373,89 @@ class Substr_Replacer {
 		return s;
 	}
 };
-extern template class Substr_Replacer<char>;
-extern template class Substr_Replacer<wchar_t>;
+template <class CharT>
+auto Substr_Replacer<CharT>::sort_uniq() -> void
+{
+	auto first = begin(table);
+	auto last = end(table);
+	sort(first, last, [](auto& a, auto& b) { return a.first < b.first; });
+	auto it = unique(first, last,
+	                 [](auto& a, auto& b) { return a.first == b.first; });
+	table.erase(it, last);
+
+	// remove empty key ""
+	if (!table.empty() && table.front().first.empty())
+		table.erase(begin(table));
+}
+
+template <class CharT>
+auto Substr_Replacer<CharT>::find_match(my_string_view<CharT> s) const
+{
+	auto& t = table;
+	struct Comparer_Str_Rep {
+		auto static cmp_prefix_of(const StrT& p, StrViewT of)
+		{
+			return p.compare(0, p.npos, of.data(),
+			                 std::min(p.size(), of.size()));
+		}
+		auto operator()(const Pair_StrT& a, StrViewT b)
+		{
+			return cmp_prefix_of(a.first, b) < 0;
+		}
+		auto operator()(StrViewT a, const Pair_StrT& b)
+		{
+			return cmp_prefix_of(b.first, a) > 0;
+		}
+		auto static eq(const Pair_StrT& a, StrViewT b)
+		{
+			return cmp_prefix_of(a.first, b) == 0;
+		}
+	};
+	Comparer_Str_Rep csr;
+	auto it = begin(t);
+	auto last_match = end(t);
+	for (;;) {
+		auto it2 = upper_bound(it, end(t), s, csr);
+		if (it2 == it) {
+			// not found, s is smaller that the range
+			break;
+		}
+		--it2;
+		if (csr.eq(*it2, s)) {
+			// Match found. Try another search maybe for
+			// longer.
+			last_match = it2;
+			it = ++it2;
+		}
+		else {
+			// not found, s is greater that the range
+			break;
+		}
+	}
+	return last_match;
+}
+
+template <class CharT>
+auto Substr_Replacer<CharT>::replace(StrT& s) const -> StrT&
+{
+
+	if (table.empty())
+		return s;
+	for (size_t i = 0; i < s.size(); /*no increment here*/) {
+		auto substr = my_string_view<CharT>(&s[i], s.size() - i);
+		auto it = find_match(substr);
+		if (it != end(table)) {
+			auto& match = *it;
+			// match found. match.first is the found string,
+			// match.second is the replacement.
+			s.replace(i, match.first.size(), match.second);
+			i += match.second.size();
+			continue;
+		}
+		++i;
+	}
+	return s;
+}
 
 template <class CharT>
 class Break_Table {
@@ -424,8 +514,31 @@ class Break_Table {
 		return {begin(table) + end_word_breaks_last_idx, end(table)};
 	}
 };
-extern template class Break_Table<char>;
-extern template class Break_Table<wchar_t>;
+template <class CharT>
+auto Break_Table<CharT>::order_entries() -> void
+{
+	auto it = remove_if(begin(table), end(table), [](auto& s) {
+		return s.empty() ||
+		       (s.size() == 1 && (s[0] == '^' || s[0] == '$'));
+	});
+	table.erase(it, end(table));
+
+	auto is_start_word_break = [=](auto& x) { return x[0] == '^'; };
+	auto is_end_word_break = [=](auto& x) { return x.back() == '$'; };
+	auto start_word_breaks_last =
+	    partition(begin(table), end(table), is_start_word_break);
+	start_word_breaks_last_idx = start_word_breaks_last - begin(table);
+
+	for_each(begin(table), start_word_breaks_last,
+	         [](auto& e) { e.erase(0, 1); });
+
+	auto end_word_breaks_last =
+	    partition(start_word_breaks_last, end(table), is_end_word_break);
+	end_word_breaks_last_idx = end_word_breaks_last - begin(table);
+
+	for_each(start_word_breaks_last, end_word_breaks_last,
+	         [](auto& e) { e.pop_back(); });
+}
 
 struct identity {
 	template <class T>
@@ -638,6 +751,119 @@ class Condition {
 		return match(s, s.size() - length, length);
 	}
 };
+template <class CharT>
+auto Condition<CharT>::construct() -> void
+{
+	size_t i = 0;
+	for (; i != cond.size();) {
+		size_t j = cond.find_first_of(NUSPELL_LITERAL(CharT, "[]."), i);
+		if (i != j) {
+			if (j == cond.npos) {
+				spans.emplace_back(i, cond.size() - i, NORMAL);
+				length += cond.size() - i;
+				break;
+			}
+			spans.emplace_back(i, j - i, NORMAL);
+			length += j - i;
+			i = j;
+		}
+		if (cond[i] == '.') {
+			spans.emplace_back(i, 1, DOT);
+			++length;
+			++i;
+			continue;
+		}
+		if (cond[i] == ']') {
+			auto what =
+			    "closing bracket has no matching opening bracket";
+			throw std::invalid_argument(what);
+		}
+		if (cond[i] == '[') {
+			++i;
+			if (i == cond.size()) {
+				auto what = "opening bracket has no matching "
+				            "closing bracket";
+				throw std::invalid_argument(what);
+			}
+			Span_Type type;
+			if (cond[i] == '^') {
+				type = NONE_OF;
+				++i;
+			}
+			else {
+				type = ANY_OF;
+			}
+			j = cond.find(']', i);
+			if (j == i) {
+				auto what = "empty bracket expression";
+				throw std::invalid_argument(what);
+			}
+			if (j == cond.npos) {
+				auto what = "opening bracket has no matching "
+				            "closing bracket";
+				throw std::invalid_argument(what);
+			}
+			spans.emplace_back(i, j - i, type);
+			++length;
+			i = j + 1;
+		}
+	}
+}
+
+/**
+ * Checks if provided string matched the condition.
+ *
+ * @param s string to check if it matches the condition.
+ * @param pos start position for string, default is 0.
+ * @param len length of string counting from the start position.
+ * @return The valueof true when string matched condition.
+ */
+template <class CharT>
+auto Condition<CharT>::match(const StrT& s, size_t pos, size_t len) const
+    -> bool
+{
+	if (pos > s.size()) {
+		throw std::out_of_range(
+		    "position on the string is out of bounds");
+	}
+	if (s.size() - pos < len)
+		len = s.size() - pos;
+	if (len != length)
+		return false;
+
+	size_t i = pos;
+	for (auto& x : spans) {
+		auto x_pos = std::get<0>(x);
+		auto x_len = std::get<1>(x);
+		auto x_type = std::get<2>(x);
+
+		using tr = typename StrT::traits_type;
+		switch (x_type) {
+		case NORMAL:
+			if (tr::compare(&s[i], &cond[x_pos], x_len) == 0)
+				i += x_len;
+			else
+				return false;
+			break;
+		case DOT:
+			++i;
+			break;
+		case ANY_OF:
+			if (tr::find(&cond[x_pos], x_len, s[i]))
+				++i;
+			else
+				return false;
+			break;
+		case NONE_OF:
+			if (tr::find(&cond[x_pos], x_len, s[i]))
+				return false;
+			else
+				++i;
+			break;
+		}
+	}
+	return true;
+}
 
 template <class CharT>
 class Prefix {
@@ -736,10 +962,6 @@ class Suffix {
 		return condition.match_suffix(word);
 	}
 };
-extern template class Prefix<char>;
-extern template class Prefix<wchar_t>;
-extern template class Suffix<char>;
-extern template class Suffix<wchar_t>;
 
 using boost::multi_index::member;
 
@@ -881,6 +1103,53 @@ class Compound_Rule_Table {
 	auto match_any_rule(const std::vector<const Flag_Set*> data) const
 	    -> bool;
 };
+auto inline Compound_Rule_Table::fill_all_flags() -> void
+{
+	for (auto& f : rules) {
+		all_flags += f;
+	}
+	all_flags.erase(u'?');
+	all_flags.erase(u'*');
+}
+
+auto inline Compound_Rule_Table::has_any_of_flags(const Flag_Set& f) const
+    -> bool
+{
+	using std::begin;
+	using std::end;
+	struct Out_Iter_One_Bool {
+		bool* value = nullptr;
+		auto& operator++() { return *this; }
+		auto& operator++(int) { return *this; }
+		auto& operator*() { return *this; }
+		auto& operator=(char16_t)
+		{
+			*value = true;
+			return *this;
+		}
+	};
+	auto has_intersection = false;
+	auto out_it = Out_Iter_One_Bool{&has_intersection};
+	std::set_intersection(begin(all_flags), end(all_flags), begin(f),
+	                      end(f), out_it);
+	return has_intersection;
+}
+
+auto inline match_compund_rule(const std::vector<const Flag_Set*>& words_data,
+                               const std::u16string& pattern)
+{
+	return match_simple_regex(
+	    words_data, pattern,
+	    [](const Flag_Set* d, char16_t p) { return d->contains(p); });
+}
+
+auto inline Compound_Rule_Table::match_any_rule(
+    const std::vector<const Flag_Set*> data) const -> bool
+{
+	return any_of(begin(rules), end(rules), [&](const std::u16string& p) {
+		return match_compund_rule(data, p);
+	});
+}
 
 /**
  * @brief Vector of strings that recycles erased strings
@@ -1311,8 +1580,37 @@ class Replacement_Table {
 		return {begin(table) + end_word_reps_last_idx, end(table)};
 	}
 };
-extern template class Break_Table<char>;
-extern template class Break_Table<wchar_t>;
+template <class CharT>
+auto Replacement_Table<CharT>::order_entries() -> void
+{
+	auto it = remove_if(begin(table), end(table), [](auto& p) {
+		auto& s = p.first;
+		return s.empty() ||
+		       (s.size() == 1 && (s[0] == '^' || s[0] == '$'));
+	});
+	table.erase(it, end(table));
+
+	auto is_start_word_pat = [=](auto& x) { return x.first[0] == '^'; };
+	auto is_end_word_pat = [=](auto& x) { return x.first.back() == '$'; };
+
+	auto start_word_reps_last =
+	    partition(begin(table), end(table), is_start_word_pat);
+	start_word_reps_last_idx = start_word_reps_last - begin(table);
+	for_each(begin(table), start_word_reps_last,
+	         [](auto& e) { e.first.erase(0, 1); });
+
+	auto whole_word_reps_last =
+	    partition(begin(table), start_word_reps_last, is_end_word_pat);
+	whole_word_reps_last_idx = whole_word_reps_last - begin(table);
+	for_each(begin(table), whole_word_reps_last,
+	         [](auto& e) { e.first.pop_back(); });
+
+	auto end_word_reps_last =
+	    partition(start_word_reps_last, end(table), is_end_word_pat);
+	end_word_reps_last_idx = end_word_reps_last - begin(table);
+	for_each(start_word_reps_last, end_word_reps_last,
+	         [](auto& e) { e.first.pop_back(); });
+}
 
 template <class CharT>
 struct Similarity_Group {
@@ -1329,10 +1627,32 @@ struct Similarity_Group {
 		return *this;
 	}
 };
+template <class CharT>
+auto Similarity_Group<CharT>::parse(const StrT& s) -> void
+{
+	auto i = size_t(0);
+	for (;;) {
+		auto j = s.find('(', i);
+		chars.append(s, i, j - i);
+		if (j == s.npos)
+			break;
+		i = j + 1;
+		j = s.find(')', i);
+		if (j == s.npos)
+			break;
+		auto len = j - i;
+		if (len == 1)
+			chars += s[i];
+		else if (len > 1)
+			strings.push_back(s.substr(i, len));
+		i = j + 1;
+	}
+}
 
 template <class CharT>
 class Phonetic_Table {
 	using StrT = std::basic_string<CharT>;
+	using Pair_StrT = std::pair<StrT, StrT>;
 
 	struct Phonet_Match_Result {
 		size_t count_matched = 0;
@@ -1350,21 +1670,15 @@ class Phonetic_Table {
 
       public:
 	Phonetic_Table() = default;
-	Phonetic_Table(const std::vector<std::pair<StrT, StrT>>& v) : table(v)
-	{
-		order();
-	}
-	Phonetic_Table(std::vector<std::pair<StrT, StrT>>&& v) : table(move(v))
-	{
-		order();
-	}
-	auto& operator=(const std::vector<std::pair<StrT, StrT>>& v)
+	Phonetic_Table(const std::vector<Pair_StrT>& v) : table(v) { order(); }
+	Phonetic_Table(std::vector<Pair_StrT>&& v) : table(move(v)) { order(); }
+	auto& operator=(const std::vector<Pair_StrT>& v)
 	{
 		table = v;
 		order();
 		return *this;
 	}
-	auto& operator=(std::vector<std::pair<StrT, StrT>>&& v)
+	auto& operator=(std::vector<Pair_StrT>&& v)
 	{
 		table = move(v);
 		order();
@@ -1380,5 +1694,157 @@ class Phonetic_Table {
 	auto replace(StrT& word) const -> bool;
 };
 
+template <class CharT>
+auto Phonetic_Table<CharT>::order() -> void
+{
+	stable_sort(begin(table), end(table), [](auto& pair1, auto& pair2) {
+		if (pair2.first.empty())
+			return false;
+		if (pair1.first.empty())
+			return true;
+		return pair1.first[0] < pair2.first[0];
+	});
+	auto it = find_if_not(begin(table), end(table),
+	                      [](auto& p) { return p.first.empty(); });
+	table.erase(begin(table), it);
+	for (auto& r : table) {
+		if (r.second == NUSPELL_LITERAL(CharT, "_"))
+			r.second.clear();
+	}
+}
+
+template <class CharT>
+auto Phonetic_Table<CharT>::match(const StrT& data, size_t i,
+                                  const StrT& pattern, bool at_begin)
+    -> Phonet_Match_Result
+{
+	auto ret = Phonet_Match_Result();
+	auto j =
+	    pattern.find_first_of(NUSPELL_LITERAL(CharT, "(<-0123456789^$"));
+	if (j == pattern.npos)
+		j = pattern.size();
+	if (data.compare(i, j, pattern, 0, j) == 0)
+		ret.count_matched = j;
+	else
+		return {};
+	if (j == pattern.size())
+		return ret;
+	if (pattern[j] == '(') {
+		auto k = pattern.find(')', j);
+		if (k == pattern.npos)
+			return {}; // bad rule
+		auto x = std::char_traits<CharT>::find(
+		    &pattern[j + 1], k - (j + 1), data[i + j]);
+		if (!x)
+			return {};
+		j = k + 1;
+		ret.count_matched += 1;
+	}
+	if (j == pattern.size())
+		return ret;
+	if (pattern[j] == '<') {
+		ret.go_back_after_replace = true;
+		++j;
+	}
+	auto k = pattern.find_first_not_of('-', j);
+	if (k == pattern.npos) {
+		k = pattern.size();
+		ret.go_back_before_replace = k - j;
+		if (ret.go_back_before_replace >= ret.count_matched)
+			return {}; // bad rule
+		return ret;
+	}
+	else {
+		ret.go_back_before_replace = k - j;
+		if (ret.go_back_before_replace >= ret.count_matched)
+			return {}; // bad rule
+	}
+	j = k;
+	if (pattern[j] >= '0' && pattern[j] <= '9') {
+		ret.priority = pattern[j] - '0';
+		++j;
+	}
+	if (j == pattern.size())
+		return ret;
+	if (pattern[j] == '^') {
+		if (!at_begin)
+			return {};
+		++j;
+	}
+	if (j == pattern.size())
+		return ret;
+	if (pattern[j] == '^') {
+		ret.treat_next_as_begin = true;
+		++j;
+	}
+	if (j == pattern.size())
+		return ret;
+	if (pattern[j] != '$')
+		return {}; // bad rule, no other char is allowed at this point
+	if (i + ret.count_matched == data.size())
+		return ret;
+	return {};
+}
+
+template <class CharT>
+auto Phonetic_Table<CharT>::replace(StrT& word) const -> bool
+{
+	using boost::make_iterator_range;
+	struct Cmp {
+		auto operator()(CharT c, const Pair_StrT& s)
+		{
+			return c < s.first[0];
+		}
+		auto operator()(const Pair_StrT& s, CharT c)
+		{
+			return s.first[0] < c;
+		}
+	};
+	if (table.empty())
+		return false;
+	auto ret = false;
+	auto treat_next_as_begin = true;
+	size_t count_go_backs_after_replace = 0; // avoid infinite loop
+	for (size_t i = 0; i != word.size(); ++i) {
+		auto rules =
+		    equal_range(begin(table), end(table), word[i], Cmp());
+		for (auto& r : make_iterator_range(rules)) {
+			auto rule = &r;
+			auto m1 = match(word, i, r.first, treat_next_as_begin);
+			if (!m1)
+				continue;
+			if (!m1.go_back_before_replace) {
+				auto j = i + m1.count_matched - 1;
+				auto rules2 = equal_range(
+				    begin(table), end(table), word[j], Cmp());
+				for (auto& r2 : make_iterator_range(rules2)) {
+					auto m2 =
+					    match(word, j, r2.first, false);
+					if (m2 && m2.priority >= m1.priority) {
+						i = j;
+						rule = &r2;
+						m1 = m2;
+						break;
+					}
+				}
+			}
+			word.replace(
+			    i, m1.count_matched - m1.go_back_before_replace,
+			    rule->second);
+			treat_next_as_begin = m1.treat_next_as_begin;
+			if (m1.go_back_after_replace &&
+			    count_go_backs_after_replace < 100) {
+				count_go_backs_after_replace++;
+			}
+			else {
+				i += rule->second.size();
+			}
+			--i;
+			ret = true;
+			break;
+		}
+	}
+	return ret;
+}
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX
