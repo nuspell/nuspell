@@ -6,8 +6,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0]
+## [Unreleased]
+### Added
+- Added build System CMake
 
+### Removed
+- Removed old autotools build system
+
+### Fixed
+- Support compiling with GCC 5. Previously GCC 7 was needed.
+
+## [2.1.0]
 ### Changed
 - Public API classes are inside inline namespace v2
 - `List_Strings<char>` is renamed to just `List_Strings`. Affects client code.
