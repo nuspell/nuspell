@@ -32,6 +32,35 @@
 #include <string>
 #include <vector>
 
+#ifdef __has_include
+#if __has_include(<experimental/string_view>)
+#if !defined(_LIBCPP_VERSION) || _LIBCPP_VERSION < 7000
+#include <experimental/string_view>
+#if defined(__cpp_lib_experimental_string_view) || defined(_LIBCPP_VERSION)
+#define NUSPELL_STR_VIEW_NS std::experimental
+#endif
+#endif
+#endif
+#endif
+
+#if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 7000
+#include <string_view>
+#define NUSPELL_STR_VIEW_NS std
+#endif
+
+#ifndef NUSPELL_STR_VIEW_NS
+#define NUSPELL_STR_VIEW_NS boost
+#include <boost/functional/hash.hpp>
+#include <boost/utility/string_view.hpp>
+template <class CharT>
+struct std::hash<boost::basic_string_view<CharT>> {
+	auto operator()(boost::basic_string_view<CharT> s) const
+	{
+		return boost::hash_range(begin(s), end(s));
+	}
+};
+#endif
+
 namespace nuspell {
 #define NUSPELL_LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
 
@@ -47,6 +76,9 @@ auto constexpr literal_choose<wchar_t>(const char*, const wchar_t* wide)
 {
 	return wide;
 }
+
+template <class CharT>
+using my_string_view = NUSPELL_STR_VIEW_NS::basic_string_view<CharT>;
 
 /**
  * @brief Splits string on set of single char seperators.
@@ -92,77 +124,6 @@ template <class CharT, class OutIt>
 auto split(const std::basic_string<CharT>& s, CharT sep, OutIt out)
 {
 	return split_on_any_of(s, sep, out);
-}
-
-/**
- * @brief Splits string on string separator.
- *
- * @param s string to split.
- * @param sep seperator to split on.
- * @param out start of the output range where separated strings are
- * appended.
- * @return The end of the output range where separated strings are appended.
- */
-template <class CharT, class OutIt>
-auto split(const std::basic_string<CharT>& s,
-           const std::basic_string<CharT>& sep, OutIt out)
-{
-	using size_type = typename std::basic_string<CharT>::size_type;
-	size_type i1 = 0;
-	size_type i2;
-	do {
-		i2 = s.find(sep, i1);
-		*out++ = s.substr(i1, i2 - i1);
-		i1 = i2 + sep.size();
-	} while (i2 != s.npos);
-	return out;
-}
-
-/**
- * @brief Splits string on string separator.
- *
- * @param s string to split.
- * @param sep seperator to split on.
- * @param out start of the output range where separated strings are
- * appended.
- * @return The end of the output range where separated strings are appended.
- */
-template <class CharT, class OutIt>
-auto split(const std::basic_string<CharT>& s, const CharT* sep, OutIt out)
-{
-	return split(s, std::basic_string<CharT>(sep), out);
-}
-
-/**
- * @brief Splits string on seperator, output to vector of strings.
- *
- * See split().
- *
- * @param s string to split.
- * @param sep separator to split on.
- * @param[out] v vector with separated strings. The vector is first cleared.
- */
-template <class CharT, class CharOrStr>
-auto split_v(const std::basic_string<CharT>& s, const CharOrStr& sep,
-             std::vector<std::basic_string<CharT>>& v)
-{
-	v.clear();
-	split(s, sep, std::back_inserter(v));
-}
-
-/**
- * @brief Gets the first token of a splitted string.
- *
- * @param s string to split.
- * @param sep char or string that acts as separator to split on.
- * @return The string that has been split off.
- */
-template <class CharT, class CharOrStr>
-auto split_first(const std::basic_string<CharT>& s, const CharOrStr& sep)
-    -> std::basic_string<CharT>
-{
-	auto index = s.find(sep);
-	return s.substr(0, index);
 }
 
 /**

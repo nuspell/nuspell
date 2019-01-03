@@ -39,39 +39,7 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/range/iterator_range_core.hpp>
 
-#ifdef __has_include
-#if __has_include(<experimental/string_view>)
-#if !defined(_LIBCPP_VERSION) || _LIBCPP_VERSION < 7000
-#include <experimental/string_view>
-#if defined(__cpp_lib_experimental_string_view) || defined(_LIBCPP_VERSION)
-#define NUSPELL_STR_VIEW_NS std::experimental
-#endif
-#endif
-#endif
-#endif
-
-#if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 7000
-#include <string_view>
-#define NUSPELL_STR_VIEW_NS std
-#endif
-
-#ifndef NUSPELL_STR_VIEW_NS
-#define NUSPELL_STR_VIEW_NS boost
-#include <boost/functional/hash.hpp>
-#include <boost/utility/string_view.hpp>
-template <class CharT>
-struct std::hash<boost::basic_string_view<CharT>> {
-	auto operator()(boost::basic_string_view<CharT> s) const
-	{
-		return boost::hash_range(begin(s), end(s));
-	}
-};
-#endif
-
 namespace nuspell {
-
-template <class CharT>
-using my_string_view = NUSPELL_STR_VIEW_NS::basic_string_view<CharT>;
 
 /**
  * @brief A Set class backed by a string. Very useful for small sets.

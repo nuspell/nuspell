@@ -33,44 +33,6 @@ TEST_CASE("method split_on_any_of", "[string_utils]")
 	CHECK(exp == out);
 }
 
-TEST_CASE("method split", "[string_utils]")
-{
-	// tests split(), also tests split_v
-
-	auto in = ";abc;;qwe;zxc;"s;
-	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
-	auto out = vector<string>();
-	split_v(in, ';', out);
-	CHECK(exp == out);
-
-	in = "<>1<>234<>qwe<==><><>";
-	exp = {"", "1", "234", "qwe<==>", "", ""};
-	split_v(in, "<>", out);
-	CHECK(exp == out);
-}
-
-TEST_CASE("method split_first", "[string_utils]")
-{
-	auto in = "first\tsecond"s;
-	auto first = "first"s;
-	auto out = split_first(in, '\t');
-	CHECK(first == out);
-
-	in = "first"s;
-	out = split_first(in, '\t');
-	CHECK(first == out);
-
-	in = "\tsecond"s;
-	first = ""s;
-	out = split_first(in, '\t');
-	CHECK(first == out);
-
-	in = ""s;
-	first = ""s;
-	out = split_first(in, '\t');
-	CHECK(first == out);
-}
-
 TEST_CASE("method split_on_whitespace", "[string_utils]")
 {
 	// also tests _v variant
