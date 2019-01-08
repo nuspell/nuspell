@@ -101,9 +101,10 @@ auto Word_List::equal_range(const std::wstring& word) const
     -> std::pair<Word_List_Base::local_const_iterator,
                  Word_List_Base::local_const_iterator>
 {
-	auto static thread_local u8buf = string();
+	// auto static thread_local u8buf = string();
+	auto u8buf = boost::container::small_vector<char, 64>();
 	wide_to_utf8(word, u8buf);
-	return equal_range(u8buf);
+	return equal_range(my_string_view<char>(u8buf.data(), u8buf.size()));
 }
 
 void reset_failbit_istream(std::istream& in)

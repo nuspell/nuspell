@@ -21,12 +21,13 @@
  * @brief Encoding transformations, private header.
  */
 
-#ifndef LOCALE_UTILS_HXX
-#define LOCALE_UTILS_HXX
+#ifndef NUSPELL_LOCALE_UTILS_HXX
+#define NUSPELL_LOCALE_UTILS_HXX
 
 #include <locale>
 #include <string>
 
+#include <boost/container/small_vector.hpp>
 #include <unicode/locid.h>
 
 struct UConverter; // unicode/ucnv.h
@@ -37,6 +38,8 @@ auto validate_utf8(const std::string& s) -> bool;
 
 auto wide_to_utf8(const std::wstring& in, std::string& out) -> void;
 auto wide_to_utf8(const std::wstring& in) -> std::string;
+auto wide_to_utf8(const std::wstring& in,
+                  boost::container::small_vector_base<char>& out) -> void;
 
 auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool;
 auto utf8_to_wide(const std::string& in) -> std::wstring;
@@ -156,4 +159,4 @@ class Encoding_Converter {
 	auto to_wide(const std::string& in) -> std::wstring;
 };
 } // namespace nuspell
-#endif // LOCALE_UTILS_HXX
+#endif // NUSPELL_LOCALE_UTILS_HXX

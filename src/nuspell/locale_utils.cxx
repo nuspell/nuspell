@@ -63,10 +63,11 @@ auto validate_utf8(const std::string& s) -> bool
 	return true;
 }
 
-template <class InChar, class OutChar>
-auto valid_utf_to_utf(const std::basic_string<InChar>& in,
-                      std::basic_string<OutChar>& out) -> void
+template <class InChar, class OutContainer>
+auto valid_utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out)
+    -> void
 {
+	using OutChar = typename OutContainer::value_type;
 	using namespace boost::locale::utf;
 	auto constexpr max_out_width = utf_traits<OutChar>::max_width;
 
@@ -96,10 +97,11 @@ auto valid_utf_to_utf(const std::basic_string<InChar>& in,
 	out.erase(out_it, end(out));
 }
 
-template <class InChar, class OutChar>
-auto utf_to_utf_my(const std::basic_string<InChar>& in,
-                   std::basic_string<OutChar>& out) -> bool
+template <class InChar, class OutContainer>
+auto utf_to_utf_my(const std::basic_string<InChar>& in, OutContainer& out)
+    -> bool
 {
+	using OutChar = typename OutContainer::value_type;
 	using namespace boost::locale::utf;
 	auto constexpr max_out_width = utf_traits<OutChar>::max_width;
 
@@ -144,6 +146,11 @@ auto wide_to_utf8(const std::wstring& in) -> std::string
 	auto out = string();
 	valid_utf_to_utf(in, out);
 	return out;
+}
+auto wide_to_utf8(const std::wstring& in,
+                  boost::container::small_vector_base<char>& out) -> void
+{
+	return valid_utf_to_utf(in, out);
 }
 
 auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool
