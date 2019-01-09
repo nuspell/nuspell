@@ -16,9 +16,9 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dictionary.hxx"
-#include "finder.hxx"
-#include "string_utils.hxx"
+#include <nuspell/dictionary.hxx>
+#include <nuspell/finder.hxx>
+#include <nuspell/string_utils.hxx>
 
 #include <chrono>
 #include <fstream>
@@ -167,20 +167,12 @@ auto print_help(const string& program_name) -> void
 	     "standard output. At the end of each presented file, space-\n"
 	     "separated statistics are printed to standard output, being:\n"
 	     "  Total Words         [0,1,..]\n"
-	     "  Positives Hunspell  [0,1,..]\n"
-	     "  Negatives Hunspell  [0,1,..]\n"
-	     "  Positives Nuspell   [0,1,..]\n"
-	     "  Negatives Nuspell   [0,1,..]\n"
 	     "  True Positives      [0,1,..]\n"
-	     "  True Positive Rate  [0.000,..,1.000]\n"
 	     "  True Negatives      [0,1,..]\n"
-	     "  True Negative Rate  [0.000,..,1.000]\n"
 	     "  False Positives     [0,1,..]\n"
-	     "  False Positive Rate [0.000,..,1.000]\n"
 	     "  False Negatives     [0,1,..]\n"
-	     "  False Negative Rate [0.000,..,1.000]\n"
-	     "  Accuracy Rate       [0.000,..,1.000]\n"
-	     "  Precision Rate      [0.000,..,1.000]\n"
+	     "  Accuracy            [0.000,..,1.000]\n"
+	     "  Precision           [0.000,..,1.000]\n"
 	     "  Duration Nuspell    [0,1,..] nanoseconds\n"
 	     "  Duration Hunspell   [0,1,..] nanoseconds\n"
 	     "  Speedup Rate        [0.00,..,9.99]\n"
@@ -192,15 +184,11 @@ auto print_help(const string& program_name) -> void
 	     "reporting only. It contains, space-separated, the following:\n"
 	     "  Total Words\n"
 	     "  True Positives\n"
-	     "  True Positive Rate\n"
 	     "  True Negatives\n"
-	     "  True Negative Rate\n"
 	     "  False Positives\n"
-	     "  False Positive Rate\n"
 	     "  False Negatives\n"
-	     "  False Negative Rate\n"
-	     "  Accuracy Rate\n"
-	     "  Precision Rate\n"
+	     "  Accuracy\n"
+	     "  Precision\n"
 	     "  Duration Nuspell\n"
 	     "  Speedup Rate\n"
 	     "\n"
@@ -236,6 +224,8 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
                  locale& hloc, bool print_false = false)
 {
 	auto word = string();
+	auto wide_word = wstring();
+	auto narrow_word = string();
 	// total number of words
 	auto total = 0;
 	// total number of words with identical spelling correctness
@@ -244,16 +234,17 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	auto false_pos = 0;
 	auto false_neg = 0;
 	// store cpu time for Hunspell and Nuspell
-	auto duration_hun = chrono::nanoseconds();
-	auto duration_nu = chrono::nanoseconds();
+	auto duration_hun = chrono::high_resolution_clock::duration();
+	auto duration_nu = duration_hun;
 	auto in_loc = in.getloc();
 	// need to take entine line here, not `in >> word`
 	while (getline(in, word)) {
 		auto tick_a = chrono::high_resolution_clock::now();
 		auto res_nu = dic.spell(word);
 		auto tick_b = chrono::high_resolution_clock::now();
-		auto res_hun =
-		    hun.spell(to_narrow(to_wide(word, in_loc), hloc));
+		to_wide(word, in_loc, wide_word);
+		to_narrow(wide_word, narrow_word, hloc);
+		auto res_hun = hun.spell(narrow_word);
 		auto tick_c = chrono::high_resolution_clock::now();
 		duration_nu += tick_b - tick_a;
 		duration_hun += tick_c - tick_b;
@@ -281,10 +272,6 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 		}
 		++total;
 	}
-	auto pos_nu = true_pos + false_pos;
-	auto pos_hun = true_pos + false_neg;
-	auto neg_nu = true_neg + false_neg;
-	auto neg_hun = true_neg + false_pos;
 
 	// prevent devision by zero
 	if (total == 0) {
@@ -297,42 +284,26 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 		return;
 	}
 	// rates
-	auto true_pos_rate = true_pos * 1.0 / total;
-	auto true_neg_rate = true_neg * 1.0 / total;
-	auto false_pos_rate = false_pos * 1.0 / total;
-	auto false_neg_rate = false_neg * 1.0 / total;
 	auto accuracy = (true_pos + true_neg) * 1.0 / total;
 	auto precision = true_pos * 1.0 / (true_pos + false_pos);
 	auto speedup = duration_hun.count() * 1.0 / duration_nu.count();
 
-	out.precision(3);
 	out << "Total Words         " << total << '\n';
-	out << "Positives Nuspell   " << pos_nu << '\n';
-	out << "Positives Hunspell  " << pos_hun << '\n';
-	out << "Negatives Nuspell   " << neg_nu << '\n';
-	out << "Negatives Hunspell  " << neg_hun << '\n';
 	out << "True Positives      " << true_pos << '\n';
-	out << "True Positive Rate  " << true_pos_rate << '\n';
 	out << "True Negatives      " << true_neg << '\n';
-	out << "True Negative Rate  " << true_neg_rate << '\n';
 	out << "False Positives     " << false_pos << '\n';
-	out << "False Positive Rate " << false_pos_rate << '\n';
 	out << "False Negatives     " << false_neg << '\n';
-	out << "False Negative Rate " << false_neg_rate << '\n';
-	out << "Accuracy Rate       " << accuracy << '\n';
-	out << "Precision Rate      " << precision << '\n';
+	out << "Accuracy            " << accuracy << '\n';
+	out << "Precision           " << precision << '\n';
 	out << "Duration Nuspell    " << duration_nu.count() << '\n';
 	out << "Duration Hunspell   " << duration_hun.count() << '\n';
-	out.precision(2); // otherwise too much variation
 	out << "Speedup Rate        " << speedup << '\n';
-	out.precision(3);
 
 	// summarey for easy reporting
-	out << fixed << total << ' ' << true_pos << ' ' << true_pos_rate << ' '
-	    << true_neg << ' ' << true_neg_rate << ' ' << false_pos << ' '
-	    << false_pos_rate << ' ' << false_neg << ' ' << false_neg_rate
-	    << ' ' << accuracy << ' ' << precision << ' ' << duration_nu.count()
-	    << ' ' << setprecision(2) << speedup << endl;
+	out << fixed << total << ' ' << true_pos << ' ' << true_neg << ' '
+	    << false_pos << ' ' << false_neg << ' ' << accuracy << ' '
+	    << precision << ' ' << duration_nu.count() << ' ' << speedup
+	    << endl;
 }
 
 namespace std {
