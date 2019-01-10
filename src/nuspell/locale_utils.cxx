@@ -67,28 +67,28 @@ auto valid_utf_to_utf(const std::basic_string<InChar>& in,
                       std::basic_string<OutChar>& out) -> void
 {
 	using namespace boost::locale::utf;
-
-	auto in_it = begin(in);
-	auto in_last = end(in);
-
 	auto constexpr max_out_width = utf_traits<OutChar>::max_width;
-	if (in.size() <= 15 / sizeof(OutChar)) {
-		out.resize(15 / sizeof(OutChar));
-	}
-	else {
-		auto new_size = in.size() + max_out_width - 1;
-		if (out.size() < new_size)
-			out.resize(new_size);
-	}
-	auto out_it = begin(out);
 
-	while (in_it != in_last) {
-		auto cp = utf_traits<InChar>::decode_valid(in_it);
-		if (unlikely(end(out) - out_it < max_out_width)) {
+	if (in.size() <= out.capacity() / max_out_width)
+		out.resize(in.size() * max_out_width);
+	else if (in.size() <= out.capacity())
+		out.resize(out.capacity());
+	else
+		out.resize(in.size());
+
+	auto it = begin(in);
+	auto last = end(in);
+	auto out_it = begin(out);
+	auto out_last = end(out);
+	while (it != last) {
+		auto cp = utf_traits<InChar>::decode_valid(it);
+		if (unlikely(out_last - out_it <
+		             utf_traits<OutChar>::width(cp))) {
 			// resize
 			auto i = out_it - begin(out);
 			out.resize(out.size() + in.size());
 			out_it = begin(out) + i;
+			out_last = end(out);
 		}
 		out_it = utf_traits<OutChar>::encode(cp, out_it);
 	}
@@ -100,32 +100,33 @@ auto utf_to_utf_my(const std::basic_string<InChar>& in,
                    std::basic_string<OutChar>& out) -> bool
 {
 	using namespace boost::locale::utf;
-
-	auto in_it = begin(in);
-	auto in_last = end(in);
-
 	auto constexpr max_out_width = utf_traits<OutChar>::max_width;
-	if (in.size() <= 15 / sizeof(OutChar)) {
-		out.resize(15 / sizeof(OutChar));
-	}
-	else {
-		auto new_size = in.size() + max_out_width - 1;
-		if (out.size() < new_size)
-			out.resize(new_size);
-	}
+
+	if (in.size() <= out.capacity() / max_out_width)
+		out.resize(in.size() * max_out_width);
+	else if (in.size() <= out.capacity())
+		out.resize(out.capacity());
+	else
+		out.resize(in.size());
+
+	auto it = begin(in);
+	auto last = end(in);
 	auto out_it = begin(out);
+	auto out_last = end(out);
 	auto valid = true;
-	while (in_it != in_last) {
-		auto cp = utf_traits<InChar>::decode(in_it, in_last);
+	while (it != last) {
+		auto cp = utf_traits<InChar>::decode(it, last);
 		if (unlikely(cp == incomplete || cp == illegal)) {
 			valid = false;
 			continue;
 		}
-		if (unlikely(end(out) - out_it < max_out_width)) {
+		if (unlikely(out_last - out_it <
+		             utf_traits<OutChar>::width(cp))) {
 			// resize
 			auto i = out_it - begin(out);
 			out.resize(out.size() + in.size());
 			out_it = begin(out) + i;
+			out_last = end(out);
 		}
 		out_it = utf_traits<OutChar>::encode(cp, out_it);
 	}
