@@ -723,7 +723,6 @@ auto Aff_Data::set_encoding_and_language(const string& enc, const string& lang)
 	if (!enc.empty())
 		name += '.' + enc;
 	internal_locale = locale_generator(name);
-	install_ctype_facets_inplace(internal_locale);
 }
 
 /**
@@ -1253,7 +1252,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			erase_chars(wide_word, ignored_chars);
 			wide_to_utf8(wide_word, word);
 		}
-		casing = classify_casing(wide_word, internal_locale);
+		casing = classify_casing(wide_word);
 
 		const char16_t HIDDEN_HOMONYM_FLAG = -1;
 		switch (casing) {

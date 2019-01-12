@@ -56,8 +56,6 @@ auto to_narrow(const std::wstring& in, std::string& out,
 auto to_narrow(const std::wstring& in, const std::locale& outloc)
     -> std::string;
 
-auto install_ctype_facets_inplace(std::locale& boost_loc) -> void;
-
 auto is_locale_known_utf8(const std::locale& loc) -> bool;
 
 /**
@@ -71,11 +69,10 @@ enum class Casing {
 	PASCAL /**< pascal case, start upper case, e.g. "PascalCase" */
 };
 
-auto classify_casing(const std::wstring& s,
-                     const std::locale& loc = std::locale()) -> Casing;
+auto classify_casing(const std::wstring& s) -> Casing;
 
-auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i,
-                                             const std::locale& loc) -> bool;
+auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i)
+    -> bool;
 
 class Encoding {
 	std::string name;

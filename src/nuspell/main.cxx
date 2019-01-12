@@ -542,14 +542,10 @@ int main(int argc, char* argv[])
 	boost::locale::generator gen;
 	auto loc = std::locale();
 	try {
-		if (args.encoding.empty()) {
+		if (args.encoding.empty())
 			loc = gen("");
-			install_ctype_facets_inplace(loc);
-		}
-		else {
+		else
 			loc = gen("en_US." + args.encoding);
-			install_ctype_facets_inplace(loc);
-		}
 	}
 	catch (const boost::locale::conv::invalid_charset_error& e) {
 		cerr << e.what() << '\n';

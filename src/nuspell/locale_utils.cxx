@@ -311,276 +311,6 @@ auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 	return ret;
 }
 
-auto get_char_mask(UChar32 cp)
-{
-	auto ret = ctype_base::mask();
-	if (u_isspace(cp)) {
-		ret |= ctype_base::space;
-	}
-	if (u_isprint(cp)) {
-		ret |= ctype_base::print;
-	}
-	if (u_iscntrl(cp)) {
-		ret |= ctype_base::cntrl;
-	}
-	if (u_isupper(cp)) {
-		ret |= ctype_base::upper;
-	}
-	if (u_islower(cp)) {
-		ret |= ctype_base::lower;
-	}
-	if (u_isalpha(cp)) {
-		ret |= ctype_base::alpha;
-	}
-	if (u_isdigit(cp)) {
-		ret |= ctype_base::digit;
-	}
-	if (u_ispunct(cp)) {
-		ret |= ctype_base::punct;
-	}
-	if (u_isxdigit(cp)) {
-		ret |= ctype_base::xdigit;
-	}
-	if (u_isblank(cp)) {
-		ret |= ctype_base::blank;
-	}
-
-	// Do not uncomment the following, because it will cause a bug. Its
-	// functionality is already covered by the code above.
-	// if (u_isalnum(cp)) {
-	//	ret |= ctype_base::alnum;
-	//}
-	// if (u_isgraph(cp)) {
-	//	ret |= ctype_base::graph;
-	//}
-	return ret;
-}
-
-template <class CharT>
-class my_ctype;
-
-template <>
-class my_ctype<char> : public std::ctype<char> {
-      private:
-	mask tbl[256];
-	char upper_table[256];
-	char lower_table[256];
-
-	auto fill(const std::string& enc) -> void;
-
-      public:
-	my_ctype(const std::string& enc, std::size_t refs = 0)
-	    : std::ctype<char>(tbl, false, refs)
-	{
-		fill(enc);
-	}
-	char_type do_toupper(char_type c) const final override
-	{
-		return upper_table[static_cast<unsigned char>(c)];
-	}
-	const char_type* do_toupper(char_type* first,
-	                            const char_type* last) const final override
-	{
-		for (; first != last; ++first) {
-			*first = do_toupper(*first);
-		}
-		return last;
-	}
-	char_type do_tolower(char_type c) const final override
-	{
-		return lower_table[static_cast<unsigned char>(c)];
-	}
-	const char_type* do_tolower(char_type* first,
-	                            const char_type* last) const final override
-	{
-		for (; first != last; ++first) {
-			*first = do_tolower(*first);
-		}
-		return last;
-	}
-};
-
-auto my_ctype<char>::fill(const string& enc) -> void
-{
-	auto err = UErrorCode::U_ZERO_ERROR;
-	auto cvt = ucnv_open(enc.c_str(), &err);
-	auto out = icu::UnicodeString();
-	for (size_t i = 0; i < 256; ++i) {
-		const char ch = i;
-		auto ch_ptr = &ch;
-		auto cp = ucnv_getNextUChar(cvt, &ch_ptr, ch_ptr + 1, &err);
-		ucnv_resetToUnicode(cvt);
-		if (cp != 0xfffd && U_SUCCESS(err)) {
-			tbl[i] = get_char_mask(cp);
-			out = u_toupper(cp);
-			out.extract(&upper_table[i], 1, cvt, err);
-			if (U_FAILURE(err)) {
-				upper_table[i] = i;
-				err = UErrorCode::U_ZERO_ERROR;
-			}
-			out = u_tolower(cp);
-			out.extract(&lower_table[i], 1, cvt, err);
-			if (U_FAILURE(err)) {
-				lower_table[i] = i;
-				err = UErrorCode::U_ZERO_ERROR;
-			}
-		}
-		else {
-			tbl[i] = ctype_base::mask();
-			upper_table[i] = i;
-			lower_table[i] = i;
-			err = UErrorCode::U_ZERO_ERROR;
-		}
-	}
-	ucnv_close(cvt);
-}
-
-template <>
-class my_ctype<wchar_t> : public std::ctype<wchar_t> {
-      private:
-	char_type wd[256];
-
-	auto fill_widen(const std::string& enc) -> void;
-
-      public:
-	my_ctype(const std::string& enc, std::size_t refs = 0)
-	    : std::ctype<wchar_t>(refs)
-	{
-		fill_widen(enc);
-	}
-
-	bool do_is(mask m, char_type c) const final override
-	{
-		if ((m & space) && u_isspace(c))
-			return true;
-		if ((m & print) && u_isprint(c))
-			return true;
-		if ((m & cntrl) && u_iscntrl(c))
-			return true;
-		if ((m & upper) && u_isupper(c))
-			return true;
-		if ((m & lower) && u_islower(c))
-			return true;
-		if ((m & alpha) && u_isalpha(c))
-			return true;
-		if ((m & digit) && u_isdigit(c))
-			return true;
-		if ((m & punct) && u_ispunct(c))
-			return true;
-		if ((m & xdigit) && u_isxdigit(c))
-			return true;
-		if ((m & blank) && u_isblank(c))
-			return true;
-
-		// don't uncoment this
-		// if ((m & alnum) && u_isalnum(c))
-		//	return true;
-		// if ((m & graph) && u_isgraph(c))
-		//	return true;
-
-		return false;
-	}
-	const char_type* do_is(const char_type* first, const char_type* last,
-	                       mask* vec) const final override
-	{
-		transform(first, last, vec,
-		          [](auto c) { return get_char_mask(c); });
-		return last;
-	}
-	const char_type* do_scan_is(mask m, const char_type* first,
-	                            const char_type* last) const final override
-	{
-		return find_if(first, last,
-		               [&](auto c) { return this->do_is(m, c); });
-	}
-	const char_type* do_scan_not(mask m, const char_type* first,
-	                             const char_type* last) const final override
-	{
-		return find_if_not(first, last,
-		                   [&](auto c) { return this->do_is(m, c); });
-	}
-
-	char_type do_toupper(char_type c) const final override
-	{
-		return u_toupper(c);
-	}
-	const char_type* do_toupper(char_type* low,
-	                            const char_type* high) const final override
-	{
-		for (; low != high; ++low) {
-			*low = u_toupper(*low);
-		}
-		return high;
-	}
-	char_type do_tolower(char_type c) const final override
-	{
-		return u_tolower(c);
-	}
-	const char_type* do_tolower(char_type* first,
-	                            const char_type* last) const final override
-	{
-		for (; first != last; ++first) {
-			*first = u_tolower(*first);
-		}
-		return last;
-	}
-
-	char_type do_widen(char c) const final override
-	{
-		return wd[static_cast<unsigned char>(c)];
-	}
-	const char* do_widen(const char* low, const char* high,
-	                     char_type* dest) const final override
-	{
-		transform(low, high, dest,
-		          [&](auto c) { return this->do_widen(c); });
-		return high;
-	}
-	char do_narrow(char_type c, char dfault) const final override
-	{
-		auto n = char_traits<char_type>::find(wd, 256, c);
-		if (n)
-			return n - wd;
-		return dfault;
-	}
-	const char_type* do_narrow(const char_type* low, const char_type* high,
-	                           char dfault, char* dest) const final override
-	{
-		transform(low, high, dest,
-		          [&](auto c) { return this->do_narrow(c, dfault); });
-		return high;
-	}
-};
-
-auto my_ctype<wchar_t>::fill_widen(const string& enc) -> void
-{
-	auto err = UErrorCode::U_ZERO_ERROR;
-	auto cvt = ucnv_open(enc.c_str(), &err);
-	auto out = icu::UnicodeString();
-	for (size_t i = 0; i < 256; ++i) {
-		const char ch = i;
-		auto ch_ptr = &ch;
-		auto cp = ucnv_getNextUChar(cvt, &ch_ptr, ch_ptr + 1, &err);
-		ucnv_resetToUnicode(cvt);
-		if (U_SUCCESS(err)) {
-			wd[i] = cp;
-		}
-		else {
-			wd[i] = -1;
-		}
-	}
-	ucnv_close(cvt);
-}
-
-auto install_ctype_facets_inplace(std::locale& boost_loc) -> void
-{
-
-	auto& info = use_facet<boost::locale::info>(boost_loc);
-	auto enc = info.encoding();
-	boost_loc = locale(boost_loc, new my_ctype<char>(enc));
-	boost_loc = locale(boost_loc, new my_ctype<wchar_t>(enc));
-}
-
 auto is_locale_known_utf8(const locale& loc) -> bool
 {
 	using namespace boost::locale;
@@ -597,32 +327,28 @@ auto is_locale_known_utf8(const locale& loc) -> bool
  * Casing is sometimes referred to as capitalization.
  *
  * @param s word for which casing is determined.
- * @param loc locale object that takes care of case detection.
  * @return The casing type.
  */
-auto classify_casing(const std::wstring& s, const std::locale& loc) -> Casing
+auto classify_casing(const std::wstring& s) -> Casing
 {
 	// TODO implement Default Case Detection from unicode standard
 	// https://www.unicode.org/versions/Unicode11.0.0/ch03.pdf
 	// See Chapter 13.3. This might be feature for Boost or ICU.
-	//
-	// use boost::locale::to_lower to upper etc.
 
 	using namespace std;
 	size_t upper = 0;
 	size_t lower = 0;
-	auto& f = use_facet<my_ctype<wchar_t>>(loc);
 	for (auto& c : s) {
-		if (f.is(ctype_base::upper, c))
+		if (u_isupper(c))
 			upper++;
-		else if (f.is(ctype_base::lower, c))
+		else if (u_islower(c))
 			lower++;
 		// else neutral
 	}
 	if (upper == 0)               // all lowercase, maybe with some neutral
 		return Casing::SMALL; // most common case
 
-	auto first_capital = isupper(s[0], loc);
+	auto first_capital = u_isupper(s[0]);
 	if (first_capital && upper == 1)
 		return Casing::INIT_CAPITAL; // second most common
 
@@ -646,15 +372,14 @@ auto classify_casing(const std::wstring& s, const std::locale& loc) -> Casing
  * @param loc
  * @return true if at least one is uppercase, false otherwise.
  */
-auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i,
-                                             const std::locale& loc) -> bool
+auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i)
+    -> bool
 {
-	auto& f = use_facet<my_ctype<wchar_t>>(loc);
-	if (f.is(f.upper, word[i])) {
-		if (f.is(f.alpha, word[i - 1]))
+	if (u_isupper(word[i])) {
+		if (u_isalpha(word[i - 1]))
 			return true;
 	}
-	else if (f.is(f.upper, word[i - 1]) && f.is(f.alpha, word[i]))
+	else if (u_isupper(word[i - 1]) && u_isalpha(word[i]))
 		return true;
 	return false;
 }

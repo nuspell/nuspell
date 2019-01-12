@@ -23,8 +23,8 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/locale.hpp>
+#include <unicode/uchar.h>
 
 namespace nuspell {
 
@@ -176,7 +176,7 @@ auto Dict_Base::spell_break(std::wstring& s, size_t depth) const -> bool
  */
 auto Dict_Base::spell_casing(std::wstring& s) const -> const Flag_Set*
 {
-	auto casing_type = classify_casing(s, internal_locale);
+	auto casing_type = classify_casing(s);
 	const Flag_Set* res = nullptr;
 
 	switch (casing_type) {
@@ -1539,7 +1539,7 @@ auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
 			return {};
 	}
 	if (compound_check_case &&
-	    has_uppercase_at_compound_word_boundary(word, i, internal_locale))
+	    has_uppercase_at_compound_word_boundary(word, i))
 		return {};
 
 	part.assign(word, i, word.npos);
@@ -1961,11 +1961,10 @@ auto Dict_Base::map_suggest(std::wstring& word, List_WStrings& out,
 auto Dict_Base::keyboard_suggest(std::wstring& word, List_WStrings& out) const
     -> void
 {
-	auto& ct = use_facet<ctype<wchar_t>>(internal_locale);
 	auto& kb = keyboard_closeness;
 	for (size_t j = 0; j != word.size(); ++j) {
 		auto c = word[j];
-		auto upp_c = ct.toupper(c);
+		auto upp_c = u_toupper(c);
 		if (upp_c != c) {
 			word[j] = upp_c;
 			add_sug_if_correct(word, out);
@@ -2018,10 +2017,12 @@ auto Dict_Base::phonetic_suggest(std::wstring& word, List_WStrings& out) const
 {
 	using ShortStr = boost::container::small_vector<wchar_t, 64>;
 	auto backup = ShortStr(&word[0], &word[word.size()]);
-	boost::algorithm::to_upper(word, internal_locale);
+	transform(begin(word), end(word), begin(word),
+	          [](auto c) { return u_toupper(c); });
 	auto changed = phonetic_table.replace(word);
 	if (changed) {
-		boost::algorithm::to_lower(word, internal_locale);
+		transform(begin(word), end(word), begin(word),
+		          [](auto c) { return u_tolower(c); });
 		add_sug_if_correct(word, out);
 	}
 	word.assign(&backup[0], backup.size());
