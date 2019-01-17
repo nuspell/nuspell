@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include <boost/locale.hpp>
+#include <boost/locale/utf8_codecvt.hpp>
 #include <nuspell/dictionary.hxx>
 
 using namespace std;
@@ -41,10 +41,10 @@ int main(int argc, char* argv[])
 		return 2;
 	}
 	file.close();
-	boost::locale::generator gen;
 	test.erase(test.size() - 4);
 	auto d = nuspell::Dictionary::load_from_path(test);
-	d.imbue(gen("en_US.UTF-8"));
+	d.imbue(locale(locale::classic(),
+	               new boost::locale::utf8_codecvt<wchar_t>()));
 	auto word = string();
 	if (type == ".dic") {
 		auto error = vector<string>();

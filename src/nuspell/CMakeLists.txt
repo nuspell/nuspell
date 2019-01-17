@@ -53,8 +53,7 @@ target_include_directories(nuspell
     INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
 target_link_libraries(nuspell
-    PUBLIC Boost::boost
-    PRIVATE Boost::locale ICU::uc ICU::data)
+    PUBLIC Boost::boost ICU::uc ICU::data)
 
 add_executable(nuspell-bin main.cxx)
 set_target_properties(nuspell-bin PROPERTIES

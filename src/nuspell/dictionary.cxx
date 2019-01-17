@@ -23,7 +23,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <boost/locale.hpp>
 #include <unicode/uchar.h>
 
 namespace nuspell {
@@ -38,8 +37,6 @@ namespace nuspell {
 
 using namespace std;
 using boost::make_iterator_range;
-using boost::locale::to_lower;
-using boost::locale::to_title;
 
 template <class L>
 class At_Scope_Exit {
@@ -203,7 +200,7 @@ auto Dict_Base::spell_casing(std::wstring& s) const -> const Flag_Set*
  */
 auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
 {
-	auto& loc = internal_locale;
+	auto& loc = icu_locale;
 
 	auto res = check_word(s);
 	if (res)
@@ -259,7 +256,7 @@ auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
  */
 auto Dict_Base::spell_casing_title(std::wstring& s) const -> const Flag_Set*
 {
-	auto& loc = internal_locale;
+	auto& loc = icu_locale;
 
 	// check title case
 	auto res = check_word(s);
@@ -2056,8 +2053,6 @@ auto Dictionary::internal_to_external_encoding(string& out,
 
 Dictionary::Dictionary()
 {
-	// ensures the internal locale is boost locale
-	set_encoding_and_language("");
 	external_locale_known_utf8 = is_locale_known_utf8(external_locale);
 }
 
@@ -2109,7 +2104,8 @@ auto Dictionary::load_from_path(const std::string& file_path_without_extension)
  * platforms, and to UTF-16 on Windows. By external encoding it is meant the
  * encoding of strings in the client code that uses this library.
  *
- * You may safely use locales geenrated by Boost.Locale.
+ * You may safely use locales geenrated by Boost.Locale. Or even simpler,
+ * use the header-only boost::locale::utf8_codecvt<wchar_t> facet.
  *
  * @param loc locale object with valid codecvt<wchar_t, char, mbstate_t>
  */

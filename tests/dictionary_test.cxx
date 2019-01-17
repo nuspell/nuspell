@@ -36,7 +36,6 @@ TEST_CASE("parse", "[dictionary]")
 TEST_CASE("simple", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
 
 	auto words = {"table", "chair", "book", "fóóáár", "áárfóóĳ"};
 	for (auto& x : words)
@@ -56,7 +55,6 @@ TEST_CASE("simple", "[dictionary]")
 TEST_CASE("suffixes", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
 
 	d.words.emplace("berry", u"T");
 	d.words.emplace("May", u"T");
@@ -77,7 +75,6 @@ TEST_CASE("suffixes", "[dictionary]")
 TEST_CASE("complex_prefixes", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
 
 	d.words.emplace("drink", u"X");
 	d.suffixes.emplace(u'Y', true, L"", L"s", Flag_Set(), L".");
@@ -95,7 +92,7 @@ TEST_CASE("complex_prefixes", "[dictionary]")
 TEST_CASE("extra_stripping", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
+
 	d.complex_prefixes = true;
 
 	d.words.emplace("aa", u"ABC");
@@ -116,7 +113,7 @@ TEST_CASE("extra_stripping", "[dictionary]")
 TEST_CASE("break_pattern", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
+
 	d.forbid_warn = true;
 	d.warn_flag = *u"W";
 
@@ -140,7 +137,7 @@ TEST_CASE("break_pattern", "[dictionary]")
 TEST_CASE("spell_casing_upper", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
+
 	d.words.emplace("Sant'Elia", u"");
 	d.words.emplace("d'Osormort", u"");
 
@@ -152,7 +149,7 @@ TEST_CASE("spell_casing_upper", "[dictionary]")
 TEST_CASE("compounding", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
+
 	d.compound_begin_flag = *u"B";
 	d.compound_last_flag = *u"L";
 
@@ -214,7 +211,7 @@ TEST_CASE("compounding", "[dictionary]")
 TEST_CASE("rep_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
+
 	d.replacements = {{L"ph", L"f"},
 	                  {L"shun$", L"tion"},
 	                  {L"^voo", L"foo"},
@@ -297,7 +294,6 @@ TEST_CASE("rep_suggest", "[dictionary]")
 TEST_CASE("extra_char_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"table";
 	d.try_chars = good;
@@ -325,7 +321,6 @@ TEST_CASE("extra_char_suggest", "[dictionary]")
 TEST_CASE("map_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"naïve";
 	d.words.emplace("naïve", u"");
@@ -377,7 +372,6 @@ TEST_CASE("map_suggest", "[dictionary]")
 TEST_CASE("keyboard_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
 
 	auto good1 = L"abcd";
 	auto good2 = L"Abb";
@@ -420,7 +414,6 @@ TEST_CASE("keyboard_suggest", "[dictionary]")
 TEST_CASE("bad_char_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"chair";
 	d.words.emplace("chair", u"");
@@ -439,7 +432,6 @@ TEST_CASE("bad_char_suggest", "[dictionary]")
 TEST_CASE("forgotten_char_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
 
 	auto good = L"abcd";
 	d.words.emplace("abcd", u"");
@@ -459,7 +451,7 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 TEST_CASE("phonetic_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
+
 
 	d.words.emplace("Brasilia", u"");
 	d.words.emplace("brassily", u"");
@@ -599,7 +591,7 @@ TEST_CASE("phonetic_suggest", "[dictionary]")
 TEST_CASE("long word", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
+
 
 	// 18 times abcdefghij (10 characters) = 180 characters
 	auto good =
@@ -630,7 +622,7 @@ TEST_CASE("long word", "[dictionary]")
 TEST_CASE("suggest_priv", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
+
 	d.try_chars = L"ailrt";
 
 	// extra char, bad char, bad char, forgotten char
@@ -648,7 +640,7 @@ TEST_CASE("suggest_priv", "[dictionary]")
 TEST_CASE("suggest_priv_max", "[dictionary]")
 {
 	auto d = Dict_Test();
-	d.set_encoding_and_language("UTF-8");
+
 	d.replacements = {
 	    {L"x", L"a"}, {L"x", L"b"}, {L"x", L"c"}, {L"x", L"d"},
 	    {L"x", L"e"}, {L"x", L"f"}, {L"x", L"g"}, {L"x", L"h"}};

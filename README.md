@@ -187,7 +187,7 @@ Including in your program:
 
 Linking with Nuspell static library:
 
-    g++ example.cxx -lnuspell -lboost-locale -licuuc -licudata
+    g++ example.cxx -lnuspell -licuuc -licudata
     # or better, use pkg-config
     g++ example.cxx $(pkg-config --cflags --libs nuspell)
 

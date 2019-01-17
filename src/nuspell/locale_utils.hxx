@@ -27,6 +27,10 @@
 #include <locale>
 #include <string>
 
+#include <unicode/locid.h>
+
+struct UConverter; // unicode/ucnv.h
+
 namespace nuspell {
 
 auto validate_utf8(const std::string& s) -> bool;
@@ -57,6 +61,13 @@ auto to_narrow(const std::wstring& in, const std::locale& outloc)
     -> std::string;
 
 auto is_locale_known_utf8(const std::locale& loc) -> bool;
+
+auto wide_to_icu(const std::wstring& in, icu::UnicodeString& out) -> bool;
+auto icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool;
+
+auto to_upper(const std::wstring& in, const icu::Locale& loc) -> std::wstring;
+auto to_title(const std::wstring& in, const icu::Locale& loc) -> std::wstring;
+auto to_lower(const std::wstring& in, const icu::Locale& loc) -> std::wstring;
 
 /**
  * @brief Casing type enum, ignoring neutral case characters.
@@ -116,6 +127,33 @@ class Encoding {
 			return name;
 	}
 	operator Enc_Type() const { return is_utf8() ? UTF8 : SINGLEBYTE; }
+};
+
+class Encoding_Converter {
+	UConverter* cnv = nullptr;
+
+      public:
+	Encoding_Converter() = default;
+	Encoding_Converter(const char* enc);
+	Encoding_Converter(const std::string& enc)
+	    : Encoding_Converter(enc.c_str())
+	{
+	}
+	~Encoding_Converter();
+	Encoding_Converter(const Encoding_Converter& other);
+	Encoding_Converter(Encoding_Converter&& other)
+	{
+		cnv = other.cnv;
+		cnv = nullptr;
+	};
+	auto operator=(const Encoding_Converter& other) -> Encoding_Converter&;
+	auto operator=(Encoding_Converter&& other) -> Encoding_Converter&
+	{
+		std::swap(cnv, other.cnv);
+		return *this;
+	}
+	auto to_wide(const std::string& in, std::wstring& out) -> bool;
+	auto to_wide(const std::string& in) -> std::wstring;
 };
 } // namespace nuspell
 #endif // LOCALE_UTILS_HXX

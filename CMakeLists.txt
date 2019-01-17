@@ -24,10 +24,8 @@ endif()
 
 add_subdirectory(docs)
 
-if (NOT BUILD_SHARED_LIBS)
-    set(pkgconf_public_libs ${Boost_LIBRARIES})
-    set(pkgconf_public_requires icu-uc)
-endif()
+#set(pkgconf_public_libs "")
+set(pkgconf_public_requires icu-uc)
 configure_file(nuspell.pc.in nuspell.pc @ONLY)
 #configure_file(NuspellConfig.cmake NuspellConfig.cmake COPYONLY)
 write_basic_package_version_file(NuspellConfigVersion.cmake

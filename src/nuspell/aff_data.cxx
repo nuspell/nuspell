@@ -32,7 +32,6 @@
 #endif
 
 #include <boost/algorithm/string/case_conv.hpp>
-#include <boost/locale.hpp>
 #include <boost/range/adaptors.hpp>
 
 /*
@@ -703,29 +702,6 @@ class Setlocale_To_C_In_Scope {
 #endif
 
 /**
- * @brief Sets the internal encoding, and optionally, language.
- *
- * Sets the encoding of the strings inside the dictionary. This function
- * should not be called manually because it is called by parse_aff(). Should
- * be only called if you are manually filling this object via C++ code,
- * and not from file.
- *
- * @param enc
- * @param lang
- */
-auto Aff_Data::set_encoding_and_language(const string& enc, const string& lang)
-    -> void
-{
-	boost::locale::generator locale_generator;
-	auto name = lang;
-	if (name.empty())
-		name = "en_US";
-	if (!enc.empty())
-		name += '.' + enc;
-	internal_locale = locale_generator(name);
-}
-
-/**
  * Parses an input stream offering affix information.
  *
  * @param in input stream to parse from.
@@ -733,7 +709,6 @@ auto Aff_Data::set_encoding_and_language(const string& enc, const string& lang)
  */
 auto Aff_Data::parse_aff(istream& in) -> bool
 {
-	Encoding encoding;
 	string language_code;
 	string ignore_chars;
 	string keyboard_layout;
@@ -987,7 +962,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	}
 
 	// now fill data structures from temporary data
-	set_encoding_and_language(encoding.value_or_default(), language_code);
+	if (!language_code.empty())
+		icu_locale = icu::Locale(language_code.c_str());
 	compound_rules = move(rules);
 	if (encoding.is_utf8()) {
 		auto u8_to_w = [](auto& x) { return utf8_to_wide(x); };
@@ -1048,13 +1024,11 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	}
 	else {
 		// convert non-unicode dicts to unicode
-		auto n_to_w = [&](auto& x) {
-			return to_wide(x, this->internal_locale);
-		};
+		auto enc_conv = Encoding_Converter(encoding.value_or_default());
+		auto n_to_w = [&](auto& x) { return enc_conv.to_wide(x); };
 		auto n_to_w_pair = [&](auto& x) {
-			return make_pair(
-			    to_wide(x.first, this->internal_locale),
-			    to_wide(x.second, this->internal_locale));
+			return make_pair(enc_conv.to_wide(x.first),
+			                 enc_conv.to_wide(x.second));
 		};
 		auto iconv =
 		    boost::adaptors::transform(input_conversion, n_to_w_pair);
@@ -1169,8 +1143,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	if (!getline(in, line)) {
 		return false;
 	}
-	auto encoding = Encoding(
-	    use_facet<boost::locale::info>(internal_locale).encoding());
+	auto enc_conv = Encoding_Converter(encoding.value_or_default());
 	if (encoding.is_utf8() && !validate_utf8(line)) {
 		cerr << "Invalid utf in dic file" << endl;
 	}
@@ -1243,7 +1216,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			ok = utf8_to_wide(word, wide_word);
 		}
 		else {
-			ok = to_wide(word, internal_locale, wide_word);
+			ok = enc_conv.to_wide(word, wide_word);
 			wide_to_utf8(wide_word, word);
 		}
 		if (!ok)
@@ -1279,8 +1252,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			words.emplace(word, flags);
 
 			// add the hidden homonym directly in uppercase
-			auto up_wide =
-			    boost::locale::to_upper(wide_word, internal_locale);
+			auto up_wide = to_upper(wide_word, icu_locale);
 			wide_to_utf8(wide_word, word);
 			auto& up = word;
 			auto hom = words.equal_range(up);

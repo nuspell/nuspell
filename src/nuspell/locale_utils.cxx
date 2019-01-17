@@ -22,11 +22,12 @@
 #include <limits>
 
 #include <boost/algorithm/string/case_conv.hpp>
-#include <boost/locale.hpp>
+#include <boost/locale/utf8_codecvt.hpp>
 
 #include <unicode/uchar.h>
 #include <unicode/ucnv.h>
 #include <unicode/unistr.h>
+#include <unicode/ustring.h>
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -313,12 +314,85 @@ auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 
 auto is_locale_known_utf8(const locale& loc) -> bool
 {
-	using namespace boost::locale;
-	if (has_facet<info>(loc)) {
-		auto& ext_info = use_facet<info>(loc);
-		return ext_info.utf8();
+	return has_facet<boost::locale::utf8_codecvt<wchar_t>>(loc);
+}
+
+auto wide_to_icu(const std::wstring& in, icu::UnicodeString& out) -> bool
+{
+	int32_t capacity = in.size();
+	if (capacity < 0) {
+		out.remove();
+		return false;
 	}
+#if U_SIZEOF_WCHAR_T == 4
+	if (capacity < out.getCapacity())
+		capacity = out.getCapacity();
+#endif
+	auto buf = out.getBuffer(capacity);
+	int32_t len;
+	auto err = U_ZERO_ERROR;
+	u_strFromWCS(buf, capacity, &len, in.c_str(), in.size(), &err);
+	if (U_SUCCESS(err)) {
+		out.releaseBuffer(len);
+		return true;
+	}
+#if U_SIZEOF_WCHAR_T == 4
+	if (err == U_BUFFER_OVERFLOW_ERROR) {
+		out.releaseBuffer(0);
+		// handle buffer overflow
+		buf = out.getBuffer(len);
+		err = U_ZERO_ERROR;
+		u_strFromWCS(buf, len, nullptr, in.c_str(), in.size(), &err);
+		if (U_SUCCESS(err)) {
+			out.releaseBuffer(len);
+			return true;
+		}
+	}
+#endif
+	out.releaseBuffer(0);
 	return false;
+}
+auto icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool
+{
+	int32_t len;
+	auto err = U_ZERO_ERROR;
+	out.resize(in.length());
+	u_strToWCS(&out[0], out.size(), &len, in.getBuffer(), in.length(),
+	           &err);
+	if (U_SUCCESS(err)) {
+		out.erase(len);
+		return true;
+	}
+	out.clear();
+	return false;
+}
+
+auto to_upper(const std::wstring& in, const icu::Locale& loc) -> std::wstring
+{
+	auto us = icu::UnicodeString();
+	auto out = wstring();
+	wide_to_icu(in, us);
+	us.toUpper(loc);
+	icu_to_wide(us, out);
+	return out;
+}
+auto to_title(const std::wstring& in, const icu::Locale& loc) -> std::wstring
+{
+	auto us = icu::UnicodeString();
+	auto out = wstring();
+	wide_to_icu(in, us);
+	us.toTitle(nullptr, loc);
+	icu_to_wide(us, out);
+	return out;
+}
+auto to_lower(const std::wstring& in, const icu::Locale& loc) -> std::wstring
+{
+	auto us = icu::UnicodeString();
+	auto out = wstring();
+	wide_to_icu(in, us);
+	us.toLower(loc);
+	icu_to_wide(us, out);
+	return out;
 }
 
 /**
@@ -391,6 +465,53 @@ auto Encoding::normalize_name() -> void
 		name = "UTF-8";
 	else if (name.compare(0, 10, "MICROSOFT-") == 0)
 		name.erase(0, 10);
+}
+
+Encoding_Converter::Encoding_Converter(const char* enc)
+{
+	auto err = UErrorCode();
+	cnv = ucnv_open(enc, &err);
+}
+
+Encoding_Converter::~Encoding_Converter()
+{
+	if (cnv)
+		ucnv_close(cnv);
+}
+
+Encoding_Converter::Encoding_Converter(const Encoding_Converter& other)
+{
+	auto err = UErrorCode();
+	cnv = ucnv_safeClone(other.cnv, nullptr, nullptr, &err);
+}
+
+auto Encoding_Converter::operator=(const Encoding_Converter& other)
+    -> Encoding_Converter&
+{
+	this->~Encoding_Converter();
+	auto err = UErrorCode();
+	cnv = ucnv_safeClone(other.cnv, nullptr, nullptr, &err);
+	return *this;
+}
+
+auto Encoding_Converter::to_wide(const string& in, wstring& out) -> bool
+{
+	auto err = U_ZERO_ERROR;
+	auto us = icu::UnicodeString(in.c_str(), in.size(), cnv, err);
+	if (U_FAILURE(err)) {
+		out.clear();
+		return false;
+	}
+	if (icu_to_wide(us, out))
+		return true;
+	return false;
+}
+
+auto Encoding_Converter::to_wide(const string& in) -> wstring
+{
+	auto out = wstring();
+	this->to_wide(in, out);
+	return out;
 }
 
 } // namespace nuspell

@@ -78,7 +78,8 @@ struct Aff_Data {
 	Phonetic_Table<wchar_t> phonetic_table;
 
 	// general options
-	std::locale internal_locale;
+	Encoding encoding;
+	icu::Locale icu_locale;
 	Flag_Type flag_type;
 	bool complex_prefixes;
 	bool fullstrip;
@@ -129,8 +130,6 @@ struct Aff_Data {
 	Flag_Set compound_syllable_num;
 
 	// methods
-	auto set_encoding_and_language(const std::string& enc,
-	                               const std::string& lang = "") -> void;
 	auto parse_aff(std::istream& in) -> bool;
 	auto parse_dic(std::istream& in) -> bool;
 	auto parse_aff_dic(std::istream& aff, std::istream& dic)

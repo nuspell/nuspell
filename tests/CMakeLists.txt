@@ -6,10 +6,10 @@ add_executable(ch.catch
     string_utils_test.cxx
     structures_test.cxx
     catch_main.cxx)
-target_link_libraries(ch.catch nuspell Catch2 Boost::locale)
+target_link_libraries(ch.catch nuspell Catch2)
 
 add_executable(nuspell_legacy_tests legacy_test.cxx)
-target_link_libraries(nuspell_legacy_tests nuspell Boost::locale)
+target_link_libraries(nuspell_legacy_tests nuspell)
 
 list(APPEND CMAKE_MODULE_PATH
     "${PROJECT_SOURCE_DIR}/external/Catch2/contrib")

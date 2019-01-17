@@ -20,7 +20,7 @@
 
 #include <algorithm>
 
-#include <boost/locale.hpp>
+#include <boost/locale/utf8_codecvt.hpp>
 #include <catch2/catch.hpp>
 
 using namespace std;
@@ -64,50 +64,85 @@ TEST_CASE("method is_all_bmp", "[locale_utils]")
 	CHECK(false == is_all_bmp(u"abcý \U00010001 þÿӤ"));
 }
 
+using namespace boost::locale;
+
+template <typename CharType>
+class latin1_codecvt
+    : public generic_codecvt<CharType, latin1_codecvt<CharType>> {
+      public:
+	/* Standard codecvt constructor */
+	latin1_codecvt(size_t refs = 0)
+	    : generic_codecvt<CharType, latin1_codecvt<CharType>>(refs)
+	{
+	}
+	/* State is unused but required by generic_codecvt */
+	struct state_type {
+	};
+	state_type initial_state(
+	    generic_codecvt_base::initial_convertion_state /*unused*/) const
+	{
+		return state_type();
+	}
+
+	int max_encoding_length() const { return 1; }
+	utf::code_point to_unicode(state_type&, char const*& begin,
+	                           char const* end) const
+	{
+		if (begin == end)
+			return utf::incomplete;
+		return static_cast<unsigned char>(*begin++);
+	}
+	utf::code_point from_unicode(state_type&, utf::code_point u,
+	                             char* begin, char const* end) const
+	{
+		if (u >= 256)
+			return utf::illegal;
+		if (begin == end)
+			return utf::incomplete;
+		*begin = u;
+		return 1;
+	}
+};
+
 TEST_CASE("to_wide", "[locale_utils]")
 {
+	auto loc = locale(locale::classic(), new utf8_codecvt<wchar_t>());
 	auto in = u8"\U0010FFFF ß"s;
-	boost::locale::generator g;
-	auto loc = g("en_US.UTF-8");
 	CHECK(L"\U0010FFFF ß" == to_wide(in, loc));
 
-	in = "abcd\xDF";
-	loc = g("en_US.ISO-8859-1");
-	CHECK(L"abcdß" == to_wide(in, loc));
-
-	loc = g("en_US.UTF-8");
 	in = u8"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59"s;
 	auto out = wstring();
-	auto exp =
-	    wstring(L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59");
+	auto exp = L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
 	CHECK(true == to_wide(in, loc, out));
 	CHECK(exp == out);
+
+	loc = locale(locale::classic(), new latin1_codecvt<wchar_t>());
+	in = "abcd\xDF";
+	CHECK(L"abcdß" == to_wide(in, loc));
 }
 
 TEST_CASE("to_narrow", "[locale_utils]")
 {
+	auto loc = locale(locale::classic(), new utf8_codecvt<wchar_t>());
 	auto in = L"\U0010FFFF ß"s;
-	boost::locale::generator g;
-	auto loc = g("en_US.UTF-8");
 	CHECK(u8"\U0010FFFF ß" == to_narrow(in, loc));
-
-	in = L"abcdß";
-	loc = g("en_US.ISO-8859-1");
-	CHECK("abcd\xDF" == to_narrow(in, loc));
 
 	in = L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
 	auto out = string();
-	CHECK(false == to_narrow(in, out, loc));
-	CHECK(all_of(begin(out), end(out), [](auto c) { return c == '?'; }));
-
-	loc = g("en_US.UTF-8");
-	in = L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
-	out = string();
 	CHECK(true == to_narrow(in, out, loc));
 	CHECK("\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59" == out);
+
+	loc = locale(locale::classic(), new latin1_codecvt<wchar_t>());
+	in = L"abcdß";
+	CHECK("abcd\xDF" == to_narrow(in, loc));
+
+	in = L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
+	out = string();
+	CHECK(false == to_narrow(in, out, loc));
+	CHECK(all_of(begin(out), end(out), [](auto c) { return c == '?'; }));
 }
 
-TEST_CASE("method classify_casing", "[string_utils]")
+TEST_CASE("method classify_casing", "[locale_utils]")
 {
 	CHECK(Casing::SMALL == classify_casing(L""s));
 	CHECK(Casing::SMALL == classify_casing(L"alllowercase"s));
@@ -123,223 +158,168 @@ TEST_CASE("method classify_casing", "[string_utils]")
 	CHECK(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"s));
 }
 
-TEST_CASE("boost locale has icu", "[locale_utils]")
+TEST_CASE("to_upper", "[locale_utils]")
 {
-	using lbm = boost::locale::localization_backend_manager;
-	auto v = lbm::global().get_all_backends();
-	CHECK(std::find(v.begin(), v.end(), "icu") != v.end());
-}
+	auto l = icu::Locale();
 
-TEST_CASE("boost locale to_upper", "[string_utils]")
-{
-	// Major note here. boost::locale::to_upper is different
-	// from boost::algorithm::to_upper.
-	//
-	// The second works on char by char basis, so it can not be used with
-	// multibyte encodings, utf-8 (but is OK with wide strings) and can not
-	// handle sharp s to double S. Strictly char by char.
-	//
-	// Here locale::to_upper is tested.
-	//
-	// As the active locale may vary from machine to machine, each test must
-	// explicitely be provided with a locale.
+	CHECK(L"" == to_upper(L"", l));
+	CHECK(L"A" == to_upper(L"a", l));
+	CHECK(L"A" == to_upper(L"A", l));
+	CHECK(L"AA" == to_upper(L"aa", l));
+	CHECK(L"AA" == to_upper(L"aA", l));
+	CHECK(L"AA" == to_upper(L"Aa", l));
+	CHECK(L"AA" == to_upper(L"AA", l));
 
-	boost::locale::generator gen;
-	using boost::locale::to_upper;
-	auto l = gen("en_US.UTF-8");
-
-	CHECK(""s == to_upper(""s, l));
-	CHECK("A"s == to_upper("a"s, l));
-	CHECK("A"s == to_upper("A"s, l));
-	CHECK("AA"s == to_upper("aa"s, l));
-	CHECK("AA"s == to_upper("aA"s, l));
-	CHECK("AA"s == to_upper("Aa"s, l));
-	CHECK("AA"s == to_upper("AA"s, l));
-
-	CHECK("TABLE"s == to_upper("table"s, l));
-	CHECK("TABLE"s == to_upper("Table"s, l));
-	CHECK("TABLE"s == to_upper("tABLE"s, l));
-	CHECK("TABLE"s == to_upper("TABLE"s, l));
+	CHECK(L"TABLE" == to_upper(L"table", l));
+	CHECK(L"TABLE" == to_upper(L"Table", l));
+	CHECK(L"TABLE" == to_upper(L"tABLE", l));
+	CHECK(L"TABLE" == to_upper(L"TABLE", l));
 
 	// Note that i is converted to I, not İ
-	CHECK_FALSE("İSTANBUL"s == to_upper("istanbul"s, l));
-	l = gen("tr_TR.UTF-8");
-	CHECK("İSTANBUL"s == to_upper("istanbul"s, l));
+	CHECK_FALSE(L"İSTANBUL" == to_upper(L"istanbul", l));
+
+	l = icu::Locale("tr_TR");
+	CHECK(L"İSTANBUL" == to_upper(L"istanbul", l));
 	// Note that I remains and is not converted to İ
-	CHECK_FALSE("İSTANBUL"s == to_upper("Istanbul"s, l));
-	CHECK("DİYARBAKIR"s == to_upper("Diyarbakır"s, l));
+	CHECK_FALSE(L"İSTANBUL" == to_upper(L"Istanbul", l));
+	CHECK(L"DİYARBAKIR" == to_upper(L"Diyarbakır", l));
 
-#if 0
-	// 201805, currently the following six tests are failing on Travis
-	l = g("el_GR.UTF-8");
-	CHECK("ΕΛΛΑΔΑ"s == to_upper("ελλάδα"s, l)); // was ΕΛΛΆΔΑ up to
-	CHECK("ΕΛΛΑΔΑ"s == to_upper("Ελλάδα"s, l)); // was ΕΛΛΆΔΑ up to
-	CHECK("ΕΛΛΑΔΑ"s == to_upper("ΕΛΛΆΔΑ"s, l)); // was ΕΛΛΆΔΑ up to
-	CHECK("ΣΙΓΜΑ"s == to_upper("Σίγμα"s, l));   // was ΣΊΓΜΑ up to
-	CHECK("ΣΙΓΜΑ"s == to_upper("σίγμα"s, l));   // was ΣΊΓΜΑ up to
-
-	// Use of ς where σ is expected, should convert to upper case Σ.
-	CHECK("ΣΙΓΜΑ"s == to_upper("ςίγμα"s, l)); // was ΣΊΓΜΑ up to
-#endif
-
-	l = gen("de_DE.UTF-8");
+	l = icu::Locale("de_DE");
 	// Note that lower case ü is not converted to upper case Ü.
 	// Note that lower case ß is converted to double SS.
-	// CHECK("GRüSSEN"s == to_upper("grüßen"s, l));
-	CHECK("GRÜSSEN"s == to_upper("GRÜßEN"s, l));
+	// CHECK(L"GRüSSEN" == to_upper(L"grüßen", l));
+	CHECK(L"GRÜSSEN" == to_upper(L"GRÜßEN", l));
 	// Note that upper case ẞ is kept in upper case.
-	CHECK("GRÜẞEN"s == to_upper("GRÜẞEN"s, l));
+	CHECK(L"GRÜẞEN" == to_upper(L"GRÜẞEN", l));
 
-	l = gen("nl_NL.UTF-8");
-	CHECK("ÉÉN"s == to_upper("één"s, l));
-	CHECK("ÉÉN"s == to_upper("Één"s, l));
-	CHECK("IJSSELMEER"s == to_upper("ijsselmeer"s, l));
-	CHECK("IJSSELMEER"s == to_upper("IJsselmeer"s, l));
-	CHECK("IJSSELMEER"s == to_upper("IJSSELMEER"s, l));
-	CHECK("ĲSSELMEER"s == to_upper("ĳsselmeer"s, l));
-	CHECK("ĲSSELMEER"s == to_upper("Ĳsselmeer"s, l));
-	CHECK("ĲSSELMEER"s == to_upper("ĲSSELMEER"s, l));
+	l = icu::Locale("nl_NL");
+	CHECK(L"ÉÉN" == to_upper(L"één", l));
+	CHECK(L"ÉÉN" == to_upper(L"Één", l));
+	CHECK(L"IJSSELMEER" == to_upper(L"ijsselmeer", l));
+	CHECK(L"IJSSELMEER" == to_upper(L"IJsselmeer", l));
+	CHECK(L"IJSSELMEER" == to_upper(L"IJSSELMEER", l));
+	CHECK(L"ĲSSELMEER" == to_upper(L"ĳsselmeer", l));
+	CHECK(L"ĲSSELMEER" == to_upper(L"Ĳsselmeer", l));
+	CHECK(L"ĲSSELMEER" == to_upper(L"ĲSSELMEER", l));
 }
 
-TEST_CASE("boost locale to_lower", "[string_utils]")
+TEST_CASE("to_lower", "[locale_utils]")
 {
-	// Major note here. boost::locale::to_lower is different
-	// from boost::algorithm::to_lower.
-	//
-	// The second works on char by char basis, so it can not be used with
-	// multibyte encodings, utf-8 (but is OK with wide strings) and can not
-	// handle sharp s to double S. Strictly char by char.
-	//
-	// Here locale::to_lower is tested.
-	//
-	// As the active locale may vary from machine to machine, each test must
-	// explicitely be provided with a locale.
+	auto l = icu::Locale("en_US");
 
-	boost::locale::generator gen;
-	using boost::locale::to_lower;
-	auto l = gen("en_US.UTF-8");
+	CHECK(L"" == to_lower(L"", l));
+	CHECK(L"a" == to_lower(L"A", l));
+	CHECK(L"a" == to_lower(L"a", l));
+	CHECK(L"aa" == to_lower(L"aa", l));
+	CHECK(L"aa" == to_lower(L"aA", l));
+	CHECK(L"aa" == to_lower(L"Aa", l));
+	CHECK(L"aa" == to_lower(L"AA", l));
 
-	CHECK(""s == to_lower(""s, l));
-	CHECK("a"s == to_lower("A"s, l));
-	CHECK("a"s == to_lower("a"s, l));
-	CHECK("aa"s == to_lower("aa"s, l));
-	CHECK("aa"s == to_lower("aA"s, l));
-	CHECK("aa"s == to_lower("Aa"s, l));
-	CHECK("aa"s == to_lower("AA"s, l));
-
-	CHECK("table"s == to_lower("table"s, l));
-	CHECK("table"s == to_lower("Table"s, l));
-	CHECK("table"s == to_lower("TABLE"s, l));
+	CHECK(L"table" == to_lower(L"table", l));
+	CHECK(L"table" == to_lower(L"Table", l));
+	CHECK(L"table" == to_lower(L"TABLE", l));
 
 	// Note that İ is converted to i followed by COMBINING DOT ABOVE U+0307
-	CHECK_FALSE("istanbul"s == to_lower("İSTANBUL"s, l));
+	CHECK_FALSE(L"istanbul" == to_lower(L"İSTANBUL", l));
 	// Note that İ is converted to i followed by COMBINING DOT ABOVE U+0307
-	CHECK_FALSE("istanbul"s == to_lower("İstanbul"s, l));
+	CHECK_FALSE(L"istanbul" == to_lower(L"İstanbul", l));
 
-	l = gen("tr_TR.UTF-8");
-	CHECK("istanbul"s == to_lower("İSTANBUL"s, l));
-	CHECK("istanbul"s == to_lower("İstanbul"s, l));
-	CHECK("diyarbakır"s == to_lower("Diyarbakır"s, l));
+	l = icu::Locale("tr_TR");
+	CHECK(L"istanbul" == to_lower(L"İSTANBUL", l));
+	CHECK(L"istanbul" == to_lower(L"İstanbul", l));
+	CHECK(L"diyarbakır" == to_lower(L"Diyarbakır", l));
 
-	l = gen("el_GR.UTF-8");
-	CHECK("ελλάδα"s == to_lower("ελλάδα"s, l));
-	CHECK("ελλάδα"s == to_lower("Ελλάδα"s, l));
-	CHECK("ελλάδα"s == to_lower("ΕΛΛΆΔΑ"s, l));
+	l = icu::Locale("el_GR");
+	CHECK(L"ελλάδα" == to_lower(L"ελλάδα", l));
+	CHECK(L"ελλάδα" == to_lower(L"Ελλάδα", l));
+	CHECK(L"ελλάδα" == to_lower(L"ΕΛΛΆΔΑ", l));
 
-	l = gen("de_DE.UTF-8");
-	CHECK("grüßen"s == to_lower("grüßen"s, l));
-	CHECK("grüssen"s == to_lower("grüssen"s, l));
+	l = icu::Locale("de_DE");
+	CHECK(L"grüßen" == to_lower(L"grüßen", l));
+	CHECK(L"grüssen" == to_lower(L"grüssen", l));
 	// Note that double SS is not converted to lower case ß.
-	CHECK("grüssen"s == to_lower("GRÜSSEN"s, l));
+	CHECK(L"grüssen" == to_lower(L"GRÜSSEN", l));
 	// Note that upper case ẞ is converted to lower case ß.
 	// this assert fails on windows with icu 62
-	// CHECK("grüßen"s == to_lower("GRÜẞEN"s, l));
+	// CHECK(L"grüßen" == to_lower(L"GRÜẞEN", l));
 
-	l = gen("nl_NL.UTF-8");
-	CHECK("één"s == to_lower("Één"s, l));
-	CHECK("één"s == to_lower("ÉÉN"s, l));
-	CHECK("ijsselmeer"s == to_lower("ijsselmeer"s, l));
-	CHECK("ijsselmeer"s == to_lower("IJsselmeer"s, l));
-	CHECK("ijsselmeer"s == to_lower("IJSSELMEER"s, l));
-	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
-	CHECK("ĳsselmeer"s == to_lower("ĲSSELMEER"s, l));
-	CHECK("ĳsselmeer"s == to_lower("Ĳsselmeer"s, l));
+	l = icu::Locale("nl_NL");
+	CHECK(L"één" == to_lower(L"Één", l));
+	CHECK(L"één" == to_lower(L"ÉÉN", l));
+	CHECK(L"ijsselmeer" == to_lower(L"ijsselmeer", l));
+	CHECK(L"ijsselmeer" == to_lower(L"IJsselmeer", l));
+	CHECK(L"ijsselmeer" == to_lower(L"IJSSELMEER", l));
+	CHECK(L"ĳsselmeer" == to_lower(L"Ĳsselmeer", l));
+	CHECK(L"ĳsselmeer" == to_lower(L"ĲSSELMEER", l));
+	CHECK(L"ĳsselmeer" == to_lower(L"Ĳsselmeer", l));
 }
 
-TEST_CASE("boost locale to_title", "[string_utils]")
+TEST_CASE("to_title", "[locale_utils]")
 {
-	// Here locale::to_upper is tested.
-	//
-	// As the active locale may vary from machine to machine, each test must
-	// explicitely be provided with a locale.
+	auto l = icu::Locale("en_US");
+	CHECK(L"" == to_title(L""s, l));
+	CHECK(L"A" == to_title(L"a", l));
+	CHECK(L"A" == to_title(L"A", l));
+	CHECK(L"Aa" == to_title(L"aa", l));
+	CHECK(L"Aa" == to_title(L"Aa", l));
+	CHECK(L"Aa" == to_title(L"aA", l));
+	CHECK(L"Aa" == to_title(L"AA", l));
 
-	boost::locale::generator gen;
-	using boost::locale::to_title;
-
-	auto l = gen("en_US.UTF-8");
-	CHECK(""s == to_title(""s, l));
-	CHECK("A"s == to_title("a"s, l));
-	CHECK("A"s == to_title("A"s, l));
-	CHECK("Aa"s == to_title("aa"s, l));
-	CHECK("Aa"s == to_title("Aa"s, l));
-	CHECK("Aa"s == to_title("aA"s, l));
-	CHECK("Aa"s == to_title("AA"s, l));
-
-	CHECK("Table"s == to_title("table"s, l));
-	CHECK("Table"s == to_title("Table"s, l));
-	CHECK("Table"s == to_title("tABLE"s, l));
-	CHECK("Table"s == to_title("TABLE"s, l));
+	CHECK(L"Table" == to_title(L"table", l));
+	CHECK(L"Table" == to_title(L"Table", l));
+	CHECK(L"Table" == to_title(L"tABLE", l));
+	CHECK(L"Table" == to_title(L"TABLE", l));
 
 	// Note that i is converted to I, not İ
-	CHECK_FALSE("İstanbul"s == to_title("istanbul"s, l));
+	CHECK_FALSE(L"İstanbul" == to_title(L"istanbul", l));
 	// Note that i is converted to I, not İ
-	CHECK_FALSE("İstanbul"s == to_title("iSTANBUL"s, l));
-	CHECK("İstanbul"s == to_title("İSTANBUL"s, l));
-	CHECK("Istanbul"s == to_title("ISTANBUL"s, l));
+	CHECK_FALSE(L"İstanbul" == to_title(L"iSTANBUL", l));
+	CHECK(L"İstanbul" == to_title(L"İSTANBUL", l));
+	CHECK(L"Istanbul" == to_title(L"ISTANBUL", l));
 
-	l = gen("tr_TR.UTF-8");
-	CHECK("İstanbul"s == to_title("istanbul"s, l));
-	CHECK("İstanbul"s == to_title("iSTANBUL"s, l));
-	CHECK("İstanbul"s == to_title("İSTANBUL"s, l));
-	CHECK("Istanbul"s == to_title("ISTANBUL"s, l));
-	CHECK("Diyarbakır"s == to_title("diyarbakır"s, l));
-	l = gen("tr_CY.UTF-8");
-	CHECK("İstanbul"s == to_title("istanbul"s, l));
-	l = gen("crh_UA.UTF-8");
+	l = icu::Locale("tr_TR");
+	CHECK(L"İstanbul" == to_title(L"istanbul", l));
+	CHECK(L"İstanbul" == to_title(L"iSTANBUL", l));
+	CHECK(L"İstanbul" == to_title(L"İSTANBUL", l));
+	CHECK(L"Istanbul" == to_title(L"ISTANBUL", l));
+	CHECK(L"Diyarbakır" == to_title(L"diyarbakır", l));
+	l = icu::Locale("tr_CY");
+	CHECK(L"İstanbul" == to_title(L"istanbul", l));
+	l = icu::Locale("crh_UA");
 	// Note that lower case i is not converted to upper case İ, bug?
-	CHECK("Istanbul"s == to_title("istanbul"s, l));
-	l = gen("az_AZ.UTF-8");
-	CHECK("İstanbul"s == to_title("istanbul"s, l));
-	l = gen("az_IR.UTF-8");
-	CHECK("İstanbul"s == to_title("istanbul"s, l));
+	CHECK(L"Istanbul" == to_title(L"istanbul", l));
+	l = icu::Locale("az_AZ");
+	CHECK(L"İstanbul" == to_title(L"istanbul", l));
+	l = icu::Locale("az_IR");
+	CHECK(L"İstanbul" == to_title(L"istanbul", l));
 
-	l = gen("el_GR.UTF-8");
-	CHECK("Ελλάδα"s == to_title("ελλάδα"s, l));
-	CHECK("Ελλάδα"s == to_title("Ελλάδα"s, l));
-	CHECK("Ελλάδα"s == to_title("ΕΛΛΆΔΑ"s, l));
-	CHECK("Σίγμα"s == to_title("Σίγμα"s, l));
-	CHECK("Σίγμα"s == to_title("σίγμα"s, l));
+	l = icu::Locale("el_GR");
+	CHECK(L"Ελλάδα" == to_title(L"ελλάδα", l));
+	CHECK(L"Ελλάδα" == to_title(L"Ελλάδα", l));
+	CHECK(L"Ελλάδα" == to_title(L"ΕΛΛΆΔΑ", l));
+	CHECK(L"Σίγμα" == to_title(L"Σίγμα", l));
+	CHECK(L"Σίγμα" == to_title(L"σίγμα", l));
 	// Use of ς where σ is expected, should convert to upper case Σ.
-	CHECK("Σίγμα"s == to_title("ςίγμα"s, l));
+	CHECK(L"Σίγμα" == to_title(L"ςίγμα", l));
 
-	l = gen("de_DE.UTF-8");
-	CHECK("Grüßen"s == to_title("grüßen"s, l));
-	CHECK("Grüßen"s == to_title("GRÜßEN"s, l));
+	l = icu::Locale("de_DE");
+	CHECK(L"Grüßen" == to_title(L"grüßen", l));
+	CHECK(L"Grüßen" == to_title(L"GRÜßEN", l));
 	// Use of upper case ẞ where lower case ß is expected.
 	// this assert fails on windows with icu 62
-	// CHECK("Grüßen"s == to_title("GRÜẞEN"s, l));
+	// CHECK(L"Grüßen" == to_title(L"GRÜẞEN", l));
 
-	l = gen("nl_NL.UTF-8");
-	CHECK("Één"s == to_title("één"s, l));
-	CHECK("Één"s == to_title("ÉÉN"s, l));
-	CHECK("IJsselmeer"s == to_title("ijsselmeer"s, l));
-	CHECK("IJsselmeer"s == to_title("Ijsselmeer"s, l));
-	CHECK("IJsselmeer"s == to_title("iJsselmeer"s, l));
-	CHECK("IJsselmeer"s == to_title("IJsselmeer"s, l));
-	CHECK("IJsselmeer"s == to_title("IJSSELMEER"s, l));
-	CHECK("Ĳsselmeer"s == to_title("ĳsselmeer"s, l));
-	CHECK("Ĳsselmeer"s == to_title("Ĳsselmeer"s, l));
-	CHECK("Ĳsselmeer"s == to_title("ĲSSELMEER"s, l));
+	l = icu::Locale("nl_NL");
+	CHECK(L"Één" == to_title(L"één", l));
+	CHECK(L"Één" == to_title(L"ÉÉN", l));
+	CHECK(L"IJsselmeer" == to_title(L"ijsselmeer", l));
+	CHECK(L"IJsselmeer" == to_title(L"Ijsselmeer", l));
+	CHECK(L"IJsselmeer" == to_title(L"iJsselmeer", l));
+	CHECK(L"IJsselmeer" == to_title(L"IJsselmeer", l));
+	CHECK(L"IJsselmeer" == to_title(L"IJSSELMEER", l));
+	CHECK(L"Ĳsselmeer" == to_title(L"ĳsselmeer", l));
+	CHECK(L"Ĳsselmeer" == to_title(L"Ĳsselmeer", l));
+	CHECK(L"Ĳsselmeer" == to_title(L"ĲSSELMEER", l));
 }
 
 TEST_CASE("Encoding", "[locale_utils]")
@@ -347,18 +327,18 @@ TEST_CASE("Encoding", "[locale_utils]")
 	auto e = Encoding();
 	auto v = e.value_or_default();
 	auto i = e.is_utf8();
-	CHECK("ISO8859-1"s == v);
+	CHECK("ISO8859-1" == v);
 	CHECK(false == i);
 
 	e = Encoding("UTF8");
 	v = e.value();
 	i = e.is_utf8();
-	CHECK("UTF-8"s == v);
+	CHECK("UTF-8" == v);
 	CHECK(true == i);
 
-	e = "MICROSOFT-CP1251"s;
+	e = "MICROSOFT-CP1251";
 	v = e.value();
 	i = e.is_utf8();
-	CHECK("CP1251"s == v);
+	CHECK("CP1251" == v);
 	CHECK(false == i);
 }
