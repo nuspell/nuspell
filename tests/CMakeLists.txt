@@ -1,4 +1,4 @@
-add_executable(ch.catch
+add_executable(unit_test
     condition_test.cxx
     dictionary_test.cxx
     finder_test.cxx
@@ -6,15 +6,18 @@ add_executable(ch.catch
     string_utils_test.cxx
     structures_test.cxx
     catch_main.cxx)
-target_link_libraries(ch.catch nuspell Catch2)
+target_link_libraries(unit_test nuspell Catch2)
 
-add_executable(nuspell_legacy_tests legacy_test.cxx)
-target_link_libraries(nuspell_legacy_tests nuspell)
+add_executable(legacy_test legacy_test.cxx)
+target_link_libraries(legacy_test nuspell)
+
+add_executable(verify verify.cxx)
+target_link_libraries(verify nuspell hunspell Boost::locale)
 
 list(APPEND CMAKE_MODULE_PATH
     "${PROJECT_SOURCE_DIR}/external/Catch2/contrib")
 include(Catch)
-catch_discover_tests(ch.catch)
+catch_discover_tests(unit_test)
 
 find_program(BASH bash)
 file(GLOB v1tests
@@ -33,7 +36,7 @@ else()
     # alternative test runner wriiten in C++, mostly for Windows
     foreach(t ${v1tests})
         add_test(NAME ${t}
-            COMMAND nuspell_legacy_tests
+            COMMAND legacy_test
                     ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/${t})
     endforeach()
 endif()

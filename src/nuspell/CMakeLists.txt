@@ -63,9 +63,6 @@ target_compile_definitions(nuspell-bin PRIVATE
 target_link_libraries(nuspell-bin nuspell Boost::locale)
 
 if (NOT subproject)
-    add_executable(verify verify.cxx)
-    target_link_libraries(verify nuspell hunspell Boost::locale)
-
     install(TARGETS nuspell
         EXPORT NuspellTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
