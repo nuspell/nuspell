@@ -21,35 +21,34 @@
 #include <catch2/catch.hpp>
 
 using namespace std;
-using namespace std::literals::string_literals;
 using namespace nuspell;
 
-TEST_CASE("method split_on_any_of", "[string_utils]")
+TEST_CASE("split_on_any_of", "[string_utils]")
 {
-	auto in = "^abc;.qwe/zxc/"s;
+	auto in = string("^abc;.qwe/zxc/");
 	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
 	auto out = vector<string>();
-	split_on_any_of(in, ".;^/"s, back_inserter(out));
+	split_on_any_of(in, ".;^/", back_inserter(out));
 	CHECK(exp == out);
 }
 
-TEST_CASE("method split_on_whitespace", "[string_utils]")
+TEST_CASE("split_on_whitespace", "[string_utils]")
 {
 	// also tests _v variant
 
-	auto in = "   qwe ert  \tasd "s;
+	auto in = string("   qwe ert  \tasd ");
 	auto exp = vector<string>{"qwe", "ert", "asd"};
 	auto out = vector<string>();
 	split_on_whitespace_v(in, out);
 	CHECK(exp == out);
 
-	in = "   \t\r\n  "s;
+	in = "   \t\r\n  ";
 	exp = vector<string>();
 	split_on_whitespace_v(in, out);
 	CHECK(exp == out);
 }
 
-TEST_CASE("method is_number", "[string_utils]")
+TEST_CASE("is_number", "[string_utils]")
 {
 	CHECK_FALSE(is_number(""s));
 	CHECK_FALSE(is_number("a"s));
@@ -112,7 +111,7 @@ TEST_CASE("method is_number", "[string_utils]")
 	CHECK_FALSE(is_number(",1-"s));
 }
 
-TEST_CASE("function match_simple_regex", "[string_utils]")
+TEST_CASE("match_simple_regex", "[string_utils]")
 {
 	CHECK(match_simple_regex("abdff"s, "abc?de*ff"s));
 	CHECK(match_simple_regex("abcdff"s, "abc?de*ff"s));

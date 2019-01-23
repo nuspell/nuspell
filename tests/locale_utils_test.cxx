@@ -24,44 +24,43 @@
 #include <catch2/catch.hpp>
 
 using namespace std;
-using namespace std::literals::string_literals;
 using namespace nuspell;
 
-TEST_CASE("method validate_utf8", "[locale_utils]")
+TEST_CASE("validate_utf8", "[locale_utils]")
 {
-	CHECK(validate_utf8(""s));
-	CHECK(validate_utf8("the brown fox~"s));
-	CHECK(validate_utf8("Ӥ日本に"s));
+	CHECK(validate_utf8(""));
+	CHECK(validate_utf8("the brown fox~"));
+	CHECK(validate_utf8("Ӥ日本に"));
 	// need counter example too
 }
 
-TEST_CASE("method is_ascii", "[locale_utils]")
+TEST_CASE("is_ascii", "[locale_utils]")
 {
 	CHECK(is_ascii('a'));
 	CHECK(is_ascii('\t'));
-
-	CHECK_FALSE(is_ascii(char_traits<char>::to_char_type(128)));
+	CHECK_FALSE(is_ascii('\x80'));
 }
 
-TEST_CASE("method is_all_ascii", "[locale_utils]")
+TEST_CASE("is_all_ascii", "[locale_utils]")
 {
-	CHECK(is_all_ascii(""s));
-	CHECK(is_all_ascii("the brown fox~"s));
-	CHECK_FALSE(is_all_ascii("brown foxĳӤ"s));
+	CHECK(is_all_ascii(""));
+	CHECK(is_all_ascii("the brown fox~"));
+	CHECK_FALSE(is_all_ascii("brown foxĳӤ"));
 }
 
-TEST_CASE("method latin1_to_ucs2", "[locale_utils]")
+TEST_CASE("latin1_to_ucs2", "[locale_utils]")
 {
-	CHECK(u"" == latin1_to_ucs2(""s));
-	CHECK(u"abc\u0080" == latin1_to_ucs2("abc\x80"s));
-	CHECK(u"²¿ýþÿ" != latin1_to_ucs2(u8"²¿ýþÿ"s));
-	CHECK(u"Ӥ日本に" != latin1_to_ucs2(u8"Ӥ日本に"s));
+	CHECK(u"" == latin1_to_ucs2(""));
+	CHECK(u"abc\u0080" == latin1_to_ucs2("abc\x80"));
+
+	CHECK(u"²¿ýþÿ" != latin1_to_ucs2("²¿ýþÿ"));
+	CHECK(u"Ӥ日本に" != latin1_to_ucs2("Ӥ日本に"));
 }
 
-TEST_CASE("method is_all_bmp", "[locale_utils]")
+TEST_CASE("is_all_bmp", "[locale_utils]")
 {
-	CHECK(true == is_all_bmp(u"abcýþÿӤ"));
-	CHECK(false == is_all_bmp(u"abcý \U00010001 þÿӤ"));
+	CHECK(is_all_bmp(u"abcýþÿӤ"));
+	CHECK_FALSE(is_all_bmp(u"abcý \U00010001 þÿӤ"));
 }
 
 using namespace boost::locale;
@@ -107,10 +106,10 @@ class latin1_codecvt
 TEST_CASE("to_wide", "[locale_utils]")
 {
 	auto loc = locale(locale::classic(), new utf8_codecvt<wchar_t>());
-	auto in = u8"\U0010FFFF ß"s;
+	auto in = string("\U0010FFFF ß");
 	CHECK(L"\U0010FFFF ß" == to_wide(in, loc));
 
-	in = u8"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59"s;
+	in = "\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
 	auto out = wstring();
 	auto exp = L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
 	CHECK(true == to_wide(in, loc, out));
@@ -124,8 +123,8 @@ TEST_CASE("to_wide", "[locale_utils]")
 TEST_CASE("to_narrow", "[locale_utils]")
 {
 	auto loc = locale(locale::classic(), new utf8_codecvt<wchar_t>());
-	auto in = L"\U0010FFFF ß"s;
-	CHECK(u8"\U0010FFFF ß" == to_narrow(in, loc));
+	auto in = wstring(L"\U0010FFFF ß");
+	CHECK("\U0010FFFF ß" == to_narrow(in, loc));
 
 	in = L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
 	auto out = string();
@@ -142,20 +141,20 @@ TEST_CASE("to_narrow", "[locale_utils]")
 	CHECK(all_of(begin(out), end(out), [](auto c) { return c == '?'; }));
 }
 
-TEST_CASE("method classify_casing", "[locale_utils]")
+TEST_CASE("classify_casing", "[locale_utils]")
 {
-	CHECK(Casing::SMALL == classify_casing(L""s));
-	CHECK(Casing::SMALL == classify_casing(L"alllowercase"s));
-	CHECK(Casing::SMALL == classify_casing(L"alllowercase3"s));
-	CHECK(Casing::INIT_CAPITAL == classify_casing(L"Initandlowercase"s));
-	CHECK(Casing::INIT_CAPITAL == classify_casing(L"Initandlowercase_"s));
-	CHECK(Casing::ALL_CAPITAL == classify_casing(L"ALLUPPERCASE"s));
-	CHECK(Casing::ALL_CAPITAL == classify_casing(L"ALLUPPERCASE."s));
-	CHECK(Casing::CAMEL == classify_casing(L"iCamelCase"s));
-	CHECK(Casing::CAMEL == classify_casing(L"iCamelCase@"s));
-	CHECK(Casing::PASCAL == classify_casing(L"InitCamelCase"s));
-	CHECK(Casing::PASCAL == classify_casing(L"InitCamelCase "s));
-	CHECK(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"s));
+	CHECK(Casing::SMALL == classify_casing(L""));
+	CHECK(Casing::SMALL == classify_casing(L"alllowercase"));
+	CHECK(Casing::SMALL == classify_casing(L"alllowercase3"));
+	CHECK(Casing::INIT_CAPITAL == classify_casing(L"Initandlowercase"));
+	CHECK(Casing::INIT_CAPITAL == classify_casing(L"Initandlowercase_"));
+	CHECK(Casing::ALL_CAPITAL == classify_casing(L"ALLUPPERCASE"));
+	CHECK(Casing::ALL_CAPITAL == classify_casing(L"ALLUPPERCASE."));
+	CHECK(Casing::CAMEL == classify_casing(L"iCamelCase"));
+	CHECK(Casing::CAMEL == classify_casing(L"iCamelCase@"));
+	CHECK(Casing::PASCAL == classify_casing(L"InitCamelCase"));
+	CHECK(Casing::PASCAL == classify_casing(L"InitCamelCase "));
+	CHECK(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"));
 }
 
 TEST_CASE("to_upper", "[locale_utils]")
@@ -257,7 +256,7 @@ TEST_CASE("to_lower", "[locale_utils]")
 TEST_CASE("to_title", "[locale_utils]")
 {
 	auto l = icu::Locale("en_US");
-	CHECK(L"" == to_title(L""s, l));
+	CHECK(L"" == to_title(L"", l));
 	CHECK(L"A" == to_title(L"a", l));
 	CHECK(L"A" == to_title(L"A", l));
 	CHECK(L"Aa" == to_title(L"aa", l));

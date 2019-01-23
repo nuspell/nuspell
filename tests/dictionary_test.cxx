@@ -21,7 +21,6 @@
 #include <catch2/catch.hpp>
 
 using namespace std;
-using namespace std::literals::string_literals;
 using namespace nuspell;
 
 struct Dict_Test : public nuspell::Dict_Base {
@@ -29,11 +28,11 @@ struct Dict_Test : public nuspell::Dict_Base {
 	auto spell_priv(std::wstring&& s) { return Dict_Base::spell_priv(s); }
 };
 
-TEST_CASE("parse", "[dictionary]")
+TEST_CASE("Dictionary::load_from_path", "[dictionary]")
 {
 	CHECK_THROWS_AS(Dictionary::load_from_path(""), std::ios_base::failure);
 }
-TEST_CASE("simple", "[dictionary]")
+TEST_CASE("Dictionary::spell_priv simple", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -52,7 +51,7 @@ TEST_CASE("simple", "[dictionary]")
 		CHECK(d.spell_priv(w) == false);
 }
 
-TEST_CASE("suffixes", "[dictionary]")
+TEST_CASE("Dictionary::spell_priv suffixes", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -72,7 +71,7 @@ TEST_CASE("suffixes", "[dictionary]")
 		CHECK(d.spell_priv(w) == false);
 }
 
-TEST_CASE("complex_prefixes", "[dictionary]")
+TEST_CASE("Dictionary::spell_priv complex_prefixes", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -89,7 +88,7 @@ TEST_CASE("complex_prefixes", "[dictionary]")
 		CHECK(d.spell_priv(w) == false);
 }
 
-TEST_CASE("extra_stripping", "[dictionary]")
+TEST_CASE("Dictionary::spell_priv extra_stripping", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -110,7 +109,7 @@ TEST_CASE("extra_stripping", "[dictionary]")
 	CHECK(d.spell_priv(L"31b2") == true);
 }
 
-TEST_CASE("break_pattern", "[dictionary]")
+TEST_CASE("Dictionary::spell_priv break_pattern", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -134,7 +133,7 @@ TEST_CASE("break_pattern", "[dictionary]")
 		CHECK(d.spell_priv(w) == false);
 }
 
-TEST_CASE("spell_casing_upper", "[dictionary]")
+TEST_CASE("Dictionary::spell_priv spell_casing_upper", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -146,7 +145,7 @@ TEST_CASE("spell_casing_upper", "[dictionary]")
 		CHECK(d.spell_priv(g) == true);
 }
 
-TEST_CASE("compounding", "[dictionary]")
+TEST_CASE("Dictionary::spell_priv compounding", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -208,7 +207,7 @@ TEST_CASE("compounding", "[dictionary]")
 	}
 }
 
-TEST_CASE("rep_suggest", "[dictionary]")
+TEST_CASE("Dictionary suggestions rep_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -291,7 +290,7 @@ TEST_CASE("rep_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 }
 
-TEST_CASE("extra_char_suggest", "[dictionary]")
+TEST_CASE("Dictionary suggestions extra_char_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -318,7 +317,7 @@ TEST_CASE("extra_char_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 }
 
-TEST_CASE("map_suggest", "[dictionary]")
+TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -369,7 +368,7 @@ TEST_CASE("map_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 }
 
-TEST_CASE("keyboard_suggest", "[dictionary]")
+TEST_CASE("Dictionary suggestions keyboard_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -411,7 +410,7 @@ TEST_CASE("keyboard_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 }
 
-TEST_CASE("bad_char_suggest", "[dictionary]")
+TEST_CASE("Dictionary suggestions bad_char_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -448,7 +447,7 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 }
 
 #if 0
-TEST_CASE("phonetic_suggest", "[dictionary]")
+TEST_CASE("Dictionary suggestions phonetic_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
@@ -619,7 +618,7 @@ TEST_CASE("long word", "[dictionary]")
 }
 #endif
 
-TEST_CASE("suggest_priv", "[dictionary]")
+TEST_CASE("Dictionary suggestions suggest_priv", "[dictionary]")
 {
 	auto d = Dict_Test();
 

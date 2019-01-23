@@ -1,7 +1,6 @@
 add_executable(unit_test
     condition_test.cxx
     dictionary_test.cxx
-    finder_test.cxx
     locale_utils_test.cxx
     string_utils_test.cxx
     structures_test.cxx

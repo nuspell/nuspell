@@ -21,10 +21,9 @@
 #include <catch2/catch.hpp>
 
 using namespace std;
-using namespace std::literals::string_literals;
 using namespace nuspell;
 
-TEST_CASE("method substring replace copy", "[structures]")
+TEST_CASE("Substr_Replacer", "[structures]")
 {
 	using Substring_Replacer = Substr_Replacer<char>;
 	auto rep = Substring_Replacer({{"aa", "bb"},
@@ -35,127 +34,120 @@ TEST_CASE("method substring replace copy", "[structures]")
 	                               {"jj kk", "ll"},
 	                               {"", "mm"},
 	                               {" nn", ""}});
-	CHECK(rep.replace_copy("aa XYZ c ee g ii jj kk nn"s) ==
+	CHECK(rep.replace_copy("aa XYZ c ee g ii jj kk nn") ==
 	      "bb XYZ d f hh ii ll");
 }
 
 // TODO add a third TEXT_CASE for twofold suffix stripping
 
-TEST_CASE("class Prefix_Entry", "[structures]")
+TEST_CASE("Prefix", "[structures]")
 {
-	// TODO ignore "0" to make method more failsafe? See aff_data.cxx with
-	// elem.stripping == "0"
-	// auto pfx_tests = nuspell::Prefix_Entry(u'U', true, "0"s, "un"s,
-	// "wr."s);
+	auto pfx_tests = Prefix<char>(u'U', true, "", "un", {}, "wr.");
 
-	auto pfx_tests = Prefix<char>(u'U', true, ""s, "un"s, {}, "wr."s);
-
-	SECTION("method to_root")
+	SECTION("Prefix::to_root")
 	{
-		auto word = "unwry"s;
-		CHECK("wry"s == pfx_tests.to_root(word));
-		CHECK("wry"s == word);
+		auto word = string("unwry");
+		CHECK("wry" == pfx_tests.to_root(word));
+		CHECK("wry" == word);
 	}
 
-	SECTION("method to_root_copy")
+	SECTION("Prefix::to_root_copy")
 	{
-		auto word = "unwry"s;
-		CHECK("wry"s == pfx_tests.to_root_copy(word));
-		CHECK("unwry"s == word);
+		auto word = string("unwry");
+		CHECK("wry" == pfx_tests.to_root_copy(word));
+		CHECK("unwry" == word);
 	}
 
-	SECTION("method to_derived")
+	SECTION("Prefix::to_derived")
 	{
-		auto word = "wry"s;
-		CHECK("unwry"s == pfx_tests.to_derived(word));
-		CHECK("unwry"s == word);
+		auto word = string("wry");
+		CHECK("unwry" == pfx_tests.to_derived(word));
+		CHECK("unwry" == word);
 	}
 
-	SECTION("method to_derived_copy")
+	SECTION("Prefix::to_derived_copy")
 	{
-		auto word = "wry"s;
-		CHECK("unwry"s == pfx_tests.to_derived_copy(word));
-		CHECK("wry"s == word);
+		auto word = string("wry");
+		CHECK("unwry" == pfx_tests.to_derived_copy(word));
+		CHECK("wry" == word);
 	}
 
-	SECTION("method check_condition")
+	SECTION("Prefix::check_condition")
 	{
-		CHECK(true == pfx_tests.check_condition("wry"s));
-		CHECK(false == pfx_tests.check_condition("unwry"s));
+		CHECK(true == pfx_tests.check_condition("wry"));
+		CHECK(false == pfx_tests.check_condition("unwry"));
 	}
 }
 
-TEST_CASE("class Suffix", "[structures]")
+TEST_CASE("Suffix", "[structures]")
 {
-	auto sfx_tests =
-	    Suffix<char>(u'T', true, "y"s, "ies"s, {}, ".[^aeiou]y"s);
+	auto sfx_tests = Suffix<char>(u'T', true, "y", "ies", {}, ".[^aeiou]y");
 	auto sfx_sk_SK =
-	    Suffix<char>(u'Z', true, "ata"s, "át"s, {}, "[^áéíóúý].[^iš]ata"s);
-	auto sfx_pt_PT =
-	    Suffix<char>(u'X', true, "er"s, "a"s, {}, "[^cug^-]er"s);
+	    Suffix<char>(u'Z', true, "ata", "át", {}, "[^áéíóúý].[^iš]ata");
+	auto sfx_pt_PT = Suffix<char>(u'X', true, "er", "a", {}, "[^cug^-]er");
 	// TODO See above regarding "0"
-	auto sfx_gd_GB = Suffix<char>(u'K', true, "0"s, "-san"s, {}, "[^-]"s);
-	auto sfx_ar = Suffix<char>(u'a', true, "ه"s, "ي"s, {}, "[^ءؤأ]ه"s);
+	auto sfx_gd_GB = Suffix<char>(u'K', true, "", "-san", {}, "[^-]");
+	auto sfx_ar = Suffix<char>(u'a', true, "ه", "ي", {}, "[^ءؤأ]ه");
 	auto sfx_ko =
-	    Suffix<char>(24, true, "ᅬ다"s, " ᅫᆻ어"s, {},
-	                 "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다"s);
+	    Suffix<char>(24, true, "ᅬ다", " ᅫᆻ어", {},
+	                 "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다");
 
-	SECTION("method to_root")
+	SECTION("Suffix::to_root")
 	{
-		auto word = "wries"s;
-		CHECK("wry"s == sfx_tests.to_root(word));
-		CHECK("wry"s == word);
+		auto word = string("wries");
+		CHECK("wry" == sfx_tests.to_root(word));
+		CHECK("wry" == word);
 	}
 
-	SECTION("method to_root_copy")
+	SECTION("Suffix::to_root_copy")
 	{
-		auto word = "wries"s;
-		CHECK("wry"s == sfx_tests.to_root_copy(word));
-		CHECK("wries"s == word);
+		auto word = string("wries");
+		CHECK("wry" == sfx_tests.to_root_copy(word));
+		CHECK("wries" == word);
 	}
 
-	SECTION("method to_derived")
+	SECTION("Suffix::to_derived")
 	{
-		auto word = "wry"s;
-		CHECK("wries"s == sfx_tests.to_derived(word));
-		CHECK("wries"s == word);
+		auto word = string("wry");
+		CHECK("wries" == sfx_tests.to_derived(word));
+		CHECK("wries" == word);
 	}
 
-	SECTION("method to_derived_copy")
+	SECTION("Suffix::to_derived_copy")
 	{
-		auto word = "wry"s;
-		CHECK("wries"s == sfx_tests.to_derived_copy(word));
-		CHECK("wry"s == word);
+		auto word = string("wry");
+		CHECK("wries" == sfx_tests.to_derived_copy(word));
+		CHECK("wry" == word);
 	}
 
-	SECTION("method check_condition")
+	SECTION("Suffix::check_condition")
 	{
-		CHECK(true == sfx_tests.check_condition("wry"s));
-		CHECK(false == sfx_tests.check_condition("ey"s));
-		CHECK(false == sfx_tests.check_condition("wries"s));
+		CHECK(true == sfx_tests.check_condition("wry"));
+		CHECK(false == sfx_tests.check_condition("ey"));
+		CHECK(false == sfx_tests.check_condition("wries"));
 	}
 }
 
-TEST_CASE("class String_Set", "[structures]")
+TEST_CASE("String_Set", "[structures]")
 {
 	SECTION("initialization")
 	{
 		auto ss1 = String_Set<char16_t>();
-		auto ss2 = String_Set<char16_t>(u"abc"s);
+		auto ss2 = String_Set<char16_t>(u16string(u"abc"));
 		auto ss3 = String_Set<char16_t>(u"abc");
 
 		CHECK(0 == ss1.size());
 		CHECK(ss2 == ss3);
-		CHECK(u"abc"s == ss2.data());
+		CHECK(u"abc" == ss2.data());
 	}
 
 	SECTION("assignment")
 	{
 		auto ss1 = String_Set<char16_t>();
 		auto ss2 = String_Set<char16_t>(u"abc");
-		ss1 = u"abc"s;
+		ss1 = u"abc";
 		CHECK(ss1 == ss2);
-		auto s = u16string(u"abc"s);
+		auto s = u16string(u"abc");
 		ss1 = s;
 		CHECK(ss1 == ss2);
 	}
@@ -225,7 +217,7 @@ TEST_CASE("class String_Set", "[structures]")
 	{
 		auto ss1 = String_Set<char16_t>();
 		auto ss2 = String_Set<char16_t>(u"abc");
-		ss1 = u"abc"s;
+		ss1 = u"abc";
 
 		CHECK(ss1 == ss2);
 		ss1.erase(ss1.begin());
@@ -277,19 +269,19 @@ TEST_CASE("class String_Set", "[structures]")
 	}
 }
 
-TEST_CASE("class Break_Table", "[structures]")
+TEST_CASE("Break_Table", "[structures]")
 {
 	auto a = Break_Table<char>();
-	auto b = Break_Table<char>({"--"s, "-"s});
+	auto b = Break_Table<char>({"--", "-"});
 	auto c = Break_Table<char>({"--", "-"});
 	auto d = Break_Table<char>();
 	d = {"-", "--"};
 	auto e = Break_Table<char>();
-	e = {"-"s, "--"s};
+	e = {"-", "--"};
 	a = d;
 }
 
-TEST_CASE("class String_Pair", "[structures]")
+TEST_CASE("String_Pair", "[structures]")
 {
 	auto x = String_Pair<char>();
 	CHECK(x.str() == "");
@@ -309,7 +301,7 @@ TEST_CASE("class String_Pair", "[structures]")
 	CHECK(x.first() == "123qwe");
 	CHECK(x.second() == "456z");
 
-	x = String_Pair<char>("6789"s, "zxcvbnm"s);
+	x = String_Pair<char>(string("6789"), string("zxcvbnm"));
 	CHECK(x.str() == "6789zxcvbnm");
 	CHECK(x.idx() == 4);
 	CHECK(x.first() == "6789");
@@ -321,13 +313,13 @@ TEST_CASE("class String_Pair", "[structures]")
 	CHECK(x.first() == "6789");
 	CHECK(x.second() == "zxcvbnm");
 
-	CHECK_NOTHROW(String_Pair<char>("6789"s, 4));
+	CHECK_NOTHROW(String_Pair<char>("6789", 4));
 	CHECK_THROWS_AS(String_Pair<char>("6789", 5), std::out_of_range);
 	CHECK_THROWS_WITH(String_Pair<char>("6789", 5),
 	                  "word split is too long");
 }
 
-TEST_CASE("class Phonetic_Table", "[structures]")
+TEST_CASE("Phonetic_Table", "[structures]")
 {
 	auto p1 = pair<string, string>({"CC", "_"});
 	auto p2 = pair<string, string>({"AA", "BB"});
@@ -377,7 +369,7 @@ TEST_CASE("class Phonetic_Table", "[structures]")
 	CHECK(exp == word);
 }
 
-TEST_CASE("class Similarity_Group", "[structures]")
+TEST_CASE("Similarity_Group", "[structures]")
 {
 	auto s1 = Similarity_Group<char>();
 	s1.parse("a(bb)");
@@ -398,7 +390,7 @@ TEST_CASE("class Similarity_Group", "[structures]")
 	CHECK(v == s1.strings);
 }
 
-TEST_CASE("class List_Strings", "[structures]")
+TEST_CASE("List_Strings", "[structures]")
 {
 	auto l = List_Strings();
 	CHECK(l.size() == 0);

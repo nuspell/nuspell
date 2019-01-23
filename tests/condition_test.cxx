@@ -21,11 +21,9 @@
 #include <catch2/catch.hpp>
 
 using namespace std;
-using namespace std::literals;
 using namespace nuspell;
 
-TEST_CASE("method match characters with standard character <char>",
-          "[condition]")
+TEST_CASE("Condition<char> 1", "[condition]")
 {
 	auto c1 = Condition<char>("");
 	CHECK(true == c1.match(""));
@@ -93,7 +91,7 @@ TEST_CASE("method match characters with standard character <char>",
 	                  "position on the string is out of bounds");
 }
 
-TEST_CASE("method match wildcards with wide character <wchar_t>", "[condition]")
+TEST_CASE("Condition<wchar_t> with wildcards", "[condition]")
 {
 	auto c1 = Condition<wchar_t>(L".");
 	CHECK(false == c1.match_prefix(L""));
@@ -116,7 +114,7 @@ TEST_CASE("method match wildcards with wide character <wchar_t>", "[condition]")
 	CHECK(true == c2.match_prefix(L"aba"));
 }
 
-TEST_CASE("method match selections with runtime exceptions", "[condition]")
+TEST_CASE("Condition<wchar_t> exceptions", "[condition]")
 {
 	auto cond1 = L"]";
 	CHECK_THROWS_AS([&]() { auto c1 = Condition<wchar_t>(cond1); }(),
@@ -155,8 +153,7 @@ TEST_CASE("method match selections with runtime exceptions", "[condition]")
 	                  "empty bracket expression");
 }
 
-TEST_CASE("method match selections with standard character <char>",
-          "[condition]")
+TEST_CASE("Condition<char> 2", "[condition]")
 {
 	auto c1 = Condition<char>("[ab]");
 	CHECK(true == c1.match("a"));
@@ -183,14 +180,14 @@ TEST_CASE("method match selections with standard character <char>",
 	CHECK(true == c4.match("b"));
 }
 
-TEST_CASE("method match diacritics and ligatues", "[condition]")
+TEST_CASE("Condition<wchar_t> unicode", "[condition]")
 {
 	auto c1 = Condition<wchar_t>(L"áåĳßøæ");
 	CHECK(true == c1.match(L"áåĳßøæ"));
 	CHECK(false == c1.match(L"ñ"));
 }
 
-TEST_CASE("method match real-life combinations", "[condition]")
+TEST_CASE("Condition<wchar_t> real-life examples", "[condition]")
 {
 	// found 2 times in affix files
 	auto c1 = Condition<wchar_t>(L"[áéiíóőuúüűy-àùø]");
