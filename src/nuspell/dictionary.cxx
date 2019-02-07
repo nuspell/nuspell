@@ -480,12 +480,12 @@ auto Dict_Base::is_valid_inside_compound(const Flag_Set& flags) const
 
 auto prefix(const wstring& word, size_t len)
 {
-	return my_string_view<wchar_t>(word).substr(0, len);
+	return wstring_view(word).substr(0, len);
 }
 auto prefix(wstring&& word, size_t len) = delete;
 auto suffix(const wstring& word, size_t len)
 {
-	return my_string_view<wchar_t>(word).substr(word.size() - len);
+	return wstring_view(word).substr(word.size() - len);
 }
 auto suffix(wstring&& word, size_t len) = delete;
 
@@ -499,7 +499,7 @@ class Prefix_Iter {
 	const Prefix_Table<wchar_t>& tbl;
 	const wstring& word;
 	size_t len;
-	my_string_view<wchar_t> pfx;
+	wstring_view pfx;
 	using iter = typename Prefix_Table<wchar_t>::iterator;
 	iter a;
 	iter b;
@@ -548,7 +548,7 @@ class Suffix_Iter {
 	const Suffix_Table<wchar_t>& tbl;
 	const wstring& word;
 	size_t len;
-	my_string_view<wchar_t> pfx;
+	wstring_view pfx;
 	using iter = typename Suffix_Table<wchar_t>::iterator;
 	iter a;
 	iter b;

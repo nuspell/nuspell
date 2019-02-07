@@ -79,6 +79,8 @@ auto constexpr literal_choose<wchar_t>(const char*, const wchar_t* wide)
 
 template <class CharT>
 using my_string_view = NUSPELL_STR_VIEW_NS::basic_string_view<CharT>;
+using string_view = my_string_view<char>;
+using wstring_view = my_string_view<wchar_t>;
 
 /**
  * @brief Splits string on set of single char seperators.

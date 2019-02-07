@@ -39,7 +39,7 @@ enum class Flag_Type {
 };
 
 using Word_List_Base =
-    Hash_Multiset<std::pair<std::string, Flag_Set>, my_string_view<char>,
+    Hash_Multiset<std::pair<std::string, Flag_Set>, string_view,
                   member<std::pair<std::string, Flag_Set>, std::string,
                          &std::pair<std::string, Flag_Set>::first>>;
 /**
