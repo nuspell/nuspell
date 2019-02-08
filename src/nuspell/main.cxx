@@ -358,7 +358,7 @@ auto list_dictionaries(const Finder& f) -> void
 auto normal_loop(istream& in, ostream& out, My_Dictionary& dic)
 {
 	auto word = string();
-	auto suggestions = List_Strings();
+	auto suggestions = vector<string>();
 	while (in >> word) {
 		auto correct = dic.spell(word);
 		if (correct) {
@@ -437,7 +437,7 @@ auto segment_loop(istream& in, ostream& out, My_Dictionary& dic)
 	namespace b = boost::locale::boundary;
 	auto line = string();
 	auto word = string();
-	auto suggestions = List_Strings();
+	auto suggestions = vector<string>();
 	auto loc = in.getloc();
 	auto pos = in.tellg();
 	if (pos < 0)

@@ -1166,6 +1166,9 @@ class List_Basic_Strings {
 	{
 		other.sz = 0;
 	}
+
+	List_Basic_Strings(VecT&& other) : d(other), sz(other.size()) {}
+
 	auto& operator=(const List_Basic_Strings& other)
 	{
 		clear();
@@ -1471,6 +1474,13 @@ class List_Basic_Strings {
 	{
 		return !(*this > other);
 	}
+
+	auto extract_sequence() -> VecT
+	{
+		d.resize(sz);
+		sz = 0;
+		return std::move(d);
+	}
 };
 
 template <class CharT>
@@ -1479,9 +1489,7 @@ auto swap(List_Basic_Strings<CharT>& a, List_Basic_Strings<CharT>& b)
 	a.swap(b);
 }
 
-inline namespace v2 {
 using List_Strings = List_Basic_Strings<char>;
-}
 using List_WStrings = List_Basic_Strings<wchar_t>;
 
 template <class CharT>

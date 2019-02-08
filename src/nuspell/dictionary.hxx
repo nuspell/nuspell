@@ -299,8 +299,8 @@ class Dictionary : private Dict_Base {
 	                                   std::wstring& wide_out) const
 	    -> bool;
 
-	auto internal_to_external_encoding(std::string& out,
-	                                   std::wstring& wide_in) const -> bool;
+	auto internal_to_external_encoding(const std::wstring& wide_in,
+	                                   std::string& out) const -> bool;
 
       public:
 	Dictionary();
@@ -310,7 +310,8 @@ class Dictionary : private Dict_Base {
 	    const std::string& file_path_without_extension) -> Dictionary;
 	auto imbue(const std::locale& loc) -> void;
 	auto spell(const std::string& word) const -> bool;
-	auto suggest(const std::string& word, List_Strings& out) const -> void;
+	auto suggest(const std::string& word,
+	             std::vector<std::string>& out) const -> void;
 };
 } // namespace v2
 } // namespace nuspell

@@ -83,8 +83,8 @@ int main(int argc, char* argv[])
 			     << " \n";
 			return 2;
 		}
-		auto list_sugs = vector<nuspell::List_Strings>();
-		auto sug = nuspell::List_Strings();
+		auto list_sugs = vector<vector<string>>();
+		auto sug = vector<string>();
 		while (file >> word) {
 			if (d.spell(word))
 				continue;
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
 		file.open(test + ".sug");
 		if (!file.is_open())
 			return 2;
-		auto expected_list_sugs = vector<nuspell::List_Strings>();
+		auto expected_list_sugs = vector<vector<string>>();
 		auto line = string();
 		while (getline(file, line)) {
 			size_t i = 0;

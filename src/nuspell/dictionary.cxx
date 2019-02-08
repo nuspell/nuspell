@@ -2041,8 +2041,8 @@ auto Dictionary::external_to_internal_encoding(const string& in,
 		return to_wide(in, external_locale, wide_out);
 }
 
-auto Dictionary::internal_to_external_encoding(string& out,
-                                               wstring& wide_in) const -> bool
+auto Dictionary::internal_to_external_encoding(const wstring& wide_in,
+                                               string& out) const -> bool
 {
 	if (external_locale_known_utf8)
 		wide_to_utf8(wide_in, out);
@@ -2140,12 +2140,12 @@ auto Dictionary::spell(const std::string& word) const -> bool
  * @param word incorrect word
  * @param[out] out this object will be populated with the suggestions
  */
-auto Dictionary::suggest(const string& word, List_Strings& out) const -> void
+auto Dictionary::suggest(const std::string& word,
+                         std::vector<std::string>& out) const -> void
 {
 	auto static thread_local wide_word = wstring();
 	auto static thread_local wide_list = List_WStrings();
 
-	out.clear();
 	auto ok_enc = external_to_internal_encoding(word, wide_word);
 	if (unlikely(wide_word.size() > 180)) {
 		wide_word.resize(180);
@@ -2156,9 +2156,13 @@ auto Dictionary::suggest(const string& word, List_Strings& out) const -> void
 		return;
 	wide_list.clear();
 	suggest_priv(wide_word, wide_list);
+
+	auto narrow_list = List_Strings(move(out));
+	narrow_list.clear();
 	for (auto& w : wide_list) {
-		auto& o = out.emplace_back();
-		internal_to_external_encoding(o, w);
+		auto& o = narrow_list.emplace_back();
+		internal_to_external_encoding(w, o);
 	}
+	out = narrow_list.extract_sequence();
 }
 } // namespace nuspell
