@@ -390,7 +390,7 @@ int main(int argc, char* argv[])
 	try {
 		dic = Dictionary::load_from_path(filename);
 	}
-	catch (const std::ios_base::failure& e) {
+	catch (const Dictionary_Loading_Error& e) {
 		cerr << e.what() << '\n';
 		return 1;
 	}

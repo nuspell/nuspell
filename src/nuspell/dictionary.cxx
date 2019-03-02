@@ -2028,7 +2028,7 @@ auto Dict_Base::phonetic_suggest(std::wstring& word, List_WStrings& out) const
 Dictionary::Dictionary(std::istream& aff, std::istream& dic)
 {
 	if (!parse_aff_dic(aff, dic))
-		throw std::ios_base::failure("error parsing");
+		throw Dictionary_Loading_Error("error parsing");
 	external_locale_known_utf8 = is_locale_known_utf8(external_locale);
 }
 
@@ -2085,13 +2085,13 @@ auto Dictionary::load_from_path(const std::string& file_path_without_extension)
 	std::ifstream aff_file(path);
 	if (aff_file.fail()) {
 		auto err = "Aff file " + path + " not found";
-		throw std::ios_base::failure(err);
+		throw Dictionary_Loading_Error(err);
 	}
 	path.replace(path.size() - 3, 3, "dic");
 	std::ifstream dic_file(path);
 	if (dic_file.fail()) {
 		auto err = "Dic file " + path + " not found";
-		throw std::ios_base::failure(err);
+		throw Dictionary_Loading_Error(err);
 	}
 	return load_from_aff_dic(aff_file, dic_file);
 }

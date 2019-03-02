@@ -287,6 +287,11 @@ struct Dict_Base : public Aff_Data {
  */
 inline namespace v2 {
 
+class Dictionary_Loading_Error : public std::runtime_error {
+      public:
+	using std::runtime_error::runtime_error;
+};
+
 /**
  * @brief The only important public class
  */

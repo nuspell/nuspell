@@ -601,7 +601,7 @@ int main(int argc, char* argv[])
 		dic = Dictionary::load_from_path(filename);
 		dic.parse_personal_dict(args.dictionary, loc);
 	}
-	catch (const std::ios_base::failure& e) {
+	catch (const Dictionary_Loading_Error& e) {
 		cerr << e.what() << '\n';
 		return 1;
 	}
