@@ -692,20 +692,20 @@ class my_ctype<wchar_t> : public std::ctype<wchar_t> {
 	                       mask* vec) const final override
 	{
 		transform(first, last, vec,
-		          [&](auto c) { return get_char_mask(c); });
+		          [](auto c) { return get_char_mask(c); });
 		return last;
 	}
 	const char_type* do_scan_is(mask m, const char_type* first,
 	                            const char_type* last) const final override
 	{
 		return find_if(first, last,
-		               [&](auto c) { return do_is(m, c); });
+		               [&](auto c) { return this->do_is(m, c); });
 	}
 	const char_type* do_scan_not(mask m, const char_type* first,
 	                             const char_type* last) const final override
 	{
 		return find_if_not(first, last,
-		                   [&](auto c) { return do_is(m, c); });
+		                   [&](auto c) { return this->do_is(m, c); });
 	}
 
 	char_type do_toupper(char_type c) const final override
@@ -740,7 +740,8 @@ class my_ctype<wchar_t> : public std::ctype<wchar_t> {
 	const char* do_widen(const char* low, const char* high,
 	                     char_type* dest) const final override
 	{
-		transform(low, high, dest, [&](auto c) { return do_widen(c); });
+		transform(low, high, dest,
+		          [&](auto c) { return this->do_widen(c); });
 		return high;
 	}
 	char do_narrow(char_type c, char dfault) const final override
@@ -754,7 +755,7 @@ class my_ctype<wchar_t> : public std::ctype<wchar_t> {
 	                           char dfault, char* dest) const final override
 	{
 		transform(low, high, dest,
-		          [&](auto c) { return do_narrow(c, dfault); });
+		          [&](auto c) { return this->do_narrow(c, dfault); });
 		return high;
 	}
 };
