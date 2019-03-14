@@ -115,7 +115,7 @@ TEST_CASE("Dictionary::spell_priv break_pattern", "[dictionary]")
 	auto d = Dict_Test();
 
 	d.forbid_warn = true;
-	d.warn_flag = *u"W";
+	d.warn_flag = 'W';
 
 	d.words.emplace("user", u"");
 	d.words.emplace("interface", u"");
@@ -146,66 +146,66 @@ TEST_CASE("Dictionary::spell_priv spell_casing_upper", "[dictionary]")
 		CHECK(d.spell_priv(g) == true);
 }
 
-TEST_CASE("Dictionary::spell_priv compounding", "[dictionary]")
+TEST_CASE("Dictionary::spell_priv compounding begin_last", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	d.compound_begin_flag = *u"B";
-	d.compound_last_flag = *u"L";
+	d.compound_begin_flag = 'B';
+	d.compound_last_flag = 'L';
 
-	SECTION("begin_last")
-	{
-		d.compound_min_length = 4;
-		d.words.emplace("car", u"B");
-		d.words.emplace("cook", u"B");
-		d.words.emplace("photo", u"B");
-		d.words.emplace("book", u"L");
+	d.compound_min_length = 4;
+	d.words.emplace("car", u"B");
+	d.words.emplace("cook", u"B");
+	d.words.emplace("photo", u"B");
+	d.words.emplace("book", u"L");
 
-		auto good = {L"cookbook", L"photobook"};
-		for (auto& g : good)
-			CHECK(d.spell_priv(g) == true);
-		auto wrong = {L"carbook", L"bookcook", L"bookphoto",
-		              L"cookphoto", L"photocook"};
-		for (auto& w : wrong)
-			CHECK(d.spell_priv(w) == false);
-	}
+	auto good = {L"cookbook", L"photobook"};
+	for (auto& g : good)
+		CHECK(d.spell_priv(g) == true);
+	auto wrong = {L"carbook", L"bookcook", L"bookphoto", L"cookphoto",
+	              L"photocook"};
+	for (auto& w : wrong)
+		CHECK(d.spell_priv(w) == false);
+}
 
-	SECTION("compound_middle")
-	{
-		d.compound_flag = *u"C";
-		d.compound_middle_flag = *u"M";
-		d.compound_check_duplicate = true;
-		d.words.emplace("goederen", u"C");
-		d.words.emplace("trein", u"M");
-		d.words.emplace("wagon", u"C");
+TEST_CASE("Dictionary::spell_priv compounding compound_middle", "[dictionary]")
+{
+	auto d = Dict_Test();
+	d.compound_flag = 'C';
+	d.compound_middle_flag = 'M';
+	d.compound_check_duplicate = true;
+	d.words.emplace("goederen", u"C");
+	d.words.emplace("trein", u"M");
+	d.words.emplace("wagon", u"C");
 
-		auto good = {L"goederentreinwagon", L"wagontreingoederen",
-		             L"goederenwagon", L"wagongoederen"};
-		for (auto& g : good)
-			CHECK(d.spell_priv(g) == true);
-		auto wrong = {L"goederentrein", L"treingoederen",
-		              L"treinwagon",    L"wagontrein",
-		              L"treintrein",    L"goederengoederen",
-		              L"wagonwagon"};
-		for (auto& w : wrong)
-			CHECK(d.spell_priv(w) == false);
-	}
+	auto good = {L"goederentreinwagon", L"wagontreingoederen",
+	             L"goederenwagon", L"wagongoederen"};
+	for (auto& g : good)
+		CHECK(d.spell_priv(g) == true);
+	auto wrong = {L"goederentrein", L"treingoederen", L"treinwagon",
+	              L"wagontrein",    L"treintrein",    L"goederengoederen",
+	              L"wagonwagon"};
+	for (auto& w : wrong)
+		CHECK(d.spell_priv(w) == false);
+}
 
-	SECTION("triple")
-	{
-		d.compound_check_triple = true;
-		d.compound_simplified_triple = true;
-		d.words.emplace("schiff", u"B");
-		d.words.emplace("fahrt", u"L");
+TEST_CASE("Dictionary::spell_priv compounding triple", "[dictionary]")
+{
+	auto d = Dict_Test();
+	d.compound_begin_flag = 'B';
+	d.compound_last_flag = 'L';
+	d.compound_check_triple = true;
+	d.compound_simplified_triple = true;
+	d.words.emplace("schiff", u"B");
+	d.words.emplace("fahrt", u"L");
 
-		auto good = {L"Schiffahrt", L"schiffahrt"};
-		for (auto& g : good)
-			CHECK(d.spell_priv(g) == true);
-		auto wrong = {L"Schifffahrt", L"schifffahrt", L"SchiffFahrt",
-		              L"SchifFahrt",  L"schiffFahrt", L"schifFahrt"};
-		for (auto& w : wrong)
-			CHECK(d.spell_priv(w) == false);
-	}
+	auto good = {L"Schiffahrt", L"schiffahrt"};
+	for (auto& g : good)
+		CHECK(d.spell_priv(g) == true);
+	auto wrong = {L"Schifffahrt", L"schifffahrt", L"SchiffFahrt",
+	              L"SchifFahrt",  L"schiffFahrt", L"schifFahrt"};
+	for (auto& w : wrong)
+		CHECK(d.spell_priv(w) == false);
 }
 
 TEST_CASE("Dictionary suggestions rep_suggest", "[dictionary]")

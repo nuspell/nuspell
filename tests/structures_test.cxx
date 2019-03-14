@@ -43,40 +43,24 @@ TEST_CASE("Substr_Replacer", "[structures]")
 TEST_CASE("Prefix", "[structures]")
 {
 	auto pfx_tests = Prefix<char>(u'U', true, "", "un", {}, "wr.");
+	auto word = string("unwry");
+	CHECK("wry" == pfx_tests.to_root(word));
+	CHECK("wry" == word);
 
-	SECTION("Prefix::to_root")
-	{
-		auto word = string("unwry");
-		CHECK("wry" == pfx_tests.to_root(word));
-		CHECK("wry" == word);
-	}
+	word = string("unwry");
+	CHECK("wry" == pfx_tests.to_root_copy(word));
+	CHECK("unwry" == word);
 
-	SECTION("Prefix::to_root_copy")
-	{
-		auto word = string("unwry");
-		CHECK("wry" == pfx_tests.to_root_copy(word));
-		CHECK("unwry" == word);
-	}
+	word = string("wry");
+	CHECK("unwry" == pfx_tests.to_derived(word));
+	CHECK("unwry" == word);
 
-	SECTION("Prefix::to_derived")
-	{
-		auto word = string("wry");
-		CHECK("unwry" == pfx_tests.to_derived(word));
-		CHECK("unwry" == word);
-	}
+	word = string("wry");
+	CHECK("unwry" == pfx_tests.to_derived_copy(word));
+	CHECK("wry" == word);
 
-	SECTION("Prefix::to_derived_copy")
-	{
-		auto word = string("wry");
-		CHECK("unwry" == pfx_tests.to_derived_copy(word));
-		CHECK("wry" == word);
-	}
-
-	SECTION("Prefix::check_condition")
-	{
-		CHECK(true == pfx_tests.check_condition("wry"));
-		CHECK(false == pfx_tests.check_condition("unwry"));
-	}
+	CHECK(true == pfx_tests.check_condition("wry"));
+	CHECK(false == pfx_tests.check_condition("unwry"));
 }
 
 TEST_CASE("Suffix", "[structures]")
@@ -92,181 +76,163 @@ TEST_CASE("Suffix", "[structures]")
 	    Suffix<char>(24, true, "ᅬ다", " ᅫᆻ어", {},
 	                 "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다");
 
-	SECTION("Suffix::to_root")
-	{
-		auto word = string("wries");
-		CHECK("wry" == sfx_tests.to_root(word));
-		CHECK("wry" == word);
-	}
+	auto word = string("wries");
+	CHECK("wry" == sfx_tests.to_root(word));
+	CHECK("wry" == word);
 
-	SECTION("Suffix::to_root_copy")
-	{
-		auto word = string("wries");
-		CHECK("wry" == sfx_tests.to_root_copy(word));
-		CHECK("wries" == word);
-	}
+	word = string("wries");
+	CHECK("wry" == sfx_tests.to_root_copy(word));
+	CHECK("wries" == word);
 
-	SECTION("Suffix::to_derived")
-	{
-		auto word = string("wry");
-		CHECK("wries" == sfx_tests.to_derived(word));
-		CHECK("wries" == word);
-	}
+	word = string("wry");
+	CHECK("wries" == sfx_tests.to_derived(word));
+	CHECK("wries" == word);
 
-	SECTION("Suffix::to_derived_copy")
-	{
-		auto word = string("wry");
-		CHECK("wries" == sfx_tests.to_derived_copy(word));
-		CHECK("wry" == word);
-	}
+	word = string("wry");
+	CHECK("wries" == sfx_tests.to_derived_copy(word));
+	CHECK("wry" == word);
 
-	SECTION("Suffix::check_condition")
-	{
-		CHECK(true == sfx_tests.check_condition("wry"));
-		CHECK(false == sfx_tests.check_condition("ey"));
-		CHECK(false == sfx_tests.check_condition("wries"));
-	}
+	CHECK(true == sfx_tests.check_condition("wry"));
+	CHECK(false == sfx_tests.check_condition("ey"));
+	CHECK(false == sfx_tests.check_condition("wries"));
 }
 
-TEST_CASE("String_Set", "[structures]")
+TEST_CASE("String_Set::String_Set", "[structures]")
 {
-	SECTION("initialization")
-	{
-		auto ss1 = String_Set<char16_t>();
-		auto ss2 = String_Set<char16_t>(u16string(u"abc"));
-		auto ss3 = String_Set<char16_t>(u"abc");
+	auto ss1 = String_Set<char16_t>();
+	auto ss2 = String_Set<char16_t>(u16string(u"abc"));
+	auto ss3 = String_Set<char16_t>(u"abc");
 
-		CHECK(0 == ss1.size());
-		CHECK(ss2 == ss3);
-		CHECK(u"abc" == ss2.data());
-	}
+	CHECK(0 == ss1.size());
+	CHECK(ss2 == ss3);
+	CHECK(u"abc" == ss2.data());
+}
 
-	SECTION("assignment")
-	{
-		auto ss1 = String_Set<char16_t>();
-		auto ss2 = String_Set<char16_t>(u"abc");
-		ss1 = u"abc";
-		CHECK(ss1 == ss2);
-		auto s = u16string(u"abc");
-		ss1 = s;
-		CHECK(ss1 == ss2);
-	}
+TEST_CASE("String_Set::operator=", "[structures]")
+{
+	auto ss1 = String_Set<char16_t>();
+	auto ss2 = String_Set<char16_t>(u"abc");
+	ss1 = u"abc";
+	CHECK(ss1 == ss2);
+	auto s = u16string(u"abc");
+	ss1 = s;
+	CHECK(ss1 == ss2);
+}
 
-	SECTION("size")
-	{
-		auto ss1 = String_Set<char16_t>();
-		CHECK(true == ss1.empty());
-		ss1.insert(u"abc");
-		ss1.insert(u"def");
-		ss1.insert(u"ghi");
-		CHECK(false == ss1.empty());
-		CHECK(9 == ss1.size());
-		CHECK(1024 < ss1.max_size());
-		ss1.clear();
-		CHECK(true == ss1.empty());
-	}
+TEST_CASE("String_Set::size", "[structures]")
+{
+	auto ss1 = String_Set<char16_t>();
+	CHECK(true == ss1.empty());
+	ss1.insert(u"abc");
+	ss1.insert(u"def");
+	ss1.insert(u"ghi");
+	CHECK(false == ss1.empty());
+	CHECK(9 == ss1.size());
+	CHECK(1024 < ss1.max_size());
+	ss1.clear();
+	CHECK(true == ss1.empty());
+}
 
-	SECTION("iterators")
-	{
-		auto ss1 = String_Set<char16_t>();
-		ss1.insert(u"aa");
-		ss1.insert(u"bb");
-		auto b = ss1.begin();
-		auto e = ss1.end();
-		b++;
-		b++;
-		CHECK(*b == *e);
+TEST_CASE("String_Set::begin end", "[structures]")
+{
+	auto ss1 = String_Set<char16_t>();
+	ss1.insert(u"aa");
+	ss1.insert(u"bb");
+	auto b = ss1.begin();
+	auto e = ss1.end();
+	b++;
+	b++;
+	CHECK(*b == *e);
 
-		auto rb = ss1.rbegin();
-		auto re = ss1.rend();
-		rb++;
-		rb++;
-		CHECK(*rb == *re);
+	auto rb = ss1.rbegin();
+	auto re = ss1.rend();
+	rb++;
+	rb++;
+	CHECK(*rb == *re);
 
-		auto cb = ss1.cbegin();
-		auto ce = ss1.cend();
-		cb++;
-		cb++;
-		CHECK(*cb == *ce);
+	auto cb = ss1.cbegin();
+	auto ce = ss1.cend();
+	cb++;
+	cb++;
+	CHECK(*cb == *ce);
 
-		auto crb = ss1.crbegin();
-		auto cre = ss1.crend();
-		crb++;
-		crb++;
-		CHECK(*crb == *cre);
+	auto crb = ss1.crbegin();
+	auto cre = ss1.crend();
+	crb++;
+	crb++;
+	CHECK(*crb == *cre);
 
-		auto lba = ss1.lower_bound('a');
-		auto lbb = ss1.lower_bound('b');
-		auto uba = ss1.upper_bound('a');
-		auto ubb = ss1.upper_bound('b');
-		CHECK(*uba == *lbb);
-		lba++;
-		lba++;
-		CHECK(*lba == *ubb);
+	auto lba = ss1.lower_bound('a');
+	auto lbb = ss1.lower_bound('b');
+	auto uba = ss1.upper_bound('a');
+	auto ubb = ss1.upper_bound('b');
+	CHECK(*uba == *lbb);
+	lba++;
+	lba++;
+	CHECK(*lba == *ubb);
 
-		auto res = ss1.find('b');
-		CHECK(*e == *res);
-		auto p = ss1.equal_range('b');
-		b = ss1.begin();
-		b++;
-		CHECK(*b == *(p.first));
-		CHECK(*e == *(p.second));
-	}
+	auto res = ss1.find('b');
+	CHECK(*e == *res);
+	auto p = ss1.equal_range('b');
+	b = ss1.begin();
+	b++;
+	CHECK(*b == *(p.first));
+	CHECK(*e == *(p.second));
+}
 
-	SECTION("manipulation")
-	{
-		auto ss1 = String_Set<char16_t>();
-		auto ss2 = String_Set<char16_t>(u"abc");
-		ss1 = u"abc";
+TEST_CASE("String_Set manipulation", "[structures]")
+{
+	auto ss1 = String_Set<char16_t>();
+	auto ss2 = String_Set<char16_t>(u"abc");
+	ss1 = u"abc";
 
-		CHECK(ss1 == ss2);
-		ss1.erase(ss1.begin());
-		auto ss3 = String_Set<char16_t>(u"bc");
-		CHECK(ss1 == ss3);
+	CHECK(ss1 == ss2);
+	ss1.erase(ss1.begin());
+	auto ss3 = String_Set<char16_t>(u"bc");
+	CHECK(ss1 == ss3);
 
-		ss1.clear();
-		CHECK(ss1 != ss3);
-		CHECK(true == ss1.empty());
+	ss1.clear();
+	CHECK(ss1 != ss3);
+	CHECK(true == ss1.empty());
 
-		ss2.erase(ss2.begin(), ss2.end());
-		CHECK(true == ss2.empty());
+	ss2.erase(ss2.begin(), ss2.end());
+	CHECK(true == ss2.empty());
 
-		ss2.insert(u"abc");
-		auto res = ss2.insert(ss2.find('b'), 'x');
-		CHECK(*(ss2.begin() + 3) == *(res));
-	}
+	ss2.insert(u"abc");
+	auto res = ss2.insert(ss2.find('b'), 'x');
+	CHECK(*(ss2.begin() + 3) == *(res));
+}
 
-	SECTION("comparison")
-	{
-		auto ss1 = String_Set<char16_t>();
-		auto ss2 = String_Set<char16_t>();
-		auto ss3 = String_Set<char16_t>();
-		auto ss4 = String_Set<char16_t>();
-		ss1.insert(u"abc");
-		ss2.insert(u"abc");
-		ss3.insert(u"abcd");
-		ss4.insert(u"abcd");
-		CHECK(ss1 == ss2);
-		CHECK(ss3 == ss4);
-		CHECK(ss1 != ss4);
-		CHECK(ss3 != ss2);
-		CHECK(ss1 < ss3);
-		CHECK(ss4 > ss2);
-		CHECK(ss1 <= ss2);
-		CHECK(ss1 <= ss3);
-		CHECK(ss3 >= ss4);
-		CHECK(ss3 >= ss1);
-		ss1.swap(ss3);
-		CHECK(ss1 == ss4);
-		CHECK(ss2 == ss3);
-		CHECK(ss1 != ss2);
-		CHECK(ss3 != ss4);
-		CHECK(1 == ss3.count('c'));
-		ss3.insert(u"c");
-		ss3.insert(u"c");
-		CHECK(1 == ss3.count('c'));
-		CHECK(0 == ss3.count('z'));
-	}
+TEST_CASE("String_Set comparison", "[structures]")
+{
+	auto ss1 = String_Set<char16_t>();
+	auto ss2 = String_Set<char16_t>();
+	auto ss3 = String_Set<char16_t>();
+	auto ss4 = String_Set<char16_t>();
+	ss1.insert(u"abc");
+	ss2.insert(u"abc");
+	ss3.insert(u"abcd");
+	ss4.insert(u"abcd");
+	CHECK(ss1 == ss2);
+	CHECK(ss3 == ss4);
+	CHECK(ss1 != ss4);
+	CHECK(ss3 != ss2);
+	CHECK(ss1 < ss3);
+	CHECK(ss4 > ss2);
+	CHECK(ss1 <= ss2);
+	CHECK(ss1 <= ss3);
+	CHECK(ss3 >= ss4);
+	CHECK(ss3 >= ss1);
+	ss1.swap(ss3);
+	CHECK(ss1 == ss4);
+	CHECK(ss2 == ss3);
+	CHECK(ss1 != ss2);
+	CHECK(ss3 != ss4);
+	CHECK(1 == ss3.count('c'));
+	ss3.insert(u"c");
+	ss3.insert(u"c");
+	CHECK(1 == ss3.count('c'));
+	CHECK(0 == ss3.count('z'));
 }
 
 TEST_CASE("Break_Table", "[structures]")
