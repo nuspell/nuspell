@@ -75,24 +75,19 @@ template <class OutIt>
 auto get_default_search_paths(OutIt out) -> OutIt
 {
 	*out++ = ".";
-	char* dicpath = getenv("DICPATH");
+	auto dicpath = getenv("DICPATH");
 	if (dicpath) {
 		out = split(string(dicpath), PATHSEP, out);
 	}
 #ifdef _POSIX_VERSION
-	char* home = getenv("HOME");
-	array<string, 3> prefixes = {home ? string(home) + "/.local" : "",
-	                             "/usr/local", "/usr"};
-	array<const char*, 3> dirs = {"/share/hunspell", "/share/myspell",
-	                              "/share/myspell/dicts"};
-	for (auto& dir : dirs) {
-		for (auto& prefix : prefixes) {
-			*out = prefix + dir;
-			++out;
-		}
+	auto home = getenv("HOME");
+	if (home) {
+		*out++ = home + string("/.local/share/hunspell");
 	}
+	*out++ = "/usr/local/share/hunspell";
+	*out++ = "/usr/share/hunspell";
 #if defined(__APPLE__) && defined(__MACH__)
-	string osx = "/Library/Spelling";
+	auto osx = string("/Library/Spelling");
 	if (home) {
 		*out++ = home + osx;
 	}
@@ -100,8 +95,7 @@ auto get_default_search_paths(OutIt out) -> OutIt
 #endif
 #endif
 #ifdef _WIN32
-	array<char*, 2> winpaths = {getenv("LOCALAPPDATA"),
-	                            getenv("PROGRAMDATA")};
+	auto winpaths = {getenv("LOCALAPPDATA"), getenv("PROGRAMDATA")};
 	for (auto& p : winpaths) {
 		if (p) {
 			*out++ = string(p) + "\\hunspell";
@@ -129,9 +123,9 @@ class FileListerWindows {
 	FileListerWindows() {}
 	FileListerWindows(const char* pattern) { first(pattern); }
 	FileListerWindows(const string& pattern) { first(pattern); }
-
 	FileListerWindows(const FileListerWindows& d) = delete;
 	void operator=(const FileListerWindows& d) = delete;
+	~FileListerWindows() { close(); }
 
 	auto first(const char* pattern) -> bool
 	{
@@ -244,6 +238,8 @@ class Globber {
       public:
 	Globber(const char* pattern) { ret = ::glob(pattern, 0, nullptr, &g); }
 	Globber(const string& pattern) : Globber(pattern.c_str()) {}
+	Globber(const Globber&) = delete;
+	auto operator=(const Globber&) = delete;
 	auto glob(const char* pattern) -> bool
 	{
 		globfree(&g);
@@ -368,10 +364,10 @@ auto get_mozilla_paths(OutIt out) -> OutIt
 {
 #ifdef _POSIX_VERSION
 	// add Mozilla Linux global path
-	array<const char*, 4> dirs = {"/usr/local/lib/firefox/dictionaries",
-	                              "/usr/lib/firefox/dictionaries",
-	                              "/usr/local/lib/thunderbird/dictionaries",
-	                              "/usr/lib/thunderbird/dictionaries"};
+	auto dirs = {"/usr/local/lib/firefox/dictionaries",
+	             "/usr/lib/firefox/dictionaries",
+	             "/usr/local/lib/thunderbird/dictionaries",
+	             "/usr/lib/thunderbird/dictionaries"};
 	struct stat dir_stat;
 	for (auto& dir : dirs) {
 		if (lstat(dir, &dir_stat) == 0) {
@@ -383,24 +379,23 @@ auto get_mozilla_paths(OutIt out) -> OutIt
 	}
 
 	// add Mozilla Linux user path
-	char* home = getenv("HOME");
+	auto home = getenv("HOME");
 	if (home == nullptr) {
 		return out;
 	}
-	string moz = home;
+	auto moz = string(home);
 	moz += "/.mozilla/firefox/*/extensions/*/dictionaries";
-	Globber gm(moz);
-	out = gm.copy_glob_paths(out);
+	Globber g(moz);
+	out = g.copy_glob_paths(out);
 
 	moz = home;
 	moz += "/.thunderbird/*/extensions/*/dictionaries";
-	Globber gt(moz);
-	out = gt.copy_glob_paths(out);
+	g.glob(moz);
+	out = g.copy_glob_paths(out);
 
 #elif defined(_WIN32)
 	// add Mozilla Windows global path
-	array<char*, 2> winpaths = {getenv("PROGRAMFILES"),
-	                            getenv("PROGRAMFILES(x86)")};
+	auto winpaths = {getenv("PROGRAMFILES"), getenv("PROGRAMFILES(x86)")};
 	for (auto& p : winpaths) {
 		if (p) {
 			*out++ = string(p) + "\\Mozilla Firefox\\dictionaries";
@@ -415,14 +410,14 @@ auto get_mozilla_paths(OutIt out) -> OutIt
 	}
 	string moz = home;
 	moz += "\\Mozilla\\Firefox\\Profiles\\*\\extensions\\*\\dictionaries";
-	Globber gm(moz);
-	out = gm.copy_glob_paths(out);
+	Globber g(moz);
+	out = g.copy_glob_paths(out);
 
 	moz = home;
 	moz +=
 	    "\\Mozilla\\Thunderbird\\Profiles\\*\\extensions\\*\\dictionaries";
-	Globber gt(moz);
-	out = gt.copy_glob_paths(out);
+	g.glob(moz);
+	out = g.copy_glob_paths(out);
 #endif
 	return out;
 }
@@ -444,12 +439,11 @@ auto Finder::add_mozilla_dir_paths() -> void
 template <class OutIt>
 auto get_libreoffice_paths(OutIt out) -> OutIt
 {
-	string lo_user_glob;
+	auto lo_user_glob = string();
 #ifdef _POSIX_VERSION
 	// add LibreOffice Linux global paths
-	array<const char*, 3> prefixes = {"/usr/local/lib/libreoffice",
-	                                  "/usr/lib/libreoffice",
-	                                  "/opt/libreoffice*"};
+	auto prefixes = {"/usr/local/lib/libreoffice", "/usr/lib/libreoffice",
+	                 "/opt/libreoffice*"};
 	for (auto& prefix : prefixes) {
 		Globber g(string(prefix) + "/share/extensions/dict-*");
 		out = g.copy_glob_paths(out);
@@ -457,7 +451,7 @@ auto get_libreoffice_paths(OutIt out) -> OutIt
 
 	// add LibreOffice Linux local
 
-	char* home = getenv("HOME");
+	auto home = getenv("HOME");
 	if (home == nullptr) {
 		return out;
 	}
@@ -466,8 +460,7 @@ auto get_libreoffice_paths(OutIt out) -> OutIt
 	                "/uno_packages/*/*.oxt/";
 #elif defined(_WIN32)
 	// add Libreoffice Windows global paths
-	array<char*, 2> prefixes = {getenv("PROGRAMFILES"),
-	                            getenv("PROGRAMFILES(x86)")};
+	auto prefixes = {getenv("PROGRAMFILES"), getenv("PROGRAMFILES(x86)")};
 	for (auto& prefix : prefixes) {
 		if (prefix == nullptr) {
 			continue;
@@ -477,7 +470,7 @@ auto get_libreoffice_paths(OutIt out) -> OutIt
 		out = g.copy_glob_paths(out);
 	}
 
-	char* home = getenv("APPDATA");
+	auto home = getenv("APPDATA");
 	if (home == nullptr) {
 		return out;
 	}
@@ -492,7 +485,7 @@ auto get_libreoffice_paths(OutIt out) -> OutIt
 	out = g.copy_glob_paths(out);
 
 	g.glob(lo_user_glob + "*.aff");
-	string path_str;
+	auto path_str = string();
 	for (auto& path : g) {
 		path_str = path;
 		path_str.erase(path_str.rfind(DIRSEP));
@@ -521,12 +514,11 @@ auto get_openoffice_paths(OutIt out) -> OutIt
 {
 	// Note that Apache OpenOffice is no longer available on Debian and
 	// Ubuntu. For legacy reasons, all paths are still supported.
-	string aoo_user_glob;
+	auto aoo_user_glob = string();
 #ifdef _POSIX_VERSION
 	// add Apache OpenOffice Linux global paths
-	array<const char*, 3> prefixes = {"/usr/local/lib/openoffice",
-	                                  "/usr/lib/openoffice",
-	                                  "/opt/openoffice*"};
+	auto prefixes = {"/usr/local/lib/openoffice", "/usr/lib/openoffice",
+	                 "/opt/openoffice*"};
 	for (auto& prefix : prefixes) {
 		Globber g(string(prefix) + "/share/extensions/dict-*");
 		out = g.copy_glob_paths(out);
@@ -534,7 +526,7 @@ auto get_openoffice_paths(OutIt out) -> OutIt
 
 	// add Apache OpenOffice Linux local
 
-	char* home = getenv("HOME");
+	auto home = getenv("HOME");
 	if (home == nullptr) {
 		return out;
 	}
@@ -543,8 +535,7 @@ auto get_openoffice_paths(OutIt out) -> OutIt
 	                 "/uno_packages/*/*.oxt/";
 #elif defined(_WIN32)
 	// add Apache OpenOffice Windows global paths
-	array<char*, 2> prefixes = {getenv("PROGRAMFILES"),
-	                            getenv("PROGRAMFILES(x86)")};
+	auto prefixes = {getenv("PROGRAMFILES"), getenv("PROGRAMFILES(x86)")};
 	for (auto& prefix : prefixes) {
 		if (prefix == nullptr) {
 			continue;
@@ -554,7 +545,7 @@ auto get_openoffice_paths(OutIt out) -> OutIt
 		out = g.copy_glob_paths(out);
 	}
 
-	char* home = getenv("APPDATA");
+	auto home = getenv("APPDATA");
 	if (home == nullptr) {
 		return out;
 	}
