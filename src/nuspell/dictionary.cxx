@@ -2065,6 +2065,7 @@ Dictionary::Dictionary()
  * @param aff The iostream of the .aff file
  * @param dic The iostream of the .dic file
  * @return Dictionary object
+ * @throws Dictionary_Loading_Error on error
  */
 auto Dictionary::load_from_aff_dic(std::istream& aff, std::istream& dic)
     -> Dictionary
@@ -2076,6 +2077,7 @@ auto Dictionary::load_from_aff_dic(std::istream& aff, std::istream& dic)
  * @brief Create a dictionary from files
  * @param file path without extensions
  * @return Dictionary object
+ * @throws Dictionary_Loading_Error on error
  */
 auto Dictionary::load_from_path(const std::string& file_path_without_extension)
     -> Dictionary
