@@ -1,5 +1,4 @@
-/* Copyright 2018 Dimitrij Mijoski, Sander van Geloven
- * Copyright 2016-2017 Dimitrij Mijoski
+/* Copyright 2016-2019 Dimitrij Mijoski, Sander van Geloven
  *
  * This file is part of Nuspell.
  *

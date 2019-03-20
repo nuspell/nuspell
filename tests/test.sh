@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2016-2017 Dimitrij Mijoski
+# Copyright 2016-2019 Dimitrij Mijoski
 # Copyright (C) 2002-2017 Németh László
 #
 # This file is part of Nuspell.

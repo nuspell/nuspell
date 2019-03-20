@@ -23,7 +23,7 @@ Main features of Nuspell spell checker and morphological analyzer:
 
 Build-only dependencies:
 
-    g++ make cmake git
+    g++ make cmake git ronn
 
 Runtime dependencies:
 
@@ -31,9 +31,7 @@ Runtime dependencies:
 
 Recommended tools for developers:
 
-```
-qtcreator ninja clang-format gdb vim doxygen
-```
+    qtcreator ninja clang-format gdb vim doxygen
 
 ## Building on GNU/Linux and Unixes
 

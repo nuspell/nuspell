@@ -4,7 +4,7 @@ nuspell(1) -- spell checker
 ## SYNOPSIS
 
 
-`nuspell` [-S] [-d _dict_NAME_] [-i _ENCODING_] [_FILE_]...
+`nuspell` [-S] [-d _dict_NAME_] [-i _ENCODING_] [_FILE_]...  
 `nuspell` -l|-G [-L] [-d _dict_NAME_] [-i _ENCODING_] [_FILE_]...  
 `nuspell` -D|-h|--help|-v|--version
 
@@ -53,9 +53,13 @@ Bug reports: <https://github.com/nuspell/nuspell/issues>
 
     nuspell -d en_US file.txt
 
-## AUTHOR
+## AUTHORS
+
+Dimitrij Mijoski and Sander van Geloven
 
 ## COPYRIGHT
+
+Copyright 2016-2019 Dimitrij Mijoski, Sander van Geloven
     
 ## SEE ALSO
 
