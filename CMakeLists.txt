@@ -13,29 +13,41 @@ get_directory_property(subproject PARENT_DIRECTORY)
 
 add_subdirectory(src/nuspell)
 
-if (NOT subproject)
-    add_subdirectory(docs)
+if (subproject)
+    # if added as subproject just build Nuspell
+    # no need to test, build docs or install
+    return()
+endif()
 
-    if (BUILD_TESTING)
+add_subdirectory(docs)
+
+if (BUILD_TESTING)
+    find_package(Git)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} submodule update --init -- external/Catch2
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        RESULT_VARIABLE git_submodule_error
+        ERROR_QUIET)
+    if (NOT git_submodule_error)
         add_subdirectory(src/hunspell)
-        execute_process(COMMAND git submodule update --init -- external/Catch2
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
         add_subdirectory(external/Catch2)
         add_subdirectory(tests)
+    else()
+        message(WARNING "Can not pull Catch2 submodule, tests will be disabled")
     endif()
-
-
-    #set(pkgconf_public_libs "")
-    set(pkgconf_public_requires icu-uc)
-    configure_file(nuspell.pc.in nuspell.pc @ONLY)
-    #configure_file(NuspellConfig.cmake NuspellConfig.cmake COPYONLY)
-    write_basic_package_version_file(NuspellConfigVersion.cmake
-        COMPATIBILITY AnyNewerVersion)
-
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/nuspell.pc
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/NuspellConfig.cmake
-                  ${CMAKE_CURRENT_BINARY_DIR}/NuspellConfigVersion.cmake
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/nuspell)
-    install(FILES README.md DESTINATION ${CMAKE_INSTALL_DOCDIR})
 endif()
+
+
+#set(pkgconf_public_libs "")
+set(pkgconf_public_requires icu-uc)
+configure_file(nuspell.pc.in nuspell.pc @ONLY)
+#configure_file(NuspellConfig.cmake NuspellConfig.cmake COPYONLY)
+write_basic_package_version_file(NuspellConfigVersion.cmake
+    COMPATIBILITY AnyNewerVersion)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/nuspell.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/NuspellConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/NuspellConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/nuspell)
+install(FILES README.md DESTINATION ${CMAKE_INSTALL_DOCDIR})

@@ -18,15 +18,15 @@ list(APPEND CMAKE_MODULE_PATH
 include(Catch)
 catch_discover_tests(unit_test)
 
-find_program(BASH bash)
+find_program(BASH_EXECUTABLE bash)
 file(GLOB v1tests
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline
     "v1cmdline/*.dic"
     "v1cmdline/*.sug")
-if (BASH)
+if (BASH_EXECUTABLE)
     foreach(t ${v1tests})
         add_test(NAME ${t}
-            COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
+            COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
                     ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/${t})
         set_tests_properties(${t} PROPERTIES
             ENVIRONMENT NUSPELL=$<TARGET_FILE:nuspell-bin>)
