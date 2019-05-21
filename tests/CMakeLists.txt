@@ -16,27 +16,15 @@ target_link_libraries(verify nuspell hunspell Boost::locale)
 include(Catch)
 catch_discover_tests(unit_test)
 
-find_program(BASH_EXECUTABLE bash)
 file(GLOB v1tests
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline
     "v1cmdline/*.dic"
     "v1cmdline/*.sug")
-if (BASH_EXECUTABLE)
-    foreach(t ${v1tests})
-        add_test(NAME ${t}
-            COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test.sh
-                    ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/${t})
-        set_tests_properties(${t} PROPERTIES
-            ENVIRONMENT NUSPELL=$<TARGET_FILE:nuspell-bin>)
-    endforeach()
-else()
-    # alternative test runner wriiten in C++, mostly for Windows
-    foreach(t ${v1tests})
-        add_test(NAME ${t}
-            COMMAND legacy_test
-                    ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/${t})
-    endforeach()
-endif()
+foreach(t ${v1tests})
+    add_test(
+        NAME ${t}
+        COMMAND legacy_test ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/${t})
+endforeach()
 
 set_tests_properties(
 allcaps.dic
