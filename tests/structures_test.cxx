@@ -138,46 +138,54 @@ TEST_CASE("String_Set::begin end", "[structures]")
 	auto ss1 = String_Set<char16_t>();
 	ss1.insert(u"aa");
 	ss1.insert(u"bb");
+	CHECK(ss1 == u"ab");
+
 	auto b = ss1.begin();
 	auto e = ss1.end();
 	b++;
 	b++;
-	CHECK(*b == *e);
+	CHECK(b == e);
 
 	auto rb = ss1.rbegin();
 	auto re = ss1.rend();
 	rb++;
 	rb++;
-	CHECK(*rb == *re);
+	CHECK(rb == re);
 
 	auto cb = ss1.cbegin();
 	auto ce = ss1.cend();
 	cb++;
 	cb++;
-	CHECK(*cb == *ce);
+	CHECK(cb == ce);
 
 	auto crb = ss1.crbegin();
 	auto cre = ss1.crend();
 	crb++;
 	crb++;
-	CHECK(*crb == *cre);
+	CHECK(crb == cre);
 
 	auto lba = ss1.lower_bound('a');
+	CHECK(lba == ss1.begin());
+	CHECK(*lba == 'a');
+
 	auto lbb = ss1.lower_bound('b');
+	CHECK(lbb == ss1.begin() + 1);
+	CHECK(*lbb == 'b');
+
 	auto uba = ss1.upper_bound('a');
+	CHECK(uba == ss1.begin() + 1);
+	CHECK(*uba == 'b');
+
 	auto ubb = ss1.upper_bound('b');
-	CHECK(*uba == *lbb);
-	lba++;
-	lba++;
-	CHECK(*lba == *ubb);
+	CHECK(ubb == ss1.end());
 
 	auto res = ss1.find('b');
-	CHECK(*e == *res);
+	CHECK(res == e - 1);
+	CHECK(*res == 'b');
+
 	auto p = ss1.equal_range('b');
-	b = ss1.begin();
-	b++;
-	CHECK(*b == *(p.first));
-	CHECK(*e == *(p.second));
+	CHECK(p.first == e - 1);
+	CHECK(p.second == e);
 }
 
 TEST_CASE("String_Set manipulation", "[structures]")

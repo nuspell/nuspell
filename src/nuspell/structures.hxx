@@ -233,7 +233,7 @@ class String_Set {
 	auto lookup(const key_type& x) const
 	{
 		auto i = d.find(x);
-		if (i != d.npos)
+		if (i == d.npos)
 			i = d.size();
 		return i;
 	}
