@@ -13,6 +13,25 @@ matrix:
     before_install: true
     install: true
     before_script: export ICU_ROOT=$(brew --prefix icu4c)
+  - os: windows
+    # This should be added to PATH as on local Git Bash install, but it isn't
+    # on travis. xz is there
+    env: PATH="/mingw64/bin:$PATH"
+    before_install:
+    - echo "$PATH"
+    - ls -al /bin
+    - ls -al /usr/bin
+    - ls -al /mingw64/bin
+    - ls -al /c/ProgramData/chocolatey/bin
+    - tar --help
+    - which tar xz bzip2 gzip 7z git
+    - cygpath -w / /bin /usr/bin /mingw64/bin
+    install: curl -L https://github.com/nuspell/misc-nuspell/releases/download/v1/vcpkg-export.tar.xz | tar -xJ
+    before_script: mkdir build && cd build
+    script: |
+      cmake .. -DCMAKE_TOOLCHAIN_FILE=../vcpkg-export/scripts/buildsystems/vcpkg.cmake -A Win32 &&
+      cmake --build . -j &&
+      ctest -C Debug
 
 before_install: |
   cd ~ &&

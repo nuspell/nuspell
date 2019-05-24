@@ -7,6 +7,11 @@
 # QtCreator https://qt.io
 /CMakeLists.txt.user
 
+# Visual Studio
+/.vs/
+/out/
+/CMakeSettings.json
+
 # https://vim.sourceforge.io/
 .?*.swp
 
