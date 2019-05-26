@@ -88,7 +88,9 @@ auto valid_utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out)
 		             utf_traits<OutChar>::width(cp))) {
 			// resize
 			auto i = out_it - begin(out);
-			out.resize(out.size() + in.size());
+			auto min_resize = utf_traits<OutChar>::width(cp) -
+			                  (out_last - out_it);
+			out.resize(out.size() + min_resize + (last - it));
 			out_it = begin(out) + i;
 			out_last = end(out);
 		}
@@ -127,7 +129,9 @@ auto utf_to_utf_my(const std::basic_string<InChar>& in, OutContainer& out)
 		             utf_traits<OutChar>::width(cp))) {
 			// resize
 			auto i = out_it - begin(out);
-			out.resize(out.size() + in.size());
+			auto min_resize = utf_traits<OutChar>::width(cp) -
+			                  (out_last - out_it);
+			out.resize(out.size() + min_resize + (last - it));
 			out_it = begin(out) + i;
 			out_last = end(out);
 		}

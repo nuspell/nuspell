@@ -141,6 +141,29 @@ TEST_CASE("to_narrow", "[locale_utils]")
 	CHECK(all_of(begin(out), end(out), [](auto c) { return c == '?'; }));
 }
 
+TEST_CASE("wide_to_utf8", "[locale_utils]")
+{
+	CHECK("abгшß" == wide_to_utf8(L"abгшß"));
+	CHECK("\U0010FFFF" == wide_to_utf8(L"\U0010FFFF"));
+	CHECK("\U0010FFFF\U0010FF12" == wide_to_utf8(L"\U0010FFFF\U0010FF12"));
+	CHECK("\U0010FFFF ß" == wide_to_utf8(L"\U0010FFFF ß"));
+
+	auto in =
+	    wstring(L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59");
+	auto out = string();
+	wide_to_utf8(in, out);
+	CHECK("\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59" == out);
+
+	in.assign(256, L'a');
+	in += L"\U0010FFFF";
+	out.clear();
+	out.shrink_to_fit();
+	auto exp = string(256, 'a');
+	exp += "\U0010FFFF";
+	wide_to_utf8(in, out);
+	CHECK(exp == out);
+}
+
 TEST_CASE("classify_casing", "[locale_utils]")
 {
 	CHECK(Casing::SMALL == classify_casing(L""));
