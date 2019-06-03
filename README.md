@@ -60,11 +60,13 @@ For speeding up the build process, run `make -j`, or use Ninja instead of Make.
 3. Install dependencies
 
 ```
-brew install cmake
-brew install boost --with-icu4c
+brew install cmake icu4c boost
+export ICU_ROOT=$(brew --prefix icu4c)
 ```
 
-Then run the standard cmake and make. See above.
+Then run the standard cmake and make. See above. The ICU_ROOT variable is needed
+because icu4c is keg-only package in Homebrew and CMake can not find it by
+default. Alternatively, you can use `-DICU_ROOT=...` on the cmake command line.
 
 If you want to build with GCC instead of Clang, you need to pull GCC with
 Homebrew and rebuild all the dependencies with it. See Homewbrew manuals.
