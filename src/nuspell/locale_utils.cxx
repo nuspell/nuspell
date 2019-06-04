@@ -128,23 +128,39 @@ template <class InChar, class OutContainer>
 auto utf_to_utf_my(const std::basic_string<InChar>& in, OutContainer& out)
     -> bool
 {
-	return utf_to_utf<Utf_Error_Handling::SKIP>(in, out);
+	return utf_to_utf<Utf_Error_Handling::REPLACE>(in, out);
 }
 
 auto wide_to_utf8(const std::wstring& in, std::string& out) -> void
 {
-	return valid_utf_to_utf(in, out);
+#if U_SIZEOF_WCHAR_T == 4
+	valid_utf_to_utf(in, out);
+#else
+	// TODO: remove the ifdefs once we move to char32_t
+	// This is needed for Windows, as there, wchar_t strings are UTF-16 and
+	// in our suggestion routines, where we operate on single wchar_t values
+	// (code units), we can easlt get faulty surrogate pair.
+	// On Linux where wchar_t is UTF-32, a single code unit (single wchar_t
+	// value) is also a code point and there (on Linux) we can assume all
+	// wchar_t strings are always valid.
+	utf_to_utf_my(in, out);
+#endif
 }
 auto wide_to_utf8(const std::wstring& in) -> std::string
 {
 	auto out = string();
-	valid_utf_to_utf(in, out);
+	wide_to_utf8(in, out);
 	return out;
 }
 auto wide_to_utf8(const std::wstring& in,
                   boost::container::small_vector_base<char>& out) -> void
 {
-	return valid_utf_to_utf(in, out);
+#if U_SIZEOF_WCHAR_T == 4
+	valid_utf_to_utf(in, out);
+#else
+	// TODO: remove the ifdefs once we move to char32_t
+	utf_to_utf_my(in, out);
+#endif
 }
 
 auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool
