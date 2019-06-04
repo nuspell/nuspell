@@ -64,48 +64,14 @@ auto validate_utf8(const std::string& s) -> bool
 	return true;
 }
 
-template <class InChar, class OutContainer>
-auto valid_utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out)
-    -> void
+enum class Utf_Error_Handling { ALWAYS_VALID, REPLACE, SKIP };
+
+template <Utf_Error_Handling eh, class InChar, class OutContainer>
+auto utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out) -> bool
 {
 	using OutChar = typename OutContainer::value_type;
 	using namespace boost::locale::utf;
-	auto constexpr max_out_width = utf_traits<OutChar>::max_width;
-
-	if (in.size() <= out.capacity() / max_out_width)
-		out.resize(in.size() * max_out_width);
-	else if (in.size() <= out.capacity())
-		out.resize(out.capacity());
-	else
-		out.resize(in.size());
-
-	auto it = begin(in);
-	auto last = end(in);
-	auto out_it = begin(out);
-	auto out_last = end(out);
-	while (it != last) {
-		auto cp = utf_traits<InChar>::decode_valid(it);
-		if (unlikely(out_last - out_it <
-		             utf_traits<OutChar>::width(cp))) {
-			// resize
-			auto i = out_it - begin(out);
-			auto min_resize = utf_traits<OutChar>::width(cp) -
-			                  (out_last - out_it);
-			out.resize(out.size() + min_resize + (last - it));
-			out_it = begin(out) + i;
-			out_last = end(out);
-		}
-		out_it = utf_traits<OutChar>::encode(cp, out_it);
-	}
-	out.erase(out_it, end(out));
-}
-
-template <class InChar, class OutContainer>
-auto utf_to_utf_my(const std::basic_string<InChar>& in, OutContainer& out)
-    -> bool
-{
-	using OutChar = typename OutContainer::value_type;
-	using namespace boost::locale::utf;
+	using UEH = Utf_Error_Handling;
 	auto constexpr max_out_width = utf_traits<OutChar>::max_width;
 
 	if (in.size() <= out.capacity() / max_out_width)
@@ -121,17 +87,26 @@ auto utf_to_utf_my(const std::basic_string<InChar>& in, OutContainer& out)
 	auto out_last = end(out);
 	auto valid = true;
 	while (it != last) {
-		auto cp = utf_traits<InChar>::decode(it, last);
-		if (unlikely(cp == incomplete || cp == illegal)) {
-			valid = false;
-			continue;
+		auto cp = code_point();
+		if (eh == UEH::ALWAYS_VALID) {
+			cp = utf_traits<InChar>::decode_valid(it);
 		}
-		if (unlikely(out_last - out_it <
-		             utf_traits<OutChar>::width(cp))) {
+		else {
+			cp = utf_traits<InChar>::decode(it, last);
+			if (unlikely(cp == incomplete || cp == illegal)) {
+				valid = false;
+				if (eh == UEH::SKIP)
+					continue;
+				else if (eh == UEH::REPLACE)
+					cp = 0xFFFD;
+			}
+		}
+		auto remaining_space = out_last - out_it;
+		auto width_cp = utf_traits<OutChar>::width(cp);
+		if (unlikely(remaining_space < width_cp)) {
 			// resize
 			auto i = out_it - begin(out);
-			auto min_resize = utf_traits<OutChar>::width(cp) -
-			                  (out_last - out_it);
+			auto min_resize = width_cp - remaining_space;
 			out.resize(out.size() + min_resize + (last - it));
 			out_it = begin(out) + i;
 			out_last = end(out);
@@ -140,6 +115,20 @@ auto utf_to_utf_my(const std::basic_string<InChar>& in, OutContainer& out)
 	}
 	out.erase(out_it, end(out));
 	return valid;
+}
+
+template <class InChar, class OutContainer>
+auto valid_utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out)
+    -> void
+{
+	utf_to_utf<Utf_Error_Handling::ALWAYS_VALID>(in, out);
+}
+
+template <class InChar, class OutContainer>
+auto utf_to_utf_my(const std::basic_string<InChar>& in, OutContainer& out)
+    -> bool
+{
+	return utf_to_utf<Utf_Error_Handling::SKIP>(in, out);
 }
 
 auto wide_to_utf8(const std::wstring& in, std::string& out) -> void
