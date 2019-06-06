@@ -6,6 +6,8 @@ locale_utils.cxx locale_utils.hxx
                  string_utils.hxx
                  structures.hxx)
 
+add_library(Nuspell::nuspell ALIAS nuspell)
+
 get_target_property(nuspell_headers nuspell SOURCES)
 list(FILTER nuspell_headers INCLUDE REGEX [=[.*\.hxx$]=])
 set_target_properties(nuspell PROPERTIES
@@ -69,6 +71,7 @@ if (NOT subproject)
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nuspell)
     install(EXPORT NuspellTargets
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/nuspell)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/nuspell
+        NAMESPACE Nuspell::)
     install(TARGETS nuspell-bin DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
