@@ -22,12 +22,19 @@ endif()
 add_subdirectory(docs)
 
 if (BUILD_TESTING)
-    find_package(Git)
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} submodule update --init -- external/Catch2
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        RESULT_VARIABLE git_submodule_error
-        ERROR_QUIET)
+    find_package(Catch2 2.3.0 QUIET)
+    if(NOT Catch2_FOUND)
+        find_package(Git)
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} submodule update --init -- Catch2
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external
+            RESULT_VARIABLE git_submodule_error
+            ERROR_QUIET)
+        if (NOT git_submodule_error)
+            list(APPEND CMAKE_MODULE_PATH
+                "${PROJECT_SOURCE_DIR}/external/Catch2/contrib")
+        endif()
+    endif()
     if (NOT git_submodule_error)
         add_subdirectory(src/hunspell)
         add_subdirectory(external/Catch2)

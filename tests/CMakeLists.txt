@@ -5,7 +5,7 @@ add_executable(unit_test
     string_utils_test.cxx
     structures_test.cxx
     catch_main.cxx)
-target_link_libraries(unit_test nuspell Catch2)
+target_link_libraries(unit_test nuspell Catch2::Catch2)
 
 add_executable(legacy_test legacy_test.cxx)
 target_link_libraries(legacy_test nuspell)
@@ -13,8 +13,6 @@ target_link_libraries(legacy_test nuspell)
 add_executable(verify verify.cxx)
 target_link_libraries(verify nuspell hunspell Boost::locale)
 
-list(APPEND CMAKE_MODULE_PATH
-    "${PROJECT_SOURCE_DIR}/external/Catch2/contrib")
 include(Catch)
 catch_discover_tests(unit_test)
 
