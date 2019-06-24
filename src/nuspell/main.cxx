@@ -359,6 +359,7 @@ auto normal_loop(istream& in, ostream& out, My_Dictionary& dic)
 {
 	auto word = string();
 	auto suggestions = vector<string>();
+	auto tellg_supported = in.tellg() >= 0;
 	while (in >> word) {
 		auto correct = dic.spell(word);
 		if (correct) {
@@ -366,11 +367,16 @@ auto normal_loop(istream& in, ostream& out, My_Dictionary& dic)
 			continue;
 		}
 		dic.suggest(word, suggestions);
-		auto pos = in.tellg();
-		if (pos < 0)
-			pos = 0;
-		else
+		auto pos = streampos();
+		if (tellg_supported) {
+			pos = in.tellg();
+			if (pos < 0) {
+				// tellg called while eof flag is set
+				in.clear();
+				pos = in.tellg();
+			}
 			pos -= streamoff(word.size());
+		}
 		if (suggestions.empty()) {
 			out << "# " << word << ' ' << pos << '\n';
 			continue;
@@ -440,8 +446,11 @@ auto segment_loop(istream& in, ostream& out, My_Dictionary& dic)
 	auto suggestions = vector<string>();
 	auto loc = in.getloc();
 	auto pos = in.tellg();
-	if (pos < 0)
+	auto tellg_supported = true;
+	if (pos < 0) {
+		tellg_supported = false;
 		pos = 0;
+	}
 	auto index = b::ssegment_index();
 	index.rule(b::word_any);
 	while (getline(in, line)) {
@@ -454,8 +463,9 @@ auto segment_loop(istream& in, ostream& out, My_Dictionary& dic)
 				continue;
 			}
 			dic.suggest(word, suggestions);
-			auto pos2 =
-			    pos + streamoff(begin(segment) - begin(line));
+			auto pos2 = pos;
+			if (tellg_supported)
+				pos2 += streamoff(begin(segment) - begin(line));
 			if (suggestions.empty()) {
 				out << "# " << word << ' ' << pos2 << '\n';
 				continue;
@@ -467,9 +477,8 @@ auto segment_loop(istream& in, ostream& out, My_Dictionary& dic)
 			         [&](auto& sug) { out << ", " << sug; });
 			out << '\n';
 		}
-		pos = in.tellg();
-		if (pos < 0)
-			pos = 0;
+		if (tellg_supported)
+			pos = in.tellg();
 	}
 }
 
