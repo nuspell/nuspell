@@ -50,8 +50,6 @@ enum Mode {
 	,
 	CORRECT_WORDS_MODE /**< printing only correct words */,
 	CORRECT_LINES_MODE /**< printing only fully correct lines */,
-	UNICODE_SEGMENT_MODE, /**< Same as normal except text is parsed using
-	                        Unicode text segmentation */
 	LINES_MODE, /**< intermediate mode used while parsing command line
 	               arguments, otherwise unused */
 	LIST_DICTIONARIES_MODE /**< printing available dictionaries */,
@@ -62,6 +60,7 @@ enum Mode {
 
 struct Args_t {
 	Mode mode = DEFAULT_MODE;
+	bool unicode_segmentation = false;
 	string program_name = "nuspell";
 	string dictionary;
 	string encoding;
@@ -154,10 +153,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 
 			break;
 		case 'S':
-			if (mode == DEFAULT_MODE)
-				mode = UNICODE_SEGMENT_MODE;
-			else
-				mode = ERROR_MODE;
+			unicode_segmentation = true;
 
 			break;
 		case 'h':
@@ -211,7 +207,7 @@ class My_Dictionary : public Dictionary {
 		static_cast<Dictionary&>(*this) = move(d);
 		return *this;
 	}
-	auto spell(const string& word)
+	auto spell(const string& word) const
 	{
 		auto correct = Dictionary::spell(word);
 		if (correct)
@@ -345,180 +341,152 @@ auto list_dictionaries(const Finder& f) -> void
 	}
 }
 
-/**
- * @brief Normal loop, tokenize and check spelling.
- *
- * Tokenizes words from @p in by whitespace, checks spelling and outputs
- * result and suggestions to @p out.
- *
- * @param in the input stream with plain text.
- * @param out the output stream to report spelling correctness
- * @param dic the dictionary to use.
- */
-auto normal_loop(istream& in, ostream& out, My_Dictionary& dic)
+auto process_word(
+    Mode mode, const My_Dictionary& dic, const string& line, streampos pos_line,
+    string::const_iterator b, string::const_iterator c, bool tellg_supported,
+    string& word,
+    vector<pair<string::const_iterator, string::const_iterator>>& wrong_words,
+    vector<string>& suggestions, ostream& out)
 {
-	auto word = string();
-	auto suggestions = vector<string>();
-	auto tellg_supported = in.tellg() >= 0;
-	while (in >> word) {
-		auto correct = dic.spell(word);
+	word.assign(b, c);
+	auto correct = dic.spell(word);
+	switch (mode) {
+	case DEFAULT_MODE: {
 		if (correct) {
 			out << "*\n";
-			continue;
+			break;
 		}
 		dic.suggest(word, suggestions);
-		auto pos = streampos();
-		if (tellg_supported) {
-			pos = in.tellg();
-			if (pos < 0) {
-				// tellg called while eof flag is set
-				in.clear();
-				pos = in.tellg();
-			}
-			pos -= streamoff(word.size());
-		}
+		auto pos_word = pos_line;
+		if (tellg_supported)
+			pos_word += b - begin(line);
 		if (suggestions.empty()) {
-			out << "# " << word << ' ' << pos << '\n';
-			continue;
+			out << "# " << word << ' ' << pos_word << '\n';
+			break;
 		}
-		out << "& " << word << ' ' << suggestions.size() << ' ' << pos
-		    << ": ";
+		out << "& " << word << ' ' << suggestions.size() << ' '
+		    << pos_word << ": ";
 		out << suggestions[0];
 		for_each(begin(suggestions) + 1, end(suggestions),
 		         [&](auto& sug) { out << ", " << sug; });
 		out << '\n';
+		break;
 	}
-}
-
-/**
- * @brief Prints misspelled words from @p in to @p out.
- *
- * Tokenizes words from @p in by whitespace
- *
- * @param in the input stream with plain text.
- * @param out the output stream with on each line only misspelled words.
- * @param dic the dictionary to use.
- */
-auto misspelled_word_loop(istream& in, ostream& out, My_Dictionary& dic)
-{
-	auto word = string();
-	while (in >> word) {
-		auto correct = dic.spell(word);
-		if (correct == false)
+	case MISSPELLED_WORDS_MODE:
+		if (!correct)
 			out << word << '\n';
-	}
-}
-
-/**
- * @brief Prints correct words from @p in to @p out.
- *
- * Tokenizes words from @p in by whitespace
- *
- * @param in the input stream with plain text.
- * @param out the output stream with on each line only correct words.
- * @param dic the dictionary to use.
- */
-auto correct_word_loop(istream& in, ostream& out, My_Dictionary& dic)
-{
-	auto word = string();
-	while (in >> word) {
-		auto correct = dic.spell(word);
-		if (correct != false)
+		break;
+	case CORRECT_WORDS_MODE:
+		if (correct)
 			out << word << '\n';
+		break;
+	case MISSPELLED_LINES_MODE:
+	case CORRECT_LINES_MODE:
+		if (!correct)
+			wrong_words.emplace_back(b, c);
+		break;
+	default:
+		break;
 	}
 }
 
-/**
- * @brief Normal loop, tokenize and check spelling.
- *
- * Tokenizes words from @p in by segmentation from Boost boundary analysis,
- * checks spelling and outputs result and suggestions to @p out.
- *
- * @param in the input stream with plain text.
- * @param out the output stream to report spelling correctness
- * @param dic the dictionary to use.
- */
-auto segment_loop(istream& in, ostream& out, My_Dictionary& dic)
+auto process_line(
+    Mode mode, const string& line,
+    const vector<pair<string::const_iterator, string::const_iterator>>&
+        wrong_words,
+    ostream& out)
+{
+	switch (mode) {
+	case MISSPELLED_LINES_MODE:
+		if (!wrong_words.empty())
+			out << line << '\n';
+		break;
+	case CORRECT_LINES_MODE:
+		if (wrong_words.empty())
+			out << line << '\n';
+		break;
+	default:
+		break;
+	}
+}
+
+auto whitespace_segmentation_loop(istream& in, ostream& out,
+                                  const My_Dictionary& dic, Mode mode)
+{
+	auto line = string();
+	auto word = string();
+	auto suggestions = vector<string>();
+	using Str_Iter = string::const_iterator;
+	auto wrong_words = vector<pair<Str_Iter, Str_Iter>>();
+	auto loc = in.getloc();
+	auto pos_line = in.tellg();
+	auto tellg_supported = true;
+	if (pos_line < 0) {
+		pos_line = 0;
+		tellg_supported = false;
+	}
+	auto line_num = size_t(0);
+	auto& facet = use_facet<ctype<char>>(loc);
+	auto isspace = [&](char c) { return facet.is(facet.space, c); };
+	while (getline(in, line)) {
+		++line_num;
+		wrong_words.clear();
+		for (auto a = begin(line); a != end(line);) {
+			auto b = find_if_not(a, end(line), isspace);
+			auto c = find_if(b, end(line), isspace);
+
+			process_word(mode, dic, line, pos_line, b, c,
+			             tellg_supported, word, wrong_words,
+			             suggestions, out);
+
+			a = c;
+		}
+		process_line(mode, line, wrong_words, out);
+
+		if (tellg_supported)
+			pos_line = in.tellg();
+	}
+}
+
+auto unicode_segentation_loop(istream& in, ostream& out,
+                              const My_Dictionary& dic, Mode mode)
 {
 	namespace b = boost::locale::boundary;
 	auto line = string();
 	auto word = string();
 	auto suggestions = vector<string>();
+	using Str_Iter = string::const_iterator;
+	auto wrong_words = vector<pair<Str_Iter, Str_Iter>>();
 	auto loc = in.getloc();
-	auto pos = in.tellg();
+	auto pos_line = in.tellg();
 	auto tellg_supported = true;
-	if (pos < 0) {
+	if (pos_line < 0) {
+		pos_line = 0;
 		tellg_supported = false;
-		pos = 0;
 	}
+	auto line_num = size_t(0);
 	auto index = b::ssegment_index();
 	index.rule(b::word_any);
+	auto line_stream = istringstream();
 	while (getline(in, line)) {
+		++line_num;
 		index.map(b::word, begin(line), end(line), loc);
+		wrong_words.clear();
+		auto a = cbegin(line);
 		for (auto& segment : index) {
-			word = segment;
-			auto correct = dic.spell(word);
-			if (correct) {
-				out << "*\n";
-				continue;
-			}
-			dic.suggest(word, suggestions);
-			auto pos2 = pos;
-			if (tellg_supported)
-				pos2 += streamoff(begin(segment) - begin(line));
-			if (suggestions.empty()) {
-				out << "# " << word << ' ' << pos2 << '\n';
-				continue;
-			}
-			out << "& " << word << ' ' << suggestions.size() << ' '
-			    << pos2 << ": ";
-			out << suggestions[0];
-			for_each(begin(suggestions) + 1, end(suggestions),
-			         [&](auto& sug) { out << ", " << sug; });
-			out << '\n';
+			auto b = begin(segment);
+			auto c = end(segment);
+
+			process_word(mode, dic, line, pos_line, b, c,
+			             tellg_supported, word, wrong_words,
+			             suggestions, out);
+
+			a = c;
 		}
+		process_line(mode, line, wrong_words, out);
+
 		if (tellg_supported)
-			pos = in.tellg();
-	}
-}
-
-auto misspelled_line_loop(istream& in, ostream& out, My_Dictionary& dic)
-{
-	auto line = string();
-	auto words = vector<string>();
-	auto loc = in.getloc();
-	while (getline(in, line)) {
-		auto print = false;
-		split_on_whitespace_v(line, words, loc);
-		for (auto& word : words) {
-			auto correct = dic.spell(word);
-			if (correct == false) {
-				print = true;
-				break;
-			}
-		}
-		if (print)
-			out << line << '\n';
-	}
-}
-
-auto correct_line_loop(istream& in, ostream& out, My_Dictionary& dic)
-{
-	auto line = string();
-	auto words = vector<string>();
-	auto loc = in.getloc();
-	while (getline(in, line)) {
-		auto print = true;
-		split_on_whitespace_v(line, words, loc);
-		for (auto& word : words) {
-			auto correct = dic.spell(word);
-			if (correct == false) {
-				print = false;
-				break;
-			}
-		}
-		if (print)
-			out << line << '\n';
+			pos_line = in.tellg();
 	}
 }
 
@@ -615,32 +583,11 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	dic.imbue(loc);
-	auto loop_function = normal_loop;
-	switch (args.mode) {
-	case DEFAULT_MODE:
-		// loop_function = normal_loop;
-		break;
-	case UNICODE_SEGMENT_MODE:
-		loop_function = segment_loop;
-		break;
-	case MISSPELLED_WORDS_MODE:
-		loop_function = misspelled_word_loop;
-		break;
-	case MISSPELLED_LINES_MODE:
-		loop_function = misspelled_line_loop;
-		break;
-	case CORRECT_WORDS_MODE:
-		loop_function = correct_word_loop;
-		break;
-	case CORRECT_LINES_MODE:
-		loop_function = correct_line_loop;
-		break;
-	default:
-		break;
-	}
-
+	auto loop_function = whitespace_segmentation_loop;
+	if (args.unicode_segmentation)
+		loop_function = unicode_segentation_loop;
 	if (args.files.empty()) {
-		loop_function(cin, cout, dic);
+		loop_function(cin, cout, dic, args.mode);
 	}
 	else {
 		for (auto& file_name : args.files) {
@@ -650,7 +597,7 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 			in.imbue(loc);
-			loop_function(in, cout, dic);
+			loop_function(in, cout, dic, args.mode);
 		}
 	}
 	return 0;
