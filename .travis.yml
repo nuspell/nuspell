@@ -1,49 +1,34 @@
 language: cpp
 
 compiler:
-- clang
 - gcc
+- clang
 
-sudo: false
+dist: xenial
 
-os:
-- linux
-# - osx
+matrix:
+  include:
+  - os: osx
+    compiler: clang
+    before_install: true
+    install: true
+    before_script: export ICU_ROOT=$(brew --prefix icu4c)
 
 before_install: |
   cd ~ &&
   wget https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.tar.bz2 -O - |
-  tar -xj &&
+    tar -xj &&
   cd -
 
-install:
-- |
-  if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-    brew link icu4c --force
-  fi
-- |
-  if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-    echo 'using gcc : : g++-7 : ;' > ~/user-config.jam
-  fi
-- export BOOST_ROOT=~/boost_1_64_0
-- |
+install: |
   cd ~/boost_1_64_0 &&
-    ./bootstrap.sh --with-libraries=locale --with-toolset="$CC" &&
-    ./b2 -d0 -j 4 cxxflags=-std=c++14 define=BOOST_LOCALE_HIDE_AUTO_PTR &&
+  ./bootstrap.sh --with-libraries=locale --with-toolset="$CC" &&
+  ./b2 -d0 -j 4 cxxflags=-std=c++14 define=BOOST_LOCALE_HIDE_AUTO_PTR &&
   cd -
 
-before_script:
-- |
-  case $TRAVIS_OS_NAME in
-    linux) export LD_LIBRARY_PATH=$BOOST_ROOT/stage/lib ;;
-    osx) export DYLD_LIBRARY_PATH=$BOOST_ROOT/stage/lib ;;
-  esac
-- |
-  # On Linux Use gcc-7. On OS X always use clang, dont download gcc from Homebrew.
-  if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then
-    export CXX="g++-7" CC="gcc-7";
-  fi
-#- export CPPFLAGS='-DBOOST_LOCALE_HIDE_AUTO_PTR'
+before_script: |
+  export BOOST_ROOT=~/boost_1_64_0 &&
+  export LD_LIBRARY_PATH=$BOOST_ROOT/stage/lib
 
 script: mkdir build && cd build && cmake .. && make -j 4 && ctest -j 4
 
@@ -52,8 +37,9 @@ after_failure:
 
 addons:
   apt:
-    sources:
-    - ubuntu-toolchain-r-test
     packages:
-    - g++-7
     - libicu-dev
+  homebrew:
+    packages:
+    - icu4c
+    - boost
