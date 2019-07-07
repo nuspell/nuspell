@@ -33,9 +33,10 @@
 #include <intrin.h>
 #endif
 
-#if !defined(U_WCHAR_IS_UTF32) && !defined(U_WCHAR_IS_UTF16)
+#if !defined(U_WCHAR_IS_UTF32) && !defined(U_WCHAR_IS_UTF16) &&                \
+    !defined(__FreeBSD__)
 #error "Platform has poor Unicode support. wchar_t must be Unicode."
-#elif defined(__STDC_MB_MIGHT_NEQ_WC__)
+#elif defined(__STDC_MB_MIGHT_NEQ_WC__) && !defined(__FreeBSD__)
 #error "Platform has non-ASCII narrow string literals."
 #endif
 
