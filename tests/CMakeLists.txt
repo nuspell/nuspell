@@ -18,6 +18,12 @@ target_link_libraries(legacy_test nuspell)
 add_executable(verify verify.cxx)
 target_link_libraries(verify nuspell hunspell Boost::locale)
 
+if (BUILD_SHARED_LIBS AND WIN32)
+    add_custom_command(TARGET unit_test POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:nuspell> $<TARGET_FILE_DIR:unit_test>)
+endif()
+
 include(Catch)
 catch_discover_tests(unit_test)
 
