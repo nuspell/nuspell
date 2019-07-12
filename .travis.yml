@@ -1,58 +1,74 @@
 language: cpp
-
-compiler:
-- gcc
-- clang
-
 dist: xenial
+
+os:
+- linux
+- osx
+
+env:
+  global:
+  - CTEST_PARALLEL_LEVEL=5
+  matrix:
+  - CXXFLAGS=
+  - CXXFLAGS=-fsanitize=address
+  - CXXFLAGS=-fsanitize=undefined
+  - CXXFLAGS="-Wall -Wextra -Werror"
+  - CONFIGURE_ARGS="-DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release"
 
 matrix:
   include:
-  - os: osx
-    compiler: clang
-    before_install: true
-    install: true
-    before_script: export ICU_ROOT=$(brew --prefix icu4c)
+  - os: linux
+    env: CXXFLAGS="-D_GLIBCXX_DEBUG -O1" B2_ARGS=define=_GLIBCXX_DEBUG
   - os: windows
-    # This should be added to PATH as on local Git Bash install, but it isn't
-    # on travis. xz is there
-    env: PATH="/mingw64/bin:$PATH"
-    before_install:
-    - echo "$PATH"
-    - ls -al /bin
-    - ls -al /usr/bin
-    - ls -al /mingw64/bin
-    - ls -al /c/ProgramData/chocolatey/bin
-    - tar --help
-    - which tar xz bzip2 gzip 7z git
-    - cygpath -w / /bin /usr/bin /mingw64/bin
-    install: curl -L https://github.com/nuspell/misc-nuspell/releases/download/v1/vcpkg-export.tar.xz | tar -xJ
-    before_script: mkdir build && cd build
-    script: |
-      cmake .. -DCMAKE_TOOLCHAIN_FILE=../vcpkg-export/scripts/buildsystems/vcpkg.cmake -A Win32 &&
-      cmake --build . -j &&
-      ctest -C Debug
+    env: CTEST_ARGS="-C Debug"
+  - os: windows
+    env: CONFIGURE_ARGS="-DBUILD_SHARED_LIBS=1" BUILD_ARGS="--config Release" CTEST_ARGS="-C Release"
 
-before_install: |
-  cd ~ &&
-  wget https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.tar.bz2 -O - |
-    tar -xj &&
-  cd -
+before_install:
+- |
+  if [ "$TRAVIS_OS_NAME" = linux ]; then
+    cd ~ &&
+    wget https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.tar.bz2 -O - | tar -xj &&
+    cd -
+  fi
+- |
+  if [ "$TRAVIS_OS_NAME" = windows ]; then
+    # This should be added to PATH as on local Windows Git Bash install,
+    # but it isn't on travis. xz is there
+    PATH="/mingw64/bin:$PATH"
+    curl -L https://github.com/nuspell/misc-nuspell/releases/download/v1/vcpkg-export.tar.xz | tar -xJ
+  fi
 
-install: |
-  cd ~/boost_1_64_0 &&
-  ./bootstrap.sh --with-libraries=locale --with-toolset="$CC" &&
-  ./b2 -d0 -j 4 cxxflags=-std=c++14 define=BOOST_LOCALE_HIDE_AUTO_PTR &&
-  cd -
+install:
+# if we update to boost 1.67 we can add define=BOOST_LOCALE_HIDE_AUTO_PTR to b2
+- |
+  if [ "$TRAVIS_OS_NAME" = linux ]; then
+    cd ~/boost_1_64_0 &&
+    ./bootstrap.sh --with-libraries=locale --with-toolset="$CC" &&
+    ./b2 -d0 -j 4 cxxflags=-std=c++14 $B2_ARGS &&
+    cd - &&
+    export BOOST_ROOT=~/boost_1_64_0              &&
+    export LD_LIBRARY_PATH=$BOOST_ROOT/stage/lib  &&
+    export CMAKE_BUILD_PARALLEL_LEVEL=4
+  fi
+- |
+  if [ "$TRAVIS_OS_NAME" = osx ]; then
+    export ICU_ROOT=$(brew --prefix icu4c)
+    BUILD_ARGS+=" -- -j 4"                 #parallel build
+  fi
+- |
+  if [ "$TRAVIS_OS_NAME" = windows ]; then
+    CONFIGURE_ARGS+=" -DCMAKE_TOOLCHAIN_FILE=../vcpkg-export/scripts/buildsystems/vcpkg.cmake -A Win32"
+  fi
 
-before_script: |
-  export BOOST_ROOT=~/boost_1_64_0 &&
-  export LD_LIBRARY_PATH=$BOOST_ROOT/stage/lib
+script:
+- mkdir build
+- cd build
+- cmake .. $CONFIGURE_ARGS
+- cmake --build . $BUILD_ARGS
+- ctest $CTEST_ARGS
 
-script: mkdir build && cd build && cmake .. && make -j 4 && ctest -j 4
-
-after_failure:
-- cat Testing/Temporary/LastTest.log
+after_failure: cat Testing/Temporary/LastTest.log
 
 addons:
   apt:
