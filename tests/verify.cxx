@@ -401,21 +401,20 @@ int main(int argc, char* argv[])
 	Hunspell hun(aff_name.c_str(), dic_name.c_str());
 	auto hun_loc = gen(
 	    "en_US." + Encoding(hun.get_dict_encoding()).value_or_default());
-	auto loop_function = normal_loop;
 
 	if (args.files.empty()) {
-		loop_function(cin, cout, dic, hun, hun_loc, args.print_false);
+		normal_loop(cin, cout, dic, hun, hun_loc, args.print_false);
 	}
 	else {
 		for (auto& file_name : args.files) {
-			ifstream in(file_name.c_str());
+			ifstream in(file_name);
 			if (!in.is_open()) {
 				cerr << "Can't open " << file_name << '\n';
 				return 1;
 			}
 			in.imbue(cin.getloc());
-			loop_function(in, cout, dic, hun, hun_loc,
-			              args.print_false);
+			normal_loop(in, cout, dic, hun, hun_loc,
+			            args.print_false);
 		}
 	}
 	return 0;

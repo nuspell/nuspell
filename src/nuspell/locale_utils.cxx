@@ -226,8 +226,8 @@ auto to_wide(const std::string& in, const std::locale& loc, std::wstring& out)
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
 	out.resize(in.size(), L'\0');
 	auto state = mbstate_t();
-	auto in_ptr = in.c_str();
-	auto in_last = in.c_str() + in.size();
+	auto in_ptr = &in[0];
+	auto in_last = &in[in.size()];
 	auto out_ptr = &out[0];
 	auto out_last = &out[out.size()];
 	auto valid = true;
@@ -279,8 +279,8 @@ auto to_narrow(const std::wstring& in, std::string& out, const std::locale& loc)
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
 	out.resize(in.size(), '\0');
 	auto state = mbstate_t();
-	auto in_ptr = in.c_str();
-	auto in_last = in.c_str() + in.size();
+	auto in_ptr = &in[0];
+	auto in_last = &in[in.size()];
 	auto out_ptr = &out[0];
 	auto out_last = &out[out.size()];
 	auto valid = true;
@@ -337,7 +337,7 @@ auto is_locale_known_utf8(const locale& loc) -> bool
 auto wide_to_icu(const std::wstring& in, icu::UnicodeString& out) -> bool
 {
 	int32_t capacity = in.size();
-	if (capacity < 0) {
+	if (in.size() > numeric_limits<int32_t>::max()) {
 		out.remove();
 		return false;
 	}

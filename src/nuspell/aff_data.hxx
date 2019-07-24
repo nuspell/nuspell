@@ -38,10 +38,15 @@ enum class Flag_Type {
 	UTF8 /**< UTF-8 flag, e.g. for "á" */
 };
 
-using Word_List_Base =
-    Hash_Multiset<std::pair<std::string, Flag_Set>, string_view,
-                  member<std::pair<std::string, Flag_Set>, std::string,
-                         &std::pair<std::string, Flag_Set>::first>>;
+struct Extractor_First_of_Word_Pair {
+	auto& operator()(const std::pair<std::string, Flag_Set>& p) const
+	{
+		return p.first;
+	}
+};
+
+using Word_List_Base = Hash_Multiset<std::pair<std::string, Flag_Set>,
+                                     string_view, Extractor_First_of_Word_Pair>;
 /**
  * @brief Map between words and word_flags.
  *

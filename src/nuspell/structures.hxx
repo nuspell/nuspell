@@ -36,7 +36,6 @@
 #include <vector>
 
 #include <boost/container/small_vector.hpp>
-#include <boost/multi_index/member.hpp>
 #include <boost/range/iterator_range_core.hpp>
 
 namespace nuspell {
@@ -933,12 +932,15 @@ class Suffix {
 	}
 };
 
-using boost::multi_index::member;
+template <class AffixT>
+struct Extractor_Of_Appending_From_Affix {
+	auto& operator()(const AffixT& a) const { return a.appending; }
+};
 
 template <class CharT, class AffixT>
 using Affix_Table_Base =
     Hash_Multiset<AffixT, my_string_view<CharT>,
-                  member<AffixT, std::basic_string<CharT>, &AffixT::appending>>;
+                  Extractor_Of_Appending_From_Affix<AffixT>>;
 
 template <class CharT, class AffixT>
 class Affix_Table : private Affix_Table_Base<CharT, AffixT> {

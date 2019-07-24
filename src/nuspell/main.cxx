@@ -433,6 +433,8 @@ auto whitespace_segmentation_loop(istream& in, ostream& out,
 		wrong_words.clear();
 		for (auto a = begin(line); a != end(line);) {
 			auto b = find_if_not(a, end(line), isspace);
+			if (b == end(line))
+				break;
 			auto c = find_if(b, end(line), isspace);
 
 			process_word(mode, dic, line, pos_line, b, c,
@@ -591,7 +593,7 @@ int main(int argc, char* argv[])
 	}
 	else {
 		for (auto& file_name : args.files) {
-			ifstream in(file_name.c_str());
+			ifstream in(file_name);
 			if (!in.is_open()) {
 				cerr << "Can't open " << file_name << '\n';
 				return 1;

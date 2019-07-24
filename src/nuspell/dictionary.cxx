@@ -2013,7 +2013,7 @@ auto Dict_Base::phonetic_suggest(std::wstring& word, List_WStrings& out) const
     -> void
 {
 	using ShortStr = boost::container::small_vector<wchar_t, 64>;
-	auto backup = ShortStr(&word[0], &word[word.size()]);
+	auto backup = ShortStr(begin(word), end(word));
 	transform(begin(word), end(word), begin(word),
 	          [](auto c) { return u_toupper(c); });
 	auto changed = phonetic_table.replace(word);

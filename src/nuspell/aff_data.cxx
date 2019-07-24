@@ -172,6 +172,24 @@ enum class Flag_Parsing_Error {
 	COMPOUND_RULE_INVALID_FORMAT
 };
 
+auto my_stoul(const string& str, size_t pos = 0, size_t* end_pos = nullptr,
+              int base = 10)
+{
+	char* end_ptr;
+	auto ptr = &str[pos];
+	errno = 0; // required, strtoul will not set to 0 if there is no error
+	auto x = strtoul(ptr, &end_ptr, base);
+	if (end_pos)
+		*end_pos = end_ptr - str.c_str();
+	if (ptr == end_ptr)
+		throw invalid_argument("not a number");
+	if (x == numeric_limits<decltype(x)>::max() && errno == ERANGE) {
+		errno = 0; // not required
+		throw out_of_range("number too large to fit");
+	}
+	return x;
+}
+
 auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
                   u16string& out) -> Flag_Parsing_Error
 {
@@ -214,20 +232,8 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
 		auto p = s.c_str();
 		char* p2 = nullptr;
 		errno = 0;
-		auto flag = strtoul(p, &p2, 10);
-		if (p2 == p)
-			return Err::INVALID_NUMERIC_FLAG;
-		if (flag == numeric_limits<decltype(flag)>::max() &&
-		    errno == ERANGE) {
-			errno = 0;
-			return Err::FLAG_ABOVE_65535;
-		}
-		if (flag > 0xFFFF)
-			return Err::FLAG_ABOVE_65535;
-		out.push_back(flag);
-		while (p2 != &s[s.size()] && *p2 == ',') {
-			p = p2 + 1;
-			flag = strtoul(p, &p2, 10);
+		for (;;) {
+			auto flag = strtoul(p, &p2, 10);
 			if (p2 == p)
 				return Err::INVALID_NUMERIC_FLAG;
 			if (flag == numeric_limits<decltype(flag)>::max() &&
@@ -238,6 +244,11 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
 			if (flag > 0xFFFF)
 				return Err::FLAG_ABOVE_65535;
 			out.push_back(flag);
+
+			if (p2 == &s[s.size()] || *p2 != ',')
+				break;
+
+			p = p2 + 1;
 		}
 		break;
 	}
@@ -600,7 +611,6 @@ auto parse_compound_rule(const string& s, Flag_Type t, const Encoding& enc,
 			++p;
 			char* p2;
 			auto flag = strtoul(p, &p2, 10);
-			flag = strtoul(p, &p2, 10);
 			if (p2 == p)
 				return Err::INVALID_NUMERIC_FLAG;
 			if (flag == numeric_limits<decltype(flag)>::max() &&
