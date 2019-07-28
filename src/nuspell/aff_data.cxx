@@ -32,7 +32,6 @@
 #endif
 
 #include <boost/algorithm/string/case_conv.hpp>
-#include <boost/range/adaptors.hpp>
 
 /*
  * Aff_Data class and the method parse() should be structured in the following
@@ -79,24 +78,6 @@ namespace nuspell {
 
 using namespace std;
 
-struct Affix {
-	char16_t flag;
-	bool cross_product;
-	std::string stripping;
-	std::string appending;
-	std::u16string new_flags;
-	std::string condition;
-	std::vector<std::string> morphological_fields;
-};
-
-struct Compound_Check_Pattern {
-	std::string first_word_end;
-	std::string second_word_begin;
-	std::string replacement;
-	char16_t first_word_flag;
-	char16_t second_word_flag;
-};
-
 auto Word_List::equal_range(const std::wstring& word) const
     -> std::pair<Word_List_Base::local_const_iterator,
                  Word_List_Base::local_const_iterator>
@@ -107,56 +88,11 @@ auto Word_List::equal_range(const std::wstring& word) const
 	return equal_range(string_view(u8buf.data(), u8buf.size()));
 }
 
+namespace {
+
 void reset_failbit_istream(std::istream& in)
 {
 	in.clear(in.rdstate() & ~in.failbit);
-}
-
-/**
- * Parses vector of class T from an input stream.
- *
- * @param in input stream to decode from.
- * @param line_num
- * @param command
- * @param[in,out] counts
- * @param[in,out] vec
- * @param parseLineFunc
- */
-template <class T, class Func>
-auto parse_vector_of_T(istream& in, size_t line_num, const string& command,
-                       unordered_map<string, int>& counts, vector<T>& vec,
-                       Func parseLineFunc) -> void
-{
-	auto dat = counts.find(command);
-	if (dat == counts.end()) {
-		// first line
-		size_t a;
-		in >> a;
-		if (in.fail()) {
-			a = 0; // err
-			cerr << "Nuspell error: a vector command (series of "
-			        "of similar commands) has no count. Ignoring "
-			        "all of them."
-			     << endl;
-		}
-		counts[command] = a;
-	}
-	else if (dat->second) {
-		vec.emplace_back();
-		parseLineFunc(in, vec.back());
-		if (in.fail()) {
-			vec.pop_back();
-			cerr << "Nuspell error: single entry of a vector "
-			        "command (series of "
-			        "of similar commands) is invalid"
-			     << endl;
-		}
-		dat->second--;
-	}
-	else {
-		cerr << "Nuspell warning: extra entries of " << command << "\n";
-		cerr << "Nuspell warning in line " << line_num << endl;
-	}
 }
 
 enum class Flag_Parsing_Error {
@@ -171,24 +107,6 @@ enum class Flag_Parsing_Error {
 	INVALID_NUMERIC_ALIAS,
 	COMPOUND_RULE_INVALID_FORMAT
 };
-
-auto my_stoul(const string& str, size_t pos = 0, size_t* end_pos = nullptr,
-              int base = 10)
-{
-	char* end_ptr;
-	auto ptr = &str[pos];
-	errno = 0; // required, strtoul will not set to 0 if there is no error
-	auto x = strtoul(ptr, &end_ptr, base);
-	if (end_pos)
-		*end_pos = end_ptr - str.c_str();
-	if (ptr == end_ptr)
-		throw invalid_argument("not a number");
-	if (x == numeric_limits<decltype(x)>::max() && errno == ERANGE) {
-		errno = 0; // not required
-		throw out_of_range("number too large to fit");
-	}
-	return x;
-}
 
 auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
                   u16string& out) -> Flag_Parsing_Error
@@ -349,29 +267,10 @@ auto report_flag_parsing_error(Flag_Parsing_Error err, size_t line_num)
 	}
 }
 
-/**
- * Decodes flags.
- *
- * Expects that there are flags in the stream.
- * If there are no flags in the stream (eg, stream is at eof)
- * or if the format of the flags is incorrect the stream failbit will be set.
- */
-auto decode_flags(istream& in, size_t line_num, Flag_Type t,
-                  const Encoding& enc, u16string& out) -> istream&
-{
-	string s;
-	in >> s;
-	auto err = decode_flags(s, t, enc, out);
-	if (static_cast<int>(err) > 0)
-		in.setstate(in.failbit);
-	report_flag_parsing_error(err, line_num);
-	return in;
-}
-
-auto decode_flags_possible_alias(istream& in, size_t line_num, Flag_Type t,
-                                 const Encoding& enc,
-                                 const vector<Flag_Set>& flag_aliases,
-                                 u16string& out) -> istream&
+auto parse_flags_possible_alias(istream& in, size_t line_num, Flag_Type t,
+                                const Encoding& enc,
+                                const vector<Flag_Set>& flag_aliases,
+                                u16string& out) -> istream&
 {
 	string s;
 	in >> s;
@@ -382,195 +281,8 @@ auto decode_flags_possible_alias(istream& in, size_t line_num, Flag_Type t,
 	return in;
 }
 
-/**
- * Decodes a single flag from an input stream.
- *
- * @param in input stream to decode from.
- * @param line_num
- * @param t
- * @param enc encoding of the stream.
- * @return The value of the first decoded flag or 0 when no flag was decoded.
- */
-auto decode_single_flag(istream& in, size_t line_num, Flag_Type t,
-                        const Encoding& enc) -> char16_t
-{
-	auto flags = u16string();
-	decode_flags(in, line_num, t, enc, flags);
-	if (!flags.empty()) {
-		return flags.front();
-	}
-	return 0;
-}
-
-auto parse_word_slash_flags(istream& in, size_t line_num, Flag_Type t,
-                            const Encoding& enc,
-                            const vector<Flag_Set>& flag_aliases, string& word,
-                            u16string& flags) -> istream&
-{
-	in >> word;
-	auto slash_pos = word.find('/');
-	if (slash_pos == word.npos) {
-		flags.clear();
-		return in;
-	}
-
-	auto flag_str = word.substr(slash_pos + 1);
-	word.erase(slash_pos);
-	auto err =
-	    decode_flags_possible_alias(flag_str, t, enc, flag_aliases, flags);
-	if (static_cast<int>(err) > 0)
-		in.setstate(in.failbit);
-	report_flag_parsing_error(err, line_num);
-	return in;
-}
-
-auto parse_word_slash_single_flag(istream& in, size_t line_num, Flag_Type t,
-                                  const Encoding& enc, string& word,
-                                  char16_t& flag) -> istream&
-{
-	in >> word;
-	auto slash_pos = word.find('/');
-	if (slash_pos == word.npos) {
-		flag = 0;
-		return in;
-	}
-
-	auto flags = u16string();
-	auto flag_str = word.substr(slash_pos + 1);
-	word.erase(slash_pos);
-	auto err = decode_flags(flag_str, t, enc, flags);
-	if (static_cast<int>(err) > 0)
-		in.setstate(in.failbit);
-	report_flag_parsing_error(err, line_num);
-	if (flags.empty())
-		flag = 0;
-	else
-		flag = flags.front();
-	return in;
-}
-
-/**
- * Parses morhological fields.
- *
- * @param in input stream to parse from.
- * @param[in,out] vecOut
- */
-auto parse_morhological_fields(istream& in, vector<string>& vecOut) -> void
-{
-	if (!in.good()) {
-		return;
-	}
-
-	string morph;
-	while (in >> morph) {
-		vecOut.push_back(morph);
-	}
-	reset_failbit_istream(in);
-}
-
-/**
- * Parses an affix from an input stream.
- *
- * @param in input stream to parse from.
- * @param line_num
- * @param[in,out] command
- * @param t
- * @param enc
- * @param flag_aliases
- * @param[in,out] vec
- * @param[in,out] cmd_affix
- */
-auto parse_affix(istream& in, size_t line_num, string& command, Flag_Type t,
-                 const Encoding& enc, const vector<Flag_Set>& flag_aliases,
-                 vector<Affix>& vec,
-                 unordered_map<string, pair<bool, int>>& cmd_affix) -> void
-{
-	char16_t f = decode_single_flag(in, line_num, t, enc);
-	if (f == 0) {
-		// err
-		return;
-	}
-	char f1 = f & 0xff;
-	char f2 = (f >> 8) & 0xff;
-	command.push_back(f1);
-	command.push_back(f2);
-	auto dat = cmd_affix.find(command);
-	// note: the current affix parser does not allow the same flag
-	// to be used once with cross product and again witohut
-	// one flag is tied to one cross product value
-	if (dat == cmd_affix.end()) {
-		char cross_char; // 'Y' or 'N'
-		size_t cnt;
-		in >> cross_char >> cnt;
-		bool cross = cross_char == 'Y';
-		if (in.fail()) {
-			cnt = 0; // err
-			cerr << "Nuspell error: a SFX/PFX header command is "
-			        "invalid, missing count or cross product in "
-			        "line "
-			     << line_num << endl;
-		}
-		cmd_affix[command] = make_pair(cross, cnt);
-	}
-	else if (dat->second.second) {
-		vec.emplace_back();
-		auto& elem = vec.back();
-		elem.flag = f;
-		elem.cross_product = dat->second.first;
-		in >> elem.stripping;
-		if (elem.stripping == "0")
-			elem.stripping = "";
-		parse_word_slash_flags(in, line_num, t, enc, flag_aliases,
-		                       elem.appending, elem.new_flags);
-		if (elem.appending == "0")
-			elem.appending = "";
-		if (in.fail()) {
-			vec.pop_back();
-			return;
-		}
-		in >> elem.condition;
-		if (elem.condition.empty())
-			elem.condition = '.';
-		if (in.fail())
-			reset_failbit_istream(in);
-		else
-			parse_morhological_fields(in,
-			                          elem.morphological_fields);
-		dat->second.second--;
-	}
-	else {
-		cerr << "Nuspell warning: extra entries of "
-		     << command.substr(0, 3) << "\n"
-		     << "Nuspell warning in line " << line_num << endl;
-	}
-}
-
-/**
- * Parses flag type.
- *
- * @param in input stream to parse from.
- * @param line_num
- * @param[out] flag_type
- */
-auto parse_flag_type(istream& in, size_t line_num, Flag_Type& flag_type) -> void
-{
-	using Ft = Flag_Type;
-	(void)line_num;
-	string p;
-	in >> p;
-	boost::algorithm::to_upper(p, in.getloc());
-	if (p == "LONG")
-		flag_type = Ft::DOUBLE_CHAR;
-	else if (p == "NUM")
-		flag_type = Ft::NUMBER;
-	else if (p == "UTF-8")
-		flag_type = Ft::UTF8;
-	else
-		cerr << "Nuspell error: unknown FLAG type" << endl;
-}
-
-auto parse_compound_rule(const string& s, Flag_Type t, const Encoding& enc,
-                         u16string& out) -> Flag_Parsing_Error
+auto decode_compound_rule(const string& s, Flag_Type t, const Encoding& enc,
+                          u16string& out) -> Flag_Parsing_Error
 {
 	using Ft = Flag_Type;
 	using Err = Flag_Parsing_Error;
@@ -635,32 +347,19 @@ auto parse_compound_rule(const string& s, Flag_Type t, const Encoding& enc,
 	return {};
 }
 
-auto parse_compound_rule(istream& in, size_t line_num, Flag_Type t,
-                         const Encoding& enc, u16string& out) -> istream&
-{
-	string s;
-	in >> s;
-	auto err = parse_compound_rule(s, t, enc, out);
-	if (static_cast<int>(err) > 0)
-		in.setstate(in.failbit);
-	report_flag_parsing_error(err, line_num);
-	return in;
-}
-
 auto strip_utf8_bom(std::istream& in) -> void
 {
 	if (!in.good())
 		return;
-	string bom(3, '\0');
+	auto bom = string(3, '\0');
 	in.read(&bom[0], 3);
-	auto cnt = in.gcount();
-	if (cnt == 3 && bom == "\xEF\xBB\xBF")
+	if (in && bom == "\xEF\xBB\xBF")
 		return;
-	if (cnt < 3)
-		reset_failbit_istream(in);
-	for (auto i = cnt - 1; i >= 0; --i) {
+	if (in.bad())
+		return;
+	reset_failbit_istream(in);
+	for (auto i = size_t(in.gcount()); i-- != 0;)
 		in.putback(bom[i]);
-	}
 }
 
 //#if _POSIX_VERSION >= 200809L
@@ -712,6 +411,402 @@ class Setlocale_To_C_In_Scope {
 };
 #endif
 
+struct Compound_Rule_Ref_Wrapper {
+	std::u16string& rule;
+};
+
+auto wrap_compound_rule(std::u16string& r) -> Compound_Rule_Ref_Wrapper
+{
+	return {r};
+}
+
+class Aff_Line_Stream : public std::istringstream {
+	std::string str_buf;
+	std::u16string flag_buffer;
+
+	const Aff_Data* aff_data = nullptr;
+	Encoding_Converter cvt;
+
+	auto virtual dummy_func() -> void;
+
+      public:
+	Flag_Parsing_Error err = {};
+
+	auto set_encoding(const Encoding& e)
+	{
+		cvt = Encoding_Converter(e.value_or_default());
+	}
+	auto set_aff_data(Aff_Data& a)
+	{
+		aff_data = &a;
+		set_encoding(a.encoding);
+	}
+
+	Aff_Line_Stream() = default;
+	Aff_Line_Stream(Aff_Line_Stream&& other)
+	    : istringstream{std::move(other)}, aff_data{other.aff_data},
+	      cvt{std::move(other.cvt)}, err{other.err}
+	{
+		other.aff_data = nullptr;
+		other.err = {};
+	}
+
+	auto& parse(Encoding& enc)
+	{
+		auto& in = *this;
+		in >> str_buf;
+		if (in)
+			enc = str_buf;
+		return in;
+	}
+
+	auto& parse(std::wstring& wstr)
+	{
+		auto& in = *this;
+		in >> str_buf;
+		if (in.fail()) // str_buf is unmodified on fail
+			return in;
+		auto ok = cvt.to_wide(str_buf, wstr);
+		if (!ok) {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("encoding conversion error");
+		}
+		return in;
+	}
+
+	auto& parse(Flag_Type& flag_type)
+	{
+		using Ft = Flag_Type;
+		auto& in = *this;
+		flag_type = {};
+		in >> str_buf;
+		if (in.fail())
+			return in;
+		boost::algorithm::to_upper(str_buf, in.getloc());
+		if (str_buf == "LONG")
+			flag_type = Ft::DOUBLE_CHAR;
+		else if (str_buf == "NUM")
+			flag_type = Ft::NUMBER;
+		else if (str_buf == "UTF-8")
+			flag_type = Ft::UTF8;
+		else {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("unknown FLAG type");
+		}
+		return in;
+	}
+
+	auto& parse(icu::Locale& loc)
+	{
+		auto& in = *this;
+		in >> str_buf;
+		if (in.fail())
+			return in;
+		loc = icu::Locale(str_buf.c_str());
+		if (loc.isBogus()) {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("unknown Language in LANG");
+		}
+		return in;
+	}
+
+	auto& parse(std::u16string& flags)
+	{
+		auto& in = *this;
+		err = {};
+		in >> str_buf;
+		if (in.fail())
+			return in;
+		err = decode_flags(str_buf, aff_data->flag_type,
+		                   aff_data->encoding, flags);
+		if (static_cast<int>(err) > 0) {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("Flag parsing error");
+		}
+		return in;
+	}
+
+	auto& parse(char16_t& flag)
+	{
+		auto& in = *this;
+		flag = 0;
+		parse(flag_buffer);
+		if (in)
+			flag = flag_buffer[0];
+		return in;
+	}
+
+	auto& parse(Flag_Set& flags)
+	{
+		auto& in = *this;
+		parse(flag_buffer);
+		if (in)
+			flags = flag_buffer;
+		return in;
+	}
+
+	auto& parse_word_slash_flags(wstring& word, Flag_Set& flags)
+	{
+		auto& in = *this;
+		err = {};
+		in >> str_buf;
+		if (in.fail())
+			return in;
+		auto slash_pos = str_buf.find('/');
+		if (slash_pos != str_buf.npos) {
+			auto flag_str =
+			    str_buf.substr(slash_pos + 1); // temporary
+			str_buf.erase(slash_pos);
+			err = decode_flags_possible_alias(
+			    flag_str, aff_data->flag_type, aff_data->encoding,
+			    aff_data->flag_aliases, flag_buffer);
+			flags = flag_buffer;
+		}
+		auto ok = cvt.to_wide(str_buf, word);
+		if (!ok) {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("Encoding error");
+		}
+		if (static_cast<int>(err) > 0) {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("Flag parsing error");
+		}
+		return in;
+	}
+
+	auto& parse(tuple<wstring&, Flag_Set&> word_and_flags)
+	{
+		return parse_word_slash_flags(std::get<0>(word_and_flags),
+		                              std::get<1>(word_and_flags));
+	}
+
+	auto& parse(Condition<wchar_t>& cond)
+	{
+		auto& in = *this;
+		auto wstr = wstring();
+		in.parse(wstr);
+		if (in)
+			cond = std::move(wstr);
+		return in;
+	}
+
+	auto parse_word_slash_single_flag(wstring& word, char16_t& flag)
+	    -> istream&
+	{
+		auto& in = *this;
+		err = {};
+		in >> str_buf;
+		if (in.fail())
+			return in;
+		auto slash_pos = str_buf.find('/');
+		if (slash_pos != str_buf.npos) {
+			auto flag_str =
+			    str_buf.substr(slash_pos + 1); // temporary
+			str_buf.erase(slash_pos);
+			err = decode_flags(flag_str, aff_data->flag_type,
+			                   aff_data->encoding, flag_buffer);
+			if (!flag_buffer.empty())
+				flag = flag_buffer[0];
+		}
+		auto ok = cvt.to_wide(str_buf, word);
+		if (!ok) {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("Encoding error");
+		}
+		if (static_cast<int>(err) > 0) {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("Flag parsing error");
+		}
+		return in;
+	}
+
+	auto& parse(tuple<wstring&, char16_t&> word_and_flag)
+	{
+		return parse_word_slash_single_flag(std::get<0>(word_and_flag),
+		                                    std::get<1>(word_and_flag));
+	}
+
+	auto& parse_compound_rule(u16string& out)
+	{
+		auto& in = *this;
+		in >> str_buf;
+		if (in.fail())
+			return in;
+		err = decode_compound_rule(str_buf, aff_data->flag_type,
+		                           aff_data->encoding, out);
+		if (static_cast<int>(err) > 0) {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("Compound rule parsing error");
+		}
+		return in;
+	}
+
+	auto& parse(Compound_Rule_Ref_Wrapper rule)
+	{
+		return parse_compound_rule(rule.rule);
+	}
+
+#if 0
+	auto& parse_morhological_fields(vector<string>& out)
+	{
+		auto& in = *this;
+		if (in.fail())
+			return in;
+		out.clear();
+		auto old_mask = in.exceptions();
+		in.exceptions(in.goodbit); // disable exceptions
+		while (in >> str_buf) {
+			out.push_back(str_buf);
+		}
+		if (in.fail() && !in.bad())
+			reset_failbit_istream(in);
+		in.exceptions(old_mask);
+		return in;
+	}
+
+	auto& parse(vector<string>& out)
+	{
+		return parse_morhological_fields(out);
+	}
+#endif
+};
+auto Aff_Line_Stream::dummy_func() -> void {}
+
+template <class T, class = decltype(std::declval<Aff_Line_Stream>().parse(
+                       std::declval<T>()))>
+auto& operator>>(Aff_Line_Stream& in, T&& x)
+{
+	return in.parse(std::forward<T>(x));
+}
+
+auto& operator>>(Aff_Line_Stream& in, pair<wstring, wstring>& out)
+{
+	return in >> out.first >> out.second;
+}
+
+auto& operator>>(Aff_Line_Stream& in, Compound_Pattern<wchar_t>& p)
+{
+	auto first_word_end = wstring();
+	auto second_word_begin = wstring();
+	p.match_first_only_unaffixed_or_zero_affixed = false;
+	in >> std::tie(first_word_end, p.first_word_flag);
+	in >> std::tie(second_word_begin, p.second_word_flag);
+	if (in.fail())
+		return in;
+	if (first_word_end == L"0") {
+		first_word_end.clear();
+		p.match_first_only_unaffixed_or_zero_affixed = true;
+	}
+	p.begin_end_chars = {first_word_end, second_word_begin};
+	auto old_mask = in.exceptions();
+	in.exceptions(in.goodbit); // disable exceptions
+	in >> p.replacement;       // optional
+	if (in.fail() && !in.bad()) {
+		reset_failbit_istream(in);
+		p.replacement.clear();
+	}
+	in.exceptions(old_mask);
+	return in;
+}
+
+template <class T, class Func = identity>
+auto parse_vector_of_T(Aff_Line_Stream& in, const string& command,
+                       unordered_map<string, size_t>& counts, vector<T>& vec,
+                       Func modifier_wrapper = Func()) -> void
+{
+	auto dat = counts.find(command);
+	if (dat == counts.end()) {
+		// first line
+		size_t a;
+		in >> a;
+		if (in.fail()) {
+			a = 0; // err
+			cerr << "Nuspell error: a vector command (series of "
+			        "of similar commands) has no count. Ignoring "
+			        "all of them."
+			     << endl;
+		}
+		counts[command] = a;
+	}
+	else if (dat->second != 0) {
+		vec.emplace_back();
+		in >> modifier_wrapper(vec.back());
+		if (in.fail()) {
+			vec.pop_back();
+			cerr << "Nuspell error: single entry of a vector "
+			        "command (series of "
+			        "of similar commands) is invalid"
+			     << endl;
+		}
+		dat->second--;
+	}
+	else {
+		cerr << "Nuspell warning: extra entries of " << command << "\n";
+		// cerr << "Nuspell warning in line " << line_num << endl;
+	}
+}
+
+template <class AffixT>
+auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
+                 unordered_map<string, pair<bool, size_t>>& cmd_affix) -> void
+{
+	char16_t f;
+	in >> f;
+	if (in.fail()) {
+		// err
+		return;
+	}
+	command.append(reinterpret_cast<char*>(&f), sizeof(f));
+	auto dat = cmd_affix.find(command);
+	// note: the current affix parser does not allow the same flag
+	// to be used once with cross product and again witohut
+	// one flag is tied to one cross product value
+	if (dat == cmd_affix.end()) {
+		char cross_char; // 'Y' or 'N'
+		size_t cnt;
+		in >> cross_char >> cnt;
+		bool cross = cross_char == 'Y';
+		if (in.fail()) {
+			cnt = 0;
+		}
+		cmd_affix[command] = make_pair(cross, cnt);
+	}
+	else if (dat->second.second) {
+		vec.emplace_back();
+		auto& elem = vec.back();
+		elem.flag = f;
+		elem.cross_product = dat->second.first;
+		in >> elem.stripping;
+		if (elem.stripping == L"0")
+			elem.stripping.clear();
+		in >> std::tie(elem.appending, elem.cont_flags);
+		if (elem.appending == L"0")
+			elem.appending.clear();
+		in >> elem.condition;
+		if (in.fail()) {
+			vec.pop_back();
+			return;
+		}
+		// in >> elem.morphological_fields;
+		dat->second.second--;
+	}
+	else {
+		cerr << "Nuspell warning: extra entries of "
+		     << command.substr(0, 3) << "\n";
+	}
+}
+
+} // namespace
+
 /**
  * Parses an input stream offering affix information.
  *
@@ -720,34 +815,26 @@ class Setlocale_To_C_In_Scope {
  */
 auto Aff_Data::parse_aff(istream& in) -> bool
 {
-	string language_code;
-	string ignore_chars;
-	string keyboard_layout;
-	string try_chars;
-	vector<Affix> prefixes;
-	vector<Affix> suffixes;
-	vector<string> break_patterns;
+	vector<Prefix<wchar_t>> prefixes;
+	vector<Suffix<wchar_t>> suffixes;
+	vector<wstring> break_patterns;
 	bool break_exists = false;
-	vector<pair<string, string>> input_conversion;
-	vector<pair<string, string>> output_conversion;
-	vector<vector<string>> morphological_aliases;
-	vector<Compound_Check_Pattern> compound_check_patterns;
+	vector<pair<wstring, wstring>> input_conversion;
+	vector<pair<wstring, wstring>> output_conversion;
+	// vector<vector<string>> morphological_aliases;
 	vector<u16string> rules;
-	vector<pair<string, string>> replacements;
-	vector<string> map_related_chars;
-	vector<pair<string, string>> phonetic_replacements;
+	vector<pair<wstring, wstring>> replacements;
+	vector<wstring> map_related_chars;
+	vector<pair<wstring, wstring>> phonetic_replacements;
 	auto flags = u16string();
 
 	flag_type = Flag_Type::SINGLE_CHAR;
 
-	unordered_map<string, string*> command_strings = {
-	    {"LANG", &language_code},
-	    {"IGNORE", &ignore_chars},
+	unordered_map<string, wstring*> command_wstrings = {
+	    {"IGNORE", &ignored_chars},
 
-	    {"KEY", &keyboard_layout},
-	    {"TRY", &try_chars},
-
-	    {"WORDCHARS", &wordchars}};
+	    {"KEY", &keyboard_closeness},
+	    {"TRY", &this->try_chars}};
 
 	unordered_map<string, bool*> command_bools = {
 	    {"COMPLEXPREFIXES", &complex_prefixes},
@@ -767,9 +854,6 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	    {"FULLSTRIP", &fullstrip},
 	    {"CHECKSHARPS", &checksharps}};
 
-	unordered_map<string, vector<string>*> command_vec_str = {
-	    {"MAP", &map_related_chars}};
-
 	unordered_map<string, unsigned short*> command_shorts = {
 	    {"MAXCPDSUGS", &max_compound_suggestions},
 	    {"MAXNGRAMSUGS", &max_ngram_suggestions},
@@ -778,11 +862,11 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	    {"COMPOUNDMIN", &compound_min_length},
 	    {"COMPOUNDWORDMAX", &compound_max_word_count}};
 
-	unordered_map<string, vector<pair<string, string>>*> command_vec_pair =
-	    {{"REP", &replacements},
-	     {"PHONE", &phonetic_replacements},
-	     {"ICONV", &input_conversion},
-	     {"OCONV", &output_conversion}};
+	unordered_map<string, vector<pair<wstring, wstring>>*>
+	    command_vec_pair = {{"REP", &replacements},
+	                        {"PHONE", &phonetic_replacements},
+	                        {"ICONV", &input_conversion},
+	                        {"OCONV", &output_conversion}};
 
 	unordered_map<string, char16_t*> command_flag = {
 	    {"NOSUGGEST", &nosuggest_flag},
@@ -805,12 +889,12 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	    {"SUBSTANDARD", &substandard_flag}};
 
 	// keeps count for each vector
-	auto cmd_with_vec_cnt = unordered_map<string, int>();
-	auto cmd_affix = unordered_map<string, pair<bool, int>>();
+	auto cmd_with_vec_cnt = unordered_map<string, size_t>();
+	auto cmd_affix = unordered_map<string, pair<bool, size_t>>();
 	auto line = string();
 	auto command = string();
 	size_t line_num = 0;
-	auto ss = istringstream();
+	auto ss = Aff_Line_Stream();
 	auto loc = locale::classic();
 	Setlocale_To_C_In_Scope setlocale_to_C;
 	// while parsing, the streams must have plain ascii locale without
@@ -819,6 +903,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	// "C" locale can be used assuming it is US-ASCII
 	in.imbue(loc);
 	ss.imbue(loc);
+	ss.set_aff_data(*this);
 	strip_utf8_bom(in);
 	while (getline(in, line)) {
 		line_num++;
@@ -832,20 +917,21 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 
 		ss.str(line);
 		ss.clear();
+		ss.err = {};
 		ss >> ws;
 		if (ss.eof() || ss.peek() == '#') {
 			continue; // skip comment or empty lines
 		}
 		ss >> command;
 		boost::algorithm::to_upper(command, ss.getloc());
-		ss >> ws;
-		if (command == "PFX" || command == "SFX") {
-			auto& vec = command[0] == 'P' ? prefixes : suffixes;
-			parse_affix(ss, line_num, command, flag_type, encoding,
-			            flag_aliases, vec, cmd_affix);
+		if (command == "SFX") {
+			parse_affix(ss, command, suffixes, cmd_affix);
 		}
-		else if (command_strings.count(command)) {
-			auto& str = *command_strings[command];
+		else if (command == "PFX") {
+			parse_affix(ss, command, prefixes, cmd_affix);
+		}
+		else if (command_wstrings.count(command)) {
+			auto& str = *command_wstrings[command];
 			if (str.empty())
 				ss >> str;
 			else
@@ -866,28 +952,20 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			}
 		}
 		else if (command_flag.count(command)) {
-			*command_flag[command] = decode_single_flag(
-			    ss, line_num, flag_type, encoding);
+			ss >> *command_flag[command];
 		}
-		else if (command_vec_str.count(command)) {
-			auto& vec = *command_vec_str[command];
-			auto func = [&](istream& in, string& p) { in >> p; };
-			parse_vector_of_T(ss, line_num, command,
-			                  cmd_with_vec_cnt, vec, func);
+		else if (command == "MAP") {
+			parse_vector_of_T(ss, command, cmd_with_vec_cnt,
+			                  map_related_chars);
 		}
 		else if (command_vec_pair.count(command)) {
 			auto& vec = *command_vec_pair[command];
-			auto func = [&](istream& in, pair<string, string>& p) {
-				in >> p.first >> p.second;
-			};
-			parse_vector_of_T(ss, line_num, command,
-			                  cmd_with_vec_cnt, vec, func);
+			parse_vector_of_T(ss, command, cmd_with_vec_cnt, vec);
 		}
 		else if (command == "SET") {
 			if (encoding.empty()) {
-				auto str = string();
-				ss >> str;
-				encoding = str;
+				ss >> encoding;
+				ss.set_encoding(encoding);
 			}
 			else {
 				cerr << "Nuspell warning: "
@@ -898,206 +976,72 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			}
 		}
 		else if (command == "FLAG") {
-			parse_flag_type(ss, line_num, flag_type);
+			ss >> flag_type;
+		}
+		else if (command == "LANG") {
+			ss >> icu_locale;
 		}
 		else if (command == "AF") {
-			auto& vec = flag_aliases;
-			auto func = [&](istream& inn, Flag_Set& p) {
-				decode_flags(inn, line_num, flag_type, encoding,
-				             flags);
-				p = flags;
-			};
-			parse_vector_of_T(ss, line_num, command,
-			                  cmd_with_vec_cnt, vec, func);
+			parse_vector_of_T(ss, command, cmd_with_vec_cnt,
+					  flag_aliases);
 		}
 		else if (command == "AM") {
-			auto& vec = morphological_aliases;
-			parse_vector_of_T(ss, line_num, command,
-			                  cmd_with_vec_cnt, vec,
-			                  parse_morhological_fields);
+			// parse_vector_of_T(ss, command, cmd_with_vec_cnt,
+			//                  morphological_aliases);
 		}
 		else if (command == "BREAK") {
-			auto& vec = break_patterns;
-			auto func = [&](istream& in, string& p) { in >> p; };
-			parse_vector_of_T(ss, line_num, command,
-			                  cmd_with_vec_cnt, vec, func);
+			parse_vector_of_T(ss, command, cmd_with_vec_cnt,
+					  break_patterns);
 			break_exists = true;
 		}
 		else if (command == "CHECKCOMPOUNDPATTERN") {
-			auto& vec = compound_check_patterns;
-			auto func = [&](istream& in,
-			                Compound_Check_Pattern& p) {
-				parse_word_slash_single_flag(
-				    in, line_num, flag_type, encoding,
-				    p.first_word_end, p.first_word_flag);
-				parse_word_slash_single_flag(
-				    in, line_num, flag_type, encoding,
-				    p.second_word_begin, p.second_word_flag);
-				if (in.fail()) {
-					return;
-				}
-				in >> p.replacement;
-				reset_failbit_istream(in);
-			};
-			parse_vector_of_T(ss, line_num, command,
-			                  cmd_with_vec_cnt, vec, func);
+			parse_vector_of_T(ss, command, cmd_with_vec_cnt,
+			                  compound_patterns);
 		}
 		else if (command == "COMPOUNDRULE") {
-			auto func = [&](istream& in, u16string& rule) {
-				parse_compound_rule(in, line_num, flag_type,
-				                    encoding, rule);
-			};
-			parse_vector_of_T(ss, line_num, command,
-			                  cmd_with_vec_cnt, rules, func);
+			parse_vector_of_T(ss, command, cmd_with_vec_cnt, rules,
+			                  wrap_compound_rule);
 		}
 		else if (command == "COMPOUNDSYLLABLE") {
 			ss >> compound_syllable_max >> compound_syllable_vowels;
 		}
 		else if (command == "SYLLABLENUM") {
-			decode_flags(ss, line_num, flag_type, encoding, flags);
-			compound_syllable_num = flags;
+			ss >> compound_syllable_num;
+		}
+		else if (command == "WORDCHARS") {
+			ss >> wordchars;
 		}
 		if (ss.fail()) {
 			cerr
 			    << "Nuspell error: could not parse affix file line "
 			    << line_num << ": " << line << endl;
+			report_flag_parsing_error(ss.err, line_num);
 		}
 	}
 	// default BREAK definition
 	if (!break_exists) {
-		break_patterns = {"-", "^-", "-$"};
+		break_patterns = {L"-", L"^-", L"-$"};
 	}
 	for (auto& r : replacements) {
 		auto& s = r.second;
-		replace_char(s, '_', ' ');
+		replace_char(s, L'_', L' ');
 	}
 
 	// now fill data structures from temporary data
-	if (!language_code.empty())
-		icu_locale = icu::Locale(language_code.c_str());
-	compound_rules = move(rules);
-	if (encoding.is_utf8()) {
-		auto u8_to_w = [](auto& x) { return utf8_to_wide(x); };
-		auto u8_to_w_pair = [](auto& x) {
-			return make_pair(utf8_to_wide(x.first),
-			                 utf8_to_wide(x.second));
-		};
-		auto iconv =
-		    boost::adaptors::transform(input_conversion, u8_to_w_pair);
-		input_substr_replacer = iconv;
-		auto oconv =
-		    boost::adaptors::transform(output_conversion, u8_to_w_pair);
-		output_substr_replacer = oconv;
-
-		auto break_pat =
-		    boost::adaptors::transform(break_patterns, u8_to_w);
-		break_table = break_pat;
-		ignored_chars = u8_to_w(ignore_chars);
-
-		for (auto& x : prefixes) {
-			auto appending = u8_to_w(x.appending);
-			erase_chars(appending, ignored_chars);
-			this->prefixes.emplace(
-			    x.flag, x.cross_product, u8_to_w(x.stripping),
-			    appending, x.new_flags, u8_to_w(x.condition));
-		}
-		for (auto& x : suffixes) {
-			auto appending = u8_to_w(x.appending);
-			erase_chars(appending, ignored_chars);
-			this->suffixes.emplace(
-			    x.flag, x.cross_product, u8_to_w(x.stripping),
-			    appending, x.new_flags, u8_to_w(x.condition));
-		}
-		for (auto& x : compound_check_patterns) {
-			auto forbid_unaffixed = x.first_word_end == "0";
-			if (forbid_unaffixed)
-				x.first_word_end.clear();
-			compound_patterns.push_back(
-			    {{u8_to_w(x.first_word_end),
-			      u8_to_w(x.second_word_begin)},
-			     u8_to_w(x.replacement),
-			     x.first_word_flag,
-			     x.second_word_flag,
-			     forbid_unaffixed});
-		}
-		auto reps =
-		    boost::adaptors::transform(replacements, u8_to_w_pair);
-		this->replacements = reps;
-
-		auto maps =
-		    boost::adaptors::transform(map_related_chars, u8_to_w);
-		similarities.assign(begin(maps), end(maps));
-		keyboard_closeness = u8_to_w(keyboard_layout);
-		this->try_chars = u8_to_w(try_chars);
-		auto phone = boost::adaptors::transform(phonetic_replacements,
-		                                        u8_to_w_pair);
-		phonetic_table = phone;
+	compound_rules = std::move(rules);
+	similarities.assign(begin(map_related_chars), end(map_related_chars));
+	break_table = std::move(break_patterns);
+	input_substr_replacer = std::move(input_conversion);
+	output_substr_replacer = std::move(output_conversion);
+	this->replacements = std::move(replacements);
+	phonetic_table = std::move(phonetic_replacements);
+	for (auto& x : prefixes) {
+		erase_chars(x.appending, ignored_chars);
+		this->prefixes.emplace(std::move(x));
 	}
-	else {
-		// convert non-unicode dicts to unicode
-		auto enc_conv = Encoding_Converter(encoding.value_or_default());
-		auto n_to_w = [&](auto& x) { return enc_conv.to_wide(x); };
-		auto n_to_w_pair = [&](auto& x) {
-			return make_pair(enc_conv.to_wide(x.first),
-			                 enc_conv.to_wide(x.second));
-		};
-		auto iconv =
-		    boost::adaptors::transform(input_conversion, n_to_w_pair);
-		input_substr_replacer = iconv;
-		auto oconv =
-		    boost::adaptors::transform(output_conversion, n_to_w_pair);
-		output_substr_replacer = oconv;
-
-		auto break_pat =
-		    boost::adaptors::transform(break_patterns, n_to_w);
-		break_table = break_pat;
-		ignored_chars = n_to_w(ignore_chars);
-
-		for (auto& x : prefixes) {
-			auto appending = n_to_w(x.appending);
-			erase_chars(appending, ignored_chars);
-			this->prefixes.emplace(
-			    x.flag, x.cross_product, n_to_w(x.stripping),
-			    appending, x.new_flags, n_to_w(x.condition));
-		}
-		for (auto& x : suffixes) {
-			auto appending = n_to_w(x.appending);
-			erase_chars(appending, ignored_chars);
-			this->suffixes.emplace(
-			    x.flag, x.cross_product, n_to_w(x.stripping),
-			    appending, x.new_flags, n_to_w(x.condition));
-		}
-		for (auto& x : compound_check_patterns) {
-			auto forbid_unaffixed = x.first_word_end == "0";
-			if (forbid_unaffixed)
-				x.first_word_end.clear();
-			compound_patterns.push_back(
-			    {{n_to_w(x.first_word_end),
-			      n_to_w(x.second_word_begin)},
-			     n_to_w(x.replacement),
-			     x.first_word_flag,
-			     x.second_word_flag,
-			     forbid_unaffixed});
-		}
-		auto reps =
-		    boost::adaptors::transform(replacements, n_to_w_pair);
-		this->replacements = reps;
-
-		auto maps =
-		    boost::adaptors::transform(map_related_chars, n_to_w);
-		similarities.assign(begin(maps), end(maps));
-		keyboard_closeness = n_to_w(keyboard_layout);
-		this->try_chars = n_to_w(try_chars);
-		auto phone = boost::adaptors::transform(phonetic_replacements,
-		                                        n_to_w_pair);
-		phonetic_table = phone;
-
-		// set_encoding_and_language("UTF-8", language_code);
-		// No need to set the internal locale to utf-8, keep it to
-		// non-unicode because:
-		// 1) We still need it as is in parse_dic().
-		// 2) We will later use only the wide facets which are Unicode
-		//    anyway.
+	for (auto& x : suffixes) {
+		erase_chars(x.appending, ignored_chars);
+		this->suffixes.emplace(std::move(x));
 	}
 
 	cerr.flush();
@@ -1200,9 +1144,9 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			// slash found, word until slash
 			word.assign(line, 0, slash_pos);
 			ss.ignore(slash_pos + 1);
-			decode_flags_possible_alias(ss, line_number, flag_type,
-			                            encoding, flag_aliases,
-			                            flags);
+			parse_flags_possible_alias(ss, line_number, flag_type,
+			                           encoding, flag_aliases,
+			                           flags);
 			if (ss.fail())
 				continue;
 		}

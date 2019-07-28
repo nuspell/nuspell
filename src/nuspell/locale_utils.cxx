@@ -513,6 +513,9 @@ auto Encoding_Converter::operator=(const Encoding_Converter& other)
 
 auto Encoding_Converter::to_wide(const string& in, wstring& out) -> bool
 {
+	if (ucnv_getType(cnv) == UCNV_UTF8)
+		return utf8_to_wide(in, out);
+
 	auto err = U_ZERO_ERROR;
 	auto us = icu::UnicodeString(in.c_str(), in.size(), cnv, err);
 	if (U_FAILURE(err)) {

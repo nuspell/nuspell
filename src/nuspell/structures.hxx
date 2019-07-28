@@ -708,6 +708,20 @@ class Condition {
 	Condition() = default;
 	Condition(const StrT& condition) : cond(condition) { construct(); }
 	Condition(StrT&& condition) : cond(move(condition)) { construct(); }
+	auto& operator=(const StrT& condition)
+	{
+		cond = condition;
+		length = 0;
+		construct();
+		return *this;
+	}
+	auto& operator=(StrT&& condition)
+	{
+		cond = std::move(condition);
+		length = 0;
+		construct();
+		return *this;
+	}
 	auto match(const StrT& s, size_t pos = 0, size_t len = StrT::npos) const
 	    -> bool; // implemented in cxx
 	auto match_prefix(const StrT& s) const { return match(s, 0, length); }

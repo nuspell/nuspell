@@ -122,7 +122,7 @@ class Encoding {
 	operator const std::string&() const { return name; }
 	auto& value() const { return name; }
 	auto is_utf8() const { return name == "UTF-8"; }
-	auto value_or_default() -> std::string
+	auto value_or_default() const -> std::string
 	{
 		if (name.empty())
 			return "ISO8859-1";
