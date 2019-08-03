@@ -117,39 +117,33 @@ TEST_CASE("Condition<wchar_t> with wildcards", "[condition]")
 TEST_CASE("Condition<wchar_t> exceptions", "[condition]")
 {
 	auto cond1 = L"]";
-	CHECK_THROWS_AS([&]() { auto c1 = Condition<wchar_t>(cond1); }(),
-	                std::invalid_argument);
-	CHECK_THROWS_WITH([&]() { auto c1 = Condition<wchar_t>(cond1); }(),
+	CHECK_THROWS_AS(Condition<wchar_t>(cond1), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond1),
 	                  "closing bracket has no matching opening bracket");
 
 	auto cond2 = L"ab]";
-	CHECK_THROWS_AS([&]() { auto c2 = Condition<wchar_t>(cond2); }(),
-	                std::invalid_argument);
-	CHECK_THROWS_WITH([&]() { auto c2 = Condition<wchar_t>(cond2); }(),
+	CHECK_THROWS_AS(Condition<wchar_t>(cond2), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond2),
 	                  "closing bracket has no matching opening bracket");
 
 	auto cond3 = L"[ab";
-	CHECK_THROWS_AS([&]() { auto c3 = Condition<wchar_t>(cond3); }(),
-	                std::invalid_argument);
-	CHECK_THROWS_WITH([&]() { auto c3 = Condition<wchar_t>(cond3); }(),
+	CHECK_THROWS_AS(Condition<wchar_t>(cond3), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond3),
 	                  "opening bracket has no matching closing bracket");
 
 	auto cond4 = L"[";
-	CHECK_THROWS_AS([&]() { auto c4 = Condition<wchar_t>(cond4); }(),
-	                std::invalid_argument);
-	CHECK_THROWS_WITH([&]() { auto c4 = Condition<wchar_t>(cond4); }(),
+	CHECK_THROWS_AS(Condition<wchar_t>(cond4), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond4),
 	                  "opening bracket has no matching closing bracket");
 
 	auto cond5 = L"[]";
-	CHECK_THROWS_AS([&]() { auto c5 = Condition<wchar_t>(cond5); }(),
-	                std::invalid_argument);
-	CHECK_THROWS_WITH([&]() { auto c5 = Condition<wchar_t>(cond5); }(),
+	CHECK_THROWS_AS(Condition<wchar_t>(cond5), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond5),
 	                  "empty bracket expression");
 
 	auto cond6 = L"[^]";
-	CHECK_THROWS_AS([&]() { auto c6 = Condition<wchar_t>(cond6); }(),
-	                std::invalid_argument);
-	CHECK_THROWS_WITH([&]() { auto c6 = Condition<wchar_t>(cond6); }(),
+	CHECK_THROWS_AS(Condition<wchar_t>(cond6), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond6),
 	                  "empty bracket expression");
 }
 

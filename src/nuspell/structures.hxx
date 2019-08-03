@@ -679,6 +679,10 @@ class Hash_Multiset {
 	}
 };
 
+struct Condition_Exception : public std::runtime_error {
+	using std::runtime_error::runtime_error;
+};
+
 /**
  * @brief Limited regular expression matching used in affix entries.
  *
@@ -757,14 +761,14 @@ auto Condition<CharT>::construct() -> void
 		if (cond[i] == ']') {
 			auto what =
 			    "closing bracket has no matching opening bracket";
-			throw std::invalid_argument(what);
+			throw Condition_Exception(what);
 		}
 		if (cond[i] == '[') {
 			++i;
 			if (i == cond.size()) {
 				auto what = "opening bracket has no matching "
 				            "closing bracket";
-				throw std::invalid_argument(what);
+				throw Condition_Exception(what);
 			}
 			Span_Type type;
 			if (cond[i] == '^') {
@@ -777,12 +781,12 @@ auto Condition<CharT>::construct() -> void
 			j = cond.find(']', i);
 			if (j == i) {
 				auto what = "empty bracket expression";
-				throw std::invalid_argument(what);
+				throw Condition_Exception(what);
 			}
 			if (j == cond.npos) {
 				auto what = "opening bracket has no matching "
 				            "closing bracket";
-				throw std::invalid_argument(what);
+				throw Condition_Exception(what);
 			}
 			spans.emplace_back(i, j - i, type);
 			++length;

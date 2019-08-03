@@ -137,8 +137,8 @@ class Encoding_Converter {
 
       public:
 	Encoding_Converter() = default;
-	Encoding_Converter(const char* enc);
-	Encoding_Converter(const std::string& enc)
+	explicit Encoding_Converter(const char* enc);
+	explicit Encoding_Converter(const std::string& enc)
 	    : Encoding_Converter(enc.c_str())
 	{
 	}
@@ -157,6 +157,7 @@ class Encoding_Converter {
 	}
 	auto to_wide(const std::string& in, std::wstring& out) -> bool;
 	auto to_wide(const std::string& in) -> std::wstring;
+	auto valid() -> bool { return cnv != nullptr; }
 };
 } // namespace nuspell
 #endif // NUSPELL_LOCALE_UTILS_HXX

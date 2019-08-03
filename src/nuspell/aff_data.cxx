@@ -95,7 +95,8 @@ void reset_failbit_istream(std::istream& in)
 	in.clear(in.rdstate() & ~in.failbit);
 }
 
-enum class Flag_Parsing_Error {
+enum class Parsing_Error_Code {
+	NO_FLAGS_AFTER_SLASH_WARNING = -2,
 	NONUTF8_FLAGS_ABOVE_127_WARNING = -1,
 	NO_ERROR = 0,
 	MISSING_FLAGS,
@@ -105,13 +106,14 @@ enum class Flag_Parsing_Error {
 	INVALID_UTF8,
 	FLAG_ABOVE_65535,
 	INVALID_NUMERIC_ALIAS,
+	AFX_CONDITION_INVALID_FORMAT,
 	COMPOUND_RULE_INVALID_FORMAT
 };
 
 auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
-                  u16string& out) -> Flag_Parsing_Error
+                  u16string& out) -> Parsing_Error_Code
 {
-	using Err = Flag_Parsing_Error;
+	using Err = Parsing_Error_Code;
 	using Ft = Flag_Type;
 	auto warn = Err();
 	out.clear();
@@ -193,7 +195,7 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
 auto decode_flags_possible_alias(const string& s, Flag_Type t,
                                  const Encoding& enc,
                                  const vector<Flag_Set>& flag_aliases,
-                                 u16string& out) -> Flag_Parsing_Error
+                                 u16string& out) -> Parsing_Error_Code
 {
 	if (flag_aliases.empty())
 		return decode_flags(s, t, enc, out);
@@ -203,22 +205,26 @@ auto decode_flags_possible_alias(const string& s, Flag_Type t,
 	out.clear();
 	auto i = strtoul(s.c_str(), &p, 10);
 	if (p == s.c_str())
-		return Flag_Parsing_Error::INVALID_NUMERIC_ALIAS;
+		return Parsing_Error_Code::INVALID_NUMERIC_ALIAS;
 
 	if (i == numeric_limits<decltype(i)>::max() && errno == ERANGE)
-		return Flag_Parsing_Error::INVALID_NUMERIC_ALIAS;
+		return Parsing_Error_Code::INVALID_NUMERIC_ALIAS;
 
 	if (0 < i && i <= flag_aliases.size()) {
 		out = flag_aliases[i - 1];
 		return {};
 	}
-	return Flag_Parsing_Error::INVALID_NUMERIC_ALIAS;
+	return Parsing_Error_Code::INVALID_NUMERIC_ALIAS;
 }
 
-auto report_flag_parsing_error(Flag_Parsing_Error err, size_t line_num)
+auto report_parsing_error(Parsing_Error_Code err, size_t line_num)
 {
-	using Err = Flag_Parsing_Error;
+	using Err = Parsing_Error_Code;
 	switch (err) {
+	case Err::NO_FLAGS_AFTER_SLASH_WARNING:
+		cerr << "Nuspell warning: no flags after slash in line "
+		     << line_num << '\n';
+		break;
 	case Err::NONUTF8_FLAGS_ABOVE_127_WARNING:
 		cerr << "Nuspell warning: bytes above 127 in flags in UTF-8 "
 		        "file are treated as lone bytes for backward "
@@ -259,6 +265,10 @@ auto report_flag_parsing_error(Flag_Parsing_Error err, size_t line_num)
 		cerr << "Nuspell error: Flag alias is invalid in line"
 		     << line_num << '\n';
 		break;
+	case Err::AFX_CONDITION_INVALID_FORMAT:
+		cerr << "Nuspell error: Affix condition is invalid in line "
+		     << line_num << '\n';
+		break;
 	case Err::COMPOUND_RULE_INVALID_FORMAT:
 		cerr << "Nuspell error: Compound rule is in invalid format in "
 		        "line "
@@ -272,20 +282,23 @@ auto parse_flags_possible_alias(istream& in, size_t line_num, Flag_Type t,
                                 const vector<Flag_Set>& flag_aliases,
                                 u16string& out) -> istream&
 {
+	using Err = Parsing_Error_Code;
 	string s;
 	in >> s;
 	auto err = decode_flags_possible_alias(s, t, enc, flag_aliases, out);
-	if (static_cast<int>(err) > 0)
+	if (err == Err::MISSING_FLAGS)
+		err = Err::NO_FLAGS_AFTER_SLASH_WARNING;
+	else if (static_cast<int>(err) > 0)
 		in.setstate(in.failbit);
-	report_flag_parsing_error(err, line_num);
+	report_parsing_error(err, line_num);
 	return in;
 }
 
 auto decode_compound_rule(const string& s, Flag_Type t, const Encoding& enc,
-                          u16string& out) -> Flag_Parsing_Error
+                          u16string& out) -> Parsing_Error_Code
 {
 	using Ft = Flag_Type;
-	using Err = Flag_Parsing_Error;
+	using Err = Parsing_Error_Code;
 	switch (t) {
 	case Ft::SINGLE_CHAR:
 	case Ft::UTF8:
@@ -430,16 +443,12 @@ class Aff_Line_Stream : public std::istringstream {
 	auto virtual dummy_func() -> void;
 
       public:
-	Flag_Parsing_Error err = {};
+	Parsing_Error_Code err = {};
 
-	auto set_encoding(const Encoding& e)
-	{
-		cvt = Encoding_Converter(e.value_or_default());
-	}
 	auto set_aff_data(Aff_Data& a)
 	{
 		aff_data = &a;
-		set_encoding(a.encoding);
+		cvt = Encoding_Converter(a.encoding.value_or_default());
 	}
 
 	Aff_Line_Stream() = default;
@@ -455,8 +464,15 @@ class Aff_Line_Stream : public std::istringstream {
 	{
 		auto& in = *this;
 		in >> str_buf;
-		if (in)
-			enc = str_buf;
+		if (in.fail())
+			return in;
+		enc = str_buf;
+		cvt = Encoding_Converter(str_buf);
+		if (!cvt.valid()) {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("Invalif setting for encoding");
+		}
 		return in;
 	}
 
@@ -516,7 +532,6 @@ class Aff_Line_Stream : public std::istringstream {
 	auto& parse(std::u16string& flags)
 	{
 		auto& in = *this;
-		err = {};
 		in >> str_buf;
 		if (in.fail())
 			return in;
@@ -551,11 +566,12 @@ class Aff_Line_Stream : public std::istringstream {
 
 	auto& parse_word_slash_flags(wstring& word, Flag_Set& flags)
 	{
+		using Err = Parsing_Error_Code;
 		auto& in = *this;
-		err = {};
 		in >> str_buf;
 		if (in.fail())
 			return in;
+		// err = {};
 		auto slash_pos = str_buf.find('/');
 		if (slash_pos != str_buf.npos) {
 			auto flag_str =
@@ -564,6 +580,8 @@ class Aff_Line_Stream : public std::istringstream {
 			err = decode_flags_possible_alias(
 			    flag_str, aff_data->flag_type, aff_data->encoding,
 			    aff_data->flag_aliases, flag_buffer);
+			if (err == Err::MISSING_FLAGS)
+				err = Err::NO_FLAGS_AFTER_SLASH_WARNING;
 			flags = flag_buffer;
 		}
 		auto ok = cvt.to_wide(str_buf, word);
@@ -591,8 +609,18 @@ class Aff_Line_Stream : public std::istringstream {
 		auto& in = *this;
 		auto wstr = wstring();
 		in.parse(wstr);
-		if (in)
+		if (in.fail())
+			return in;
+		try {
 			cond = std::move(wstr);
+		}
+		catch (const Condition_Exception& ex) {
+			err = Parsing_Error_Code::AFX_CONDITION_INVALID_FORMAT;
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw failure("Condition error, " +
+				              string(ex.what()));
+		}
 		return in;
 	}
 
@@ -600,10 +628,10 @@ class Aff_Line_Stream : public std::istringstream {
 	    -> istream&
 	{
 		auto& in = *this;
-		err = {};
 		in >> str_buf;
 		if (in.fail())
 			return in;
+		// err = {};
 		auto slash_pos = str_buf.find('/');
 		if (slash_pos != str_buf.npos) {
 			auto flag_str =
@@ -726,28 +754,24 @@ auto parse_vector_of_T(Aff_Line_Stream& in, const string& command,
 	auto dat = counts.find(command);
 	if (dat == counts.end()) {
 		// first line
+		auto& cnt = counts[command]; // cnt == 0
 		size_t a;
 		in >> a;
-		if (in.fail()) {
-			a = 0; // err
+		if (in)
+			cnt = a;
+		else
 			cerr << "Nuspell error: a vector command (series of "
 			        "of similar commands) has no count. Ignoring "
-			        "all of them."
-			     << endl;
-		}
-		counts[command] = a;
+			        "all of them.\n";
 	}
 	else if (dat->second != 0) {
+		dat->second--;
 		vec.emplace_back();
 		in >> modifier_wrapper(vec.back());
-		if (in.fail()) {
-			vec.pop_back();
+		if (in.fail())
 			cerr << "Nuspell error: single entry of a vector "
 			        "command (series of "
-			        "of similar commands) is invalid"
-			     << endl;
-		}
-		dat->second--;
+			        "of similar commands) is invalid.\n";
 	}
 	else {
 		cerr << "Nuspell warning: extra entries of " << command << "\n";
@@ -761,10 +785,8 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
 {
 	char16_t f;
 	in >> f;
-	if (in.fail()) {
-		// err
+	if (in.fail())
 		return;
-	}
 	command.append(reinterpret_cast<char*>(&f), sizeof(f));
 	auto dat = cmd_affix.find(command);
 	// note: the current affix parser does not allow the same flag
@@ -773,14 +795,21 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
 	if (dat == cmd_affix.end()) {
 		char cross_char; // 'Y' or 'N'
 		size_t cnt;
+		auto& cross_and_cnt = cmd_affix[command]; // == false, 0
 		in >> cross_char >> cnt;
-		bool cross = cross_char == 'Y';
-		if (in.fail()) {
-			cnt = 0;
+		if (in.fail())
+			return;
+		if (cross_char != 'Y' && cross_char != 'N') {
+			in.setstate(in.failbit);
+			if (in.exceptions() & in.failbit)
+				throw istream::failure("Cross char invalid");
+			return;
 		}
-		cmd_affix[command] = make_pair(cross, cnt);
+		bool cross = cross_char == 'Y';
+		cross_and_cnt = {cross, cnt};
 	}
 	else if (dat->second.second) {
+		dat->second.second--;
 		vec.emplace_back();
 		auto& elem = vec.back();
 		elem.flag = f;
@@ -792,12 +821,7 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
 		if (elem.appending == L"0")
 			elem.appending.clear();
 		in >> elem.condition;
-		if (in.fail()) {
-			vec.pop_back();
-			return;
-		}
 		// in >> elem.morphological_fields;
-		dat->second.second--;
 	}
 	else {
 		cerr << "Nuspell warning: extra entries of "
@@ -815,18 +839,17 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
  */
 auto Aff_Data::parse_aff(istream& in) -> bool
 {
-	vector<Prefix<wchar_t>> prefixes;
-	vector<Suffix<wchar_t>> suffixes;
-	vector<wstring> break_patterns;
-	bool break_exists = false;
-	vector<pair<wstring, wstring>> input_conversion;
-	vector<pair<wstring, wstring>> output_conversion;
-	// vector<vector<string>> morphological_aliases;
-	vector<u16string> rules;
-	vector<pair<wstring, wstring>> replacements;
-	vector<wstring> map_related_chars;
-	vector<pair<wstring, wstring>> phonetic_replacements;
-	auto flags = u16string();
+	auto prefixes = vector<Prefix<wchar_t>>();
+	auto suffixes = vector<Suffix<wchar_t>>();
+	auto break_patterns = vector<wstring>();
+	auto break_exists = false;
+	auto input_conversion = vector<pair<wstring, wstring>>();
+	auto output_conversion = vector<pair<wstring, wstring>>();
+	// auto morphological_aliases = vector<vector<string>>();
+	auto rules = vector<u16string>();
+	auto replacements = vector<pair<wstring, wstring>>();
+	auto map_related_chars = vector<wstring>();
+	auto phonetic_replacements = vector<pair<wstring, wstring>>();
 
 	flag_type = Flag_Type::SINGLE_CHAR;
 
@@ -888,21 +911,21 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	    {"NEEDAFFIX", &need_affix_flag},
 	    {"SUBSTANDARD", &substandard_flag}};
 
-	// keeps count for each vector
+	// keeps count for each array-command
 	auto cmd_with_vec_cnt = unordered_map<string, size_t>();
 	auto cmd_affix = unordered_map<string, pair<bool, size_t>>();
 	auto line = string();
 	auto command = string();
-	size_t line_num = 0;
+	auto line_num = size_t(0);
 	auto ss = Aff_Line_Stream();
-	auto loc = locale::classic();
 	Setlocale_To_C_In_Scope setlocale_to_C;
+	auto error_happened = false;
 	// while parsing, the streams must have plain ascii locale without
 	// any special number separator otherwise istream >> int might fail
 	// due to thousands separator.
 	// "C" locale can be used assuming it is US-ASCII
-	in.imbue(loc);
-	ss.imbue(loc);
+	in.imbue(locale::classic());
+	ss.imbue(locale::classic());
 	ss.set_aff_data(*this);
 	strip_utf8_bom(in);
 	while (getline(in, line)) {
@@ -965,7 +988,6 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		else if (command == "SET") {
 			if (encoding.empty()) {
 				ss >> encoding;
-				ss.set_encoding(encoding);
 			}
 			else {
 				cerr << "Nuspell warning: "
@@ -983,7 +1005,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		}
 		else if (command == "AF") {
 			parse_vector_of_T(ss, command, cmd_with_vec_cnt,
-					  flag_aliases);
+			                  flag_aliases);
 		}
 		else if (command == "AM") {
 			// parse_vector_of_T(ss, command, cmd_with_vec_cnt,
@@ -991,7 +1013,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		}
 		else if (command == "BREAK") {
 			parse_vector_of_T(ss, command, cmd_with_vec_cnt,
-					  break_patterns);
+			                  break_patterns);
 			break_exists = true;
 		}
 		else if (command == "CHECKCOMPOUNDPATTERN") {
@@ -1012,10 +1034,17 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			ss >> wordchars;
 		}
 		if (ss.fail()) {
+			error_happened = true;
 			cerr
 			    << "Nuspell error: could not parse affix file line "
 			    << line_num << ": " << line << endl;
-			report_flag_parsing_error(ss.err, line_num);
+			report_parsing_error(ss.err, line_num);
+		}
+		else if (ss.err != Parsing_Error_Code::NO_ERROR) {
+			cerr
+			    << "Nuspell warning: while parsing affix file line "
+			    << line_num << ": " << line << endl;
+			report_parsing_error(ss.err, line_num);
 		}
 	}
 	// default BREAK definition
@@ -1045,7 +1074,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	}
 
 	cerr.flush();
-	return in.eof(); // success when eof is reached
+	return in.eof() && !error_happened; // true for success
 }
 
 /**
