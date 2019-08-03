@@ -23,80 +23,6 @@
 using namespace std;
 using namespace nuspell;
 
-TEST_CASE("Substr_Replacer", "[structures]")
-{
-	using Substring_Replacer = Substr_Replacer<char>;
-	auto rep = Substring_Replacer({{"aa", "bb"},
-	                               {"c", "d"},
-	                               {"ee", "f"},
-	                               {"g", "hh"},
-	                               {"ii  ", ""},
-	                               {"jj kk", "ll"},
-	                               {"", "mm"},
-	                               {" nn", ""}});
-	CHECK(rep.replace_copy("aa XYZ c ee g ii jj kk nn") ==
-	      "bb XYZ d f hh ii ll");
-}
-
-// TODO add a third TEXT_CASE for twofold suffix stripping
-
-TEST_CASE("Prefix", "[structures]")
-{
-	auto pfx_tests = Prefix<char>(u'U', true, "", "un", {}, "wr.");
-	auto word = string("unwry");
-	CHECK("wry" == pfx_tests.to_root(word));
-	CHECK("wry" == word);
-
-	word = string("unwry");
-	CHECK("wry" == pfx_tests.to_root_copy(word));
-	CHECK("unwry" == word);
-
-	word = string("wry");
-	CHECK("unwry" == pfx_tests.to_derived(word));
-	CHECK("unwry" == word);
-
-	word = string("wry");
-	CHECK("unwry" == pfx_tests.to_derived_copy(word));
-	CHECK("wry" == word);
-
-	CHECK(true == pfx_tests.check_condition("wry"));
-	CHECK(false == pfx_tests.check_condition("unwry"));
-}
-
-TEST_CASE("Suffix", "[structures]")
-{
-	auto sfx_tests = Suffix<char>(u'T', true, "y", "ies", {}, ".[^aeiou]y");
-	auto sfx_sk_SK =
-	    Suffix<char>(u'Z', true, "ata", "át", {}, "[^áéíóúý].[^iš]ata");
-	auto sfx_pt_PT = Suffix<char>(u'X', true, "er", "a", {}, "[^cug^-]er");
-	// TODO See above regarding "0"
-	auto sfx_gd_GB = Suffix<char>(u'K', true, "", "-san", {}, "[^-]");
-	auto sfx_ar = Suffix<char>(u'a', true, "ه", "ي", {}, "[^ءؤأ]ه");
-	auto sfx_ko =
-	    Suffix<char>(24, true, "ᅬ다", " ᅫᆻ어", {},
-	                 "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다");
-
-	auto word = string("wries");
-	CHECK("wry" == sfx_tests.to_root(word));
-	CHECK("wry" == word);
-
-	word = string("wries");
-	CHECK("wry" == sfx_tests.to_root_copy(word));
-	CHECK("wries" == word);
-
-	word = string("wry");
-	CHECK("wries" == sfx_tests.to_derived(word));
-	CHECK("wries" == word);
-
-	word = string("wry");
-	CHECK("wries" == sfx_tests.to_derived_copy(word));
-	CHECK("wry" == word);
-
-	CHECK(true == sfx_tests.check_condition("wry"));
-	CHECK(false == sfx_tests.check_condition("ey"));
-	CHECK(false == sfx_tests.check_condition("wries"));
-}
-
 TEST_CASE("String_Set::String_Set", "[structures]")
 {
 	auto ss1 = String_Set<char16_t>();
@@ -243,6 +169,21 @@ TEST_CASE("String_Set comparison", "[structures]")
 	CHECK(0 == ss3.count('z'));
 }
 
+TEST_CASE("Substr_Replacer", "[structures]")
+{
+	using Substring_Replacer = Substr_Replacer<char>;
+	auto rep = Substring_Replacer({{"aa", "bb"},
+	                               {"c", "d"},
+	                               {"ee", "f"},
+	                               {"g", "hh"},
+	                               {"ii  ", ""},
+	                               {"jj kk", "ll"},
+	                               {"", "mm"},
+	                               {" nn", ""}});
+	CHECK(rep.replace_copy("aa XYZ c ee g ii jj kk nn") ==
+	      "bb XYZ d f hh ii ll");
+}
+
 TEST_CASE("Break_Table", "[structures]")
 {
 	auto a = Break_Table<char>();
@@ -253,6 +194,287 @@ TEST_CASE("Break_Table", "[structures]")
 	auto e = Break_Table<char>();
 	e = {"-", "--"};
 	a = d;
+}
+
+TEST_CASE("Condition<char> 1", "[structures]")
+{
+	auto c1 = Condition<char>("");
+	CHECK(true == c1.match(""));
+	CHECK(false == c1.match("a"));
+
+	auto c2 = Condition<char>("a");
+	CHECK(false == c2.match(""));
+	CHECK(true == c2.match("a"));
+	CHECK(false == c2.match("aa"));
+	CHECK(false == c2.match("ab"));
+	CHECK(false == c2.match("aba"));
+	CHECK(false == c2.match("b"));
+	CHECK(false == c2.match("ba"));
+	CHECK(false == c2.match("bab"));
+
+	CHECK(false == c2.match_prefix(""));
+	CHECK(true == c2.match_prefix("a"));
+	CHECK(true == c2.match_prefix("aa"));
+	CHECK(true == c2.match_prefix("ab"));
+	CHECK(true == c2.match_prefix("aba"));
+	CHECK(false == c2.match_prefix("b"));
+	CHECK(false == c2.match_prefix("ba"));
+	CHECK(false == c2.match_prefix("bab"));
+
+	CHECK(false == c2.match_suffix(""));
+	CHECK(true == c2.match_suffix("a"));
+	CHECK(true == c2.match_suffix("aa"));
+	CHECK(false == c2.match_suffix("ab"));
+	CHECK(true == c2.match_suffix("aba"));
+	CHECK(false == c2.match_suffix("b"));
+	CHECK(true == c2.match_suffix("ba"));
+	CHECK(false == c2.match_suffix("bab"));
+
+	auto c3 = Condition<char>("ba");
+	CHECK(false == c3.match(""));
+	CHECK(false == c3.match("b"));
+	CHECK(true == c3.match("ba"));
+	CHECK(false == c3.match("bab"));
+	CHECK(false == c3.match("a"));
+	CHECK(false == c3.match("aa"));
+	CHECK(false == c3.match("ab"));
+	CHECK(false == c3.match("aba"));
+
+	CHECK(false == c3.match_prefix(""));
+	CHECK(false == c3.match_prefix("b"));
+	CHECK(true == c3.match_prefix("ba"));
+	CHECK(true == c3.match_prefix("bab"));
+	CHECK(false == c3.match_prefix("a"));
+	CHECK(false == c3.match_prefix("aa"));
+	CHECK(false == c3.match_prefix("ab"));
+	CHECK(false == c3.match_prefix("aba"));
+
+	CHECK(false == c3.match_suffix(""));
+	CHECK(false == c3.match_suffix("b"));
+	CHECK(true == c3.match_suffix("ba"));
+	CHECK(false == c3.match_suffix("bab"));
+	CHECK(false == c3.match_suffix("a"));
+	CHECK(false == c3.match_suffix("aa"));
+	CHECK(false == c3.match_suffix("ab"));
+	CHECK(true == c3.match_suffix("aba"));
+
+	CHECK_NOTHROW(c3.match("a"));
+	CHECK_THROWS_AS(c3.match("a", 100), std::out_of_range);
+	CHECK_THROWS_WITH(c3.match("a", 100),
+	                  "position on the string is out of bounds");
+}
+
+TEST_CASE("Condition<wchar_t> with wildcards", "[structures]")
+{
+	auto c1 = Condition<wchar_t>(L".");
+	CHECK(false == c1.match_prefix(L""));
+	CHECK(true == c1.match_prefix(L"a"));
+	CHECK(true == c1.match_prefix(L"b"));
+	CHECK(true == c1.match_prefix(L"aa"));
+	CHECK(true == c1.match_prefix(L"ab"));
+	CHECK(true == c1.match_prefix(L"ba"));
+	CHECK(true == c1.match_prefix(L"bab"));
+	CHECK(true == c1.match_prefix(L"aba"));
+
+	auto c2 = Condition<wchar_t>(L"..");
+	CHECK(false == c2.match_prefix(L""));
+	CHECK(false == c2.match_prefix(L"a"));
+	CHECK(false == c2.match_prefix(L"b"));
+	CHECK(true == c2.match_prefix(L"aa"));
+	CHECK(true == c2.match_prefix(L"ab"));
+	CHECK(true == c2.match_prefix(L"ba"));
+	CHECK(true == c2.match_prefix(L"bab"));
+	CHECK(true == c2.match_prefix(L"aba"));
+}
+
+TEST_CASE("Condition<wchar_t> exceptions", "[structures]")
+{
+	auto cond1 = L"]";
+	CHECK_THROWS_AS(Condition<wchar_t>(cond1), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond1),
+	                  "closing bracket has no matching opening bracket");
+
+	auto cond2 = L"ab]";
+	CHECK_THROWS_AS(Condition<wchar_t>(cond2), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond2),
+	                  "closing bracket has no matching opening bracket");
+
+	auto cond3 = L"[ab";
+	CHECK_THROWS_AS(Condition<wchar_t>(cond3), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond3),
+	                  "opening bracket has no matching closing bracket");
+
+	auto cond4 = L"[";
+	CHECK_THROWS_AS(Condition<wchar_t>(cond4), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond4),
+	                  "opening bracket has no matching closing bracket");
+
+	auto cond5 = L"[]";
+	CHECK_THROWS_AS(Condition<wchar_t>(cond5), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond5),
+	                  "empty bracket expression");
+
+	auto cond6 = L"[^]";
+	CHECK_THROWS_AS(Condition<wchar_t>(cond6), Condition_Exception);
+	CHECK_THROWS_WITH(Condition<wchar_t>(cond6),
+	                  "empty bracket expression");
+}
+
+TEST_CASE("Condition<char> 2", "[structures]")
+{
+	auto c1 = Condition<char>("[ab]");
+	CHECK(true == c1.match("a"));
+	CHECK(true == c1.match("b"));
+	CHECK(false == c1.match("c"));
+
+	auto c2 = Condition<char>("[^ab]");
+	CHECK(false == c2.match("a"));
+	CHECK(false == c2.match("b"));
+	CHECK(true == c2.match("c"));
+
+	// not default regex behaviour for hyphen
+	auto c3 = Condition<char>("[a-c]");
+	CHECK(true == c3.match("a"));
+	CHECK(true == c3.match("-"));
+	CHECK(true == c3.match("c"));
+	CHECK(false == c3.match("b"));
+
+	// not default regex behaviour for hyphen
+	auto c4 = Condition<char>("[^a-c]");
+	CHECK(false == c4.match("a"));
+	CHECK(false == c4.match("-"));
+	CHECK(false == c4.match("c"));
+	CHECK(true == c4.match("b"));
+}
+
+TEST_CASE("Condition<wchar_t> unicode", "[structures]")
+{
+	auto c1 = Condition<wchar_t>(L"áåĳßøæ");
+	CHECK(true == c1.match(L"áåĳßøæ"));
+	CHECK(false == c1.match(L"ñ"));
+}
+
+TEST_CASE("Condition<wchar_t> real-life examples", "[structures]")
+{
+	// found 2 times in affix files
+	auto c1 = Condition<wchar_t>(L"[áéiíóőuúüűy-àùø]");
+	CHECK(true == c1.match(L"á"));
+	CHECK(true == c1.match(L"é"));
+	CHECK(true == c1.match(L"i"));
+	CHECK(true == c1.match(L"í"));
+	CHECK(true == c1.match(L"ó"));
+	CHECK(true == c1.match(L"ő"));
+	CHECK(true == c1.match(L"u"));
+	CHECK(true == c1.match(L"ú"));
+	CHECK(true == c1.match(L"ü"));
+	CHECK(true == c1.match(L"ű"));
+	CHECK(true == c1.match(L"y"));
+	CHECK(true == c1.match(L"-"));
+	CHECK(true == c1.match(L"à"));
+	CHECK(true == c1.match(L"ù"));
+	CHECK(true == c1.match(L"ø"));
+	CHECK(false == c1.match(L"ñ"));
+
+	// found 850 times in affix files
+	auto c2 = Condition<wchar_t>(L"[cghjmsxyvzbdfklnprt-]");
+	CHECK(true == c2.match(L"c"));
+	CHECK(true == c2.match(L"-"));
+	CHECK(false == c2.match(L"ñ"));
+
+	// found 744 times in affix files
+	auto c3 = Condition<wchar_t>(L"[áéiíóőuúüűy-àùø]");
+	CHECK(true == c3.match(L"ő"));
+	CHECK(true == c3.match(L"-"));
+	CHECK(false == c3.match(L"ñ"));
+
+	// found 8 times in affix files
+	auto c4 = Condition<wchar_t>(L"[^-]");
+	CHECK(true == c4.match(L"a"));
+	CHECK(true == c4.match(L"b"));
+	CHECK(true == c4.match(L"^"));
+	CHECK(false == c4.match(L"-"));
+
+	// found 4 times in affix files
+	auto c5 = Condition<wchar_t>(L"[^cts]Z-");
+	CHECK(true == c5.match(L"aZ-"));
+	CHECK(false == c5.match(L"cZ-"));
+	CHECK(false == c5.match(L"Z-"));
+
+	// found 2 times in affix files
+	auto c6 = Condition<wchar_t>(L"[^cug^-]er");
+	CHECK(false == c6.match(L"^er"));
+	CHECK(true == c6.match(L"_er"));
+
+	// found 74 times in affix files
+	auto c7 = Condition<wchar_t>(L"[^дж]ерти");
+	CHECK(true == c7.match(L"рерти"));
+	CHECK(true == c7.match_prefix(L"рерти123"));
+	CHECK(true == c7.match_suffix(L"123рерти"));
+
+	CHECK(false == c7.match(L"ерти"));
+
+	CHECK(false == c7.match(L"дерти"));
+	CHECK(false == c7.match_prefix(L"дерти123"));
+	CHECK(false == c7.match_suffix(L"123дерти"));
+
+	CHECK(false == c7.match(L"жерти"));
+}
+
+TEST_CASE("Prefix", "[structures]")
+{
+	auto pfx_tests = Prefix<char>(u'U', true, "", "un", {}, "wr.");
+	auto word = string("unwry");
+	CHECK("wry" == pfx_tests.to_root(word));
+	CHECK("wry" == word);
+
+	word = string("unwry");
+	CHECK("wry" == pfx_tests.to_root_copy(word));
+	CHECK("unwry" == word);
+
+	word = string("wry");
+	CHECK("unwry" == pfx_tests.to_derived(word));
+	CHECK("unwry" == word);
+
+	word = string("wry");
+	CHECK("unwry" == pfx_tests.to_derived_copy(word));
+	CHECK("wry" == word);
+
+	CHECK(true == pfx_tests.check_condition("wry"));
+	CHECK(false == pfx_tests.check_condition("unwry"));
+}
+
+TEST_CASE("Suffix", "[structures]")
+{
+	auto sfx_tests = Suffix<char>(u'T', true, "y", "ies", {}, ".[^aeiou]y");
+	auto sfx_sk_SK =
+	    Suffix<char>(u'Z', true, "ata", "át", {}, "[^áéíóúý].[^iš]ata");
+	auto sfx_pt_PT = Suffix<char>(u'X', true, "er", "a", {}, "[^cug^-]er");
+	// TODO See above regarding "0"
+	auto sfx_gd_GB = Suffix<char>(u'K', true, "", "-san", {}, "[^-]");
+	auto sfx_ar = Suffix<char>(u'a', true, "ه", "ي", {}, "[^ءؤأ]ه");
+	auto sfx_ko =
+	    Suffix<char>(24, true, "ᅬ다", " ᅫᆻ어", {},
+	                 "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다");
+
+	auto word = string("wries");
+	CHECK("wry" == sfx_tests.to_root(word));
+	CHECK("wry" == word);
+
+	word = string("wries");
+	CHECK("wry" == sfx_tests.to_root_copy(word));
+	CHECK("wries" == word);
+
+	word = string("wry");
+	CHECK("wries" == sfx_tests.to_derived(word));
+	CHECK("wries" == word);
+
+	word = string("wry");
+	CHECK("wries" == sfx_tests.to_derived_copy(word));
+	CHECK("wry" == word);
+
+	CHECK(true == sfx_tests.check_condition("wry"));
+	CHECK(false == sfx_tests.check_condition("ey"));
+	CHECK(false == sfx_tests.check_condition("wries"));
 }
 
 TEST_CASE("String_Pair", "[structures]")
@@ -291,6 +513,63 @@ TEST_CASE("String_Pair", "[structures]")
 	CHECK_THROWS_AS(String_Pair<char>("6789", 5), std::out_of_range);
 	CHECK_THROWS_WITH(String_Pair<char>("6789", 5),
 	                  "word split is too long");
+}
+
+TEST_CASE("List_Strings", "[structures]")
+{
+	auto l = List_Strings();
+	CHECK(l.size() == 0);
+	CHECK(begin(l) == end(l));
+	l.push_back("1");
+	l.push_back("2");
+	l.push_back("3");
+	CHECK(l.size() == 3);
+	CHECK(begin(l) + 3 == end(l));
+	CHECK(l[0] == "1");
+	CHECK(l[1] == "2");
+	CHECK(l[2] == "3");
+
+	l.insert(begin(l) + 1, {"qwe", "asd"});
+	CHECK(l.size() == 5);
+	CHECK(begin(l) + 5 == end(l));
+	CHECK(l[0] == "1");
+	CHECK(l[1] == "qwe");
+	CHECK(l[2] == "asd");
+	CHECK(l[3] == "2");
+	CHECK(l[4] == "3");
+
+	l.erase(begin(l) + 3);
+	CHECK(l.size() == 4);
+	CHECK(begin(l) + 4 == end(l));
+	CHECK(l[0] == "1");
+	CHECK(l[1] == "qwe");
+	CHECK(l[2] == "asd");
+	CHECK(l[3] == "3");
+
+	l.clear();
+	CHECK(l.size() == 0);
+	CHECK(begin(l) == end(l));
+}
+
+TEST_CASE("Similarity_Group", "[structures]")
+{
+	auto s1 = Similarity_Group<char>();
+	s1.parse("a(bb)");
+	s1.parse("c(dd"); // non-regular
+	s1.parse("e(f)");
+	s1.parse(")"); // non-regular
+	auto s2 = Similarity_Group<char>();
+	s2 = "(bb)a";
+	s2 = "c(dd"; // non-regular
+	s2 = "e";
+	s2 = "f)"; // non-regular
+	CHECK(s2.strings == s1.strings);
+	CHECK(s2.chars == s1.chars);
+	auto exp = string("acef)");
+	CHECK(exp == s1.chars);
+	auto v = vector<string>();
+	v.push_back("bb");
+	CHECK(v == s1.strings);
 }
 
 TEST_CASE("Phonetic_Table", "[structures]")
@@ -341,61 +620,4 @@ TEST_CASE("Phonetic_Table", "[structures]")
 	CHECK(exp == word);
 	CHECK(false == f5.replace(word));
 	CHECK(exp == word);
-}
-
-TEST_CASE("Similarity_Group", "[structures]")
-{
-	auto s1 = Similarity_Group<char>();
-	s1.parse("a(bb)");
-	s1.parse("c(dd"); // non-regular
-	s1.parse("e(f)");
-	s1.parse(")"); // non-regular
-	auto s2 = Similarity_Group<char>();
-	s2 = "(bb)a";
-	s2 = "c(dd"; // non-regular
-	s2 = "e";
-	s2 = "f)"; // non-regular
-	CHECK(s2.strings == s1.strings);
-	CHECK(s2.chars == s1.chars);
-	auto exp = string("acef)");
-	CHECK(exp == s1.chars);
-	auto v = vector<string>();
-	v.push_back("bb");
-	CHECK(v == s1.strings);
-}
-
-TEST_CASE("List_Strings", "[structures]")
-{
-	auto l = List_Strings();
-	CHECK(l.size() == 0);
-	CHECK(begin(l) == end(l));
-	l.push_back("1");
-	l.push_back("2");
-	l.push_back("3");
-	CHECK(l.size() == 3);
-	CHECK(begin(l) + 3 == end(l));
-	CHECK(l[0] == "1");
-	CHECK(l[1] == "2");
-	CHECK(l[2] == "3");
-
-	l.insert(begin(l) + 1, {"qwe", "asd"});
-	CHECK(l.size() == 5);
-	CHECK(begin(l) + 5 == end(l));
-	CHECK(l[0] == "1");
-	CHECK(l[1] == "qwe");
-	CHECK(l[2] == "asd");
-	CHECK(l[3] == "2");
-	CHECK(l[4] == "3");
-
-	l.erase(begin(l) + 3);
-	CHECK(l.size() == 4);
-	CHECK(begin(l) + 4 == end(l));
-	CHECK(l[0] == "1");
-	CHECK(l[1] == "qwe");
-	CHECK(l[2] == "asd");
-	CHECK(l[3] == "3");
-
-	l.clear();
-	CHECK(l.size() == 0);
-	CHECK(begin(l) == end(l));
 }

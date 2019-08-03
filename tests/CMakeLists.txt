@@ -1,6 +1,5 @@
 add_executable(unit_test
     aff_data_test.cxx
-    condition_test.cxx
     dictionary_test.cxx
     locale_utils_test.cxx
     string_utils_test.cxx
