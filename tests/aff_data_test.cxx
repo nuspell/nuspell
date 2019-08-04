@@ -132,3 +132,33 @@ BREAK ^-
 	cerr.rdbuf(old);
 }
 #endif
+
+TEST_CASE("Aff_Data::parse() utf8 long flag warning")
+{
+	auto cerr_buf = stringbuf();
+	auto old = cerr.rdbuf(&cerr_buf);
+
+	auto str = R"(
+SET UTF-8
+TRY անմիողտեըցկչյԱՆՄԻՈՂՏԵԸՑԿՉՅ
+FLAG long
+
+SFX AB Y 1
+SFX AB 	0	ից	.
+
+SFX DE Y 1
+SFX DE 	0	իգ	.
+
+SFX խխ Y 1
+SFX խխ 	0	ագ	.
+)";
+	auto in = istringstream(str);
+	CHECK(Aff_Data().parse_aff(in));
+
+	auto warn_str = cerr_buf.str();
+	using namespace Catch::Matchers;
+	CHECK_THAT(warn_str,
+	           StartsWith("Nuspell warning") && !Contains("error"));
+
+	cerr.rdbuf(old);
+}
