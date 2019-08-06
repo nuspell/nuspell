@@ -27,6 +27,13 @@
 #include <locale>
 #include <string>
 
+#include <clocale>
+
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) ||               \
+                         (defined(__APPLE__) && defined(__MACH__)))
+#include <unistd.h>
+#endif
+
 #include <boost/container/small_vector.hpp>
 #include <unicode/locid.h>
 
@@ -88,50 +95,6 @@ auto classify_casing(const std::wstring& s) -> Casing;
 auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i)
     -> bool;
 
-class Encoding {
-	std::string name;
-
-	auto normalize_name() -> void;
-
-      public:
-	enum Enc_Type { SINGLEBYTE = false, UTF8 = true };
-
-	Encoding() = default;
-	Encoding(const std::string& e) : name(e) { normalize_name(); }
-	Encoding(std::string&& e) : name(move(e)) { normalize_name(); }
-	Encoding(const char* e) : name(e) { normalize_name(); }
-	auto& operator=(const std::string& e)
-	{
-		name = e;
-		normalize_name();
-		return *this;
-	}
-	auto& operator=(std::string&& e)
-	{
-		name = move(e);
-		normalize_name();
-		return *this;
-	}
-	auto& operator=(const char* e)
-	{
-		name = e;
-		normalize_name();
-		return *this;
-	}
-	auto empty() const { return name.empty(); }
-	operator const std::string&() const { return name; }
-	auto& value() const { return name; }
-	auto is_utf8() const { return name == "UTF-8"; }
-	auto value_or_default() const -> std::string
-	{
-		if (name.empty())
-			return "ISO8859-1";
-		else
-			return name;
-	}
-	operator Enc_Type() const { return is_utf8() ? UTF8 : SINGLEBYTE; }
-};
-
 class Encoding_Converter {
 	UConverter* cnv = nullptr;
 
@@ -159,5 +122,55 @@ class Encoding_Converter {
 	auto to_wide(const std::string& in) -> std::wstring;
 	auto valid() -> bool { return cnv != nullptr; }
 };
+
+//#if _POSIX_VERSION >= 200809L
+#ifdef _POSIX_VERSION
+class Setlocale_To_C_In_Scope {
+	locale_t old_loc = nullptr;
+
+      public:
+	Setlocale_To_C_In_Scope()
+	    : old_loc{uselocale(newlocale(0, "C", nullptr))}
+	{
+	}
+	~Setlocale_To_C_In_Scope()
+	{
+		auto new_loc = uselocale(old_loc);
+		if (new_loc != old_loc)
+			freelocale(new_loc);
+	}
+	Setlocale_To_C_In_Scope(const Setlocale_To_C_In_Scope&) = delete;
+};
+#else
+class Setlocale_To_C_In_Scope {
+	std::string old_name;
+#ifdef _WIN32
+	int old_per_thread;
+#endif
+      public:
+	Setlocale_To_C_In_Scope() : old_name(setlocale(LC_ALL, nullptr))
+	{
+#ifdef _WIN32
+		old_per_thread = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+#endif
+		auto x = setlocale(LC_ALL, "C");
+		if (!x)
+			old_name.clear();
+	}
+	~Setlocale_To_C_In_Scope()
+	{
+#ifdef _WIN32
+		_configthreadlocale(old_per_thread);
+		if (old_per_thread == _ENABLE_PER_THREAD_LOCALE)
+#endif
+		{
+			if (!old_name.empty())
+				setlocale(LC_ALL, old_name.c_str());
+		}
+	}
+	Setlocale_To_C_In_Scope(const Setlocale_To_C_In_Scope&) = delete;
+};
+#endif
+
 } // namespace nuspell
 #endif // NUSPELL_LOCALE_UTILS_HXX

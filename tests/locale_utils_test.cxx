@@ -343,24 +343,3 @@ TEST_CASE("to_title", "[locale_utils]")
 	CHECK(L"Ĳsselmeer" == to_title(L"Ĳsselmeer", l));
 	CHECK(L"Ĳsselmeer" == to_title(L"ĲSSELMEER", l));
 }
-
-TEST_CASE("Encoding", "[locale_utils]")
-{
-	auto e = Encoding();
-	auto v = e.value_or_default();
-	auto i = e.is_utf8();
-	CHECK("ISO8859-1" == v);
-	CHECK(false == i);
-
-	e = Encoding("UTF8");
-	v = e.value();
-	i = e.is_utf8();
-	CHECK("UTF-8" == v);
-	CHECK(true == i);
-
-	e = "MICROSOFT-CP1251";
-	v = e.value();
-	i = e.is_utf8();
-	CHECK("CP1251" == v);
-	CHECK(false == i);
-}

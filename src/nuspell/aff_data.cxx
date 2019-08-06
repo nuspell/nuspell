@@ -17,19 +17,13 @@
  */
 
 #include "aff_data.hxx"
+#include "locale_utils.hxx"
 #include "string_utils.hxx"
 
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
-
-#include <clocale>
-
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) ||               \
-                         (defined(__APPLE__) && defined(__MACH__)))
-#include <unistd.h>
-#endif
 
 #include <boost/algorithm/string/case_conv.hpp>
 
@@ -77,6 +71,15 @@
 namespace nuspell {
 
 using namespace std;
+
+auto Encoding::normalize_name() -> void
+{
+	boost::algorithm::to_upper(name, locale::classic());
+	if (name == "UTF8")
+		name = "UTF-8";
+	else if (name.compare(0, 10, "MICROSOFT-") == 0)
+		name.erase(0, 10);
+}
 
 auto Word_List::equal_range(const std::wstring& word) const
     -> std::pair<Word_List_Base::local_const_iterator,
@@ -375,55 +378,6 @@ auto strip_utf8_bom(std::istream& in) -> void
 		in.putback(bom[i]);
 }
 
-//#if _POSIX_VERSION >= 200809L
-#ifdef _POSIX_VERSION
-class Setlocale_To_C_In_Scope {
-	locale_t old_loc = nullptr;
-
-      public:
-	Setlocale_To_C_In_Scope()
-	    : old_loc{uselocale(newlocale(0, "C", nullptr))}
-	{
-	}
-	~Setlocale_To_C_In_Scope()
-	{
-		auto new_loc = uselocale(old_loc);
-		if (new_loc != old_loc)
-			freelocale(new_loc);
-	}
-	Setlocale_To_C_In_Scope(const Setlocale_To_C_In_Scope&) = delete;
-};
-#else
-class Setlocale_To_C_In_Scope {
-	std::string old_name;
-#ifdef _WIN32
-	int old_per_thread;
-#endif
-      public:
-	Setlocale_To_C_In_Scope() : old_name(setlocale(LC_ALL, nullptr))
-	{
-#ifdef _WIN32
-		old_per_thread = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-#endif
-		auto x = setlocale(LC_ALL, "C");
-		if (!x)
-			old_name.clear();
-	}
-	~Setlocale_To_C_In_Scope()
-	{
-#ifdef _WIN32
-		_configthreadlocale(old_per_thread);
-		if (old_per_thread == _ENABLE_PER_THREAD_LOCALE)
-#endif
-		{
-			if (!old_name.empty())
-				setlocale(LC_ALL, old_name.c_str());
-		}
-	}
-	Setlocale_To_C_In_Scope(const Setlocale_To_C_In_Scope&) = delete;
-};
-#endif
-
 struct Compound_Rule_Ref_Wrapper {
 	std::u16string& rule;
 };
@@ -467,7 +421,7 @@ class Aff_Line_Stream : public std::istringstream {
 		if (in.fail())
 			return in;
 		enc = str_buf;
-		cvt = Encoding_Converter(str_buf);
+		cvt = Encoding_Converter(enc.value_or_default());
 		if (!cvt.valid()) {
 			in.setstate(in.failbit);
 			if (in.exceptions() & in.failbit)

@@ -24,12 +24,56 @@
 #ifndef NUSPELL_AFF_DATA_HXX
 #define NUSPELL_AFF_DATA_HXX
 
-#include "locale_utils.hxx"
 #include "structures.hxx"
 
 #include <iosfwd>
+#include <unicode/locid.h>
 
 namespace nuspell {
+
+class Encoding {
+	std::string name;
+
+	auto normalize_name() -> void;
+
+      public:
+	enum Enc_Type { SINGLEBYTE = false, UTF8 = true };
+
+	Encoding() = default;
+	Encoding(const std::string& e) : name(e) { normalize_name(); }
+	Encoding(std::string&& e) : name(move(e)) { normalize_name(); }
+	Encoding(const char* e) : name(e) { normalize_name(); }
+	auto& operator=(const std::string& e)
+	{
+		name = e;
+		normalize_name();
+		return *this;
+	}
+	auto& operator=(std::string&& e)
+	{
+		name = move(e);
+		normalize_name();
+		return *this;
+	}
+	auto& operator=(const char* e)
+	{
+		name = e;
+		normalize_name();
+		return *this;
+	}
+	auto empty() const { return name.empty(); }
+	operator const std::string&() const { return name; }
+	auto& value() const { return name; }
+	auto is_utf8() const { return name == "UTF-8"; }
+	auto value_or_default() const -> std::string
+	{
+		if (name.empty())
+			return "ISO8859-1";
+		else
+			return name;
+	}
+	operator Enc_Type() const { return is_utf8() ? UTF8 : SINGLEBYTE; }
+};
 
 enum class Flag_Type {
 	SINGLE_CHAR /**< single-character flag, e.g. for "a" */,

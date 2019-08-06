@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <limits>
 
-#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/locale/utf8_codecvt.hpp>
 
 #include <unicode/uchar.h>
@@ -473,15 +472,6 @@ auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i)
 	else if (u_isupper(word[i - 1]) && u_isalpha(word[i]))
 		return true;
 	return false;
-}
-
-auto Encoding::normalize_name() -> void
-{
-	boost::algorithm::to_upper(name, locale::classic());
-	if (name == "UTF8")
-		name = "UTF-8";
-	else if (name.compare(0, 10, "MICROSOFT-") == 0)
-		name.erase(0, 10);
 }
 
 Encoding_Converter::Encoding_Converter(const char* enc)

@@ -25,6 +25,24 @@
 using namespace std;
 using namespace nuspell;
 
+TEST_CASE("class Encoding")
+{
+	auto e = Encoding();
+	CHECK("" == e.value());
+	CHECK("ISO8859-1" == e.value_or_default());
+	CHECK_FALSE(e.is_utf8());
+
+	e = Encoding("uTF8");
+	CHECK("UTF-8" == e.value());
+	CHECK("UTF-8" == e.value_or_default());
+	CHECK(e.is_utf8());
+
+	e = "MICROSOFT-CP1251";
+	CHECK("CP1251" == e.value());
+	CHECK("CP1251" == e.value_or_default());
+	CHECK_FALSE(e.is_utf8());
+}
+
 TEST_CASE("Aff_Data::parse() error 1")
 {
 	auto cerr_buf = stringbuf();

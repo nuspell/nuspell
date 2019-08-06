@@ -18,6 +18,7 @@
 
 #include "dictionary.hxx"
 #include "finder.hxx"
+#include "locale_utils.hxx"
 #include "string_utils.hxx"
 
 #include <fstream>
