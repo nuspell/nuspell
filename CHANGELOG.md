@@ -6,6 +6,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2019-08-08
+### Added
+- Support for macOS
+- Support for building with MSVC on Windows
+- Support for building with pre-installed Catch 2
+- Continuous integration/testing for all three major operating systems
+- In the CLI tool, Unicode text segmentation now can be combined with all modes.
+
+### Changed
+- In Cmake the exported target has namespace, e.g. Nuspell::nuspell
+
+### Fixed
+- Building from a tarball. Previously only a git clone worked.
+- Small internal fixes in Unicode transformations on Windows (because wchar_t
+  is 16 bits there).
+- Major improvements in aff parser brings better error handling.
+
 ## [2.2.0] - 2019-03-19
 ### Added
 - Added build System CMake. Supports building as shared library.
@@ -30,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Support compiling with GCC 5. Previously GCC 7 was needed.
-- Faster dictionary loading and better internal error handing when parsing a
+- Faster dictionary loading and better internal error handling when parsing a
   dictionary file.
 - Faster spellchecking as a consequence of faster case classification, which
   in turn, is a consequence of all string being Unicode and directly using ICU.
@@ -49,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
+[2.3.0]: https://github.com/nuspell/nuspell/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/nuspell/nuspell/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/nuspell/nuspell/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/nuspell/nuspell/compare/v1.6.2...v2.0.0
