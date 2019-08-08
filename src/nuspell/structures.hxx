@@ -298,14 +298,14 @@ template <class CharT>
 class Substr_Replacer {
       public:
 	using StrT = std::basic_string<CharT>;
-	using StrViewT = my_string_view<CharT>;
+	using StrViewT = std::basic_string_view<CharT>;
 	using Pair_StrT = std::pair<StrT, StrT>;
 	using Table_Pairs = std::vector<Pair_StrT>;
 
       private:
 	Table_Pairs table;
 	auto sort_uniq() -> void; // implemented in cxx
-	auto find_match(my_string_view<CharT> s) const;
+	auto find_match(StrViewT s) const;
 
       public:
 	Substr_Replacer() = default;
@@ -356,7 +356,7 @@ auto Substr_Replacer<CharT>::sort_uniq() -> void
 }
 
 template <class CharT>
-auto Substr_Replacer<CharT>::find_match(my_string_view<CharT> s) const
+auto Substr_Replacer<CharT>::find_match(StrViewT s) const
 {
 	auto& t = table;
 	struct Comparer_Str_Rep {
@@ -409,7 +409,7 @@ auto Substr_Replacer<CharT>::replace(StrT& s) const -> StrT&
 	if (table.empty())
 		return s;
 	for (size_t i = 0; i < s.size(); /*no increment here*/) {
-		auto substr = my_string_view<CharT>(&s[i], s.size() - i);
+		auto substr = StrViewT(&s[i], s.size() - i);
 		auto it = find_match(substr);
 		if (it != end(table)) {
 			auto& match = *it;
@@ -957,7 +957,7 @@ struct Extractor_Of_Appending_From_Affix {
 
 template <class CharT, class AffixT>
 using Affix_Table_Base =
-    Hash_Multiset<AffixT, my_string_view<CharT>,
+    Hash_Multiset<AffixT, std::basic_string_view<CharT>,
                   Extractor_Of_Appending_From_Affix<AffixT>>;
 
 template <class CharT, class AffixT>
@@ -975,7 +975,7 @@ class Affix_Table : private Affix_Table_Base<CharT, AffixT> {
 		all_cont_flags += it->cont_flags;
 		return it;
 	}
-	auto equal_range(my_string_view<CharT> appending) const
+	auto equal_range(std::basic_string_view<CharT> appending) const
 	{
 		return base::equal_range(appending);
 	}
@@ -998,6 +998,7 @@ using Suffix_Table = Affix_Table<CharT, Suffix<CharT>>;
 template <class CharT>
 class String_Pair {
 	using StrT = std::basic_string<CharT>;
+	using StrViewT = std::basic_string_view<CharT>;
 	size_t i = 0;
 	StrT s;
 
@@ -1034,17 +1035,14 @@ class String_Pair {
 
 	{
 	}
-	auto first() const { return my_string_view<CharT>(s).substr(0, i); }
-	auto second() const { return my_string_view<CharT>(s).substr(i); }
-	auto first(my_string_view<CharT> x)
+	auto first() const { return StrViewT(s).substr(0, i); }
+	auto second() const { return StrViewT(s).substr(i); }
+	auto first(StrViewT x)
 	{
 		s.replace(0, i, x.data(), x.size());
 		i = x.size();
 	}
-	auto second(my_string_view<CharT> x)
-	{
-		s.replace(i, s.npos, x.data(), x.size());
-	}
+	auto second(StrViewT x) { s.replace(i, s.npos, x.data(), x.size()); }
 	auto& str() const { return s; }
 	auto idx() const { return i; }
 };

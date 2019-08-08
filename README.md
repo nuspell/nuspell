@@ -23,8 +23,8 @@ Main features of Nuspell spell checker:
 
 Build-only dependencies:
 
-  - C++ 14 compiler, GCC >= v5, Clang >= v3.4, MSVC >= 2017
-  - Cmake version 3.7 or newer
+  - C++ 17 compiler, GCC >= v7, Clang >= v5, MSVC >= 2017
+  - Cmake version 3.8 or newer
   - Git
   - Ronn
   - Boost headers version 1.62 or newer

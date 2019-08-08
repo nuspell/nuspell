@@ -89,8 +89,9 @@ struct Extractor_First_of_Word_Pair {
 	}
 };
 
-using Word_List_Base = Hash_Multiset<std::pair<std::string, Flag_Set>,
-                                     string_view, Extractor_First_of_Word_Pair>;
+using Word_List_Base =
+    Hash_Multiset<std::pair<std::string, Flag_Set>, std::string_view,
+                  Extractor_First_of_Word_Pair>;
 /**
  * @brief Map between words and word_flags.
  *

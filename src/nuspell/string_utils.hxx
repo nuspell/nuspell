@@ -29,36 +29,8 @@
 #include <locale>
 #include <stack>
 #include <string>
-#include <vector>
-
-#ifdef __has_include
-#if __has_include(<experimental/string_view>)
-#if !defined(_LIBCPP_VERSION) || _LIBCPP_VERSION < 7000
-#include <experimental/string_view>
-#if defined(__cpp_lib_experimental_string_view) || defined(_LIBCPP_VERSION)
-#define NUSPELL_STR_VIEW_NS std::experimental
-#endif
-#endif
-#endif
-#endif
-
-#if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 7000
 #include <string_view>
-#define NUSPELL_STR_VIEW_NS std
-#endif
-
-#ifndef NUSPELL_STR_VIEW_NS
-#define NUSPELL_STR_VIEW_NS boost
-#include <boost/functional/hash.hpp>
-#include <boost/utility/string_view.hpp>
-template <class CharT>
-struct std::hash<boost::basic_string_view<CharT>> {
-	auto operator()(boost::basic_string_view<CharT> s) const
-	{
-		return boost::hash_range(begin(s), end(s));
-	}
-};
-#endif
+#include <vector>
 
 namespace nuspell {
 #define NUSPELL_LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
@@ -75,11 +47,6 @@ auto constexpr literal_choose<wchar_t>(const char*, const wchar_t* wide)
 {
 	return wide;
 }
-
-template <class CharT>
-using my_string_view = NUSPELL_STR_VIEW_NS::basic_string_view<CharT>;
-using string_view = my_string_view<char>;
-using wstring_view = my_string_view<wchar_t>;
 
 /**
  * @brief Splits string on set of single char seperators.

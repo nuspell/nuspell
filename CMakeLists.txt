@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.7)
-project(nuspell VERSION 2.3.0)
+cmake_minimum_required(VERSION 3.8)
+project(nuspell VERSION 3.0.0)
 set(PROJECT_HOMEPAGE_URL "https://nuspell.github.io/")
 
 include(GNUInstallDirs)
