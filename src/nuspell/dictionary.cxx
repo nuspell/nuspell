@@ -882,6 +882,8 @@ template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_then_2_suffixes(std::wstring& word) const
     -> Affixing_Result<>
 {
+	// The following check is purely for performance, it does not change
+	// correctness.
 	if (!suffixes.has_continuation_flags())
 		return {};
 
@@ -896,6 +898,12 @@ auto Dict_Base::strip_prefix_then_2_suffixes(std::wstring& word) const
 			continue;
 		for (auto i2 = suffixes.iterate_suffixes_of(word); i2; ++i2) {
 			auto& se1 = *i2;
+
+			// The following check is purely for performance, it
+			// does not change correctness.
+			if (!suffixes.has_continuation_flag(se1.flag))
+				continue;
+
 			if (se1.cross_product == false)
 				continue;
 			if (affix_NOT_valid<m>(se1))
@@ -955,12 +963,21 @@ template <Affixing_Mode m>
 auto Dict_Base::strip_suffix_prefix_suffix(std::wstring& word) const
     -> Affixing_Result<>
 {
+	// The following check is purely for performance, it does not change
+	// correctness.
 	if (!suffixes.has_continuation_flags() &&
 	    !prefixes.has_continuation_flags())
 		return {};
 
 	for (auto i1 = suffixes.iterate_suffixes_of(word); i1; ++i1) {
 		auto& se1 = *i1;
+
+		// The following check is purely for performance, it
+		// does not change correctness.
+		if (!suffixes.has_continuation_flag(se1.flag) &&
+		    !prefixes.has_continuation_flag(se1.flag))
+			continue;
+
 		if (se1.cross_product == false)
 			continue;
 		if (outer_affix_NOT_valid<m>(se1))
@@ -1034,12 +1051,21 @@ template <Affixing_Mode m>
 auto Dict_Base::strip_2_suffixes_then_prefix(std::wstring& word) const
     -> Affixing_Result<>
 {
+	// The following check is purely for performance, it does not change
+	// correctness.
 	if (!suffixes.has_continuation_flags() &&
 	    !prefixes.has_continuation_flags())
 		return {};
 
 	for (auto i1 = suffixes.iterate_suffixes_of(word); i1; ++i1) {
 		auto& se1 = *i1;
+
+		// The following check is purely for performance, it
+		// does not change correctness.
+		if (!suffixes.has_continuation_flag(se1.flag) &&
+		    !prefixes.has_continuation_flag(se1.flag))
+			continue;
+
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
 		if (is_circumfix(se1))
@@ -1109,6 +1135,8 @@ template <Affixing_Mode m>
 auto Dict_Base::strip_suffix_then_2_prefixes(std::wstring& word) const
     -> Affixing_Result<>
 {
+	// The following check is purely for performance, it does not change
+	// correctness.
 	if (!prefixes.has_continuation_flags())
 		return {};
 
@@ -1123,6 +1151,12 @@ auto Dict_Base::strip_suffix_then_2_prefixes(std::wstring& word) const
 			continue;
 		for (auto i2 = prefixes.iterate_prefixes_of(word); i2; ++i2) {
 			auto& pe1 = *i2;
+
+			// The following check is purely for performance, it
+			// does not change correctness.
+			if (!prefixes.has_continuation_flag(pe1.flag))
+				continue;
+
 			if (pe1.cross_product == false)
 				continue;
 			if (affix_NOT_valid<m>(pe1))
@@ -1181,12 +1215,21 @@ template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_suffix_prefix(std::wstring& word) const
     -> Affixing_Result<>
 {
-	if (!suffixes.has_continuation_flags() &&
-	    !prefixes.has_continuation_flags())
+	// The following check is purely for performance, it does not change
+	// correctness.
+	if (!prefixes.has_continuation_flags() &&
+	    !suffixes.has_continuation_flags())
 		return {};
 
 	for (auto i1 = prefixes.iterate_prefixes_of(word); i1; ++i1) {
 		auto& pe1 = *i1;
+
+		// The following check is purely for performance, it
+		// does not change correctness.
+		if (!prefixes.has_continuation_flag(pe1.flag) &&
+		    !suffixes.has_continuation_flag(pe1.flag))
+			continue;
+
 		if (pe1.cross_product == false)
 			continue;
 		if (outer_affix_NOT_valid<m>(pe1))
@@ -1259,12 +1302,21 @@ template <Affixing_Mode m>
 auto Dict_Base::strip_2_prefixes_then_suffix(std::wstring& word) const
     -> Affixing_Result<>
 {
-	if (!suffixes.has_continuation_flags() &&
-	    !prefixes.has_continuation_flags())
+	// The following check is purely for performance, it does not change
+	// correctness.
+	if (!prefixes.has_continuation_flags() &&
+	    !suffixes.has_continuation_flags())
 		return {};
 
 	for (auto i1 = prefixes.iterate_prefixes_of(word); i1; ++i1) {
 		auto& pe1 = *i1;
+
+		// The following check is purely for performance, it
+		// does not change correctness.
+		if (!prefixes.has_continuation_flag(pe1.flag) &&
+		    !suffixes.has_continuation_flag(pe1.flag))
+			continue;
+
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
 		if (is_circumfix(pe1))
