@@ -942,11 +942,14 @@ class Prefix_Multiset {
 	using Char_Type = typename Key_Type::value_type;
 	using Traits = typename Key_Type::traits_type;
 	using Vector_Type = std::vector<T>;
+	using Iterator = typename Vector_Type::const_iterator;
 
       private:
 	Vector_Type table;
 	Key_Extr extract_key;
 	Key_Transform transform_key;
+	std::basic_string<Char_Type> first_letter;
+	std::vector<size_t> prefix_idx_with_first_letter;
 
 	auto sort()
 	{
@@ -955,6 +958,26 @@ class Prefix_Multiset {
 			auto&& key_b = transform_key(extract_key(b));
 			return key_a < key_b;
 		});
+
+		first_letter.clear();
+		prefix_idx_with_first_letter.clear();
+		auto first = begin(table);
+		auto last = end(table);
+		auto it = std::find_if_not(first, last, [=](const T& x) {
+			auto&& k = transform_key(extract_key(x));
+			return k.empty();
+		});
+		for (; it != last;) {
+			auto&& k1 = transform_key(extract_key(*it));
+			first_letter.push_back(k1[0]);
+			prefix_idx_with_first_letter.push_back(it - first);
+
+			it = std::upper_bound(
+			    it, last, k1[0],
+			    Comparator{0, extract_key, transform_key});
+		}
+		if (!prefix_idx_with_first_letter.empty())
+			prefix_idx_with_first_letter.push_back(last - first);
 	}
 
 	struct Comparator {
@@ -1027,12 +1050,9 @@ class Prefix_Multiset {
 	}
 
 	class Iter_Prefixes_Of {
-		using Iterator = typename std::vector<T>::const_iterator;
-
+		const Prefix_Multiset* set = {};
 		Iterator it = {};
 		Iterator last = {};
-		Key_Extr extract_key = {};
-		Key_Transform transform_key = {};
 		const Key_Type* search_key = {};
 		size_t len = {};
 		bool valid = false;
@@ -1050,10 +1070,8 @@ class Prefix_Multiset {
 		Iter_Prefixes_Of() = default;
 		Iter_Prefixes_Of(const Prefix_Multiset& set,
 		                 const Key_Type& word)
-		    : it(set.table.begin()), last(set.table.end()),
-		      extract_key(set.extract_key),
-		      transform_key(set.transform_key), search_key(&word),
-		      valid(true)
+		    : set(&set), it(set.table.begin()), last(set.table.end()),
+		      search_key(&word), valid(true)
 		{
 			advance();
 		}
@@ -1101,6 +1119,38 @@ template <class T, class Key_Extr, class Key_Transform>
 auto Prefix_Multiset<T, Key_Extr, Key_Transform>::Iter_Prefixes_Of::advance()
     -> void
 {
+	auto&& transform_key = set->transform_key;
+	auto&& extract_key = set->extract_key;
+
+	if (len == 0) {
+		if (it != last) {
+			if (transform_key(extract_key(*it)).empty())
+				return;
+			if (transform_key(*search_key).empty()) {
+				valid = false;
+				return;
+			}
+
+			auto& first_letter = set->first_letter;
+			auto& prefix_idx_with_first_letter =
+			    set->prefix_idx_with_first_letter;
+			auto idx =
+			    first_letter.find(transform_key(*search_key)[0]);
+			if (idx == first_letter.npos) {
+				valid = false;
+				return;
+			}
+
+			auto first = set->table.begin();
+			it = first + prefix_idx_with_first_letter[idx];
+			last = first + prefix_idx_with_first_letter[idx + 1];
+			++len;
+		}
+		else {
+			valid = false;
+			return;
+		}
+	}
 	for (;; ++len) {
 		if (it != last) {
 			if (transform_key(extract_key(*it)).size() == len)
@@ -1127,8 +1177,28 @@ auto Prefix_Multiset<T, Key_Extr, Key_Transform>::for_each_prefixes_of(
 {
 	auto first = begin(table);
 	auto last = end(table);
-	for (size_t len = 0;; ++len) {
-		auto it = first;
+	auto it = first;
+	for (; it != last; ++it) {
+		auto&& k = transform_key(extract_key(*it));
+		if (k.empty())
+			func(*it);
+		else
+			break;
+	}
+
+	if (it == last)
+		return;
+	if (transform_key(word).empty())
+		return;
+
+	auto idx = first_letter.find(transform_key(word)[0]);
+	if (idx == first_letter.npos)
+		return;
+	first = begin(table) + prefix_idx_with_first_letter[idx];
+	last = begin(table) + prefix_idx_with_first_letter[idx + 1];
+
+	for (size_t len = 1;; ++len) {
+		it = first;
 		for (; it != last &&
 		       transform_key(extract_key(*it)).size() == len;
 		     ++it) {
@@ -1163,6 +1233,7 @@ class Reversed_String_View {
 	Reversed_String_View(Str&& s) = delete;
 	auto& operator[](size_type i) const { return first[i]; }
 	auto size() const { return sz; }
+	auto empty() const { return sz == 0; }
 	auto begin() const { return first; }
 	auto end() const { return first + sz; }
 	auto operator<(Reversed_String_View other) const
