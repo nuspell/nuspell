@@ -60,7 +60,7 @@ TEST_CASE("Dictionary::spell_priv suffixes", "[dictionary]")
 	d.words.emplace("May", u"T");
 	d.words.emplace("vary", u"");
 
-	d.suffixes.emplace(u'T', true, L"y", L"ies", Flag_Set(), L".[^aeiou]y");
+	d.suffixes = {{u'T', true, L"y", L"ies", Flag_Set(), L".[^aeiou]y"}};
 
 	auto good = {L"berry", L"Berry", L"berries", L"BERRIES",
 	             L"May",   L"MAY",   L"vary"};
@@ -77,8 +77,8 @@ TEST_CASE("Dictionary::spell_priv complex_prefixes", "[dictionary]")
 	auto d = Dict_Test();
 
 	d.words.emplace("drink", u"X");
-	d.suffixes.emplace(u'Y', true, L"", L"s", Flag_Set(), L".");
-	d.suffixes.emplace(u'X', true, L"", L"able", Flag_Set(u"Y"), L".");
+	d.suffixes = {{u'Y', true, L"", L"s", Flag_Set(), L"."},
+	              {u'X', true, L"", L"able", Flag_Set(u"Y"), L"."}};
 
 	auto good = {L"drink", L"drinkable", L"drinkables"};
 	for (auto& g : good)
@@ -98,12 +98,12 @@ TEST_CASE("Dictionary::spell_priv extra_stripping", "[dictionary]")
 	d.words.emplace("aa", u"ABC");
 	d.words.emplace("bb", u"XYZ");
 
-	d.prefixes.emplace(u'A', true, L"", L"W", Flag_Set(u"B"), L"aa");
-	d.prefixes.emplace(u'B', true, L"", L"Q", Flag_Set(u"C"), L"Wa");
-	d.suffixes.emplace(u'C', true, L"", L"E", Flag_Set(), L"a");
-	d.prefixes.emplace(u'X', true, L"b", L"1", Flag_Set(u"Y"), L"b");
-	d.suffixes.emplace(u'Y', true, L"", L"2", Flag_Set(u"Z"), L"b");
-	d.prefixes.emplace(u'Z', true, L"", L"3", Flag_Set(), L"1");
+	d.prefixes = {{u'A', true, L"", L"W", Flag_Set(u"B"), L"aa"},
+	              {u'B', true, L"", L"Q", Flag_Set(u"C"), L"Wa"},
+	              {u'X', true, L"b", L"1", Flag_Set(u"Y"), L"b"},
+	              {u'Z', true, L"", L"3", Flag_Set(), L"1"}};
+	d.suffixes = {{u'C', true, L"", L"E", Flag_Set(), L"a"},
+	              {u'Y', true, L"", L"2", Flag_Set(u"Z"), L"b"}};
 	// complex strip suffix prefix prefix
 	CHECK(d.spell_priv(L"QWaaE") == true);
 	// complex strip prefix suffix prefix

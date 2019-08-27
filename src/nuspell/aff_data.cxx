@@ -1020,12 +1020,12 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	phonetic_table = std::move(phonetic_replacements);
 	for (auto& x : prefixes) {
 		erase_chars(x.appending, ignored_chars);
-		this->prefixes.emplace(std::move(x));
 	}
 	for (auto& x : suffixes) {
 		erase_chars(x.appending, ignored_chars);
-		this->suffixes.emplace(std::move(x));
 	}
+	this->prefixes = std::move(prefixes);
+	this->suffixes = std::move(suffixes);
 
 	cerr.flush();
 	return in.eof() && !error_happened; // true for success

@@ -118,8 +118,8 @@ struct Aff_Data {
 	Substr_Replacer<wchar_t> output_substr_replacer;
 	Break_Table<wchar_t> break_table;
 	std::basic_string<wchar_t> ignored_chars;
-	Prefix_Table<wchar_t> prefixes;
-	Suffix_Table<wchar_t> suffixes;
+	Prefix_Table prefixes;
+	Suffix_Table suffixes;
 	std::vector<Compound_Pattern<wchar_t>> compound_patterns;
 	Replacement_Table<wchar_t> replacements;
 	std::vector<Similarity_Group<wchar_t>> similarities;

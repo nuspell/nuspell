@@ -479,123 +479,13 @@ auto Dict_Base::is_valid_inside_compound(const Flag_Set& flags) const
 	return true;
 }
 
-auto prefix(const wstring& word, size_t len)
-{
-	return wstring_view(word).substr(0, len);
-}
-auto prefix(wstring&& word, size_t len) = delete;
-auto suffix(const wstring& word, size_t len)
-{
-	return wstring_view(word).substr(word.size() - len);
-}
-auto suffix(wstring&& word, size_t len) = delete;
-
-/**
- * @brief Iterator of prefix entres that match a word.
- *
- * Iterates all prefix entries where the appending member is prefix of a given
- * word.
- */
-class Prefix_Iter {
-	const Prefix_Table<wchar_t>& tbl;
-	const wstring& word;
-	size_t len;
-	wstring_view pfx;
-	using iter = typename Prefix_Table<wchar_t>::iterator;
-	iter a;
-	iter b;
-	bool valid;
-
-      public:
-	Prefix_Iter(const Prefix_Table<wchar_t>& tbl, const wstring& word)
-	    : tbl(tbl), word(word)
-	{
-		for (len = 0; len <= word.size(); ++len) {
-			pfx = prefix(word, len);
-			tie(a, b) = tbl.equal_range(pfx);
-			for (; a != b; ++a) {
-				valid = true;
-				return;
-			}
-		}
-		valid = false;
-	}
-	auto& operator++()
-	{
-		goto resume_pfx_of_word;
-
-		for (len = 0; len <= word.size(); ++len) {
-			pfx = prefix(word, len);
-			tie(a, b) = tbl.equal_range(pfx);
-			for (; a != b; ++a) {
-				return *this;
-			resume_pfx_of_word:;
-			}
-		}
-		valid = false;
-		return *this;
-	}
-	operator bool() { return valid; }
-	auto& operator*() { return *a; }
-};
-
-/**
- * @brief Iterator of suffix entres that match a word.
- *
- * Iterates all suffix entries where the appending member is suffix of a given
- * word.
- */
-class Suffix_Iter {
-	const Suffix_Table<wchar_t>& tbl;
-	const wstring& word;
-	size_t len;
-	wstring_view pfx;
-	using iter = typename Suffix_Table<wchar_t>::iterator;
-	iter a;
-	iter b;
-	bool valid;
-
-      public:
-	Suffix_Iter(const Suffix_Table<wchar_t>& tbl, const wstring& word)
-	    : tbl(tbl), word(word)
-	{
-		for (len = 0; len <= word.size(); ++len) {
-			pfx = suffix(word, len);
-			tie(a, b) = tbl.equal_range(pfx);
-			for (; a != b; ++a) {
-				valid = true;
-				return;
-			}
-		}
-		valid = false;
-	}
-	auto& operator++()
-	{
-		goto resume_sfx_of_word;
-
-		for (len = 0; len <= word.size(); ++len) {
-			pfx = suffix(word, len);
-			tie(a, b) = tbl.equal_range(pfx);
-			for (; a != b; ++a) {
-				return *this;
-			resume_sfx_of_word:;
-			}
-		}
-		valid = false;
-		return *this;
-	}
-	operator bool() { return valid; }
-	auto& operator*() { return *a; }
-	auto aff_len() { return len; }
-};
-
 template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_only(std::wstring& word) const
     -> Affixing_Result<Prefix<wchar_t>>
 {
 	auto& dic = words;
 
-	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
+	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& e = *it;
 		if (outer_affix_NOT_valid<m>(e))
 			continue;
@@ -628,12 +518,11 @@ auto Dict_Base::strip_suffix_only(std::wstring& word) const
     -> Affixing_Result<Suffix<wchar_t>>
 {
 	auto& dic = words;
-
-	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
+	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
 		auto& e = *it;
 		if (outer_affix_NOT_valid<m>(e))
 			continue;
-		if (it.aff_len() != 0 && m == AT_COMPOUND_END &&
+		if (e.appending.size() != 0 && m == AT_COMPOUND_END &&
 		    e.cont_flags.contains(compound_onlyin_flag))
 			continue;
 		if (is_circumfix(e))
@@ -664,7 +553,7 @@ template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_then_suffix(std::wstring& word) const
     -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>
 {
-	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
+	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& pe = *it;
 		if (pe.cross_product == false)
 			continue;
@@ -687,7 +576,7 @@ auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<wchar_t>& pe,
 {
 	auto& dic = words;
 
-	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
+	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
 		auto& se = *it;
 		if (se.cross_product == false)
 			continue;
@@ -726,7 +615,7 @@ template <Affixing_Mode m>
 auto Dict_Base::strip_suffix_then_prefix(std::wstring& word) const
     -> Affixing_Result<Prefix<wchar_t>, Suffix<wchar_t>>
 {
-	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
+	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
 		auto& se = *it;
 		if (se.cross_product == false)
 			continue;
@@ -749,7 +638,7 @@ auto Dict_Base::strip_sfx_then_pfx_2(const Suffix<wchar_t>& se,
 {
 	auto& dic = words;
 
-	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
+	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& pe = *it;
 		if (pe.cross_product == false)
 			continue;
@@ -787,7 +676,7 @@ template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_then_suffix_commutative(std::wstring& word) const
     -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>
 {
-	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
+	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& pe = *it;
 		if (pe.cross_product == false)
 			continue;
@@ -812,7 +701,7 @@ auto Dict_Base::strip_pfx_then_sfx_comm_2(const Prefix<wchar_t>& pe,
 	auto has_needaffix_pe = pe.cont_flags.contains(need_affix_flag);
 	auto is_circumfix_pe = is_circumfix(pe);
 
-	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
+	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
 		auto& se = *it;
 		if (se.cross_product == false)
 			continue;
@@ -870,7 +759,7 @@ auto Dict_Base::strip_suffix_then_suffix(std::wstring& word) const
 	if (!suffixes.has_continuation_flags())
 		return {};
 
-	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
+	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
 		auto& se1 = *it;
 
 		// The following check is purely for performance, it does not
@@ -899,7 +788,7 @@ auto Dict_Base::strip_sfx_then_sfx_2(const Suffix<wchar_t>& se1,
 
 	auto& dic = words;
 
-	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
+	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
 		auto& se2 = *it;
 		if (!cross_valid_inner_outer(se2, se1))
 			continue;
@@ -935,7 +824,7 @@ auto Dict_Base::strip_prefix_then_prefix(std::wstring& word) const
 	if (!prefixes.has_continuation_flags())
 		return {};
 
-	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
+	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& pe1 = *it;
 		// The following check is purely for performance, it does not
 		// change correctness.
@@ -962,7 +851,7 @@ auto Dict_Base::strip_pfx_then_pfx_2(const Prefix<wchar_t>& pe1,
 {
 	auto& dic = words;
 
-	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
+	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& pe2 = *it;
 		if (!cross_valid_inner_outer(pe2, pe1))
 			continue;
@@ -996,7 +885,7 @@ auto Dict_Base::strip_prefix_then_2_suffixes(std::wstring& word) const
 	if (!suffixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Prefix_Iter(prefixes, word); i1; ++i1) {
+	for (auto i1 = prefixes.iterate_prefixes_of(word); i1; ++i1) {
 		auto& pe1 = *i1;
 		if (pe1.cross_product == false)
 			continue;
@@ -1005,7 +894,7 @@ auto Dict_Base::strip_prefix_then_2_suffixes(std::wstring& word) const
 		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
-		for (auto i2 = Suffix_Iter(suffixes, word); i2; ++i2) {
+		for (auto i2 = suffixes.iterate_suffixes_of(word); i2; ++i2) {
 			auto& se1 = *i2;
 			if (se1.cross_product == false)
 				continue;
@@ -1031,7 +920,7 @@ auto Dict_Base::strip_pfx_2_sfx_3(const Prefix<wchar_t>& pe1,
 {
 	auto& dic = words;
 
-	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
+	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
 		auto& se2 = *it;
 		if (!cross_valid_inner_outer(se2, se1))
 			continue;
@@ -1070,7 +959,7 @@ auto Dict_Base::strip_suffix_prefix_suffix(std::wstring& word) const
 	    !prefixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Suffix_Iter(suffixes, word); i1; ++i1) {
+	for (auto i1 = suffixes.iterate_suffixes_of(word); i1; ++i1) {
 		auto& se1 = *i1;
 		if (se1.cross_product == false)
 			continue;
@@ -1079,7 +968,7 @@ auto Dict_Base::strip_suffix_prefix_suffix(std::wstring& word) const
 		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
-		for (auto i2 = Prefix_Iter(prefixes, word); i2; ++i2) {
+		for (auto i2 = prefixes.iterate_prefixes_of(word); i2; ++i2) {
 			auto& pe1 = *i2;
 			if (pe1.cross_product == false)
 				continue;
@@ -1103,7 +992,7 @@ auto Dict_Base::strip_s_p_s_3(const Suffix<wchar_t>& se1,
 {
 	auto& dic = words;
 
-	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
+	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
 		auto& se2 = *it;
 		if (se2.cross_product == false)
 			continue;
@@ -1149,7 +1038,7 @@ auto Dict_Base::strip_2_suffixes_then_prefix(std::wstring& word) const
 	    !prefixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Suffix_Iter(suffixes, word); i1; ++i1) {
+	for (auto i1 = suffixes.iterate_suffixes_of(word); i1; ++i1) {
 		auto& se1 = *i1;
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
@@ -1158,7 +1047,7 @@ auto Dict_Base::strip_2_suffixes_then_prefix(std::wstring& word) const
 		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
-		for (auto i2 = Suffix_Iter(suffixes, word); i2; ++i2) {
+		for (auto i2 = suffixes.iterate_suffixes_of(word); i2; ++i2) {
 			auto& se2 = *i2;
 			if (se2.cross_product == false)
 				continue;
@@ -1182,7 +1071,7 @@ auto Dict_Base::strip_2_sfx_pfx_3(const Suffix<wchar_t>& se1,
 {
 	auto& dic = words;
 
-	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
+	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& pe1 = *it;
 		if (pe1.cross_product == false)
 			continue;
@@ -1223,7 +1112,7 @@ auto Dict_Base::strip_suffix_then_2_prefixes(std::wstring& word) const
 	if (!prefixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Suffix_Iter(suffixes, word); i1; ++i1) {
+	for (auto i1 = suffixes.iterate_suffixes_of(word); i1; ++i1) {
 		auto& se1 = *i1;
 		if (se1.cross_product == false)
 			continue;
@@ -1232,7 +1121,7 @@ auto Dict_Base::strip_suffix_then_2_prefixes(std::wstring& word) const
 		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
-		for (auto i2 = Prefix_Iter(prefixes, word); i2; ++i2) {
+		for (auto i2 = prefixes.iterate_prefixes_of(word); i2; ++i2) {
 			auto& pe1 = *i2;
 			if (pe1.cross_product == false)
 				continue;
@@ -1258,7 +1147,7 @@ auto Dict_Base::strip_sfx_2_pfx_3(const Suffix<wchar_t>& se1,
 {
 	auto& dic = words;
 
-	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
+	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& pe2 = *it;
 		if (!cross_valid_inner_outer(pe2, pe1))
 			continue;
@@ -1296,7 +1185,7 @@ auto Dict_Base::strip_prefix_suffix_prefix(std::wstring& word) const
 	    !prefixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Prefix_Iter(prefixes, word); i1; ++i1) {
+	for (auto i1 = prefixes.iterate_prefixes_of(word); i1; ++i1) {
 		auto& pe1 = *i1;
 		if (pe1.cross_product == false)
 			continue;
@@ -1305,7 +1194,7 @@ auto Dict_Base::strip_prefix_suffix_prefix(std::wstring& word) const
 		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
-		for (auto i2 = Suffix_Iter(suffixes, word); i2; ++i2) {
+		for (auto i2 = suffixes.iterate_suffixes_of(word); i2; ++i2) {
 			auto& se1 = *i2;
 			if (se1.cross_product == false)
 				continue;
@@ -1329,7 +1218,7 @@ auto Dict_Base::strip_p_s_p_3(const Prefix<wchar_t>& pe1,
 {
 	auto& dic = words;
 
-	for (auto it = Prefix_Iter(prefixes, word); it; ++it) {
+	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& pe2 = *it;
 		if (pe2.cross_product == false)
 			continue;
@@ -1374,7 +1263,7 @@ auto Dict_Base::strip_2_prefixes_then_suffix(std::wstring& word) const
 	    !prefixes.has_continuation_flags())
 		return {};
 
-	for (auto i1 = Prefix_Iter(prefixes, word); i1; ++i1) {
+	for (auto i1 = prefixes.iterate_prefixes_of(word); i1; ++i1) {
 		auto& pe1 = *i1;
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
@@ -1383,7 +1272,7 @@ auto Dict_Base::strip_2_prefixes_then_suffix(std::wstring& word) const
 		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
-		for (auto i2 = Prefix_Iter(prefixes, word); i2; ++i2) {
+		for (auto i2 = prefixes.iterate_prefixes_of(word); i2; ++i2) {
 			auto& pe2 = *i2;
 			if (pe2.cross_product == false)
 				continue;
@@ -1407,7 +1296,7 @@ auto Dict_Base::strip_2_pfx_sfx_3(const Prefix<wchar_t>& pe1,
 {
 	auto& dic = words;
 
-	for (auto it = Suffix_Iter(suffixes, word); it; ++it) {
+	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
 		auto& se1 = *it;
 		if (se1.cross_product == false)
 			continue;

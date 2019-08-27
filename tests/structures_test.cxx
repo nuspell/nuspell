@@ -446,16 +446,6 @@ TEST_CASE("Prefix", "[structures]")
 TEST_CASE("Suffix", "[structures]")
 {
 	auto sfx_tests = Suffix<char>(u'T', true, "y", "ies", {}, ".[^aeiou]y");
-	auto sfx_sk_SK =
-	    Suffix<char>(u'Z', true, "ata", "át", {}, "[^áéíóúý].[^iš]ata");
-	auto sfx_pt_PT = Suffix<char>(u'X', true, "er", "a", {}, "[^cug^-]er");
-	// TODO See above regarding "0"
-	auto sfx_gd_GB = Suffix<char>(u'K', true, "", "-san", {}, "[^-]");
-	auto sfx_ar = Suffix<char>(u'a', true, "ه", "ي", {}, "[^ءؤأ]ه");
-	auto sfx_ko =
-	    Suffix<char>(24, true, "ᅬ다", " ᅫᆻ어", {},
-	                 "[ᄀᄁᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ]ᅬ다");
-
 	auto word = string("wries");
 	CHECK("wry" == sfx_tests.to_root(word));
 	CHECK("wry" == word);
@@ -475,6 +465,38 @@ TEST_CASE("Suffix", "[structures]")
 	CHECK(true == sfx_tests.check_condition("wry"));
 	CHECK(false == sfx_tests.check_condition("ey"));
 	CHECK(false == sfx_tests.check_condition("wries"));
+}
+
+TEST_CASE("Prefix_Multiset")
+{
+	auto set =
+	    Prefix_Multiset<string>{"",     "a",   "",   "ab",   "abx", "as",
+	                            "asdf", "axx", "as", "bqwe", "ba",  "rqwe"};
+	auto expected = vector<string>{"", "", "a", "as", "as", "asdf"};
+	auto out = vector<string>();
+	set.copy_all_prefixes_of("asdfg", back_inserter(out));
+	CHECK(out == expected);
+
+	auto word = string("asdfg");
+	auto it = set.iterate_prefixes_of(word);
+	out.assign(begin(it), end(it));
+	REQUIRE(out == expected);
+}
+
+TEST_CASE("Suffix_Multiset")
+{
+	auto set =
+	    Suffix_Multiset<string>{"",   "",   "a",   "b",   "b",   "ab",
+	                            "ub", "zb", "aub", "uub", "xub", "huub"};
+	auto expected = vector<string>{"", "", "b", "b", "ub", "uub", "huub"};
+	auto out = vector<string>();
+	auto word = string("ahahuub");
+	set.copy_all_prefixes_of(word, back_inserter(out));
+	CHECK(out == expected);
+
+	auto it = set.iterate_prefixes_of(word);
+	out.assign(begin(it), end(it));
+	REQUIRE(out == expected);
 }
 
 TEST_CASE("String_Pair", "[structures]")

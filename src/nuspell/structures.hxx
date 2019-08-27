@@ -65,28 +65,28 @@ class String_Set {
 	};
 
       public:
-	using StrT = std::basic_string<CharT>;
-	using traits_type = typename StrT::traits_type;
+	using Str = std::basic_string<CharT>;
+	using traits_type = typename Str::traits_type;
 
-	using key_type = typename StrT::value_type;
+	using key_type = typename Str::value_type;
 	using key_compare = Char_Traits_Less_Than;
-	using value_type = typename StrT::value_type;
+	using value_type = typename Str::value_type;
 	using value_compare = key_compare;
-	using allocator_type = typename StrT::allocator_type;
-	using pointer = typename StrT::pointer;
-	using const_pointer = typename StrT::const_pointer;
-	using reference = typename StrT::reference;
-	using const_reference = typename StrT::const_reference;
-	using size_type = typename StrT::size_type;
-	using difference_type = typename StrT::difference_type;
-	using iterator = typename StrT::iterator;
-	using const_iterator = typename StrT::const_iterator;
-	using reverse_iterator = typename StrT::reverse_iterator;
-	using const_reverse_iterator = typename StrT::const_reverse_iterator;
+	using allocator_type = typename Str::allocator_type;
+	using pointer = typename Str::pointer;
+	using const_pointer = typename Str::const_pointer;
+	using reference = typename Str::reference;
+	using const_reference = typename Str::const_reference;
+	using size_type = typename Str::size_type;
+	using difference_type = typename Str::difference_type;
+	using iterator = typename Str::iterator;
+	using const_iterator = typename Str::const_iterator;
+	using reverse_iterator = typename Str::reverse_iterator;
+	using const_reverse_iterator = typename Str::const_reverse_iterator;
 
 	String_Set() = default;
-	String_Set(const StrT& s) : d(s) { sort_uniq(); }
-	String_Set(StrT&& s) : d(move(s)) { sort_uniq(); }
+	String_Set(const Str& s) : d(s) { sort_uniq(); }
+	String_Set(Str&& s) : d(move(s)) { sort_uniq(); }
 	String_Set(const CharT* s) : d(s) { sort_uniq(); }
 	template <class InputIterator>
 	String_Set(InputIterator first, InputIterator last) : d(first, last)
@@ -98,13 +98,13 @@ class String_Set {
 		sort_uniq();
 	}
 
-	auto& operator=(const StrT& s)
+	auto& operator=(const Str& s)
 	{
 		d = s;
 		sort_uniq();
 		return *this;
 	}
-	auto& operator=(StrT&& s)
+	auto& operator=(Str&& s)
 	{
 		d = move(s);
 		sort_uniq();
@@ -125,7 +125,7 @@ class String_Set {
 
 	// non standard underlying storage access:
 	auto& data() const { return d; }
-	operator const StrT&() const noexcept { return d; }
+	operator const Str&() const noexcept { return d; }
 
 	// iterators:
 	iterator begin() noexcept { return d.begin(); }
@@ -212,12 +212,12 @@ class String_Set {
 	void clear() noexcept { d.clear(); }
 
 	// non standrd modifiers:
-	auto insert(const StrT& s) -> void
+	auto insert(const Str& s) -> void
 	{
 		d += s;
 		sort_uniq();
 	}
-	auto operator+=(const StrT& s) -> String_Set
+	auto operator+=(const Str& s) -> String_Set
 	{
 		insert(s);
 		return *this;
@@ -297,15 +297,15 @@ using Flag_Set = String_Set<char16_t>;
 template <class CharT>
 class Substr_Replacer {
       public:
-	using StrT = std::basic_string<CharT>;
-	using StrViewT = std::basic_string_view<CharT>;
-	using Pair_StrT = std::pair<StrT, StrT>;
-	using Table_Pairs = std::vector<Pair_StrT>;
+	using Str = std::basic_string<CharT>;
+	using Str_View = std::basic_string_view<CharT>;
+	using Pair_Str = std::pair<Str, Str>;
+	using Table_Pairs = std::vector<Pair_Str>;
 
       private:
 	Table_Pairs table;
-	auto sort_uniq() -> void; // implemented in cxx
-	auto find_match(StrViewT s) const;
+	auto sort_uniq() -> void;
+	auto find_match(Str_View s) const;
 
       public:
 	Substr_Replacer() = default;
@@ -325,16 +325,8 @@ class Substr_Replacer {
 		return *this;
 	}
 
-	template <class Range>
-	auto& operator=(const Range& range)
-	{
-		table.assign(std::begin(range), std::end(range));
-		sort_uniq();
-		return *this;
-	}
-
-	auto replace(StrT& s) const -> StrT&; // implemented in cxx
-	auto replace_copy(StrT s) const -> StrT
+	auto replace(Str& s) const -> Str&;
+	auto replace_copy(Str s) const -> Str
 	{
 		replace(s);
 		return s;
@@ -356,24 +348,24 @@ auto Substr_Replacer<CharT>::sort_uniq() -> void
 }
 
 template <class CharT>
-auto Substr_Replacer<CharT>::find_match(StrViewT s) const
+auto Substr_Replacer<CharT>::find_match(Str_View s) const
 {
 	auto& t = table;
 	struct Comparer_Str_Rep {
-		auto static cmp_prefix_of(const StrT& p, StrViewT of)
+		auto static cmp_prefix_of(const Str& p, Str_View of)
 		{
 			return p.compare(0, p.npos, of.data(),
 			                 std::min(p.size(), of.size()));
 		}
-		auto operator()(const Pair_StrT& a, StrViewT b)
+		auto operator()(const Pair_Str& a, Str_View b)
 		{
 			return cmp_prefix_of(a.first, b) < 0;
 		}
-		auto operator()(StrViewT a, const Pair_StrT& b)
+		auto operator()(Str_View a, const Pair_Str& b)
 		{
 			return cmp_prefix_of(b.first, a) > 0;
 		}
-		auto static eq(const Pair_StrT& a, StrViewT b)
+		auto static eq(const Pair_Str& a, Str_View b)
 		{
 			return cmp_prefix_of(a.first, b) == 0;
 		}
@@ -403,13 +395,13 @@ auto Substr_Replacer<CharT>::find_match(StrViewT s) const
 }
 
 template <class CharT>
-auto Substr_Replacer<CharT>::replace(StrT& s) const -> StrT&
+auto Substr_Replacer<CharT>::replace(Str& s) const -> Str&
 {
 
 	if (table.empty())
 		return s;
 	for (size_t i = 0; i < s.size(); /*no increment here*/) {
-		auto substr = StrViewT(&s[i], s.size() - i);
+		auto substr = Str_View(&s[i], s.size() - i);
 		auto it = find_match(substr);
 		if (it != end(table)) {
 			auto& match = *it;
@@ -427,8 +419,8 @@ auto Substr_Replacer<CharT>::replace(StrT& s) const -> StrT&
 template <class CharT>
 class Break_Table {
       public:
-	using StrT = std::basic_string<CharT>;
-	using Table_Str = std::vector<StrT>;
+	using Str = std::basic_string<CharT>;
+	using Table_Str = std::vector<Str>;
 	using iterator = typename Table_Str::iterator;
 	using const_iterator = typename Table_Str::const_iterator;
 
@@ -437,7 +429,7 @@ class Break_Table {
 	size_t start_word_breaks_last_idx = 0;
 	size_t end_word_breaks_last_idx = 0;
 
-	auto order_entries() -> void; // implemented in cxx
+	auto order_entries() -> void;
 
       public:
 	Break_Table() = default;
@@ -454,14 +446,6 @@ class Break_Table {
 	auto& operator=(Table_Str&& v)
 	{
 		table = move(v);
-		order_entries();
-		return *this;
-	}
-
-	template <class Range>
-	auto& operator=(const Range& range)
-	{
-		table.assign(std::begin(range), std::end(range));
 		order_entries();
 		return *this;
 	}
@@ -698,38 +682,38 @@ class Condition {
 		ANY_OF /**< set of possible characters */,
 		NONE_OF /**< set of excluding characters */
 	};
-	using StrT = std::basic_string<CharT>;
+	using Str = std::basic_string<CharT>;
 
       private:
-	StrT cond;
+	Str cond;
 	std::vector<std::tuple<size_t, size_t, Span_Type>>
 	    spans; // pos, len, type
 	size_t length = 0;
 
-	auto construct() -> void; // implemented in cxx
+	auto construct() -> void;
 
       public:
 	Condition() = default;
-	Condition(const StrT& condition) : cond(condition) { construct(); }
-	Condition(StrT&& condition) : cond(move(condition)) { construct(); }
-	auto& operator=(const StrT& condition)
+	Condition(const Str& condition) : cond(condition) { construct(); }
+	Condition(Str&& condition) : cond(move(condition)) { construct(); }
+	auto& operator=(const Str& condition)
 	{
 		cond = condition;
 		length = 0;
 		construct();
 		return *this;
 	}
-	auto& operator=(StrT&& condition)
+	auto& operator=(Str&& condition)
 	{
 		cond = std::move(condition);
 		length = 0;
 		construct();
 		return *this;
 	}
-	auto match(const StrT& s, size_t pos = 0, size_t len = StrT::npos) const
-	    -> bool; // implemented in cxx
-	auto match_prefix(const StrT& s) const { return match(s, 0, length); }
-	auto match_suffix(const StrT& s) const
+	auto match(const Str& s, size_t pos = 0, size_t len = Str::npos) const
+	    -> bool;
+	auto match_prefix(const Str& s) const { return match(s, 0, length); }
+	auto match_suffix(const Str& s) const
 	{
 		if (length > s.size())
 			return false;
@@ -804,8 +788,7 @@ auto Condition<CharT>::construct() -> void
  * @return The valueof true when string matched condition.
  */
 template <class CharT>
-auto Condition<CharT>::match(const StrT& s, size_t pos, size_t len) const
-    -> bool
+auto Condition<CharT>::match(const Str& s, size_t pos, size_t len) const -> bool
 {
 	if (pos > s.size()) {
 		throw std::out_of_range(
@@ -822,7 +805,7 @@ auto Condition<CharT>::match(const StrT& s, size_t pos, size_t len) const
 		auto x_len = std::get<1>(x);
 		auto x_type = std::get<2>(x);
 
-		using tr = typename StrT::traits_type;
+		using tr = typename Str::traits_type;
 		switch (x_type) {
 		case NORMAL:
 			if (tr::compare(&s[i], &cond[x_pos], x_len) == 0)
@@ -853,47 +836,47 @@ auto Condition<CharT>::match(const StrT& s, size_t pos, size_t len) const
 template <class CharT>
 class Prefix {
       public:
-	using StrT = std::basic_string<CharT>;
-	using CondT = Condition<CharT>;
+	using Str = std::basic_string<CharT>;
+	using Cond = Condition<CharT>;
 	using value_type = CharT;
 
 	char16_t flag = 0;
 	bool cross_product = false;
-	StrT stripping;
-	StrT appending;
+	Str stripping;
+	Str appending;
 	Flag_Set cont_flags;
-	CondT condition;
+	Cond condition;
 
 	Prefix() = default;
-	Prefix(char16_t flag, bool cross_product, const StrT& strip,
-	       const StrT& append, const std::u16string& cont_flags,
-	       const StrT& condition)
+	Prefix(char16_t flag, bool cross_product, const Str& strip,
+	       const Str& append, const std::u16string& cont_flags,
+	       const Str& condition)
 	    : flag(flag), cross_product(cross_product), stripping(strip),
 	      appending(append), cont_flags(cont_flags), condition(condition)
 	{
 	}
 
-	auto to_root(StrT& word) const -> StrT&
+	auto to_root(Str& word) const -> Str&
 	{
 		return word.replace(0, appending.size(), stripping);
 	}
-	auto to_root_copy(StrT word) const -> StrT
+	auto to_root_copy(Str word) const -> Str
 	{
 		to_root(word);
 		return word;
 	}
 
-	auto to_derived(StrT& word) const -> StrT&
+	auto to_derived(Str& word) const -> Str&
 	{
 		return word.replace(0, stripping.size(), appending);
 	}
-	auto to_derived_copy(StrT word) const -> StrT
+	auto to_derived_copy(Str word) const -> Str
 	{
 		to_derived(word);
 		return word;
 	}
 
-	auto check_condition(const StrT& word) const -> bool
+	auto check_condition(const Str& word) const -> bool
 	{
 		return condition.match_prefix(word);
 	}
@@ -902,52 +885,300 @@ class Prefix {
 template <class CharT>
 class Suffix {
       public:
-	using StrT = std::basic_string<CharT>;
-	using CondT = Condition<CharT>;
+	using Str = std::basic_string<CharT>;
+	using Cond = Condition<CharT>;
 	using value_type = CharT;
 
 	char16_t flag = 0;
 	bool cross_product = false;
-	StrT stripping;
-	StrT appending;
+	Str stripping;
+	Str appending;
 	Flag_Set cont_flags;
-	CondT condition;
+	Cond condition;
 
 	Suffix() = default;
-	Suffix(char16_t flag, bool cross_product, const StrT& strip,
-	       const StrT& append, const std::u16string& cont_flags,
-	       const StrT& condition)
+	Suffix(char16_t flag, bool cross_product, const Str& strip,
+	       const Str& append, const std::u16string& cont_flags,
+	       const Str& condition)
 	    : flag(flag), cross_product(cross_product), stripping(strip),
 	      appending(append), cont_flags(cont_flags), condition(condition)
 	{
 	}
 
-	auto to_root(StrT& word) const -> StrT&
+	auto to_root(Str& word) const -> Str&
 	{
 		return word.replace(word.size() - appending.size(),
 		                    appending.size(), stripping);
 	}
-	auto to_root_copy(StrT word) const -> StrT
+	auto to_root_copy(Str word) const -> Str
 	{
 		to_root(word);
 		return word;
 	}
 
-	auto to_derived(StrT& word) const -> StrT&
+	auto to_derived(Str& word) const -> Str&
 	{
 		return word.replace(word.size() - stripping.size(),
 		                    stripping.size(), appending);
 	}
-	auto to_derived_copy(StrT word) const -> StrT
+	auto to_derived_copy(Str word) const -> Str
 	{
 		to_derived(word);
 		return word;
 	}
 
-	auto check_condition(const StrT& word) const -> bool
+	auto check_condition(const Str& word) const -> bool
 	{
 		return condition.match_suffix(word);
 	}
+};
+
+template <class T, class Key_Extr = identity, class Key_Transform = identity>
+class Prefix_Multiset {
+      public:
+	using Value_Type = T;
+	using Key_Type = std::remove_reference_t<decltype(
+	    std::declval<Key_Extr>()(std::declval<T>()))>;
+	using Char_Type = typename Key_Type::value_type;
+	using Traits = typename Key_Type::traits_type;
+	using Vector_Type = std::vector<T>;
+
+      private:
+	Vector_Type table;
+	Key_Extr extract_key;
+	Key_Transform transform_key;
+
+	auto sort()
+	{
+		std::sort(begin(table), end(table), [&](T& a, T& b) {
+			auto&& key_a = transform_key(extract_key(a));
+			auto&& key_b = transform_key(extract_key(b));
+			return key_a < key_b;
+		});
+	}
+
+	struct Comparator {
+		size_t i;
+		Key_Extr extract_key;
+		Key_Transform transform_key;
+		auto operator()(const T& a, Char_Type b) const
+		{
+			auto&& key_a = transform_key(extract_key(a));
+			return Traits::lt(key_a[i], b);
+		}
+		auto operator()(Char_Type a, const T& b) const
+		{
+			auto&& key_b = transform_key(extract_key(b));
+			return Traits::lt(a, key_b[i]);
+		}
+	};
+
+      public:
+	Prefix_Multiset(Key_Extr ke = {}, Key_Transform kt = {})
+	    : extract_key(ke), transform_key(kt)
+	{
+	}
+	Prefix_Multiset(const Vector_Type& v, Key_Extr ke = {},
+	                Key_Transform kt = {})
+	    : table(v), extract_key(ke), transform_key(kt)
+	{
+		sort();
+	}
+	Prefix_Multiset(Vector_Type&& v, Key_Extr ke = {},
+	                Key_Transform kt = {})
+	    : table(std::move(v)), extract_key(ke), transform_key(kt)
+	{
+		sort();
+	}
+	Prefix_Multiset(std::initializer_list<T> list, Key_Extr ke = {},
+	                Key_Transform kt = {})
+	    : table(list), extract_key(ke), transform_key(kt)
+	{
+		sort();
+	}
+	auto& operator=(const Vector_Type& v)
+	{
+		table = v;
+		sort();
+		return *this;
+	}
+	auto& operator=(std::vector<T>&& v)
+	{
+		table = std::move(v);
+		sort();
+		return *this;
+	}
+	auto& operator=(std::initializer_list<T> list)
+	{
+		table = list;
+		sort();
+		return *this;
+	}
+	auto& data() const { return table; }
+
+	template <class Func>
+	auto for_each_prefixes_of(const Key_Type& word, Func func) const;
+
+	template <class OutIter>
+	auto copy_all_prefixes_of(const Key_Type& word, OutIter o) const
+	{
+		for_each_prefixes_of(word, [&](const T& x) { *o++ = x; });
+		return o;
+	}
+
+	class Iter_Prefixes_Of {
+		using Iterator = typename std::vector<T>::const_iterator;
+
+		Iterator it = {};
+		Iterator last = {};
+		Key_Extr extract_key = {};
+		Key_Transform transform_key = {};
+		const Key_Type* search_key = {};
+		size_t len = {};
+		bool valid = false;
+
+		auto advance() -> void;
+
+	      public:
+		using iterator_category = std::input_iterator_tag;
+		using value_type = T;
+		using size_type = size_t;
+		using difference_type = ptrdiff_t;
+		using reference = const T&;
+		using pointer = const T*;
+
+		Iter_Prefixes_Of() = default;
+		Iter_Prefixes_Of(const Prefix_Multiset& set,
+		                 const Key_Type& word)
+		    : it(set.table.begin()), last(set.table.end()),
+		      extract_key(set.extract_key),
+		      transform_key(set.transform_key), search_key(&word),
+		      valid(true)
+		{
+			advance();
+		}
+		Iter_Prefixes_Of(const Prefix_Multiset&, Key_Type&&) = delete;
+		Iter_Prefixes_Of(Prefix_Multiset&&, const Key_Type&) = delete;
+		Iter_Prefixes_Of(Prefix_Multiset&&, Key_Type&&) = delete;
+
+		auto& operator++()
+		{
+			++it;
+			advance();
+			return *this;
+		}
+		auto& operator++(int)
+		{
+			auto old = *this;
+			++*this;
+			return old;
+		}
+		auto& operator*() const { return *it; }
+		auto operator-> () const { return &*it; }
+		auto operator==(const Iter_Prefixes_Of& other) const
+		{
+			return valid == other.valid;
+		}
+		auto operator!=(const Iter_Prefixes_Of& other) const
+		{
+			return valid != other.valid;
+		}
+
+		operator bool() const { return valid; }
+
+		auto begin() const { return *this; }
+		auto end() const { return Iter_Prefixes_Of(); }
+	};
+
+	auto iterate_prefixes_of(const Key_Type& word) const
+	{
+		return Iter_Prefixes_Of(*this, word);
+	}
+	auto iterate_prefixes_of(Key_Type&& word) const = delete;
+};
+
+template <class T, class Key_Extr, class Key_Transform>
+auto Prefix_Multiset<T, Key_Extr, Key_Transform>::Iter_Prefixes_Of::advance()
+    -> void
+{
+	for (;; ++len) {
+		if (it != last) {
+			if (transform_key(extract_key(*it)).size() == len)
+				return;
+			if (len == transform_key(*search_key).size()) {
+				valid = false;
+				break;
+			}
+		}
+		else {
+			valid = false;
+			break;
+		}
+		tie(it, last) =
+		    equal_range(it, last, transform_key(*search_key)[len],
+		                Comparator{len, extract_key, transform_key});
+	}
+}
+
+template <class T, class Key_Extr, class Key_Transform>
+template <class Func>
+auto Prefix_Multiset<T, Key_Extr, Key_Transform>::for_each_prefixes_of(
+    const Key_Type& word, Func func) const
+{
+	auto first = begin(table);
+	auto last = end(table);
+	for (size_t len = 0;; ++len) {
+		auto it = first;
+		for (; it != last &&
+		       transform_key(extract_key(*it)).size() == len;
+		     ++it) {
+			func(*it);
+		}
+		if (it == last)
+			break;
+		if (len == transform_key(word).size())
+			break;
+		tie(first, last) =
+		    equal_range(it, last, transform_key(word)[len],
+		                Comparator{len, extract_key, transform_key});
+	}
+}
+
+template <class CharT>
+class Reversed_String_View {
+      public:
+	using Str = std::basic_string<CharT>;
+	using traits_type = typename Str::traits_type;
+	using value_type = typename Str::value_type;
+	using size_type = typename Str::size_type;
+	using const_iterator = typename Str::const_reverse_iterator;
+
+      private:
+	const_iterator first = {};
+	size_type sz = {};
+
+      public:
+	Reversed_String_View() = default;
+	Reversed_String_View(const Str& s) : first(s.rbegin()), sz(s.size()) {}
+	Reversed_String_View(Str&& s) = delete;
+	auto& operator[](size_type i) const { return first[i]; }
+	auto size() const { return sz; }
+	auto begin() const { return first; }
+	auto end() const { return first + sz; }
+	auto operator<(Reversed_String_View other) const
+	{
+		return lexicographical_compare(begin(), end(), other.begin(),
+		                               other.end(), traits_type::lt);
+	}
+};
+
+template <class CharT>
+struct String_Reverser {
+	auto operator()(const std::basic_string<CharT>& x) const
+	{
+		return Reversed_String_View<CharT>(x);
+	}
+	// auto operator()(T&& x) const = delete;
 };
 
 template <class AffixT>
@@ -955,29 +1186,45 @@ struct Extractor_Of_Appending_From_Affix {
 	auto& operator()(const AffixT& a) const { return a.appending; }
 };
 
-template <class CharT, class AffixT>
-using Affix_Table_Base =
-    Hash_Multiset<AffixT, std::basic_string_view<CharT>,
-                  Extractor_Of_Appending_From_Affix<AffixT>>;
+template <class T, class Key_Extr = identity>
+using Suffix_Multiset = Prefix_Multiset<
+    T, Key_Extr,
+    String_Reverser<typename Prefix_Multiset<T, Key_Extr>::Char_Type>>;
 
-template <class CharT, class AffixT>
-class Affix_Table : private Affix_Table_Base<CharT, AffixT> {
-      private:
+template <class T, class Key_Extr = identity>
+class Affix_Table {
+};
+
+class Prefix_Table {
+	using Prefix_Multiset_Type =
+	    Prefix_Multiset<Prefix<wchar_t>,
+	                    Extractor_Of_Appending_From_Affix<Prefix<wchar_t>>>;
+	using Key_Type = typename Prefix_Multiset_Type::Key_Type;
+	using Vector_Type = typename Prefix_Multiset_Type::Vector_Type;
+	Prefix_Multiset_Type table;
 	Flag_Set all_cont_flags;
 
-      public:
-	using base = Affix_Table_Base<CharT, AffixT>;
-	using iterator = typename base::local_const_iterator;
-	template <class... Args>
-	auto emplace(Args&&... a)
+	auto populate()
 	{
-		auto it = base::emplace(std::forward<Args>(a)...);
-		all_cont_flags += it->cont_flags;
-		return it;
+		for (auto& x : table.data())
+			all_cont_flags += x.cont_flags;
 	}
-	auto equal_range(std::basic_string_view<CharT> appending) const
+
+      public:
+	Prefix_Table() = default;
+	Prefix_Table(const Vector_Type& t) : table(t) { populate(); }
+	Prefix_Table(Vector_Type&& t) : table(std::move(t)) { populate(); }
+	auto& operator=(const Vector_Type& t)
 	{
-		return base::equal_range(appending);
+		table = t;
+		populate();
+		return *this;
+	}
+	auto& operator=(Vector_Type&& t)
+	{
+		table = std::move(t);
+		populate();
+		return *this;
 	}
 	auto has_continuation_flags() const
 	{
@@ -987,24 +1234,68 @@ class Affix_Table : private Affix_Table_Base<CharT, AffixT> {
 	{
 		return all_cont_flags.contains(flag);
 	}
+	auto iterate_prefixes_of(const Key_Type& word) const
+	{
+		return table.iterate_prefixes_of(word);
+	}
+	auto iterate_prefixes_of(Key_Type&& word) const = delete;
+};
+
+class Suffix_Table {
+	using Suffix_Multiset_Type =
+	    Suffix_Multiset<Suffix<wchar_t>,
+	                    Extractor_Of_Appending_From_Affix<Suffix<wchar_t>>>;
+	using Key_Type = typename Suffix_Multiset_Type::Key_Type;
+	using Vector_Type = typename Suffix_Multiset_Type::Vector_Type;
+	Suffix_Multiset_Type table;
+	Flag_Set all_cont_flags;
+
+	auto populate()
+	{
+		for (auto& x : table.data())
+			all_cont_flags += x.cont_flags;
+	}
+
+      public:
+	Suffix_Table() = default;
+	Suffix_Table(const Vector_Type& t) : table(t) { populate(); }
+	Suffix_Table(Vector_Type&& t) : table(std::move(t)) { populate(); }
+	auto& operator=(const Vector_Type& t)
+	{
+		table = t;
+		populate();
+		return *this;
+	}
+	auto& operator=(Vector_Type&& t)
+	{
+		table = std::move(t);
+		populate();
+		return *this;
+	}
+	auto has_continuation_flags() const
+	{
+		return all_cont_flags.size() != 0;
+	}
+	auto has_continuation_flag(char16_t flag) const
+	{
+		return all_cont_flags.contains(flag);
+	}
+	auto iterate_suffixes_of(const Key_Type& word) const
+	{
+		return table.iterate_prefixes_of(word);
+	}
+	auto iterate_suffixes_of(Key_Type&& word) const = delete;
 };
 
 template <class CharT>
-using Prefix_Table = Affix_Table<CharT, Prefix<CharT>>;
-
-template <class CharT>
-using Suffix_Table = Affix_Table<CharT, Suffix<CharT>>;
-
-template <class CharT>
 class String_Pair {
-	using StrT = std::basic_string<CharT>;
-	using StrViewT = std::basic_string_view<CharT>;
+	using Str = std::basic_string<CharT>;
+	using Str_View = std::basic_string_view<CharT>;
 	size_t i = 0;
-	StrT s;
+	Str s;
 
       public:
 	String_Pair() = default;
-	template <class Str1>
 	/**
 	 * @brief Construct string pair
 	 *
@@ -1015,6 +1306,7 @@ class String_Pair {
 	 * @param i the index where the string is split.
 	 * @throws std::out_of_range
 	 */
+	template <class Str1>
 	String_Pair(Str1&& str, size_t i) : i(i), s(std::forward<Str1>(str))
 	{
 		if (i > s.size()) {
@@ -1022,11 +1314,10 @@ class String_Pair {
 		}
 	}
 
-	template <
-	    class Str1, class Str2,
-	    class = std::enable_if_t<
-	        std::is_same<std::remove_reference_t<Str1>, StrT>::value &&
-	        std::is_same<std::remove_reference_t<Str2>, StrT>::value>>
+	template <class Str1, class Str2,
+	          class = std::enable_if_t<
+	              std::is_same<std::remove_reference_t<Str1>, Str>::value &&
+	              std::is_same<std::remove_reference_t<Str2>, Str>::value>>
 	String_Pair(Str1&& first, Str2&& second)
 	    : i(first.size()) /* must be init before s, before we move
 	                         from first */
@@ -1035,14 +1326,14 @@ class String_Pair {
 
 	{
 	}
-	auto first() const { return StrViewT(s).substr(0, i); }
-	auto second() const { return StrViewT(s).substr(i); }
-	auto first(StrViewT x)
+	auto first() const { return Str_View(s).substr(0, i); }
+	auto second() const { return Str_View(s).substr(i); }
+	auto first(Str_View x)
 	{
-		s.replace(0, i, x.data(), x.size());
+		s.replace(0, i, x);
 		i = x.size();
 	}
-	auto second(StrViewT x) { s.replace(i, s.npos, x.data(), x.size()); }
+	auto second(Str_View x) { s.replace(i, s.npos, x); }
 	auto& str() const { return s; }
 	auto idx() const { return i; }
 };
@@ -1144,23 +1435,23 @@ auto inline Compound_Rule_Table::match_any_rule(
  */
 template <class CharT>
 class List_Basic_Strings {
-	using VecT = std::vector<std::basic_string<CharT>>;
-	VecT d;
+	using Vec_Str = std::vector<std::basic_string<CharT>>;
+	Vec_Str d;
 	size_t sz = 0;
 
       public:
-	using value_type = typename VecT::value_type;
-	using allocator_type = typename VecT::allocator_type;
-	using size_type = typename VecT::size_type;
-	using difference_type = typename VecT::difference_type;
-	using reference = typename VecT::reference;
-	using const_reference = typename VecT::const_reference;
-	using pointer = typename VecT::pointer;
-	using const_pointer = typename VecT::const_pointer;
-	using iterator = typename VecT::iterator;
-	using const_iterator = typename VecT::const_iterator;
-	using reverse_iterator = typename VecT::reverse_iterator;
-	using const_reverse_iterator = typename VecT::const_reverse_iterator;
+	using value_type = typename Vec_Str::value_type;
+	using allocator_type = typename Vec_Str::allocator_type;
+	using size_type = typename Vec_Str::size_type;
+	using difference_type = typename Vec_Str::difference_type;
+	using reference = typename Vec_Str::reference;
+	using const_reference = typename Vec_Str::const_reference;
+	using pointer = typename Vec_Str::pointer;
+	using const_pointer = typename Vec_Str::const_pointer;
+	using iterator = typename Vec_Str::iterator;
+	using const_iterator = typename Vec_Str::const_iterator;
+	using reverse_iterator = typename Vec_Str::reverse_iterator;
+	using const_reverse_iterator = typename Vec_Str::const_reverse_iterator;
 
 	List_Basic_Strings() = default;
 	explicit List_Basic_Strings(size_type n) : d(n), sz(n) {}
@@ -1185,7 +1476,7 @@ class List_Basic_Strings {
 		other.sz = 0;
 	}
 
-	List_Basic_Strings(VecT&& other) : d(other), sz(other.size()) {}
+	List_Basic_Strings(Vec_Str&& other) : d(other), sz(other.size()) {}
 
 	auto& operator=(const List_Basic_Strings& other)
 	{
@@ -1493,7 +1784,7 @@ class List_Basic_Strings {
 		return !(*this > other);
 	}
 
-	auto extract_sequence() -> VecT
+	auto extract_sequence() -> Vec_Str
 	{
 		d.resize(sz);
 		sz = 0;
@@ -1513,8 +1804,8 @@ using List_WStrings = List_Basic_Strings<wchar_t>;
 template <class CharT>
 class Replacement_Table {
       public:
-	using StrT = std::basic_string<CharT>;
-	using Table_Str = std::vector<std::pair<StrT, StrT>>;
+	using Str = std::basic_string<CharT>;
+	using Table_Str = std::vector<std::pair<Str, Str>>;
 	using iterator = typename Table_Str::iterator;
 	using const_iterator = typename Table_Str::const_iterator;
 
@@ -1524,7 +1815,7 @@ class Replacement_Table {
 	size_t start_word_reps_last_idx = 0;
 	size_t end_word_reps_last_idx = 0;
 
-	auto order_entries() -> void; // implemented in cxx
+	auto order_entries() -> void;
 
       public:
 	Replacement_Table() = default;
@@ -1541,14 +1832,6 @@ class Replacement_Table {
 	auto& operator=(Table_Str&& v)
 	{
 		table = move(v);
-		order_entries();
-		return *this;
-	}
-
-	template <class Range>
-	auto& operator=(const Range& range)
-	{
-		table.assign(std::begin(range), std::end(range));
 		order_entries();
 		return *this;
 	}
@@ -1610,21 +1893,21 @@ auto Replacement_Table<CharT>::order_entries() -> void
 
 template <class CharT>
 struct Similarity_Group {
-	using StrT = std::basic_string<CharT>;
-	StrT chars;
-	std::vector<StrT> strings;
+	using Str = std::basic_string<CharT>;
+	Str chars;
+	std::vector<Str> strings;
 
-	auto parse(const StrT& s) -> void;
+	auto parse(const Str& s) -> void;
 	Similarity_Group() = default;
-	Similarity_Group(const StrT& s) { parse(s); }
-	auto& operator=(const StrT& s)
+	Similarity_Group(const Str& s) { parse(s); }
+	auto& operator=(const Str& s)
 	{
 		parse(s);
 		return *this;
 	}
 };
 template <class CharT>
-auto Similarity_Group<CharT>::parse(const StrT& s) -> void
+auto Similarity_Group<CharT>::parse(const Str& s) -> void
 {
 	auto i = size_t(0);
 	for (;;) {
@@ -1647,8 +1930,8 @@ auto Similarity_Group<CharT>::parse(const StrT& s) -> void
 
 template <class CharT>
 class Phonetic_Table {
-	using StrT = std::basic_string<CharT>;
-	using Pair_StrT = std::pair<StrT, StrT>;
+	using Str = std::basic_string<CharT>;
+	using Pair_Str = std::pair<Str, Str>;
 
 	struct Phonet_Match_Result {
 		size_t count_matched = 0;
@@ -1659,35 +1942,28 @@ class Phonetic_Table {
 		operator bool() { return count_matched; }
 	};
 
-	std::vector<std::pair<StrT, StrT>> table;
+	std::vector<std::pair<Str, Str>> table;
 	auto order() -> void;
-	auto static match(const StrT& data, size_t i, const StrT& pattern,
+	auto static match(const Str& data, size_t i, const Str& pattern,
 	                  bool at_begin) -> Phonet_Match_Result;
 
       public:
 	Phonetic_Table() = default;
-	Phonetic_Table(const std::vector<Pair_StrT>& v) : table(v) { order(); }
-	Phonetic_Table(std::vector<Pair_StrT>&& v) : table(move(v)) { order(); }
-	auto& operator=(const std::vector<Pair_StrT>& v)
+	Phonetic_Table(const std::vector<Pair_Str>& v) : table(v) { order(); }
+	Phonetic_Table(std::vector<Pair_Str>&& v) : table(move(v)) { order(); }
+	auto& operator=(const std::vector<Pair_Str>& v)
 	{
 		table = v;
 		order();
 		return *this;
 	}
-	auto& operator=(std::vector<Pair_StrT>&& v)
+	auto& operator=(std::vector<Pair_Str>&& v)
 	{
 		table = move(v);
 		order();
 		return *this;
 	}
-	template <class Range>
-	auto& operator=(const Range& range)
-	{
-		table.assign(std::begin(range), std::end(range));
-		order();
-		return *this;
-	}
-	auto replace(StrT& word) const -> bool;
+	auto replace(Str& word) const -> bool;
 };
 
 template <class CharT>
@@ -1710,9 +1986,8 @@ auto Phonetic_Table<CharT>::order() -> void
 }
 
 template <class CharT>
-auto Phonetic_Table<CharT>::match(const StrT& data, size_t i,
-                                  const StrT& pattern, bool at_begin)
-    -> Phonet_Match_Result
+auto Phonetic_Table<CharT>::match(const Str& data, size_t i, const Str& pattern,
+                                  bool at_begin) -> Phonet_Match_Result
 {
 	auto ret = Phonet_Match_Result();
 	auto j =
@@ -1783,15 +2058,15 @@ auto Phonetic_Table<CharT>::match(const StrT& data, size_t i,
 }
 
 template <class CharT>
-auto Phonetic_Table<CharT>::replace(StrT& word) const -> bool
+auto Phonetic_Table<CharT>::replace(Str& word) const -> bool
 {
 	using boost::make_iterator_range;
 	struct Cmp {
-		auto operator()(CharT c, const Pair_StrT& s)
+		auto operator()(CharT c, const Pair_Str& s)
 		{
 			return c < s.first[0];
 		}
-		auto operator()(const Pair_StrT& s, CharT c)
+		auto operator()(const Pair_Str& s, CharT c)
 		{
 			return s.first[0] < c;
 		}
