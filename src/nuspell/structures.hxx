@@ -499,8 +499,7 @@ struct identity {
 	}
 };
 
-template <class Value, class Key = Value, class KeyExtract = identity,
-          class Hash = std::hash<Key>, class KeyEqual = std::equal_to<>>
+template <class Value, class Key = Value, class KeyExtract = identity>
 class Hash_Multiset {
       private:
 	using bucket_type = boost::container::small_vector<Value, 1>;
@@ -508,16 +507,13 @@ class Hash_Multiset {
 	std::vector<bucket_type> data;
 	size_t sz = 0;
 	size_t max_load_factor_capacity = 0;
-	KeyExtract key_extract = {};
-	Hash hash = {};
-	KeyEqual equal = {};
 
       public:
 	using key_type = Key;
 	using value_type = Value;
 	using size_type = std::size_t;
 	using difference_type = std::ptrdiff_t;
-	using hasher = Hash;
+	using hasher = std::hash<Key>;
 	using reference = value_type&;
 	using const_reference = const value_type&;
 	using pointer = typename bucket_type::pointer;
@@ -563,6 +559,8 @@ class Hash_Multiset {
 	auto insert(const_reference value)
 	{
 		using namespace std;
+		auto hash = hasher();
+		auto key_extract = KeyExtract();
 		if (sz == max_load_factor_capacity) {
 			reserve(sz + 1);
 		}
@@ -571,14 +569,14 @@ class Hash_Multiset {
 		auto h_mod = h & (data.size() - 1);
 		auto& bucket = data[h_mod];
 		if (bucket.size() == 0 || bucket.size() == 1 ||
-		    equal(key, key_extract(bucket.back()))) {
+		    key == key_extract(bucket.back())) {
 			bucket.push_back(value);
 			++sz;
 			return end(bucket) - 1;
 		}
 		auto last =
 		    std::find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
-			    return equal(key, key_extract(x));
+			    return key == key_extract(x);
 		    });
 		if (last != rend(bucket)) {
 			auto ret = bucket.insert(last.base(), value);
@@ -602,6 +600,8 @@ class Hash_Multiset {
 	    -> std::pair<local_iterator, local_iterator>
 	{
 		using namespace std;
+		auto hash = hasher();
+		auto key_extract = KeyExtract();
 		if (data.empty())
 			return {};
 		auto h = hash(key);
@@ -610,22 +610,22 @@ class Hash_Multiset {
 		if (bucket.empty())
 			return {};
 		if (bucket.size() == 1) {
-			if (equal(key, key_extract(bucket.front())))
+			if (key == key_extract(bucket.front()))
 				return {begin(bucket), end(bucket)};
 			return {};
 		}
 		auto first =
 		    std::find_if(begin(bucket), end(bucket), [&](auto& x) {
-			    return equal(key, key_extract(x));
+			    return key == key_extract(x);
 		    });
 		if (first == end(bucket))
 			return {};
 		auto next = first + 1;
-		if (next == end(bucket) || !equal(key, key_extract(*next)))
+		if (next == end(bucket) || key != key_extract(*next))
 			return {first, next};
 		auto last =
 		    std::find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
-			    return equal(key, key_extract(x));
+			    return key == key_extract(x);
 		    });
 		return {first, last.base()};
 	}
@@ -634,6 +634,8 @@ class Hash_Multiset {
 	    -> std::pair<local_const_iterator, local_const_iterator>
 	{
 		using namespace std;
+		auto hash = hasher();
+		auto key_extract = KeyExtract();
 		if (data.empty())
 			return {};
 		auto h = hash(key);
@@ -642,22 +644,22 @@ class Hash_Multiset {
 		if (bucket.empty())
 			return {};
 		if (bucket.size() == 1) {
-			if (equal(key, key_extract(bucket.front())))
+			if (key == key_extract(bucket.front()))
 				return {begin(bucket), end(bucket)};
 			return {};
 		}
 		auto first =
 		    std::find_if(begin(bucket), end(bucket), [&](auto& x) {
-			    return equal(key, key_extract(x));
+			    return key == key_extract(x);
 		    });
 		if (first == end(bucket))
 			return {};
 		auto next = first + 1;
-		if (next == end(bucket) || !equal(key, key_extract(*next)))
+		if (next == end(bucket) || key != key_extract(*next))
 			return {first, next};
 		auto last =
 		    std::find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
-			    return equal(key, key_extract(x));
+			    return key == key_extract(x);
 		    });
 		return {first, last.base()};
 	}
@@ -945,14 +947,27 @@ class Prefix_Multiset {
 	using Iterator = typename Vector_Type::const_iterator;
 
       private:
-	Vector_Type table;
-	Key_Extr extract_key;
-	Key_Transform transform_key;
+	struct Ebo_Key_Extr : public Key_Extr {
+	};
+	struct Ebo_Key_Transf : public Key_Transform {
+	};
+	struct Ebo : public Ebo_Key_Extr, Ebo_Key_Transf {
+		Vector_Type table;
+	} ebo;
 	std::basic_string<Char_Type> first_letter;
 	std::vector<size_t> prefix_idx_with_first_letter;
 
+	auto key_extractor() const -> const Ebo_Key_Extr& { return ebo; }
+	auto key_transformator() const -> const Ebo_Key_Transf& { return ebo; }
+	auto& get_table() { return ebo.table; }
+	auto& get_table() const { return ebo.table; }
+
 	auto sort()
 	{
+		auto& extract_key = key_extractor();
+		auto& transform_key = key_transformator();
+		auto& table = get_table();
+
 		std::sort(begin(table), end(table), [&](T& a, T& b) {
 			auto&& key_a = transform_key(extract_key(a));
 			auto&& key_b = transform_key(extract_key(b));
@@ -967,7 +982,7 @@ class Prefix_Multiset {
 			auto&& k = transform_key(extract_key(x));
 			return k.empty();
 		});
-		for (; it != last;) {
+		while (it != last) {
 			auto&& k1 = transform_key(extract_key(*it));
 			first_letter.push_back(k1[0]);
 			prefix_idx_with_first_letter.push_back(it - first);
@@ -998,46 +1013,46 @@ class Prefix_Multiset {
 
       public:
 	Prefix_Multiset(Key_Extr ke = {}, Key_Transform kt = {})
-	    : extract_key(ke), transform_key(kt)
+	    : ebo{{ke}, {kt}, {}}
 	{
 	}
 	Prefix_Multiset(const Vector_Type& v, Key_Extr ke = {},
 	                Key_Transform kt = {})
-	    : table(v), extract_key(ke), transform_key(kt)
+	    : ebo{{ke}, {kt}, v}
 	{
 		sort();
 	}
 	Prefix_Multiset(Vector_Type&& v, Key_Extr ke = {},
 	                Key_Transform kt = {})
-	    : table(std::move(v)), extract_key(ke), transform_key(kt)
+	    : ebo{{ke}, {kt}, std::move(v)}
 	{
 		sort();
 	}
 	Prefix_Multiset(std::initializer_list<T> list, Key_Extr ke = {},
 	                Key_Transform kt = {})
-	    : table(list), extract_key(ke), transform_key(kt)
+	    : ebo{{ke}, {kt}, list}
 	{
 		sort();
 	}
 	auto& operator=(const Vector_Type& v)
 	{
-		table = v;
+		get_table() = v;
 		sort();
 		return *this;
 	}
 	auto& operator=(std::vector<T>&& v)
 	{
-		table = std::move(v);
+		get_table() = std::move(v);
 		sort();
 		return *this;
 	}
 	auto& operator=(std::initializer_list<T> list)
 	{
-		table = list;
+		get_table() = list;
 		sort();
 		return *this;
 	}
-	auto& data() const { return table; }
+	auto& data() const { return get_table(); }
 
 	template <class Func>
 	auto for_each_prefixes_of(const Key_Type& word, Func func) const;
@@ -1070,8 +1085,9 @@ class Prefix_Multiset {
 		Iter_Prefixes_Of() = default;
 		Iter_Prefixes_Of(const Prefix_Multiset& set,
 		                 const Key_Type& word)
-		    : set(&set), it(set.table.begin()), last(set.table.end()),
-		      search_key(&word), valid(true)
+		    : set(&set), it(set.get_table().begin()),
+		      last(set.get_table().end()), search_key(&word),
+		      valid(true)
 		{
 			advance();
 		}
@@ -1119,8 +1135,9 @@ template <class T, class Key_Extr, class Key_Transform>
 auto Prefix_Multiset<T, Key_Extr, Key_Transform>::Iter_Prefixes_Of::advance()
     -> void
 {
-	auto&& transform_key = set->transform_key;
-	auto&& extract_key = set->extract_key;
+	auto& extract_key = set->key_extractor();
+	auto& transform_key = set->key_transformator();
+	auto& table = set->get_table();
 
 	if (len == 0) {
 		if (it != last) {
@@ -1141,7 +1158,7 @@ auto Prefix_Multiset<T, Key_Extr, Key_Transform>::Iter_Prefixes_Of::advance()
 				return;
 			}
 
-			auto first = set->table.begin();
+			auto first = table.begin();
 			it = first + prefix_idx_with_first_letter[idx];
 			last = first + prefix_idx_with_first_letter[idx + 1];
 			++len;
@@ -1175,6 +1192,10 @@ template <class Func>
 auto Prefix_Multiset<T, Key_Extr, Key_Transform>::for_each_prefixes_of(
     const Key_Type& word, Func func) const
 {
+	auto& extract_key = key_extractor();
+	auto& transform_key = key_transformator();
+	auto& table = get_table();
+
 	auto first = begin(table);
 	auto last = end(table);
 	auto it = first;

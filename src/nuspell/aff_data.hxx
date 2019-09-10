@@ -110,43 +110,51 @@ class Word_List : public Word_List_Base {
 };
 
 struct Aff_Data {
-	// data members
-	// word list
-	Word_List words;
 
-	Substr_Replacer<wchar_t> input_substr_replacer;
-	Substr_Replacer<wchar_t> output_substr_replacer;
-	Break_Table<wchar_t> break_table;
-	std::basic_string<wchar_t> ignored_chars;
+	// spell checking options
+	Word_List words;
 	Prefix_Table prefixes;
 	Suffix_Table suffixes;
-	std::vector<Compound_Pattern<wchar_t>> compound_patterns;
-	Replacement_Table<wchar_t> replacements;
-	std::vector<Similarity_Group<wchar_t>> similarities;
-	std::basic_string<wchar_t> keyboard_closeness;
-	std::basic_string<wchar_t> try_chars;
-	Phonetic_Table<wchar_t> phonetic_table;
 
-	// general options
-	Encoding encoding;
-	icu::Locale icu_locale;
-	Flag_Type flag_type;
 	bool complex_prefixes;
 	bool fullstrip;
 	bool checksharps;
 	bool forbid_warn;
+	char16_t compound_onlyin_flag;
 	char16_t circumfix_flag;
 	char16_t forbiddenword_flag;
 	char16_t keepcase_flag;
 	char16_t need_affix_flag;
-	char16_t substandard_flag;
 	char16_t warn_flag;
 
+	// compounding options
+	char16_t compound_flag;
+	char16_t compound_begin_flag;
+	char16_t compound_last_flag;
+	char16_t compound_middle_flag;
+	Compound_Rule_Table compound_rules;
+
+	// spell checking options
+	Break_Table<wchar_t> break_table;
+	Substr_Replacer<wchar_t> input_substr_replacer;
+	std::wstring ignored_chars;
+	icu::Locale icu_locale;
+	Substr_Replacer<wchar_t> output_substr_replacer;
+
+	Encoding encoding;
+	Flag_Type flag_type;
 	std::vector<Flag_Set> flag_aliases;
 	std::string wordchars; // deprecated?
 
 	// suggestion options
+	Replacement_Table<wchar_t> replacements;
+	std::vector<Similarity_Group<wchar_t>> similarities;
+	std::wstring keyboard_closeness;
+	std::wstring try_chars;
+	Phonetic_Table<wchar_t> phonetic_table;
+
 	char16_t nosuggest_flag;
+	char16_t substandard_flag;
 	unsigned short max_compound_suggestions;
 	unsigned short max_ngram_suggestions;
 	unsigned short max_diff_factor;
@@ -157,11 +165,6 @@ struct Aff_Data {
 	// compounding options
 	unsigned short compound_min_length;
 	unsigned short compound_max_word_count;
-	char16_t compound_flag;
-	char16_t compound_begin_flag;
-	char16_t compound_last_flag;
-	char16_t compound_middle_flag;
-	char16_t compound_onlyin_flag;
 	char16_t compound_permit_flag;
 	char16_t compound_forbid_flag;
 	char16_t compound_root_flag;
@@ -173,13 +176,12 @@ struct Aff_Data {
 	bool compound_check_triple;
 	bool compound_simplified_triple;
 
-	Compound_Rule_Table compound_rules;
+	std::vector<Compound_Pattern<wchar_t>> compound_patterns;
 
 	unsigned short compound_syllable_max;
 	std::string compound_syllable_vowels;
 	Flag_Set compound_syllable_num;
 
-	// methods
 	auto parse_aff(std::istream& in) -> bool;
 	auto parse_dic(std::istream& in) -> bool;
 	auto parse_aff_dic(std::istream& aff, std::istream& dic)
