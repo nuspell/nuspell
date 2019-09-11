@@ -37,7 +37,7 @@ TEST_CASE("Dictionary::spell_priv simple", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	auto words = {"table", "chair", "book", "fóóáár", "áárfóóĳ"};
+	auto words = {L"table", L"chair", L"book", L"fóóáár", L"áárfóóĳ"};
 	for (auto& x : words)
 		d.words.insert({x, {}});
 
@@ -56,9 +56,9 @@ TEST_CASE("Dictionary::spell_priv suffixes", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	d.words.emplace("berry", u"T");
-	d.words.emplace("May", u"T");
-	d.words.emplace("vary", u"");
+	d.words.emplace(L"berry", u"T");
+	d.words.emplace(L"May", u"T");
+	d.words.emplace(L"vary", u"");
 
 	d.suffixes = {{u'T', true, L"y", L"ies", Flag_Set(), L".[^aeiou]y"}};
 
@@ -76,7 +76,7 @@ TEST_CASE("Dictionary::spell_priv complex_prefixes", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	d.words.emplace("drink", u"X");
+	d.words.emplace(L"drink", u"X");
 	d.suffixes = {{u'Y', true, L"", L"s", Flag_Set(), L"."},
 	              {u'X', true, L"", L"able", Flag_Set(u"Y"), L"."}};
 
@@ -95,8 +95,8 @@ TEST_CASE("Dictionary::spell_priv extra_stripping", "[dictionary]")
 
 	d.complex_prefixes = true;
 
-	d.words.emplace("aa", u"ABC");
-	d.words.emplace("bb", u"XYZ");
+	d.words.emplace(L"aa", u"ABC");
+	d.words.emplace(L"bb", u"XYZ");
 
 	d.prefixes = {{u'A', true, L"", L"W", Flag_Set(u"B"), L"aa"},
 	              {u'B', true, L"", L"Q", Flag_Set(u"C"), L"Wa"},
@@ -117,9 +117,9 @@ TEST_CASE("Dictionary::spell_priv break_pattern", "[dictionary]")
 	d.forbid_warn = true;
 	d.warn_flag = 'W';
 
-	d.words.emplace("user", u"");
-	d.words.emplace("interface", u"");
-	d.words.emplace("interface-interface", u"W");
+	d.words.emplace(L"user", u"");
+	d.words.emplace(L"interface", u"");
+	d.words.emplace(L"interface-interface", u"W");
 
 	d.break_table = {L"-", L"++++++$"};
 
@@ -138,8 +138,8 @@ TEST_CASE("Dictionary::spell_priv spell_casing_upper", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	d.words.emplace("Sant'Elia", u"");
-	d.words.emplace("d'Osormort", u"");
+	d.words.emplace(L"Sant'Elia", u"");
+	d.words.emplace(L"d'Osormort", u"");
 
 	auto good = {L"SANT'ELIA", L"D'OSORMORT"};
 	for (auto& g : good)
@@ -154,10 +154,10 @@ TEST_CASE("Dictionary::spell_priv compounding begin_last", "[dictionary]")
 	d.compound_last_flag = 'L';
 
 	d.compound_min_length = 4;
-	d.words.emplace("car", u"B");
-	d.words.emplace("cook", u"B");
-	d.words.emplace("photo", u"B");
-	d.words.emplace("book", u"L");
+	d.words.emplace(L"car", u"B");
+	d.words.emplace(L"cook", u"B");
+	d.words.emplace(L"photo", u"B");
+	d.words.emplace(L"book", u"L");
 
 	auto good = {L"cookbook", L"photobook"};
 	for (auto& g : good)
@@ -174,9 +174,9 @@ TEST_CASE("Dictionary::spell_priv compounding compound_middle", "[dictionary]")
 	d.compound_flag = 'C';
 	d.compound_middle_flag = 'M';
 	d.compound_check_duplicate = true;
-	d.words.emplace("goederen", u"C");
-	d.words.emplace("trein", u"M");
-	d.words.emplace("wagon", u"C");
+	d.words.emplace(L"goederen", u"C");
+	d.words.emplace(L"trein", u"M");
+	d.words.emplace(L"wagon", u"C");
 
 	auto good = {L"goederentreinwagon", L"wagontreingoederen",
 	             L"goederenwagon", L"wagongoederen"};
@@ -196,8 +196,8 @@ TEST_CASE("Dictionary::spell_priv compounding triple", "[dictionary]")
 	d.compound_last_flag = 'L';
 	d.compound_check_triple = true;
 	d.compound_simplified_triple = true;
-	d.words.emplace("schiff", u"B");
-	d.words.emplace("fahrt", u"L");
+	d.words.emplace(L"schiff", u"B");
+	d.words.emplace(L"fahrt", u"L");
 
 	auto good = {L"Schiffahrt", L"schiffahrt"};
 	for (auto& g : good)
@@ -217,7 +217,7 @@ TEST_CASE("Dictionary suggestions rep_suggest", "[dictionary]")
 	                  {L"^voo", L"foo"},
 	                  {L"^alot$", L"a lot"}};
 	auto good = L"fat";
-	d.words.emplace("fat", u"");
+	d.words.emplace(L"fat", u"");
 	CHECK(d.spell_priv(good) == true);
 	auto w = wstring(L"phat");
 	CHECK(d.spell_priv(w) == false);
@@ -232,7 +232,7 @@ TEST_CASE("Dictionary suggestions rep_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 
 	good = L"station";
-	d.words.emplace("station", u"");
+	d.words.emplace(L"station", u"");
 	CHECK(d.spell_priv(good) == true);
 	w = wstring(L"stashun");
 	CHECK(d.spell_priv(w) == false);
@@ -241,7 +241,7 @@ TEST_CASE("Dictionary suggestions rep_suggest", "[dictionary]")
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	d.words.emplace("stations", u"");
+	d.words.emplace(L"stations", u"");
 	w = wstring(L"stashuns");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
@@ -250,7 +250,7 @@ TEST_CASE("Dictionary suggestions rep_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 
 	good = L"food";
-	d.words.emplace("food", u"");
+	d.words.emplace(L"food", u"");
 	CHECK(d.spell_priv(good) == true);
 	w = wstring(L"vood");
 	CHECK(d.spell_priv(w) == false);
@@ -267,7 +267,7 @@ TEST_CASE("Dictionary suggestions rep_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 
 	good = L"a lot";
-	d.words.emplace("a lot", u"");
+	d.words.emplace(L"a lot", u"");
 	CHECK(d.spell_priv(good) == true);
 	w = wstring(L"alot");
 	CHECK(d.spell_priv(w) == false);
@@ -297,7 +297,7 @@ TEST_CASE("Dictionary suggestions extra_char_suggest", "[dictionary]")
 
 	auto good = L"table";
 	d.try_chars = good;
-	d.words.emplace("table", u"");
+	d.words.emplace(L"table", u"");
 	CHECK(d.spell_priv(good) == true);
 
 	auto w = wstring(L"tabble");
@@ -310,7 +310,7 @@ TEST_CASE("Dictionary suggestions extra_char_suggest", "[dictionary]")
 
 	d.forbid_warn = true;
 	d.warn_flag = *u"W";
-	d.words.emplace("late", u"W");
+	d.words.emplace(L"late", u"W");
 	w = wstring(L"laate");
 	out_sug.clear();
 	expected_sug.clear();
@@ -323,7 +323,7 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 	auto d = Dict_Test();
 
 	auto good = L"naïve";
-	d.words.emplace("naïve", u"");
+	d.words.emplace(L"naïve", u"");
 	d.similarities = {Similarity_Group<wchar_t>(L"iíìîï")};
 	CHECK(d.spell_priv(good) == true);
 
@@ -335,7 +335,7 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 	d.map_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	d.words.emplace("æon", u"");
+	d.words.emplace(L"æon", u"");
 	d.similarities.push_back(Similarity_Group<wchar_t>(L"æ(ae)"));
 	good = L"æon";
 	CHECK(d.spell_priv(good) == true);
@@ -346,7 +346,7 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 	d.map_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	d.words.emplace("zijn", u"");
+	d.words.emplace(L"zijn", u"");
 	d.similarities.push_back(Similarity_Group<wchar_t>(L"(ij)ĳ"));
 	good = L"zijn";
 	CHECK(d.spell_priv(good) == true);
@@ -357,7 +357,7 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 	d.map_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	d.words.emplace("hear", u"");
+	d.words.emplace(L"hear", u"");
 	d.similarities.push_back(Similarity_Group<wchar_t>(L"(ae)(ea)"));
 	good = L"hear";
 	CHECK(d.spell_priv(good) == true);
@@ -375,8 +375,8 @@ TEST_CASE("Dictionary suggestions keyboard_suggest", "[dictionary]")
 
 	auto good1 = L"abcd";
 	auto good2 = L"Abb";
-	d.words.emplace("abcd", u"");
-	d.words.emplace("Abb", u"");
+	d.words.emplace(L"abcd", u"");
+	d.words.emplace(L"Abb", u"");
 	d.keyboard_closeness = L"uiop|xdf|nm";
 	CHECK(d.spell_priv(good1) == true);
 
@@ -416,7 +416,7 @@ TEST_CASE("Dictionary suggestions bad_char_suggest", "[dictionary]")
 	auto d = Dict_Test();
 
 	auto good = L"chair";
-	d.words.emplace("chair", u"");
+	d.words.emplace(L"chair", u"");
 	d.try_chars = good;
 	CHECK(d.spell_priv(good) == true);
 
@@ -434,7 +434,7 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 	auto d = Dict_Test();
 
 	auto good = L"abcd";
-	d.words.emplace("abcd", u"");
+	d.words.emplace(L"abcd", u"");
 	d.try_chars = good;
 	CHECK(d.spell_priv(good) == true);
 
@@ -453,16 +453,16 @@ TEST_CASE("Dictionary suggestions phonetic_suggest", "[dictionary]")
 	auto d = Dict_Test();
 
 
-	d.words.emplace("Brasilia", u"");
-	d.words.emplace("brassily", u"");
-	d.words.emplace("Brazilian", u"");
-	d.words.emplace("brilliance", u"");
-	d.words.emplace("brilliancy", u"");
-	d.words.emplace("brilliant", u"");
-	d.words.emplace("brain", u"");
-	d.words.emplace("brass", u"");
-	d.words.emplace("Churchillian", u"");
-	d.words.emplace("xxxxxxxxxx", u""); // needs adding of ph:Brasilia to
+	d.words.emplace(L"Brasilia", u"");
+	d.words.emplace(L"brassily", u"");
+	d.words.emplace(L"Brazilian", u"");
+	d.words.emplace(L"brilliance", u"");
+	d.words.emplace(L"brilliancy", u"");
+	d.words.emplace(L"brilliant", u"");
+	d.words.emplace(L"brain", u"");
+	d.words.emplace(L"brass", u"");
+	d.words.emplace(L"Churchillian", u"");
+	d.words.emplace(L"xxxxxxxxxx", u""); // needs adding of ph:Brasilia to
 	// its morph data, but this is pending enabling of
 	// parse_morhological_fields when reading aff file.
 
@@ -626,7 +626,7 @@ TEST_CASE("Dictionary suggestions suggest_priv", "[dictionary]")
 	d.try_chars = L"ailrt";
 
 	// extra char, bad char, bad char, forgotten char
-	auto words = {"tral", "trial", "trail", "traalt"};
+	auto words = {L"tral", L"trial", L"trail", L"traalt"};
 	for (auto& x : words)
 		d.words.insert({x, {}});
 

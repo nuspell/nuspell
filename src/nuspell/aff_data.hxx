@@ -83,15 +83,12 @@ enum class Flag_Type {
 };
 
 struct Extractor_First_of_Word_Pair {
-	auto& operator()(const std::pair<std::string, Flag_Set>& p) const
+	auto& operator()(const std::pair<std::wstring, Flag_Set>& p) const
 	{
 		return p.first;
 	}
 };
 
-using Word_List_Base =
-    Hash_Multiset<std::pair<std::string, Flag_Set>, std::string_view,
-                  Extractor_First_of_Word_Pair>;
 /**
  * @brief Map between words and word_flags.
  *
@@ -101,13 +98,9 @@ using Word_List_Base =
  * Does not store morphological data as is low priority feature and is out of
  * scope.
  */
-class Word_List : public Word_List_Base {
-      public:
-	using Word_List_Base::equal_range;
-	auto equal_range(const std::wstring& word) const
-	    -> std::pair<Word_List_Base::local_const_iterator,
-	                 Word_List_Base::local_const_iterator>;
-};
+using Word_List =
+    Hash_Multiset<std::pair<std::wstring, Flag_Set>, std::wstring_view,
+                  Extractor_First_of_Word_Pair>;
 
 struct Aff_Data {
 

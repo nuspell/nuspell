@@ -81,16 +81,6 @@ auto Encoding::normalize_name() -> void
 		name.erase(0, 10);
 }
 
-auto Word_List::equal_range(const std::wstring& word) const
-    -> std::pair<Word_List_Base::local_const_iterator,
-                 Word_List_Base::local_const_iterator>
-{
-	// auto static thread_local u8buf = string();
-	auto u8buf = boost::container::small_vector<char, 64>();
-	wide_to_utf8(word, u8buf);
-	return equal_range(string_view(u8buf.data(), u8buf.size()));
-}
-
 namespace {
 
 void reset_failbit_istream(std::istream& in)
@@ -1155,13 +1145,11 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		}
 		else {
 			ok = enc_conv.to_wide(word, wide_word);
-			wide_to_utf8(wide_word, word);
 		}
 		if (!ok)
 			continue;
 		if (!ignored_chars.empty()) {
 			erase_chars(wide_word, ignored_chars);
-			wide_to_utf8(wide_word, word);
 		}
 		casing = classify_casing(wide_word);
 
@@ -1169,7 +1157,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		switch (casing) {
 		case Casing::ALL_CAPITAL: {
 			// check for hidden homonym
-			auto hom = words.equal_range_nonconst_unsafe(word);
+			auto hom = words.equal_range_nonconst_unsafe(wide_word);
 			auto h =
 			    std::find_if(hom.first, hom.second, [&](auto& w) {
 				    return w.second.contains(
@@ -1181,18 +1169,17 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 				h->second = flags;
 			}
 			else {
-				words.emplace(word, flags);
+				words.emplace(wide_word, flags);
 			}
 			break;
 		}
 		case Casing::PASCAL:
 		case Casing::CAMEL: {
-			words.emplace(word, flags);
+			words.emplace(wide_word, flags);
 
 			// add the hidden homonym directly in uppercase
 			auto up_wide = to_upper(wide_word, icu_locale);
-			wide_to_utf8(wide_word, word);
-			auto& up = word;
+			auto& up = wide_word;
 			auto hom = words.equal_range(up);
 			auto h = none_of(hom.first, hom.second, [&](auto& w) {
 				return w.second.contains(HIDDEN_HOMONYM_FLAG);
@@ -1204,7 +1191,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			break;
 		}
 		default:
-			words.emplace(word, flags);
+			words.emplace(wide_word, flags);
 			break;
 		}
 	}
