@@ -270,23 +270,6 @@ auto report_parsing_error(Parsing_Error_Code err, size_t line_num)
 	}
 }
 
-auto parse_flags_possible_alias(istream& in, size_t line_num, Flag_Type t,
-                                const Encoding& enc,
-                                const vector<Flag_Set>& flag_aliases,
-                                u16string& out) -> istream&
-{
-	using Err = Parsing_Error_Code;
-	string s;
-	in >> s;
-	auto err = decode_flags_possible_alias(s, t, enc, flag_aliases, out);
-	if (err == Err::MISSING_FLAGS)
-		err = Err::NO_FLAGS_AFTER_SLASH_WARNING;
-	else if (static_cast<int>(err) > 0)
-		in.setstate(in.failbit);
-	report_parsing_error(err, line_num);
-	return in;
-}
-
 auto decode_compound_rule(const string& s, Flag_Type t, const Encoding& enc,
                           u16string& out) -> Parsing_Error_Code
 {
@@ -682,7 +665,7 @@ auto& operator>>(Aff_Line_Stream& in, Compound_Pattern<wchar_t>& p)
 	auto old_mask = in.exceptions();
 	in.exceptions(in.goodbit); // disable exceptions
 	in >> p.replacement;       // optional
-	if (in.fail() && !in.bad()) {
+	if (in.fail() && in.eof() && !in.bad()) {
 		reset_failbit_istream(in);
 		p.replacement.clear();
 	}
@@ -764,7 +747,17 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
 		in >> std::tie(elem.appending, elem.cont_flags);
 		if (elem.appending == L"0")
 			elem.appending.clear();
-		in >> elem.condition;
+		if (in.fail())
+			return;
+		auto old_mask = in.exceptions();
+		in.exceptions(in.goodbit);
+		in >> elem.condition; // optional
+		if (in.fail() && in.eof() && !in.bad()) {
+			elem.condition = L".";
+			reset_failbit_istream(in);
+		}
+		in.exceptions(old_mask);
+
 		// in >> elem.morphological_fields;
 	}
 	else {
@@ -1059,49 +1052,33 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 {
 	size_t line_number = 1;
 	size_t approximate_size;
-	istringstream ss;
 	string line;
-
-	// locale must be without thousands separator.
-	auto loc = locale::classic();
-	Setlocale_To_C_In_Scope setlocale_to_C;
-	in.imbue(loc);
-	ss.imbue(loc);
-	strip_utf8_bom(in);
-	if (!getline(in, line)) {
-		return false;
-	}
-	auto enc_conv = Encoding_Converter(encoding.value_or_default());
-	if (encoding.is_utf8() && !validate_utf8(line)) {
-		cerr << "Invalid utf in dic file" << endl;
-	}
-	ss.str(line);
-	if (ss >> approximate_size) {
-		words.reserve(approximate_size);
-	}
-	else {
-		return false;
-	}
-
 	string word;
-	string morph;
-	vector<string> morphs;
+	string flags_str;
 	u16string flags;
 	wstring wide_word;
+	auto enc_conv = Encoding_Converter(encoding.value_or_default());
+
+	// locale must be without thousands separator.
+	auto& ctype = use_facet<std::ctype<char>>(locale::classic());
+	in.imbue(locale::classic());
+	Setlocale_To_C_In_Scope setlocale_to_C;
+
+	strip_utf8_bom(in);
+	if (in >> approximate_size)
+		words.reserve(approximate_size);
+	else
+		return false;
+	getline(in, line);
 
 	while (getline(in, line)) {
 		line_number++;
-		ss.str(line);
-		ss.clear();
 		word.clear();
-		morph.clear();
+		flags_str.clear();
 		flags.clear();
-		morphs.clear();
 
-		if (encoding.is_utf8() && !validate_utf8(line)) {
-			cerr << "Invalid utf in dic file" << endl;
-		}
 		size_t slash_pos = 0;
+		size_t tab_pos = 0;
 		for (;;) {
 			slash_pos = line.find('/', slash_pos);
 			if (slash_pos == line.npos)
@@ -1116,43 +1093,34 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		if (slash_pos != line.npos && slash_pos != 0) {
 			// slash found, word until slash
 			word.assign(line, 0, slash_pos);
-			ss.ignore(slash_pos + 1);
-			parse_flags_possible_alias(ss, line_number, flag_type,
-			                           encoding, flag_aliases,
-			                           flags);
-			if (ss.fail())
+			auto ptr = ctype.scan_is(ctype.space, &line[slash_pos],
+			                         &line[line.size()]);
+			auto end_flags_pos = ptr - &line[0];
+			flags_str.assign(line, slash_pos + 1,
+			                 end_flags_pos - (slash_pos + 1));
+			auto err = decode_flags_possible_alias(
+			    flags_str, flag_type, encoding, flag_aliases,
+			    flags);
+			report_parsing_error(err, line_number);
+			if (static_cast<int>(err) > 0)
 				continue;
 		}
-		else if (line.find('\t') != line.npos) {
+		else if ((tab_pos = line.find('\t')) != line.npos) {
 			// Tab found, word until tab. No flags.
 			// After tab follow morphological fields
-			getline(ss, word, '\t');
+			word.assign(line, 0, tab_pos);
 		}
 		else {
 			auto end = dic_find_end_of_word_heuristics(line);
 			word.assign(line, 0, end);
-			ss.ignore(end);
 		}
-		if (word.empty()) {
+		if (word.empty())
 			continue;
-		}
-		// parse_morhological_fields(ss, morphs);
-
-		auto casing = Casing();
-		auto ok = false;
-		if (encoding.is_utf8()) {
-			ok = utf8_to_wide(word, wide_word);
-		}
-		else {
-			ok = enc_conv.to_wide(word, wide_word);
-		}
+		auto ok = enc_conv.to_wide(word, wide_word);
 		if (!ok)
 			continue;
-		if (!ignored_chars.empty()) {
-			erase_chars(wide_word, ignored_chars);
-		}
-		casing = classify_casing(wide_word);
-
+		erase_chars(wide_word, ignored_chars);
+		auto casing = classify_casing(wide_word);
 		const char16_t HIDDEN_HOMONYM_FLAG = -1;
 		switch (casing) {
 		case Casing::ALL_CAPITAL: {
