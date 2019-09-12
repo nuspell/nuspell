@@ -63,6 +63,14 @@ sudo make install
 For faster build process run `make -j`, or use Ninja instead
 of Make.
 
+If you are making a Linux distribution package (dep, rpm) you need
+some additional configurations on the CMake invocation. For example:
+
+```bash
+cmake .. -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release \
+         -DCMAKE_INSTALL_PREFIX=/usr
+```
+
 ## Building on OSX and macOS
 
 1.  Install Apple's Command-line tools.
@@ -140,41 +148,7 @@ pkg cmake icu boost-libs catch
 
 Then run the standard cmake and make as on Linux. See above.
 
-# Debugging Nuspell
-
-First, always install the debugger:
-
-```bash
-sudo apt install gdb
-```
-
-It is recomended to install a debug build of the standard library:
-
-```bash
-sudo apt install libstdc++6-8-dbg
-```
-
-For debugging we need to create a debug build and then we need to start
-`gdb`.
-
-```bash
-mkdir debug
-cd debug
-cmake .. -DCMAKE_BUILD_TYPE=Debug
-make -j
-gdb src/nuspell/nuspell
-```
-
-If you like to develop and debug with an IDE, see documentation at
-https://github.com/nuspell/nuspell/wiki/IDE-Setup
-
-# Testing
-
-To run the tests, run the following command after building:
-
-    ctest
-
-# Documentation
+# Using the software
 
 ## Using the command-line tool
 
@@ -270,7 +244,43 @@ add_executable(myprogram main.cpp)
 target_link_libraries(myprogram Nuspell::nuspell)
 ```
 
-## See also
+# Dictionaries
+
+Myspell, Hunspell and Nuspell dictionaries:
+
+<https://github.com/nuspell/nuspell/wiki/Dictionaries-and-Contacts>
+
+
+# Advanced topics
+## Debugging Nuspell
+
+First, always install the debugger:
+
+```bash
+sudo apt install gdb
+```
+
+For debugging we need to create a debug build and then we need to start
+`gdb`.
+
+```bash
+mkdir debug
+cd debug
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+make -j
+gdb src/nuspell/nuspell
+```
+
+We recommend debugging to be done
+[with an IDE](https://github.com/nuspell/nuspell/wiki/IDE-Setup).
+
+## Testing
+
+To run the tests, run the following command after building:
+
+    ctest
+
+# See also
 
 Full documentation in the [wiki](https://github.com/nuspell/nuspell/wiki),
 which also holds the [Code of
@@ -284,8 +294,4 @@ by running:
 The result can be viewed by opening `doxygen/html/index.html` in a web
 browser.
 
-# Dictionaries
 
-Myspell, Hunspell and Nuspell dictionaries:
-
-<https://github.com/nuspell/nuspell/wiki/Dictionaries-and-Contacts>

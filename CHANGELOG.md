@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- Building and using the library requires a compiler with C++17 support.
+
+### Fixed
+- Major improvement in speed. The best case is almost 3x faster than Hunspell,
+  and the worst case is now matching and exceeding Hunspell's speed by a
+  few percent. Previously, the worst case was usually triggered with incorrect
+  words and was major bottleneck, it was slower than Hunspell.
+- Fixed loading Dutch dictionary, a regression introduced in 2.3.0.
+
 ## [2.3.0] - 2019-08-08
 ### Added
 - Support for macOS
@@ -66,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v2.3.0...HEAD
 [2.3.0]: https://github.com/nuspell/nuspell/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/nuspell/nuspell/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/nuspell/nuspell/compare/v2.0.0...v2.1.0

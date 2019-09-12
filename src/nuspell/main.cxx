@@ -267,7 +267,7 @@ auto print_help(const string& program_name) -> void
 	o << "Usage:\n"
 	     "\n";
 	o << p << " [-S] [-d dict_NAME] [-i enc] [file_name]...\n";
-	o << p << " -l|-G [-L] [-d dict_NAME] [-i enc] [file_name]...\n";
+	o << p << " -l|-G [-L] [-S] [-d dict_NAME] [-i enc] [file_name]...\n";
 	o << p << " -D|-h|--help|-v|--version\n";
 	o << "\n"
 	     "Check spelling of each FILE. Without FILE, check standard "
