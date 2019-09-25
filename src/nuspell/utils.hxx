@@ -18,14 +18,16 @@
 
 /**
  * @file
- * @brief Encoding transformations, private header.
+ * @brief Utilities for strings, private header.
  */
 
-#ifndef NUSPELL_LOCALE_UTILS_HXX
-#define NUSPELL_LOCALE_UTILS_HXX
+#ifndef NUSPELL_UTILS_HXX
+#define NUSPELL_UTILS_HXX
 
+#include <algorithm>
 #include <locale>
 #include <string>
+#include <vector>
 
 #include <clocale>
 
@@ -34,19 +36,14 @@
 #include <unistd.h>
 #endif
 
-#include <boost/container/small_vector.hpp>
 #include <unicode/locid.h>
 
 struct UConverter; // unicode/ucnv.h
 
 namespace nuspell {
 
-auto validate_utf8(const std::string& s) -> bool;
-
 auto wide_to_utf8(const std::wstring& in, std::string& out) -> void;
 auto wide_to_utf8(const std::wstring& in) -> std::string;
-auto wide_to_utf8(const std::wstring& in,
-                  boost::container::small_vector_base<char>& out) -> void;
 
 auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool;
 auto utf8_to_wide(const std::string& in) -> std::wstring;
@@ -69,6 +66,8 @@ auto to_narrow(const std::wstring& in, std::string& out,
                const std::locale& outloc) -> bool;
 auto to_narrow(const std::wstring& in, const std::locale& outloc)
     -> std::string;
+
+auto to_upper_ascii(std::string& s) -> void;
 
 auto is_locale_known_utf8(const std::locale& loc) -> bool;
 
@@ -111,7 +110,7 @@ class Encoding_Converter {
 	{
 		cnv = other.cnv;
 		cnv = nullptr;
-	};
+	}
 	auto operator=(const Encoding_Converter& other) -> Encoding_Converter&;
 	auto operator=(Encoding_Converter&& other) -> Encoding_Converter&
 	{
@@ -172,5 +171,106 @@ class Setlocale_To_C_In_Scope {
 };
 #endif
 
+/**
+ * @brief Splits string on set of single char seperators.
+ *
+ * Consecutive separators are treated as separate and will emit empty strings.
+ *
+ * @param s string to split.
+ * @param sep seperator(s) to split on.
+ * @param out start of the output range where separated strings are
+ * appended.
+ * @return The end of the output range where separated strings are appended.
+ */
+template <class CharT, class SepT, class OutIt>
+auto split_on_any_of(const std::basic_string<CharT>& s, const SepT& sep,
+                     OutIt out)
+{
+	using size_type = typename std::basic_string<CharT>::size_type;
+	size_type i1 = 0;
+	size_type i2;
+	do {
+		i2 = s.find_first_of(sep, i1);
+		*out++ = s.substr(i1, i2 - i1);
+		i1 = i2 + 1; // we can only add +1 if sep is single char.
+
+		// i2 gets s.npos after the last separator.
+		// Length of i2-i1 will always go past the end. That is defined.
+	} while (i2 != s.npos);
+	return out;
+}
+
+/**
+ * @brief Splits string on single char seperator.
+ *
+ * Consecutive separators are treated as separate and will emit empty strings.
+ *
+ * @param s string to split.
+ * @param sep char that acts as separator to split on.
+ * @param out start of the output range where separated strings are
+ * appended.
+ * @return The iterator that indicates the end of the output range.
+ */
+template <class CharT, class OutIt>
+auto split(const std::basic_string<CharT>& s, CharT sep, OutIt out)
+{
+	return split_on_any_of(s, sep, out);
+}
+
+template <class CharT>
+auto& erase_chars(std::basic_string<CharT>& s,
+                  const std::basic_string<CharT>& erase_chars)
+{
+	if (erase_chars.empty())
+		return s;
+	auto is_erasable = [&](CharT c) {
+		return erase_chars.find(c) != erase_chars.npos;
+	};
+	auto it = remove_if(begin(s), end(s), is_erasable);
+	s.erase(it, end(s));
+	return s;
+}
+
+template <class CharT>
+auto& replace_char(std::basic_string<CharT>& s, CharT from, CharT to)
+{
+	for (auto i = s.find(from); i != s.npos; i = s.find(from, i + 1)) {
+		s[i] = to;
+	}
+	return s;
+}
+
+/**
+ * @brief Tests if word is a number.
+ *
+ * Allow numbers with dots ".", dashes "-" and commas ",", but forbids double
+ * separators such as "..", "--" and ".,".  This implementation increases
+ * performance over the regex implementation in the standard library.
+ */
+template <class CharT>
+auto is_number(const std::basic_string<CharT>& s) -> bool
+{
+	if (s.empty())
+		return false;
+
+	auto it = begin(s);
+	if (s[0] == '-')
+		++it;
+	while (it != end(s)) {
+		auto next = find_if(it, end(s),
+		                    [](auto c) { return c < '0' || c > '9'; });
+		if (next == it)
+			return false;
+		if (next == end(s))
+			return true;
+		it = next;
+		auto c = *it;
+		if (c == '.' || c == ',' || c == '-')
+			++it;
+		else
+			return false;
+	}
+	return false;
+}
 } // namespace nuspell
-#endif // NUSPELL_LOCALE_UTILS_HXX
+#endif // NUSPELL_UTILS_HXX

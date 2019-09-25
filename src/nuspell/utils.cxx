@@ -16,9 +16,8 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "locale_utils.hxx"
+#include "utils.hxx"
 
-#include <algorithm>
 #include <limits>
 
 #include <boost/locale/utf8_codecvt.hpp>
@@ -49,19 +48,6 @@ using namespace std;
 #define likely(expr) (expr)
 #define unlikely(expr) (expr)
 #endif
-
-auto validate_utf8(const std::string& s) -> bool
-{
-	using namespace boost::locale::utf;
-	auto first = begin(s);
-	auto last = end(s);
-	while (first != last) {
-		auto cp = utf_traits<char>::decode(first, last);
-		if (unlikely(cp == incomplete || cp == illegal))
-			return false;
-	}
-	return true;
-}
 
 enum class Utf_Error_Handling { ALWAYS_VALID, REPLACE, SKIP };
 
@@ -150,16 +136,6 @@ auto wide_to_utf8(const std::wstring& in) -> std::string
 	auto out = string();
 	wide_to_utf8(in, out);
 	return out;
-}
-auto wide_to_utf8(const std::wstring& in,
-                  boost::container::small_vector_base<char>& out) -> void
-{
-#if U_SIZEOF_WCHAR_T == 4
-	valid_utf_to_utf(in, out);
-#else
-	// TODO: remove the ifdefs once we move to char32_t
-	utf_to_utf_my(in, out);
-#endif
 }
 
 auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool
@@ -326,6 +302,12 @@ auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 	auto ret = string();
 	to_narrow(in, ret, loc);
 	return ret;
+}
+
+auto to_upper_ascii(std::string& s) -> void
+{
+	auto& char_type = use_facet<ctype<char>>(locale::classic());
+	char_type.toupper(&s[0], &s[s.size()]);
 }
 
 auto is_locale_known_utf8(const locale& loc) -> bool

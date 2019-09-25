@@ -18,8 +18,7 @@
 
 #include <nuspell/dictionary.hxx>
 #include <nuspell/finder.hxx>
-#include <nuspell/locale_utils.hxx>
-#include <nuspell/string_utils.hxx>
+#include <nuspell/utils.hxx>
 
 #include <chrono>
 #include <fstream>

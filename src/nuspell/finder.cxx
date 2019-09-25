@@ -17,7 +17,7 @@
  */
 
 #include "finder.hxx"
-#include "string_utils.hxx"
+#include "utils.hxx"
 
 #include <algorithm>
 #include <array>

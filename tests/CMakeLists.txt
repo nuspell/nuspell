@@ -1,9 +1,8 @@
 add_executable(unit_test
     aff_data_test.cxx
     dictionary_test.cxx
-    locale_utils_test.cxx
-    string_utils_test.cxx
     structures_test.cxx
+    utils_test.cxx
     catch_main.cxx)
 target_link_libraries(unit_test nuspell Catch2::Catch2)
 if (MSVC)

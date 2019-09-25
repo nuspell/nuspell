@@ -16,23 +16,13 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <nuspell/locale_utils.hxx>
-
-#include <algorithm>
+#include <nuspell/utils.hxx>
 
 #include <boost/locale/utf8_codecvt.hpp>
 #include <catch2/catch.hpp>
 
 using namespace std;
 using namespace nuspell;
-
-TEST_CASE("validate_utf8", "[locale_utils]")
-{
-	CHECK(validate_utf8(""));
-	CHECK(validate_utf8("the brown fox~"));
-	CHECK(validate_utf8("Ӥ日本に"));
-	// need counter example too
-}
 
 TEST_CASE("is_ascii", "[locale_utils]")
 {
@@ -342,4 +332,76 @@ TEST_CASE("to_title", "[locale_utils]")
 	CHECK(L"Ĳsselmeer" == to_title(L"ĳsselmeer", l));
 	CHECK(L"Ĳsselmeer" == to_title(L"Ĳsselmeer", l));
 	CHECK(L"Ĳsselmeer" == to_title(L"ĲSSELMEER", l));
+}
+
+TEST_CASE("split_on_any_of", "[string_utils]")
+{
+	auto in = string("^abc;.qwe/zxc/");
+	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
+	auto out = vector<string>();
+	split_on_any_of(in, ".;^/", back_inserter(out));
+	CHECK(exp == out);
+}
+
+TEST_CASE("is_number", "[string_utils]")
+{
+	CHECK_FALSE(is_number(""s));
+	CHECK_FALSE(is_number("a"s));
+	CHECK_FALSE(is_number("1a"s));
+	CHECK_FALSE(is_number("a1"s));
+	CHECK_FALSE(is_number(".a"s));
+	CHECK_FALSE(is_number("a."s));
+	CHECK_FALSE(is_number(",a"s));
+	CHECK_FALSE(is_number("a,"s));
+	CHECK_FALSE(is_number("-a"s));
+	CHECK_FALSE(is_number("a-"s));
+
+	CHECK_FALSE(is_number("1..1"s));
+	CHECK_FALSE(is_number("1.,1"s));
+	CHECK_FALSE(is_number("1.-1"s));
+	CHECK_FALSE(is_number("1,.1"s));
+	CHECK_FALSE(is_number("1,,1"s));
+	CHECK_FALSE(is_number("1,-1"s));
+	CHECK_FALSE(is_number("1-.1"s));
+	CHECK_FALSE(is_number("1-,1"s));
+	CHECK_FALSE(is_number("1--1"s));
+
+	CHECK(is_number("1,1111"s));
+	CHECK(is_number("-1,1111"s));
+	CHECK(is_number("1,1111.00"s));
+	CHECK(is_number("-1,1111.00"s));
+	CHECK(is_number("1.1111"s));
+	CHECK(is_number("-1.1111"s));
+	CHECK(is_number("1.1111,00"s));
+	CHECK(is_number("-1.1111,00"s));
+
+	// below needs extra review
+
+	CHECK(is_number("1"s));
+	CHECK(is_number("-1"s));
+	CHECK_FALSE(is_number("1-"s));
+
+	CHECK_FALSE(is_number("1."s));
+	CHECK_FALSE(is_number("-1."s));
+	CHECK_FALSE(is_number("1.-"s));
+
+	CHECK_FALSE(is_number("1,"s));
+	CHECK_FALSE(is_number("-1,"s));
+	CHECK_FALSE(is_number("1,-"s));
+
+	CHECK(is_number("1.1"s));
+	CHECK(is_number("-1.1"s));
+	CHECK_FALSE(is_number("1.1-"s));
+
+	CHECK(is_number("1,1"s));
+	CHECK(is_number("-1,1"s));
+	CHECK_FALSE(is_number("1,1-"s));
+
+	CHECK_FALSE(is_number(".1"s));
+	CHECK_FALSE(is_number("-.1"s));
+	CHECK_FALSE(is_number(".1-"s));
+
+	CHECK_FALSE(is_number(",1"s));
+	CHECK_FALSE(is_number("-,1"s));
+	CHECK_FALSE(is_number(",1-"s));
 }

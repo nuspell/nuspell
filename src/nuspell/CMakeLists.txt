@@ -2,8 +2,7 @@ add_library(nuspell
 aff_data.cxx     aff_data.hxx
 dictionary.cxx   dictionary.hxx
 finder.cxx       finder.hxx
-locale_utils.cxx locale_utils.hxx
-                 string_utils.hxx
+utils.cxx        utils.hxx
                  structures.hxx)
 
 add_library(Nuspell::nuspell ALIAS nuspell)

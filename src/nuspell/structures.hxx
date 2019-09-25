@@ -24,13 +24,14 @@
 #ifndef NUSPELL_STRUCTURES_HXX
 #define NUSPELL_STRUCTURES_HXX
 
-#include "string_utils.hxx"
-
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <iterator>
+#include <stack>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -39,6 +40,21 @@
 #include <boost/range/iterator_range_core.hpp>
 
 namespace nuspell {
+
+#define NUSPELL_LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
+
+template <class CharT>
+auto constexpr literal_choose(const char* narrow, const wchar_t* wide);
+template <>
+auto constexpr literal_choose<char>(const char* narrow, const wchar_t*)
+{
+	return narrow;
+}
+template <>
+auto constexpr literal_choose<wchar_t>(const char*, const wchar_t* wide)
+{
+	return wide;
+}
 
 /**
  * @brief A Set class backed by a string. Very useful for small sets.
@@ -1504,6 +1520,59 @@ auto inline Compound_Rule_Table::has_any_of_flags(const Flag_Set& f) const
 	std::set_intersection(begin(all_flags), end(all_flags), begin(f),
 	                      end(f), out_it);
 	return has_intersection;
+}
+
+template <class DataIter, class PatternIter, class FuncEq = std::equal_to<>>
+auto match_simple_regex(DataIter data_first, DataIter data_last,
+                        PatternIter pat_first, PatternIter pat_last,
+                        FuncEq eq = FuncEq())
+{
+	auto s = std::stack<std::pair<DataIter, PatternIter>>();
+	s.emplace(data_first, pat_first);
+	auto data_it = DataIter();
+	auto pat_it = PatternIter();
+	while (!s.empty()) {
+		std::tie(data_it, pat_it) = s.top();
+		s.pop();
+		if (pat_it == pat_last) {
+			if (data_it == data_last)
+				return true;
+			else
+				return false;
+		}
+		auto node_type = *pat_it;
+		if (pat_it + 1 == pat_last)
+			node_type = 0;
+		else
+			node_type = *(pat_it + 1);
+		switch (node_type) {
+		case '?':
+			s.emplace(data_it, pat_it + 2);
+			if (data_it != data_last && eq(*data_it, *pat_it))
+				s.emplace(data_it + 1, pat_it + 2);
+			break;
+		case '*':
+			s.emplace(data_it, pat_it + 2);
+			if (data_it != data_last && eq(*data_it, *pat_it))
+				s.emplace(data_it + 1, pat_it);
+
+			break;
+		default:
+			if (data_it != data_last && eq(*data_it, *pat_it))
+				s.emplace(data_it + 1, pat_it + 1);
+			break;
+		}
+	}
+	return false;
+}
+
+template <class DataRange, class PatternRange, class FuncEq = std::equal_to<>>
+auto match_simple_regex(const DataRange& data, const PatternRange& pattern,
+                        FuncEq eq = FuncEq())
+{
+	using namespace std;
+	return match_simple_regex(begin(data), end(data), begin(pattern),
+	                          end(pattern), eq);
 }
 
 auto inline match_compund_rule(const std::vector<const Flag_Set*>& words_data,

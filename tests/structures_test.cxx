@@ -537,6 +537,17 @@ TEST_CASE("String_Pair", "[structures]")
 	                  "word split is too long");
 }
 
+TEST_CASE("match_simple_regex", "[structures]")
+{
+	CHECK(match_simple_regex("abdff"s, "abc?de*ff"s));
+	CHECK(match_simple_regex("abcdff"s, "abc?de*ff"s));
+	CHECK(match_simple_regex("abdeeff"s, "abc?de*ff"s));
+	CHECK(match_simple_regex("abcdeff"s, "abc?de*ff"s));
+	CHECK_FALSE(match_simple_regex("abcdeeeefff"s, "abc?de*ff"s));
+	CHECK_FALSE(match_simple_regex("abccdeeeeff"s, "abc?de*ff"s));
+	CHECK_FALSE(match_simple_regex("qwerty"s, "abc?de*ff"s));
+}
+
 TEST_CASE("List_Strings", "[structures]")
 {
 	auto l = List_Strings();

@@ -26,6 +26,8 @@
 
 #include "aff_data.hxx"
 
+#include <locale>
+
 namespace nuspell {
 
 enum Affixing_Mode {

@@ -17,15 +17,11 @@
  */
 
 #include "aff_data.hxx"
-#include "locale_utils.hxx"
-#include "string_utils.hxx"
+#include "utils.hxx"
 
-#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
-
-#include <boost/algorithm/string/case_conv.hpp>
 
 /*
  * Aff_Data class and the method parse() should be structured in the following
@@ -74,7 +70,7 @@ using namespace std;
 
 auto Encoding::normalize_name() -> void
 {
-	boost::algorithm::to_upper(name, locale::classic());
+	to_upper_ascii(name);
 	if (name == "UTF8")
 		name = "UTF-8";
 	else if (name.compare(0, 10, "MICROSOFT-") == 0)
@@ -426,7 +422,7 @@ class Aff_Line_Stream : public std::istringstream {
 		in >> str_buf;
 		if (in.fail())
 			return in;
-		boost::algorithm::to_upper(str_buf, in.getloc());
+		to_upper_ascii(str_buf);
 		if (str_buf == "LONG")
 			flag_type = Ft::DOUBLE_CHAR;
 		else if (str_buf == "NUM")
@@ -867,14 +863,6 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	strip_utf8_bom(in);
 	while (getline(in, line)) {
 		line_num++;
-
-		if (encoding.is_utf8() && !validate_utf8(line)) {
-			cerr << "Nuspell warning: invalid utf in aff file"
-			     << endl;
-			// Hungarian will triger this, contains mixed
-			// utf-8 and latin2. See note in decode_flags().
-		}
-
 		ss.str(line);
 		ss.clear();
 		ss.err = {};
@@ -883,7 +871,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			continue; // skip comment or empty lines
 		}
 		ss >> command;
-		boost::algorithm::to_upper(command, ss.getloc());
+		to_upper_ascii(command);
 		if (command == "SFX") {
 			parse_affix(ss, command, suffixes, cmd_affix);
 		}
