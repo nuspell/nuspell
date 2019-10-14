@@ -29,6 +29,7 @@
 #include <locale>
 
 namespace nuspell {
+inline namespace v3 {
 
 enum Affixing_Mode {
 	FULL_WORD,
@@ -37,21 +38,42 @@ enum Affixing_Mode {
 	AT_COMPOUND_MIDDLE
 };
 
-template <class... Affixes>
-struct Affixing_Result
-    : public std::tuple<Word_List::const_pointer, const Affixes*...> {
-	using base_type =
-	    std::tuple<Word_List::const_pointer, const Affixes*...>;
+struct Affixing_Result_Base {
+	Word_List::const_pointer root_word = {};
+
+	operator Word_List::const_pointer() const { return root_word; }
+	auto& operator*() const { return *root_word; }
+	auto operator-> () const { return root_word; }
+};
+
+template <class T1 = void, class T2 = void>
+struct Affixing_Result : Affixing_Result_Base {
+	const T1* a = {};
+	const T2* b = {};
+
 	Affixing_Result() = default;
-	Affixing_Result(Word_List::const_reference word_entry,
-	                const Affixes&... affixes)
-	    : base_type(&word_entry, &affixes...)
+	Affixing_Result(Word_List::const_reference r, const T1& a, const T2& b)
+	    : Affixing_Result_Base{&r}, a{&a}, b{&b}
 	{
 	}
-	// operator bool() const { return std::get<0>(*this); }
-	operator Word_List::const_pointer() const { return std::get<0>(*this); }
-	auto& operator*() const { return *std::get<0>(*this); }
-	auto operator-> () const { return std::get<0>(*this); }
+};
+template <class T1>
+struct Affixing_Result<T1, void> : Affixing_Result_Base {
+	const T1* a = {};
+
+	Affixing_Result() = default;
+	Affixing_Result(Word_List::const_reference r, const T1& a)
+	    : Affixing_Result_Base{&r}, a{&a}
+	{
+	}
+};
+
+template <>
+struct Affixing_Result<void, void> : Affixing_Result_Base {
+	Affixing_Result() = default;
+	Affixing_Result(Word_List::const_reference r) : Affixing_Result_Base{&r}
+	{
+	}
 };
 
 struct Compounding_Result {
@@ -285,10 +307,8 @@ struct Dict_Base : public Aff_Data {
 };
 
 /**
- * @brief Public API is inline namespace
+ * @brief The only important public exception
  */
-inline namespace v2 {
-
 class Dictionary_Loading_Error : public std::runtime_error {
       public:
 	using std::runtime_error::runtime_error;
@@ -320,6 +340,6 @@ class Dictionary : private Dict_Base {
 	auto suggest(const std::string& word,
 	             std::vector<std::string>& out) const -> void;
 };
-} // namespace v2
+} // namespace v3
 } // namespace nuspell
 #endif // NUSPELL_DICTIONARY_HXX

@@ -106,13 +106,14 @@ class Encoding_Converter {
 	}
 	~Encoding_Converter();
 	Encoding_Converter(const Encoding_Converter& other);
-	Encoding_Converter(Encoding_Converter&& other)
+	Encoding_Converter(Encoding_Converter&& other) noexcept
 	{
 		cnv = other.cnv;
 		cnv = nullptr;
 	}
 	auto operator=(const Encoding_Converter& other) -> Encoding_Converter&;
-	auto operator=(Encoding_Converter&& other) -> Encoding_Converter&
+	auto operator=(Encoding_Converter&& other) noexcept
+	    -> Encoding_Converter&
 	{
 		std::swap(cnv, other.cnv);
 		return *this;

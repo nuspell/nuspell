@@ -30,6 +30,7 @@
 #include <unicode/locid.h>
 
 namespace nuspell {
+inline namespace v3 {
 
 class Encoding {
 	std::string name;
@@ -98,9 +99,8 @@ struct Extractor_First_of_Word_Pair {
  * Does not store morphological data as is low priority feature and is out of
  * scope.
  */
-using Word_List =
-    Hash_Multiset<std::pair<std::wstring, Flag_Set>, std::wstring_view,
-                  Extractor_First_of_Word_Pair>;
+using Word_List = Hash_Multiset<std::pair<std::wstring, Flag_Set>, std::wstring,
+                                Extractor_First_of_Word_Pair>;
 
 struct Aff_Data {
 
@@ -184,6 +184,7 @@ struct Aff_Data {
 		return false;
 	}
 };
+} // namespace v3
 } // namespace nuspell
 
 #endif // NUSPELL_AFF_DATA_HXX

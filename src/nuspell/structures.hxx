@@ -32,7 +32,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -40,7 +39,7 @@
 #include <boost/range/iterator_range_core.hpp>
 
 namespace nuspell {
-
+inline namespace v3 {
 #define NUSPELL_LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
 
 template <class CharT>
@@ -74,7 +73,7 @@ class String_Set {
 		d.erase(unique(first, last, t::eq), last);
 	}
 	struct Char_Traits_Less_Than {
-		auto operator()(CharT a, CharT b)
+		auto operator()(CharT a, CharT b) const noexcept
 		{
 			return traits_type::lt(a, b);
 		}
@@ -140,7 +139,7 @@ class String_Set {
 	}
 
 	// non standard underlying storage access:
-	auto& data() const { return d; }
+	auto& data() const noexcept { return d; }
 	operator const Str&() const noexcept { return d; }
 
 	// iterators:
@@ -165,7 +164,7 @@ class String_Set {
 	size_type max_size() const noexcept { return d.max_size(); }
 
 	// modifiers:
-	std::pair<iterator, bool> insert(const value_type& x)
+	std::pair<iterator, bool> insert(value_type x)
 	{
 		auto it = lower_bound(x);
 		if (it != end() && *it == x) {
@@ -174,8 +173,7 @@ class String_Set {
 		auto ret = d.insert(it, x);
 		return {ret, true};
 	}
-	// std::pair<iterator, bool> insert(value_type&& x);
-	iterator insert(iterator hint, const value_type& x)
+	iterator insert(iterator hint, value_type x)
 	{
 		if (hint == end() || traits_type::lt(x, *hint)) {
 			if (hint == begin() ||
@@ -211,7 +209,7 @@ class String_Set {
 	}
 
 	iterator erase(iterator position) { return d.erase(position); }
-	size_type erase(const key_type& x)
+	size_type erase(key_type x)
 	{
 		auto i = d.find(x);
 		if (i != d.npos) {
@@ -233,7 +231,7 @@ class String_Set {
 		d += s;
 		sort_uniq();
 	}
-	auto operator+=(const Str& s) -> String_Set
+	auto& operator+=(const Str& s)
 	{
 		insert(s);
 		return *this;
@@ -245,7 +243,7 @@ class String_Set {
 
 	// set operations:
       private:
-	auto lookup(const key_type& x) const
+	auto lookup(key_type x) const
 	{
 		auto i = d.find(x);
 		if (i == d.npos)
@@ -254,44 +252,40 @@ class String_Set {
 	}
 
       public:
-	iterator find(const key_type& x) { return begin() + lookup(x); }
-	const_iterator find(const key_type& x) const
-	{
-		return begin() + lookup(x);
-	}
-	size_type count(const key_type& x) const { return d.find(x) != d.npos; }
+	iterator find(key_type x) { return begin() + lookup(x); }
+	const_iterator find(key_type x) const { return begin() + lookup(x); }
+	size_type count(key_type x) const { return d.find(x) != d.npos; }
 
-	iterator lower_bound(const key_type& x)
+	iterator lower_bound(key_type x)
 	{
 		return std::lower_bound(begin(), end(), x, traits_type::lt);
 	}
 
-	const_iterator lower_bound(const key_type& x) const
+	const_iterator lower_bound(key_type x) const
 	{
 		return std::lower_bound(begin(), end(), x, traits_type::lt);
 	}
-	iterator upper_bound(const key_type& x)
+	iterator upper_bound(key_type x)
 	{
 		return std::upper_bound(begin(), end(), x, traits_type::lt);
 	}
 
-	const_iterator upper_bound(const key_type& x) const
+	const_iterator upper_bound(key_type x) const
 	{
 		return std::upper_bound(begin(), end(), x, traits_type::lt);
 	}
-	std::pair<iterator, iterator> equal_range(const key_type& x)
+	std::pair<iterator, iterator> equal_range(key_type x)
 	{
 		return std::equal_range(begin(), end(), x, traits_type::lt);
 	}
 
-	std::pair<const_iterator, const_iterator>
-	equal_range(const key_type& x) const
+	std::pair<const_iterator, const_iterator> equal_range(key_type x) const
 	{
 		return std::equal_range(begin(), end(), x, traits_type::lt);
 	}
 
 	// non standard set operations:
-	bool contains(const key_type& x) const { return count(x); }
+	bool contains(key_type x) const { return count(x); }
 
 	// compare
 	bool operator<(const String_Set& rhs) const { return d < rhs.d; }
@@ -326,7 +320,7 @@ class Substr_Replacer {
       public:
 	Substr_Replacer() = default;
 	Substr_Replacer(const Table_Pairs& v) : table(v) { sort_uniq(); }
-	Substr_Replacer(const Table_Pairs&& v) : table(move(v)) { sort_uniq(); }
+	Substr_Replacer(Table_Pairs&& v) : table(move(v)) { sort_uniq(); }
 
 	auto& operator=(const Table_Pairs& v)
 	{
@@ -334,7 +328,7 @@ class Substr_Replacer {
 		sort_uniq();
 		return *this;
 	}
-	auto& operator=(const Table_Pairs&& v)
+	auto& operator=(Table_Pairs&& v)
 	{
 		table = move(v);
 		sort_uniq();
@@ -537,7 +531,7 @@ class Hash_Multiset {
 	using local_iterator = typename bucket_type::iterator;
 	using local_const_iterator = typename bucket_type::const_iterator;
 
-	Hash_Multiset() : data(16) {}
+	Hash_Multiset() = default;
 
 	auto size() const { return sz; }
 	auto empty() const { return size() == 0; }
@@ -693,19 +687,26 @@ struct Condition_Exception : public std::runtime_error {
  */
 template <class CharT>
 class Condition {
-      public:
+	using Str = std::basic_string<CharT>;
 	enum Span_Type {
 		NORMAL /**< normal character */,
 		DOT /**< wildcard character */,
 		ANY_OF /**< set of possible characters */,
 		NONE_OF /**< set of excluding characters */
 	};
-	using Str = std::basic_string<CharT>;
+	struct Span {
+		size_t pos = {};
+		size_t len = {};
+		Span_Type type = {};
+		Span() = default;
+		Span(size_t pos, size_t len, Span_Type type)
+		    : pos(pos), len(len), type(type)
+		{
+		}
+	};
 
-      private:
 	Str cond;
-	std::vector<std::tuple<size_t, size_t, Span_Type>>
-	    spans; // pos, len, type
+	std::vector<Span> spans; // pos, len, type
 	size_t length = 0;
 
 	auto construct() -> void;
@@ -714,6 +715,7 @@ class Condition {
 	Condition() = default;
 	Condition(const Str& condition) : cond(condition) { construct(); }
 	Condition(Str&& condition) : cond(move(condition)) { construct(); }
+	Condition(const CharT* condition) : cond(condition) { construct(); }
 	auto& operator=(const Str& condition)
 	{
 		cond = condition;
@@ -724,6 +726,13 @@ class Condition {
 	auto& operator=(Str&& condition)
 	{
 		cond = std::move(condition);
+		length = 0;
+		construct();
+		return *this;
+	}
+	auto& operator=(const CharT* condition)
+	{
+		cond = condition;
 		length = 0;
 		construct();
 		return *this;
@@ -819,15 +828,11 @@ auto Condition<CharT>::match(const Str& s, size_t pos, size_t len) const -> bool
 
 	size_t i = pos;
 	for (auto& x : spans) {
-		auto x_pos = std::get<0>(x);
-		auto x_len = std::get<1>(x);
-		auto x_type = std::get<2>(x);
-
 		using tr = typename Str::traits_type;
-		switch (x_type) {
+		switch (x.type) {
 		case NORMAL:
-			if (tr::compare(&s[i], &cond[x_pos], x_len) == 0)
-				i += x_len;
+			if (tr::compare(&s[i], &cond[x.pos], x.len) == 0)
+				i += x.len;
 			else
 				return false;
 			break;
@@ -835,13 +840,13 @@ auto Condition<CharT>::match(const Str& s, size_t pos, size_t len) const -> bool
 			++i;
 			break;
 		case ANY_OF:
-			if (tr::find(&cond[x_pos], x_len, s[i]))
+			if (tr::find(&cond[x.pos], x.len, s[i]))
 				++i;
 			else
 				return false;
 			break;
 		case NONE_OF:
-			if (tr::find(&cond[x_pos], x_len, s[i]))
+			if (tr::find(&cond[x.pos], x.len, s[i]))
 				return false;
 			else
 				++i;
@@ -864,15 +869,6 @@ class Prefix {
 	Str appending;
 	Flag_Set cont_flags;
 	Cond condition;
-
-	Prefix() = default;
-	Prefix(char16_t flag, bool cross_product, const Str& strip,
-	       const Str& append, const std::u16string& cont_flags,
-	       const Str& condition)
-	    : flag(flag), cross_product(cross_product), stripping(strip),
-	      appending(append), cont_flags(cont_flags), condition(condition)
-	{
-	}
 
 	auto to_root(Str& word) const -> Str&
 	{
@@ -913,15 +909,6 @@ class Suffix {
 	Str appending;
 	Flag_Set cont_flags;
 	Cond condition;
-
-	Suffix() = default;
-	Suffix(char16_t flag, bool cross_product, const Str& strip,
-	       const Str& append, const std::u16string& cont_flags,
-	       const Str& condition)
-	    : flag(flag), cross_product(cross_product), stripping(strip),
-	      appending(append), cont_flags(cont_flags), condition(condition)
-	{
-	}
 
 	auto to_root(Str& word) const -> Str&
 	{
@@ -1028,7 +1015,8 @@ class Prefix_Multiset {
 	};
 
       public:
-	Prefix_Multiset(Key_Extr ke = {}, Key_Transform kt = {})
+	Prefix_Multiset() = default;
+	Prefix_Multiset(Key_Extr ke, Key_Transform kt = {})
 	    : ebo{{ke}, {kt}, {}}
 	{
 	}
@@ -1056,7 +1044,7 @@ class Prefix_Multiset {
 		sort();
 		return *this;
 	}
-	auto& operator=(std::vector<T>&& v)
+	auto& operator=(Vector_Type&& v)
 	{
 		get_table() = std::move(v);
 		sort();
@@ -1146,7 +1134,6 @@ class Prefix_Multiset {
 	}
 	auto iterate_prefixes_of(Key_Type&& word) const = delete;
 };
-
 template <class T, class Key_Extr, class Key_Transform>
 auto Prefix_Multiset<T, Key_Extr, Key_Transform>::Iter_Prefixes_Of::advance()
     -> void
@@ -1473,13 +1460,13 @@ class Compound_Rule_Table {
 	{
 		fill_all_flags();
 	}
-	auto operator=(const std::vector<std::u16string>& tbl)
+	auto& operator=(const std::vector<std::u16string>& tbl)
 	{
 		rules = tbl;
 		fill_all_flags();
 		return *this;
 	}
-	auto operator=(std::vector<std::u16string>&& tbl)
+	auto& operator=(std::vector<std::u16string>&& tbl)
 	{
 		rules = move(tbl);
 		fill_all_flags();
@@ -1487,7 +1474,7 @@ class Compound_Rule_Table {
 	}
 	auto empty() const { return rules.empty(); }
 	auto has_any_of_flags(const Flag_Set& f) const -> bool;
-	auto match_any_rule(const std::vector<const Flag_Set*> data) const
+	auto match_any_rule(const std::vector<const Flag_Set*>& data) const
 	    -> bool;
 };
 auto inline Compound_Rule_Table::fill_all_flags() -> void
@@ -1584,7 +1571,7 @@ auto inline match_compund_rule(const std::vector<const Flag_Set*>& words_data,
 }
 
 auto inline Compound_Rule_Table::match_any_rule(
-    const std::vector<const Flag_Set*> data) const -> bool
+    const std::vector<const Flag_Set*>& data) const -> bool
 {
 	return any_of(begin(rules), end(rules), [&](const std::u16string& p) {
 		return match_compund_rule(data, p);
@@ -1631,7 +1618,7 @@ class List_Basic_Strings {
 	}
 
 	List_Basic_Strings(const List_Basic_Strings& other) = default;
-	List_Basic_Strings(List_Basic_Strings&& other)
+	List_Basic_Strings(List_Basic_Strings&& other) noexcept
 	    : d(move(other.d)), sz(other.sz)
 	{
 		other.sz = 0;
@@ -1645,7 +1632,7 @@ class List_Basic_Strings {
 		insert(begin(), other.begin(), other.end());
 		return *this;
 	}
-	auto& operator=(List_Basic_Strings&& other)
+	auto& operator=(List_Basic_Strings&& other) noexcept
 	{
 		d = move(other.d);
 		sz = other.sz;
@@ -2278,5 +2265,6 @@ auto Phonetic_Table<CharT>::replace(Str& word) const -> bool
 	}
 	return ret;
 }
+} // namespace v3
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX

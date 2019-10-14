@@ -1673,16 +1673,16 @@ auto Dict_Base::check_word_in_compound(std::wstring& word) const
 	}
 	auto x2 = strip_suffix_only<m>(word);
 	if (x2)
-		return {x2, is_modiying_affix(*get<1>(x2))};
+		return {x2, is_modiying_affix(*x2.a)};
 
 	auto x1 = strip_prefix_only<m>(word);
 	if (x1)
-		return {x1, is_modiying_affix(*get<1>(x1))};
+		return {x1, is_modiying_affix(*x1.a)};
 
 	auto x3 = strip_prefix_then_suffix_commutative<m>(word);
 	if (x3)
-		return {x3, is_modiying_affix(*get<1>(x3)) ||
-		                is_modiying_affix(*get<2>(x3))};
+		return {x3,
+		        is_modiying_affix(*x3.a) || is_modiying_affix(*x3.b)};
 	return {};
 }
 
@@ -2066,7 +2066,6 @@ auto Dictionary::imbue(const locale& loc) -> void
 auto Dictionary::spell(const std::string& word) const -> bool
 {
 	auto static thread_local wide_word = wstring();
-	auto static thread_local narrow_word = string();
 	auto ok_enc = external_to_internal_encoding(word, wide_word);
 	if (unlikely(wide_word.size() > 180)) {
 		wide_word.resize(180);

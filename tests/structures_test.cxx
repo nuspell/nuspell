@@ -422,7 +422,7 @@ TEST_CASE("Condition<wchar_t> real-life examples", "[structures]")
 
 TEST_CASE("Prefix", "[structures]")
 {
-	auto pfx_tests = Prefix<char>(u'U', true, "", "un", {}, "wr.");
+	auto pfx_tests = Prefix<char>{u'U', true, "", "un", {}, "wr."};
 	auto word = string("unwry");
 	CHECK("wry" == pfx_tests.to_root(word));
 	CHECK("wry" == word);
@@ -445,7 +445,7 @@ TEST_CASE("Prefix", "[structures]")
 
 TEST_CASE("Suffix", "[structures]")
 {
-	auto sfx_tests = Suffix<char>(u'T', true, "y", "ies", {}, ".[^aeiou]y");
+	auto sfx_tests = Suffix<char>{u'T', true, "y", "ies", {}, ".[^aeiou]y"};
 	auto word = string("wries");
 	CHECK("wry" == sfx_tests.to_root(word));
 	CHECK("wry" == word);

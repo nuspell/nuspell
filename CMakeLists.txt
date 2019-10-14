@@ -4,7 +4,6 @@ set(PROJECT_HOMEPAGE_URL "https://nuspell.github.io/")
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
-include(CTest)
 
 find_package(ICU REQUIRED COMPONENTS uc data)
 find_package(Boost 1.62.0 REQUIRED COMPONENTS locale)
@@ -21,7 +20,9 @@ endif()
 
 add_subdirectory(docs)
 
+option(BUILD_TESTING "Build the testing tree." ON)
 if (BUILD_TESTING)
+    enable_testing()
     find_package(Catch2 2.3.0 QUIET)
     if(NOT Catch2_FOUND)
         find_package(Git)

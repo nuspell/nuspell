@@ -521,10 +521,10 @@ class Aff_Line_Stream : public std::istringstream {
 		return in;
 	}
 
-	auto& parse(tuple<wstring&, Flag_Set&> word_and_flags)
+	auto& parse(pair<wstring&, Flag_Set&> word_and_flags)
 	{
-		return parse_word_slash_flags(std::get<0>(word_and_flags),
-		                              std::get<1>(word_and_flags));
+		return parse_word_slash_flags(word_and_flags.first,
+		                              word_and_flags.second);
 	}
 
 	auto& parse(Condition<wchar_t>& cond)
@@ -579,10 +579,10 @@ class Aff_Line_Stream : public std::istringstream {
 		return in;
 	}
 
-	auto& parse(tuple<wstring&, char16_t&> word_and_flag)
+	auto& parse(pair<wstring&, char16_t&> word_and_flag)
 	{
-		return parse_word_slash_single_flag(std::get<0>(word_and_flag),
-		                                    std::get<1>(word_and_flag));
+		return parse_word_slash_single_flag(word_and_flag.first,
+		                                    word_and_flag.second);
 	}
 
 	auto& parse_compound_rule(u16string& out)
@@ -632,6 +632,12 @@ class Aff_Line_Stream : public std::istringstream {
 };
 auto Aff_Line_Stream::dummy_func() -> void {}
 
+template <class T, class U>
+auto pair_tie(T& a, U& b) -> pair<T&, U&>
+{
+	return {a, b};
+}
+
 template <class T, class = decltype(std::declval<Aff_Line_Stream>().parse(
                        std::declval<T>()))>
 auto& operator>>(Aff_Line_Stream& in, T&& x)
@@ -649,8 +655,8 @@ auto& operator>>(Aff_Line_Stream& in, Compound_Pattern<wchar_t>& p)
 	auto first_word_end = wstring();
 	auto second_word_begin = wstring();
 	p.match_first_only_unaffixed_or_zero_affixed = false;
-	in >> std::tie(first_word_end, p.first_word_flag);
-	in >> std::tie(second_word_begin, p.second_word_flag);
+	in >> pair_tie(first_word_end, p.first_word_flag);
+	in >> pair_tie(second_word_begin, p.second_word_flag);
 	if (in.fail())
 		return in;
 	if (first_word_end == L"0") {
@@ -740,7 +746,7 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
 		in >> elem.stripping;
 		if (elem.stripping == L"0")
 			elem.stripping.clear();
-		in >> std::tie(elem.appending, elem.cont_flags);
+		in >> pair_tie(elem.appending, elem.cont_flags);
 		if (elem.appending == L"0")
 			elem.appending.clear();
 		if (in.fail())
