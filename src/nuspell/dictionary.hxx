@@ -95,6 +95,7 @@ struct Dict_Base : public Aff_Data {
 	                  size_t rep = 0) const -> const Flag_Set*;
 
 	auto check_word(std::wstring& s) const -> const Flag_Set*;
+	auto check_simple_word(std::wstring& word) const -> const Flag_Set*;
 
 	template <Affixing_Mode m>
 	auto affix_NOT_valid(const Prefix<wchar_t>& a) const;
@@ -280,6 +281,8 @@ struct Dict_Base : public Aff_Data {
 	    -> void;
 
 	auto rep_suggest(std::wstring& word, List_WStrings& out) const -> void;
+
+	auto is_rep_similar(std::wstring& word) const -> bool;
 
 	auto extra_char_suggest(std::wstring& word, List_WStrings& out) const
 	    -> void;

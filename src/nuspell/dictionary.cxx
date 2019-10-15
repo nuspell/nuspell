@@ -52,7 +52,7 @@ class At_Scope_Exit {
 
 #define ASE_INTERNAL1(lname, aname, ...)                                       \
 	auto lname = [&]() { __VA_ARGS__; };                                   \
-	At_Scope_Exit<decltype(lname)> aname(lname);
+	At_Scope_Exit<decltype(lname)> aname(lname)
 
 #define ASE_INTERNAL2(ctr, ...)                                                \
 	ASE_INTERNAL1(MACRO_CONCAT(Auto_func_, ctr),                           \
@@ -331,6 +331,19 @@ auto Dict_Base::spell_sharps(std::wstring& base, size_t pos, size_t n,
 auto Dict_Base::check_word(std::wstring& s) const -> const Flag_Set*
 {
 
+	auto ret1 = check_simple_word(s);
+	if (ret1)
+		return ret1;
+	auto ret2 = check_compound(s);
+	if (ret2)
+		return &ret2->second;
+
+	return nullptr;
+}
+
+auto Dict_Base::check_simple_word(std::wstring& s) const -> const Flag_Set*
+{
+
 	for (auto& we : make_iterator_range(words.equal_range(s))) {
 		auto& word_flags = we.second;
 		if (word_flags.contains(need_affix_flag))
@@ -389,10 +402,6 @@ auto Dict_Base::check_word(std::wstring& s) const -> const Flag_Set*
 		// if (ret9)
 		//	return &ret9->second;
 	}
-	auto ret10 = check_compound(s);
-	if (ret10)
-		return &ret10->second;
-
 	return nullptr;
 }
 
@@ -1491,7 +1500,11 @@ auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
 		goto try_recursive;
 	if (compound_check_duplicate && part1_entry == part2_entry)
 		goto try_recursive;
-
+	if (compound_check_rep) {
+		part.assign(word, start_pos);
+		if (is_rep_similar(part))
+			goto try_recursive;
+	}
 	return part1_entry;
 
 try_recursive:
@@ -1504,7 +1517,20 @@ try_recursive:
 		goto try_simplified_triple;
 	// if (compound_check_duplicate && part1_entry == part2_entry)
 	//	goto try_simplified_triple;
-
+	if (compound_check_rep) {
+		part.assign(word, start_pos);
+		if (is_rep_similar(part))
+			goto try_simplified_triple;
+		auto& p2word = part2_entry->first;
+		if (word.compare(i, p2word.size(), p2word) == 0) {
+			// part.assign(word, start_pos,
+			//            i - start_pos + p2word.size());
+			// The erase() is equivaled as the assign above.
+			part.erase(i - start_pos + p2word.size());
+			if (is_rep_similar(part))
+				goto try_simplified_triple;
+		}
+	}
 	return part1_entry;
 
 try_simplified_triple:
@@ -1525,6 +1551,16 @@ try_simplified_triple:
 		goto try_simplified_triple_recursive;
 	if (compound_check_duplicate && part1_entry == part2_entry)
 		goto try_simplified_triple_recursive;
+	if (compound_check_rep) {
+		part.assign(word, start_pos);
+
+		// The added char above should not be checked for rep
+		// similarity, instead check the original word.
+		part.erase(i - start_pos, 1);
+
+		if (is_rep_similar(part))
+			goto try_simplified_triple_recursive;
+	}
 
 	return part1_entry;
 
@@ -1538,7 +1574,20 @@ try_simplified_triple_recursive:
 		return {};
 	// if (compound_check_duplicate && part1_entry == part2_entry)
 	//	return {};
-
+	if (compound_check_rep) {
+		part.assign(word, start_pos);
+		part.erase(i - start_pos, 1); // for the added char
+		if (is_rep_similar(part))
+			return {};
+		auto& p2word = part2_entry->first;
+		if (word.compare(i, p2word.size(), p2word) == 0) {
+			part.assign(word, start_pos,
+			            i - start_pos + p2word.size());
+			part.erase(i - start_pos, 1); // for the added char
+			if (is_rep_similar(part))
+				return {};
+		}
+	}
 	return part1_entry;
 }
 
@@ -1591,6 +1640,14 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			goto try_recursive;
 		if (compound_check_duplicate && part1_entry == part2_entry)
 			goto try_recursive;
+		if (compound_check_rep) {
+			part.assign(word, start_pos);
+			part.replace(i - start_pos - p.begin_end_chars.idx(),
+			             p.begin_end_chars.str().size(),
+			             p.replacement);
+			if (is_rep_similar(part))
+				goto try_recursive;
+		}
 
 		return part1_entry;
 
@@ -1604,7 +1661,21 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			goto try_simplified_triple;
 		// if (compound_check_duplicate && part1_entry == part2_entry)
 		//	goto try_simplified_triple;
-
+		if (compound_check_rep) {
+			part.assign(word, start_pos);
+			part.replace(i - start_pos - p.begin_end_chars.idx(),
+			             p.begin_end_chars.str().size(),
+			             p.replacement);
+			if (is_rep_similar(part))
+				goto try_simplified_triple;
+			auto& p2word = part2_entry->first;
+			if (word.compare(i, p2word.size(), p2word) == 0) {
+				part.assign(word, start_pos,
+				            i - start_pos + p2word.size());
+				if (is_rep_similar(part))
+					goto try_simplified_triple;
+			}
+		}
 		return part1_entry;
 
 	try_simplified_triple:
@@ -1625,6 +1696,15 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			goto try_simplified_triple_recursive;
 		if (compound_check_duplicate && part1_entry == part2_entry)
 			goto try_simplified_triple_recursive;
+		if (compound_check_rep) {
+			part.assign(word, start_pos);
+			part.erase(i - start_pos, 1); // for the added char
+			part.replace(i - start_pos - p.begin_end_chars.idx(),
+			             p.begin_end_chars.str().size(),
+			             p.replacement);
+			if (is_rep_similar(part))
+				goto try_simplified_triple_recursive;
+		}
 
 		return part1_entry;
 
@@ -1638,7 +1718,24 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			continue;
 		// if (compound_check_duplicate && part1_entry == part2_entry)
 		//	return {};
-
+		if (compound_check_rep) {
+			part.assign(word, start_pos);
+			part.erase(i - start_pos, 1); // for the added char
+			part.replace(i - start_pos - p.begin_end_chars.idx(),
+			             p.begin_end_chars.str().size(),
+			             p.replacement);
+			if (is_rep_similar(part))
+				continue;
+			auto& p2word = part2_entry->first;
+			if (word.compare(i, p2word.size(), p2word) == 0) {
+				part.assign(word, start_pos,
+				            i - start_pos + p2word.size());
+				part.erase(i - start_pos,
+				           1); // for the added char
+				if (is_rep_similar(part))
+					continue;
+			}
+		}
 		return part1_entry;
 	}
 	return {};
@@ -1838,6 +1935,59 @@ auto Dict_Base::rep_suggest(std::wstring& word, List_WStrings& out) const
 			word.replace(i, to.size(), from);
 		}
 	}
+}
+
+auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
+{
+	auto& reps = replacements;
+	for (auto& r : reps.whole_word_replacements()) {
+		auto& from = r.first;
+		auto& to = r.second;
+		if (word == from) {
+			word = to;
+			auto ret = check_simple_word(word);
+			word = from;
+			if (ret)
+				return true;
+		}
+	}
+	for (auto& r : reps.start_word_replacements()) {
+		auto& from = r.first;
+		auto& to = r.second;
+		if (word.compare(0, from.size(), from) == 0) {
+			word.replace(0, from.size(), to);
+			auto ret = check_simple_word(word);
+			word.replace(0, to.size(), from);
+			if (ret)
+				return true;
+		}
+	}
+	for (auto& r : reps.end_word_replacements()) {
+		auto& from = r.first;
+		auto& to = r.second;
+		auto pos = word.size() - from.size();
+		if (from.size() <= word.size() &&
+		    word.compare(pos, word.npos, from) == 0) {
+			word.replace(pos, word.npos, to);
+			auto ret = check_simple_word(word);
+			word.replace(pos, word.npos, from);
+			if (ret)
+				return true;
+		}
+	}
+	for (auto& r : reps.any_place_replacements()) {
+		auto& from = r.first;
+		auto& to = r.second;
+		for (auto i = word.find(from); i != word.npos;
+		     i = word.find(from, i + 1)) {
+			word.replace(i, from.size(), to);
+			auto ret = check_simple_word(word);
+			word.replace(i, to.size(), from);
+			if (ret)
+				return true;
+		}
+	}
+	return false;
 }
 
 auto Dict_Base::extra_char_suggest(std::wstring& word, List_WStrings& out) const
