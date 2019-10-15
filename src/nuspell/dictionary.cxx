@@ -1479,11 +1479,12 @@ auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
 	if (part1_entry->second.contains(forbiddenword_flag))
 		return {};
 	if (compound_check_triple) {
-		auto triple = wstring(3, word[i]);
-		if (word.compare(i - 1, 3, triple) == 0)
-			return {};
-		if (i >= 2 && word.compare(i - 2, 3, triple) == 0)
-			return {};
+		if (word[i - 1] == word[i]) {
+			if (i + 1 < word.size() && word[i] == word[i + 1])
+				return {};
+			if (i >= 2 && word[i - 2] == word[i])
+				return {};
+		}
 	}
 	if (compound_check_case &&
 	    has_uppercase_at_compound_word_boundary(word, i))
@@ -1621,11 +1622,13 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		    !part1_entry->second.contains(p.first_word_flag))
 			continue;
 		if (compound_check_triple) {
-			auto triple = wstring(3, word[i]);
-			if (word.compare(i - 1, 3, triple) == 0)
-				continue;
-			if (i >= 2 && word.compare(i - 2, 3, triple) == 0)
-				continue;
+			if (word[i - 1] == word[i]) {
+				if (i + 1 < word.size() &&
+				    word[i] == word[i + 1])
+					continue;
+				if (i >= 2 && word[i - 2] == word[i])
+					continue;
+			}
 		}
 
 		part.assign(word, i, word.npos);
@@ -1680,9 +1683,9 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 
 	try_simplified_triple:
 		if (!compound_simplified_triple)
-			return {};
+			continue;
 		if (!(i >= 2 && word[i - 1] == word[i - 2]))
-			return {};
+			continue;
 		word.insert(i, 1, word[i - 1]);
 		AT_SCOPE_EXIT(word.erase(i, 1));
 		part.assign(word, i, word.npos);
@@ -1717,7 +1720,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		    !part2_entry->second.contains(p.second_word_flag))
 			continue;
 		// if (compound_check_duplicate && part1_entry == part2_entry)
-		//	return {};
+		//	continue;
 		if (compound_check_rep) {
 			part.assign(word, start_pos);
 			part.erase(i - start_pos, 1); // for the added char
