@@ -24,11 +24,9 @@
 #ifndef NUSPELL_UTILS_HXX
 #define NUSPELL_UTILS_HXX
 
-#include <algorithm>
-#include <locale>
-#include <string>
-#include <vector>
+#include "structures.hxx"
 
+#include <locale>
 #include <clocale>
 
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) ||               \
@@ -77,17 +75,6 @@ auto icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool;
 auto to_upper(const std::wstring& in, const icu::Locale& loc) -> std::wstring;
 auto to_title(const std::wstring& in, const icu::Locale& loc) -> std::wstring;
 auto to_lower(const std::wstring& in, const icu::Locale& loc) -> std::wstring;
-
-/**
- * @brief Casing type enum, ignoring neutral case characters.
- */
-enum class Casing {
-	SMALL /**< all lower case or neutral case, e.g. "lowercase" or "123" */,
-	INIT_CAPITAL /**< start upper case, rest lower case, e.g. "Initcap" */,
-	ALL_CAPITAL /**< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
-	CAMEL /**< camel case, start lower case, e.g. "camelCase" */,
-	PASCAL /**< pascal case, start upper case, e.g. "PascalCase" */
-};
 
 auto classify_casing(const std::wstring& s) -> Casing;
 

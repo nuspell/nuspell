@@ -94,7 +94,8 @@ struct Dict_Base : public Aff_Data {
 	auto spell_sharps(std::wstring& base, size_t n_pos = 0, size_t n = 0,
 	                  size_t rep = 0) const -> const Flag_Set*;
 
-	auto check_word(std::wstring& s) const -> const Flag_Set*;
+	auto check_word(std::wstring& s, Casing input_word_casing) const
+	    -> const Flag_Set*;
 	auto check_simple_word(std::wstring& word) const -> const Flag_Set*;
 
 	template <Affixing_Mode m>
@@ -242,30 +243,32 @@ struct Dict_Base : public Aff_Data {
 	                       const Prefix<wchar_t>& pe2,
 	                       std::wstring& word) const -> Affixing_Result<>;
 
-	auto check_compound(std::wstring& word) const -> Compounding_Result;
+	auto check_compound(std::wstring& word, Casing input_word_casing) const
+	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
 	auto check_compound(std::wstring& word, size_t start_pos,
-	                    size_t num_part, std::wstring& part) const
+	                    size_t num_part, std::wstring& part,
+	                    Casing input_word_casing) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
 	auto check_compound_classic(std::wstring& word, size_t start_pos,
 	                            size_t i, size_t num_part,
-	                            std::wstring& part) const
+	                            std::wstring& part,
+	                            Casing input_word_casing) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
-	auto check_compound_with_pattern_replacements(std::wstring& word,
-	                                              size_t start_pos,
-	                                              size_t i, size_t num_part,
-	                                              std::wstring& part) const
+	auto check_compound_with_pattern_replacements(
+	    std::wstring& word, size_t start_pos, size_t i, size_t num_part,
+	    std::wstring& part, Casing input_word_casing) const
 	    -> Compounding_Result;
 
 	auto check_compound_with_rules(std::wstring& word,
 	                               std::vector<const Flag_Set*>& words_data,
-	                               size_t start_pos,
-	                               std::wstring& part) const
+	                               size_t start_pos, std::wstring& part,
+	                               Casing input_word_casing) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m>
