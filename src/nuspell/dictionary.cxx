@@ -1583,7 +1583,7 @@ try_simplified_triple:
 			// first letter lowercase
 			if (part2_entry->second.contains(
 			        compound_force_uppercase))
-				goto try_recursive;
+				goto try_simplified_triple_recursive;
 		}
 	}
 	return part1_entry;
@@ -1745,7 +1745,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 				// first letter lowercase
 				if (part2_entry->second.contains(
 				        compound_force_uppercase))
-					goto try_recursive;
+					goto try_simplified_triple_recursive;
 			}
 		}
 		return part1_entry;
