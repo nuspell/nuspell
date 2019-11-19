@@ -812,6 +812,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	    {"CHECKCOMPOUNDCASE", &compound_check_case},
 	    {"CHECKCOMPOUNDTRIPLE", &compound_check_triple},
 	    {"SIMPLIFIEDTRIPLE", &compound_simplified_triple},
+	    {"SYLLABLENUM", &compound_syllable_num},
 
 	    {"FULLSTRIP", &fullstrip},
 	    {"CHECKSHARPS", &checksharps}};
@@ -956,10 +957,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			                  wrap_compound_rule);
 		}
 		else if (command == "COMPOUNDSYLLABLE") {
-			ss >> compound_syllable_max >> compound_syllable_vowels;
-		}
-		else if (command == "SYLLABLENUM") {
-			ss >> compound_syllable_num;
+			ss >> compound_syllable_max;
+			ss >> compound_syllable_vowels;
 		}
 		else if (command == "WORDCHARS") {
 			ss >> wordchars;

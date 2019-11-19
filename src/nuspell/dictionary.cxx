@@ -1478,6 +1478,7 @@ auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
                                        Casing input_word_casing) const
     -> Compounding_Result
 {
+	auto old_num_part = num_part;
 	part.assign(word, start_pos, i - start_pos);
 	auto part1_entry = check_word_in_compound<m>(part);
 	if (!part1_entry)
@@ -1495,6 +1496,9 @@ auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
 	if (compound_check_case &&
 	    has_uppercase_at_compound_word_boundary(word, i))
 		return {};
+	num_part += part1_entry.num_words_modifier;
+	num_part += compound_root_flag &&
+	            part1_entry->second.contains(compound_root_flag);
 
 	part.assign(word, i, word.npos);
 	auto part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
@@ -1519,6 +1523,23 @@ auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
 			if (part2_entry->second.contains(
 			        compound_force_uppercase))
 				goto try_recursive;
+		}
+	}
+	old_num_part = num_part;
+	num_part += part2_entry.num_words_modifier;
+	num_part += compound_root_flag &&
+	            part2_entry->second.contains(compound_root_flag);
+	if (compound_max_word_count != 0 &&
+	    num_part + 1 >= compound_max_word_count) {
+		if (compound_syllable_vowels.empty()) // is not Hungarian
+			return {}; // end search here, num_part can only go up
+
+		// else, language is Hungarian
+		auto num_syllable = count_syllables(word);
+		num_syllable += part2_entry.num_syllable_modifier;
+		if (num_syllable > compound_syllable_max) {
+			num_part = old_num_part;
+			goto try_recursive;
 		}
 	}
 	return part1_entry;
@@ -1586,6 +1607,9 @@ try_simplified_triple:
 				goto try_simplified_triple_recursive;
 		}
 	}
+	if (compound_max_word_count != 0 &&
+	    num_part + 1 >= compound_max_word_count)
+		return {};
 	return part1_entry;
 
 try_simplified_triple_recursive:
@@ -1683,6 +1707,9 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 					goto try_recursive;
 			}
 		}
+		if (compound_max_word_count != 0 &&
+		    num_part + 1 >= compound_max_word_count)
+			return {};
 		return part1_entry;
 
 	try_recursive:
@@ -1748,6 +1775,9 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 					goto try_simplified_triple_recursive;
 			}
 		}
+		if (compound_max_word_count != 0 &&
+		    num_part + 1 >= compound_max_word_count)
+			return {};
 		return part1_entry;
 
 	try_simplified_triple_recursive:
@@ -1793,36 +1823,105 @@ template <Affixing_Mode m>
 auto Dict_Base::check_word_in_compound(std::wstring& word) const
     -> Compounding_Result
 {
+	auto cpd_flag = char16_t();
+	if (m == AT_COMPOUND_BEGIN)
+		cpd_flag = compound_begin_flag;
+	else if (m == AT_COMPOUND_MIDDLE)
+		cpd_flag = compound_middle_flag;
+	else if (m == AT_COMPOUND_END)
+		cpd_flag = compound_last_flag;
+
 	auto range = words.equal_range(word);
 	for (auto& we : make_iterator_range(range)) {
 		auto& word_flags = we.second;
 		if (word_flags.contains(need_affix_flag))
 			continue;
-		if (word_flags.contains(compound_flag))
-			return {&we};
-		if (m == AT_COMPOUND_BEGIN &&
-		    word_flags.contains(compound_begin_flag))
-			return {&we};
-		if (m == AT_COMPOUND_MIDDLE &&
-		    word_flags.contains(compound_middle_flag))
-			return {&we};
-		if (m == AT_COMPOUND_END &&
-		    word_flags.contains(compound_last_flag))
-			return {&we};
+		if (!word_flags.contains(compound_flag) &&
+		    !word_flags.contains(cpd_flag))
+			continue;
+		auto num_syllable_mod = calc_syllable_modifier<m>(we);
+		return {&we, 0, num_syllable_mod};
 	}
 	auto x2 = strip_suffix_only<m>(word);
-	if (x2)
-		return {x2, is_modiying_affix(*x2.a)};
+	if (x2) {
+		auto num_syllable_mod = calc_syllable_modifier<m>(*x2, *x2.a);
+		return {x2, 0, num_syllable_mod, is_modiying_affix(*x2.a)};
+	}
 
 	auto x1 = strip_prefix_only<m>(word);
-	if (x1)
-		return {x1, is_modiying_affix(*x1.a)};
+	if (x1) {
+		auto num_words_mod = calc_num_words_modifier(*x1.a);
+		return {x1, num_words_mod, 0, is_modiying_affix(*x1.a)};
+	}
 
 	auto x3 = strip_prefix_then_suffix_commutative<m>(word);
-	if (x3)
-		return {x3,
+	if (x3) {
+		auto num_words_mod = calc_num_words_modifier(*x3.b);
+		auto num_syllable_mod = calc_syllable_modifier<m>(*x3, *x3.a);
+		return {x3, num_words_mod, num_syllable_mod,
 		        is_modiying_affix(*x3.a) || is_modiying_affix(*x3.b)};
+	}
 	return {};
+}
+
+auto Dict_Base::calc_num_words_modifier(const Prefix<wchar_t>& pfx) const
+    -> unsigned char
+{
+	if (compound_syllable_vowels.empty())
+		return 0;
+	auto c = count_syllables(pfx.appending);
+	return c > 1;
+}
+
+template <Affixing_Mode m>
+auto Dict_Base::calc_syllable_modifier(Word_List::const_reference we) const
+    -> signed char
+{
+	auto subtract_syllable =
+	    m == AT_COMPOUND_END && !compound_syllable_vowels.empty() &&
+	    we.second.contains('I') && !we.second.contains('J');
+	return 0 - subtract_syllable;
+}
+
+template <Affixing_Mode m>
+auto Dict_Base::calc_syllable_modifier(Word_List::const_reference we,
+                                       const Suffix<wchar_t>& sfx) const
+    -> signed char
+{
+	if (m != AT_COMPOUND_END)
+		return 0;
+	if (compound_syllable_vowels.empty())
+		return 0;
+	auto& appnd = sfx.appending;
+	signed char num_syllable_mod = 0 - count_syllables(appnd);
+	auto sfx_extra = !appnd.empty() && appnd.back() == 'i';
+	if (sfx_extra && appnd.size() > 1) {
+		auto c = appnd[appnd.size() - 2];
+		sfx_extra = c != 'y' && c != 't';
+	}
+	num_syllable_mod -= sfx_extra;
+
+	if (compound_syllable_num) {
+		switch (sfx.flag) {
+		case 'c':
+			num_syllable_mod += 2;
+			break;
+
+		case 'J':
+			num_syllable_mod += 1;
+			break;
+
+		case 'I':
+			num_syllable_mod += we.second.contains('J');
+			break;
+		}
+	}
+	return num_syllable_mod;
+}
+
+auto Dict_Base::count_syllables(const std::wstring& word) const -> size_t
+{
+	return count_appereances_of(word, compound_syllable_vowels);
 }
 
 auto Dict_Base::check_compound_with_rules(

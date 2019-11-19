@@ -506,4 +506,12 @@ auto Encoding_Converter::to_wide(const string& in) -> wstring
 	return out;
 }
 
+auto count_appereances_of(const wstring& haystack, const wstring& needles)
+    -> size_t
+{
+	return std::count_if(begin(haystack), end(haystack), [&](auto c) {
+		return needles.find(c) != needles.npos;
+	});
+}
+
 } // namespace nuspell

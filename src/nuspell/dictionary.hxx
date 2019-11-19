@@ -78,6 +78,8 @@ struct Affixing_Result<void, void> : Affixing_Result_Base {
 
 struct Compounding_Result {
 	Word_List::const_pointer word_entry = {};
+	unsigned char num_words_modifier = {};
+	signed char num_syllable_modifier = {};
 	bool affixed_and_modified = {}; /**< non-zero affix */
 	operator Word_List::const_pointer() const { return word_entry; }
 	auto& operator*() const { return *word_entry; }
@@ -265,14 +267,29 @@ struct Dict_Base : public Aff_Data {
 	    std::wstring& part, Casing input_word_casing) const
 	    -> Compounding_Result;
 
+	template <Affixing_Mode m>
+	auto check_word_in_compound(std::wstring& s) const
+	    -> Compounding_Result;
+
+	auto calc_num_words_modifier(const Prefix<wchar_t>& pfx) const
+	    -> unsigned char;
+
+	template <Affixing_Mode m>
+	auto calc_syllable_modifier(Word_List::const_reference we) const
+	    -> signed char;
+
+	template <Affixing_Mode m>
+	auto calc_syllable_modifier(Word_List::const_reference we,
+	                            const Suffix<wchar_t>& sfx) const
+	    -> signed char;
+
+	auto count_syllables(const std::wstring& word) const -> size_t;
+
 	auto check_compound_with_rules(std::wstring& word,
 	                               std::vector<const Flag_Set*>& words_data,
 	                               size_t start_pos, std::wstring& part,
 	                               Casing input_word_casing) const
-	    -> Compounding_Result;
 
-	template <Affixing_Mode m>
-	auto check_word_in_compound(std::wstring& s) const
 	    -> Compounding_Result;
 
 	auto suggest_priv(std::wstring& word, List_WStrings& out) const -> void;

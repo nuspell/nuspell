@@ -260,5 +260,9 @@ auto is_number(const std::basic_string<CharT>& s) -> bool
 	}
 	return false;
 }
+
+auto count_appereances_of(const std::wstring& haystack,
+                          const std::wstring& needles) -> size_t;
+
 } // namespace nuspell
 #endif // NUSPELL_UTILS_HXX

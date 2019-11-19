@@ -134,11 +134,6 @@ struct Aff_Data {
 	icu::Locale icu_locale;
 	Substr_Replacer<wchar_t> output_substr_replacer;
 
-	Encoding encoding;
-	Flag_Type flag_type;
-	std::vector<Flag_Set> flag_aliases;
-	std::string wordchars; // deprecated?
-
 	// suggestion options
 	Replacement_Table<wchar_t> replacements;
 	std::vector<Similarity_Group<wchar_t>> similarities;
@@ -168,12 +163,16 @@ struct Aff_Data {
 	bool compound_check_case;
 	bool compound_check_triple;
 	bool compound_simplified_triple;
-
+	bool compound_syllable_num;
+	unsigned short compound_syllable_max;
+	std::wstring compound_syllable_vowels;
 	std::vector<Compound_Pattern<wchar_t>> compound_patterns;
 
-	unsigned short compound_syllable_max;
-	std::string compound_syllable_vowels;
-	Flag_Set compound_syllable_num;
+	// data members used only while parsing
+	Flag_Type flag_type;
+	Encoding encoding;
+	std::vector<Flag_Set> flag_aliases;
+	std::string wordchars; // deprecated?
 
 	auto parse_aff(std::istream& in) -> bool;
 	auto parse_dic(std::istream& in) -> bool;
