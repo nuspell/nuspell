@@ -297,27 +297,45 @@ struct Dict_Base : public Aff_Data {
 	auto add_sug_if_correct(std::wstring& word, List_WStrings& out) const
 	    -> bool;
 
-	auto try_rep_suggestion(std::wstring& word, List_WStrings& out) const
+	auto uppercase_suggest(std::wstring& word, List_WStrings& out) const
 	    -> void;
 
 	auto rep_suggest(std::wstring& word, List_WStrings& out) const -> void;
 
-	auto is_rep_similar(std::wstring& word) const -> bool;
-
-	auto extra_char_suggest(std::wstring& word, List_WStrings& out) const
+	auto try_rep_suggestion(std::wstring& word, List_WStrings& out) const
 	    -> void;
+
+	auto is_rep_similar(std::wstring& word) const -> bool;
 
 	auto map_suggest(std::wstring& word, List_WStrings& out,
 	                 size_t i = 0) const -> void;
 
+	auto adjacent_swap_suggest(std::wstring& word, List_WStrings& out) const
+	    -> void;
+
+	auto distant_swap_suggest(std::wstring& word, List_WStrings& out) const
+	    -> void;
+
 	auto keyboard_suggest(std::wstring& word, List_WStrings& out) const
+	    -> void;
+
+	auto extra_char_suggest(std::wstring& word, List_WStrings& out) const
+	    -> void;
+
+	auto forgotten_char_suggest(std::wstring& word,
+	                            List_WStrings& out) const -> void;
+
+	auto move_char_suggest(std::wstring& word, List_WStrings& out) const
 	    -> void;
 
 	auto bad_char_suggest(std::wstring& word, List_WStrings& out) const
 	    -> void;
 
-	auto forgotten_char_suggest(std::wstring& word,
-	                            List_WStrings& out) const -> void;
+	auto doubled_two_chars_suggest(std::wstring& word,
+	                               List_WStrings& out) const -> void;
+
+	auto two_words_suggest(std::wstring& word, List_WStrings& out) const
+	    -> void;
 
 	auto phonetic_suggest(std::wstring& word, List_WStrings& out) const
 	    -> void;

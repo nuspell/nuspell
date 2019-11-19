@@ -1589,6 +1589,75 @@ auto inline Compound_Rule_Table::match_any_rule(
 	});
 }
 
+template <class CharT>
+class Simple_Short_String {
+	using value_type = CharT;
+	using traits_type = std::char_traits<value_type>;
+	using size_type = size_t;
+	using Str_View = std::basic_string_view<value_type>;
+
+	static constexpr size_type short_capacity = 22;
+	size_type sz = {};
+	bool is_long = {};
+	union {
+		value_type short_data[short_capacity + 1];
+		value_type* long_data;
+	};
+
+	auto is_short() const -> bool { return !is_long; }
+
+      public:
+	Simple_Short_String() { short_data[0] = {}; }
+	Simple_Short_String(Str_View other)
+	    : sz(other.size()), is_long(sz > short_capacity)
+	{
+		value_type* ptr;
+		if (is_short()) {
+			ptr = short_data;
+		}
+		else {
+			long_data = new value_type[sz + 1];
+			ptr = long_data;
+		}
+		traits_type::copy(ptr, other.data(), sz);
+		ptr[sz] = {};
+	}
+	~Simple_Short_String()
+	{
+		if (is_long)
+			delete[] long_data;
+	}
+
+	operator Str_View() const noexcept
+	{
+		if (is_short())
+			return {short_data, sz};
+		return {long_data, sz};
+	}
+
+	Simple_Short_String(const Simple_Short_String& other)
+	    : Simple_Short_String(Str_View(other))
+	{
+	}
+	Simple_Short_String(Simple_Short_String&& other) noexcept
+	    : sz(other.sz), is_long(other.is_long)
+	{
+		if (is_short()) {
+			traits_type::copy(short_data, other.short_data, sz);
+			short_data[sz] = {};
+			return;
+		}
+		long_data = other.long_data;
+		other.sz = 0;
+		other.is_long = false;
+		other.short_data[0] = {};
+	}
+	auto operator=(const Simple_Short_String&)
+	    -> Simple_Short_String& = delete;
+	auto operator=(Simple_Short_String &&) -> Simple_Short_String& = delete;
+};
+using Short_WString = Simple_Short_String<wchar_t>;
+
 /**
  * @brief Vector of strings that recycles erased strings
  */
