@@ -260,10 +260,6 @@ auto Dict_Base::spell_casing_title(std::wstring& s) const -> const Flag_Set*
 
 	// check title case
 	auto res = check_word(s, Casing::INIT_CAPITAL);
-
-	// forbid bad capitalization
-	if (res && res->contains(forbiddenword_flag))
-		return nullptr;
 	if (res)
 		return res;
 
