@@ -15,13 +15,11 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <nuspell/dictionary.hxx>
+
 #include <fstream>
 #include <iostream>
-#include <string>
-#include <vector>
-
-#include <boost/locale/utf8_codecvt.hpp>
-#include <nuspell/dictionary.hxx>
 
 using namespace std;
 
@@ -43,8 +41,6 @@ int main(int argc, char* argv[])
 	file.close();
 	test.erase(test.size() - 4);
 	auto d = nuspell::Dictionary::load_from_path(test);
-	d.imbue(locale(locale::classic(),
-	               new boost::locale::utf8_codecvt<wchar_t>()));
 	auto word = string();
 	if (type == ".dic") {
 		auto error = vector<string>();

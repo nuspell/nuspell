@@ -2409,10 +2409,10 @@ auto Dict_Base::phonetic_suggest(std::wstring& word, List_WStrings& out) const
 }
 
 Dictionary::Dictionary(std::istream& aff, std::istream& dic)
+    : external_locale_known_utf8(true)
 {
 	if (!parse_aff_dic(aff, dic))
 		throw Dictionary_Loading_Error("error parsing");
-	external_locale_known_utf8 = is_locale_known_utf8(external_locale);
 }
 
 auto Dictionary::external_to_internal_encoding(const string& in,
@@ -2434,10 +2434,7 @@ auto Dictionary::internal_to_external_encoding(const wstring& wide_in,
 	return true;
 }
 
-Dictionary::Dictionary()
-{
-	external_locale_known_utf8 = is_locale_known_utf8(external_locale);
-}
+Dictionary::Dictionary() : external_locale_known_utf8(true) {}
 
 /**
  * @brief Create a dictionary from opened files as iostreams
@@ -2458,7 +2455,8 @@ auto Dictionary::load_from_aff_dic(std::istream& aff, std::istream& dic)
 
 /**
  * @brief Create a dictionary from files
- * @param file path without extensions
+ * @param file_path_without_extension path *without* extensions (without .dic or
+ * .aff)
  * @return Dictionary object
  * @throws Dictionary_Loading_Error on error
  */
@@ -2482,15 +2480,19 @@ auto Dictionary::load_from_path(const std::string& file_path_without_extension)
 }
 
 /**
- * @brief Imbues external locale object to set external encoding
+ * @brief Sets external (public API) encoding
  *
- * The locale must contain codecvt<wchar_t, char, mbstate_t> facet that can
+ * By external encoding we mean the encoding of the strings that you are going
+ * to pass to other functions like spell() and suggest(). This function should
+ * be used rarely, as the default external encoding is UTF-8.
+ *
+ * This encoding should not be misunderstood with the internal encoding or with
+ * the encoding of the dictionary files (.dic and .aff). It can be different
+ * than any of them.
+ *
+ * The locale must contain std::codecvt<wchar_t, char, mbstate_t> facet that can
  * convert the strings from the external locale to UTF-32 on non-Windows
- * platforms, and to UTF-16 on Windows. By external encoding it is meant the
- * encoding of strings in the client code that uses this library.
- *
- * You may safely use locales geenrated by Boost.Locale. Or even simpler,
- * use the header-only boost::locale::utf8_codecvt<wchar_t> facet.
+ * platforms, and to UTF-16 on Windows.
  *
  * @param loc locale object with valid codecvt<wchar_t, char, mbstate_t>
  */
@@ -2501,8 +2503,15 @@ auto Dictionary::imbue(const locale& loc) -> void
 }
 
 /**
+ * @brief Sets external (public API) encoding to UTF-8
+ *
+ * Call this only if you used imbue() and want to revert it to UTF-8.
+ */
+auto Dictionary::imbue_utf8() -> void { external_locale_known_utf8 = true; }
+
+/**
  * @brief Checks if a given word is correct
- * @param word
+ * @param word any word
  * @return true if correct, false otherwise
  */
 auto Dictionary::spell(const std::string& word) const -> bool
@@ -2521,7 +2530,7 @@ auto Dictionary::spell(const std::string& word) const -> bool
 
 /**
  * @brief Suggests correct words for a given incorrect word
- * @param word incorrect word
+ * @param[in] word incorrect word
  * @param[out] out this object will be populated with the suggestions
  */
 auto Dictionary::suggest(const std::string& word,

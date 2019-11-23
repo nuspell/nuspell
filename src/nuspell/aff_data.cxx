@@ -66,6 +66,18 @@
  */
 namespace nuspell {
 
+/**
+ * @brief inline namespace for API and ABI versioning
+ *
+ * Everything that is public API gets here, and even symbols that should be
+ * private at API but are called at ABI level end up here. For example, our
+ * public class Dictionary has implicit destructor which gets inlined in client
+ * code. Thus, the client code directly calls the destructors of all the private
+ * data members of our class Dictionary.
+ */
+inline namespace v3 {
+}
+
 using namespace std;
 
 auto Encoding::normalize_name() -> void

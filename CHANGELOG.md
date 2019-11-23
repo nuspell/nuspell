@@ -7,8 +7,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added compounding features: CHECKCOMPOUNDREP, FORCEUCASE, COMPOUNDWORDMAX.
+- Added compounding features specific only to Hungarian language:
+  COMPOUNDROOT, COMPOUNDSYLLABLE, SYLLABLENUM. These three basically are
+  extension to COMPOUNDWORDMAX.
+- Added six new simple suggestion methods.
+
 ### Changed
 - Building and using the library requires a compiler with C++17 support.
+- The functions of the public API now accept strings encoded in UTF-8 by
+  default. You should not call the function `imbue()` and you should not use
+  `locale` and `codecvt` objects at all if you need UTF-8 strings. Use `imbue()`
+  only if you need API that accepts strings in other encoding.
 
 ### Fixed
 - Major improvement in speed. The best case is almost 3x faster than Hunspell,

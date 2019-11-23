@@ -191,7 +191,6 @@ The src/tools directory contains ten executables after compiling.
 Sample program:
 
 ```cpp
-#include <boost/locale/utf8_codecvt.hpp>
 #include <nuspell/dictionary.hxx>
 #include <nuspell/finder.hxx>
 
@@ -203,10 +202,6 @@ int main()
 	auto path = dict_finder.get_dictionary_path("en_US");
 
 	auto dict = nuspell::Dictionary::load_from_path(path);
-
-	auto utf8_loc = locale(locale::classic(),
-	                       new boost::locale::utf8_codecvt<wchar_t>());
-	dict.imbue(utf8_loc);
 
 	auto word = string();
 	auto sugs = vector<string>();

@@ -377,6 +377,7 @@ class Dictionary : private Dict_Base {
 	auto static load_from_path(
 	    const std::string& file_path_without_extension) -> Dictionary;
 	auto imbue(const std::locale& loc) -> void;
+	auto imbue_utf8() -> void;
 	auto spell(const std::string& word) const -> bool;
 	auto suggest(const std::string& word,
 	             std::vector<std::string>& out) const -> void;
