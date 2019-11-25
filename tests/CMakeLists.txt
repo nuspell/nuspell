@@ -37,9 +37,6 @@ foreach(t ${v1tests})
 endforeach()
 
 set_tests_properties(
-allcaps.dic
-allcaps2.dic
-allcaps_utf.dic
 base_utf.dic
 nepali.dic
 1463589.sug

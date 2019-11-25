@@ -429,7 +429,7 @@ auto Substr_Replacer<CharT>::replace(Str& s) const -> Str&
 /**
  * @brief Casing type enum, ignoring neutral case characters.
  */
-enum class Casing {
+enum class Casing : char {
 	SMALL /**< all lower case or neutral case, e.g. "lowercase" or "123" */,
 	INIT_CAPITAL /**< start upper case, rest lower case, e.g. "Initcap" */,
 	ALL_CAPITAL /**< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
@@ -613,42 +613,6 @@ class Hash_Multiset {
 	auto emplace(Args&&... a)
 	{
 		return insert(value_type(std::forward<Args>(a)...));
-	}
-
-	// Note, leaks non-const iterator. do not modify
-	// the key part of the returned value(s).
-	auto equal_range_nonconst_unsafe(const key_type& key)
-	    -> std::pair<local_iterator, local_iterator>
-	{
-		using namespace std;
-		auto hash = hasher();
-		auto key_extract = KeyExtract();
-		if (data.empty())
-			return {};
-		auto h = hash(key);
-		auto h_mod = h & (data.size() - 1);
-		auto& bucket = data[h_mod];
-		if (bucket.empty())
-			return {};
-		if (bucket.size() == 1) {
-			if (key == key_extract(bucket.front()))
-				return {begin(bucket), end(bucket)};
-			return {};
-		}
-		auto first =
-		    std::find_if(begin(bucket), end(bucket), [&](auto& x) {
-			    return key == key_extract(x);
-		    });
-		if (first == end(bucket))
-			return {};
-		auto next = first + 1;
-		if (next == end(bucket) || key != key_extract(*next))
-			return {first, next};
-		auto last =
-		    std::find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
-			    return key == key_extract(x);
-		    });
-		return {first, last.base()};
 	}
 
 	auto equal_range(const key_type& key) const

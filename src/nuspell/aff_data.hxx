@@ -103,6 +103,7 @@ using Word_List = Hash_Multiset<std::pair<std::wstring, Flag_Set>, std::wstring,
                                 Extractor_First_of_Word_Pair>;
 
 struct Aff_Data {
+	static const auto HIDDEN_HOMONYM_FLAG = char16_t(-1);
 
 	// spell checking options
 	Word_List words;

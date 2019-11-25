@@ -1126,45 +1126,27 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			continue;
 		erase_chars(wide_word, ignored_chars);
 		auto casing = classify_casing(wide_word);
-		const char16_t HIDDEN_HOMONYM_FLAG = -1;
+		auto inserted = words.emplace(wide_word, flags);
 		switch (casing) {
-		case Casing::ALL_CAPITAL: {
-			// check for hidden homonym
-			auto hom = words.equal_range_nonconst_unsafe(wide_word);
-			auto h =
-			    std::find_if(hom.first, hom.second, [&](auto& w) {
-				    return w.second.contains(
-				        HIDDEN_HOMONYM_FLAG);
-			    });
-
-			if (h != hom.second) {
-				// replace if found
-				h->second = flags;
-			}
-			else {
-				words.emplace(wide_word, flags);
-			}
-			break;
-		}
+		case Casing::ALL_CAPITAL:
+			if (flags.empty())
+				break;
+			[[fallthrough]];
 		case Casing::PASCAL:
 		case Casing::CAMEL: {
-			words.emplace(wide_word, flags);
-
-			// add the hidden homonym directly in uppercase
-			auto up_wide = to_upper(wide_word, icu_locale);
-			auto& up = wide_word;
-			auto hom = words.equal_range(up);
-			auto h = none_of(hom.first, hom.second, [&](auto& w) {
-				return w.second.contains(HIDDEN_HOMONYM_FLAG);
-			});
-			if (h) { // if not found
-				flags += HIDDEN_HOMONYM_FLAG;
-				words.emplace(up, flags);
-			}
+			// This if is needed for the test allcaps2.dic.
+			// Maybe it can be solved better by not checking the
+			// forbiddenword_flag, but by keeping the hidden
+			// homonym last in the multimap among the same-key
+			// entries.
+			if (inserted->second.contains(forbiddenword_flag))
+				break;
+			auto title_word = to_title(wide_word, icu_locale);
+			flags += HIDDEN_HOMONYM_FLAG;
+			words.emplace(title_word, flags);
 			break;
 		}
 		default:
-			words.emplace(wide_word, flags);
 			break;
 		}
 	}
