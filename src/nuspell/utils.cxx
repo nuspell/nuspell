@@ -27,15 +27,11 @@
 #include <unicode/unistr.h>
 #include <unicode/ustring.h>
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
-
-#if !defined(U_WCHAR_IS_UTF32) && !defined(U_WCHAR_IS_UTF16) &&                \
-    !defined(__FreeBSD__)
-#error "Platform has poor Unicode support. wchar_t must be Unicode."
-#elif defined(__STDC_MB_MIGHT_NEQ_WC__) && !defined(__FreeBSD__)
-#error "Platform has non-ASCII narrow string literals."
+#if ' ' != 32 || '.' != 46 || 'A' != 65 || 'Z' != 90 || 'a' != 97 || 'z' != 122
+#error "Basic execution character set is not ASCII"
+#elif L' ' != 32 || L'.' != 46 || L'A' != 65 || L'Z' != 90 || L'a' != 97 ||    \
+    L'z' != 122
+#error "Basic wide execution character set is not ASCII-compatible"
 #endif
 
 namespace nuspell {
