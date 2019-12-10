@@ -97,10 +97,11 @@ int main(int argc, char* argv[])
 		auto expected_list_sugs = vector<vector<string>>();
 		auto line = string();
 		while (getline(file, line)) {
-			size_t i = 0;
-			size_t j = line.find(',');
+			if (line.empty())
+				continue;
 			sug.clear();
-			for (;;) {
+			for (size_t i = 0;;) {
+				auto j = line.find(',', i);
 				word.assign(line, i, j - i);
 				sug.push_back(word);
 				if (j == line.npos)
@@ -109,7 +110,6 @@ int main(int argc, char* argv[])
 				i = line.find_first_not_of(' ', j + 1);
 				if (i == line.npos)
 					break;
-				j = line.find(',', i);
 			}
 			if (!sug.empty())
 				expected_list_sugs.push_back(sug);

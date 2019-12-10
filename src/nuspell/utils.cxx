@@ -410,7 +410,7 @@ auto to_lower(wstring_view in, const icu::Locale& loc, wstring& out) -> void
  * @param s word for which casing is determined.
  * @return The casing type.
  */
-auto classify_casing(const std::wstring& s) -> Casing
+auto classify_casing(wstring_view s) -> Casing
 {
 	// TODO implement Default Case Detection from unicode standard
 	// https://www.unicode.org/versions/Unicode11.0.0/ch03.pdf

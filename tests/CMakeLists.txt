@@ -42,7 +42,6 @@ nepali.dic
 1463589.sug
 1463589_utf.sug
 allcaps.sug
-allcaps2.sug
 allcaps_utf.sug
 base.sug
 base_utf.sug
@@ -58,8 +57,6 @@ nosuggest.sug
 oconv.sug
 opentaal_keepcase.sug
 phone.sug
-sug.sug
-sugutf.sug
 utf8_nonbmp.sug
 
 PROPERTIES WILL_FAIL TRUE)

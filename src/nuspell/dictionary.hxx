@@ -327,6 +327,8 @@ struct Dict_Base : public Aff_Data {
 
 	auto suggest_priv(std::wstring& word, List_WStrings& out) const -> void;
 
+	auto suggest_low(std::wstring& word, List_WStrings& out) const -> void;
+
 	auto add_sug_if_correct(std::wstring& word, List_WStrings& out) const
 	    -> bool;
 

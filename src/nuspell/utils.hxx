@@ -86,7 +86,7 @@ auto to_title(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
 auto to_lower(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
     -> void;
 
-auto classify_casing(const std::wstring& s) -> Casing;
+auto classify_casing(std::wstring_view s) -> Casing;
 
 auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i)
     -> bool;
