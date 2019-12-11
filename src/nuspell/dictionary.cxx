@@ -2092,13 +2092,14 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
     -> void
 {
 	suggest_low(word, out);
+	auto backup = Short_WString(word);
 	auto casing = classify_casing(word);
 	switch (casing) {
 	case Casing::SMALL:
 		break;
 	case Casing::INIT_CAPITAL: {
-		auto lowercase = to_lower(word, icu_locale);
-		suggest_low(lowercase, out);
+		to_lower(word, icu_locale, word);
+		suggest_low(word, out);
 		break;
 	}
 	case Casing::CAMEL:
@@ -2115,16 +2116,17 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 				word.erase(dot_idx + 1, 1);
 			}
 		}
-		auto lowercase = to_lower(word, icu_locale);
-		if (spell_priv(lowercase) &&
-		    find(begin(out), end(out), lowercase) == end(out))
-			out.insert(begin(out), lowercase);
-		suggest_low(lowercase, out);
+		to_lower(word, icu_locale, word);
+		if (spell_priv(word) &&
+		    find(begin(out), end(out), word) == end(out))
+			out.insert(begin(out), word);
+		suggest_low(word, out);
 		break;
 	}
 	case Casing::ALL_CAPITAL:
 		break;
 	}
+	word = backup;
 }
 
 auto Dict_Base::suggest_low(std::wstring& word, List_WStrings& out) const
