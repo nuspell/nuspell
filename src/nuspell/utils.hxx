@@ -69,12 +69,22 @@ auto to_upper_ascii(std::string& s) -> void;
 
 auto is_locale_known_utf8(const std::locale& loc) -> bool;
 
-auto wide_to_icu(const std::wstring& in, icu::UnicodeString& out) -> bool;
+auto wide_to_icu(std::wstring_view in, icu::UnicodeString& out) -> bool;
 auto icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool;
 
-auto to_upper(const std::wstring& in, const icu::Locale& loc) -> std::wstring;
-auto to_title(const std::wstring& in, const icu::Locale& loc) -> std::wstring;
-auto to_lower(const std::wstring& in, const icu::Locale& loc) -> std::wstring;
+[[nodiscard]] auto to_upper(std::wstring_view in, const icu::Locale& loc)
+    -> std::wstring;
+[[nodiscard]] auto to_title(std::wstring_view in, const icu::Locale& loc)
+    -> std::wstring;
+[[nodiscard]] auto to_lower(std::wstring_view in, const icu::Locale& loc)
+    -> std::wstring;
+
+auto to_upper(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
+    -> void;
+auto to_title(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
+    -> void;
+auto to_lower(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
+    -> void;
 
 auto classify_casing(const std::wstring& s) -> Casing;
 

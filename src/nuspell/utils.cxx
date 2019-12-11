@@ -311,7 +311,7 @@ auto is_locale_known_utf8(const locale& loc) -> bool
 	return has_facet<boost::locale::utf8_codecvt<wchar_t>>(loc);
 }
 
-auto wide_to_icu(const std::wstring& in, icu::UnicodeString& out) -> bool
+auto wide_to_icu(wstring_view in, icu::UnicodeString& out) -> bool
 {
 	int32_t capacity = in.size();
 	if (in.size() > numeric_limits<int32_t>::max()) {
@@ -325,7 +325,7 @@ auto wide_to_icu(const std::wstring& in, icu::UnicodeString& out) -> bool
 	auto buf = out.getBuffer(capacity);
 	int32_t len;
 	auto err = U_ZERO_ERROR;
-	u_strFromWCS(buf, capacity, &len, in.c_str(), in.size(), &err);
+	u_strFromWCS(buf, capacity, &len, in.data(), in.size(), &err);
 	if (U_SUCCESS(err)) {
 		out.releaseBuffer(len);
 		return true;
@@ -336,7 +336,7 @@ auto wide_to_icu(const std::wstring& in, icu::UnicodeString& out) -> bool
 		// handle buffer overflow
 		buf = out.getBuffer(len);
 		err = U_ZERO_ERROR;
-		u_strFromWCS(buf, len, nullptr, in.c_str(), in.size(), &err);
+		u_strFromWCS(buf, len, nullptr, in.data(), in.size(), &err);
 		if (U_SUCCESS(err)) {
 			out.releaseBuffer(len);
 			return true;
@@ -361,32 +361,45 @@ auto icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool
 	return false;
 }
 
-auto to_upper(const std::wstring& in, const icu::Locale& loc) -> std::wstring
+auto to_upper(wstring_view in, const icu::Locale& loc) -> std::wstring
+{
+	auto out = wstring();
+	to_upper(in, loc, out);
+	return out;
+}
+auto to_title(wstring_view in, const icu::Locale& loc) -> std::wstring
+{
+	auto out = wstring();
+	to_title(in, loc, out);
+	return out;
+}
+auto to_lower(wstring_view in, const icu::Locale& loc) -> std::wstring
+{
+	auto out = wstring();
+	to_lower(in, loc, out);
+	return out;
+}
+
+auto to_upper(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 {
 	auto us = icu::UnicodeString();
-	auto out = wstring();
 	wide_to_icu(in, us);
 	us.toUpper(loc);
 	icu_to_wide(us, out);
-	return out;
 }
-auto to_title(const std::wstring& in, const icu::Locale& loc) -> std::wstring
+auto to_title(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 {
 	auto us = icu::UnicodeString();
-	auto out = wstring();
 	wide_to_icu(in, us);
 	us.toTitle(nullptr, loc);
 	icu_to_wide(us, out);
-	return out;
 }
-auto to_lower(const std::wstring& in, const icu::Locale& loc) -> std::wstring
+auto to_lower(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 {
 	auto us = icu::UnicodeString();
-	auto out = wstring();
 	wide_to_icu(in, us);
 	us.toLower(loc);
 	icu_to_wide(us, out);
-	return out;
 }
 
 /**

@@ -213,36 +213,41 @@ auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
 		// apostophe is at beginning of word or dividing the word
 		auto part1 = s.substr(0, apos + 1);
 		auto part2 = s.substr(apos + 1);
-		part1 = to_lower(part1, loc);
-		part2 = to_title(part2, loc);
+		to_lower(part1, loc, part1);
+		to_title(part2, loc, part2);
 		auto t = part1 + part2;
 		res = check_word(t, Casing::ALL_CAPITAL);
 		if (res)
 			return res;
-		part1 = to_title(part1, loc);
+		to_title(part1, loc, part1);
 		t = part1 + part2;
 		res = check_word(t, Casing::ALL_CAPITAL);
 		if (res)
 			return res;
 	}
 
+	auto backup = Short_WString(s);
+	AT_SCOPE_EXIT(s = backup);
+
 	// handle sharp s for German
 	if (checksharps && s.find(L"SS") != s.npos) {
-		auto t = to_lower(s, loc);
-		res = spell_sharps(t);
-		if (!res)
-			t = to_title(s, loc);
-		res = spell_sharps(t);
+		to_lower(backup, loc, s);
+		res = spell_sharps(s);
+		if (res)
+			return res;
+
+		to_title(backup, loc, s);
+		res = spell_sharps(s);
 		if (res)
 			return res;
 	}
-	auto t = to_title(s, loc);
-	res = check_word(t, Casing::ALL_CAPITAL);
+	to_title(backup, loc, s);
+	res = check_word(s, Casing::ALL_CAPITAL);
 	if (res && !res->contains(keepcase_flag))
 		return res;
 
-	t = to_lower(s, loc);
-	res = check_word(t, Casing::ALL_CAPITAL);
+	to_lower(backup, loc, s);
+	res = check_word(s, Casing::ALL_CAPITAL);
 	if (res && !res->contains(keepcase_flag))
 		return res;
 	return nullptr;
@@ -263,15 +268,16 @@ auto Dict_Base::spell_casing_title(std::wstring& s) const -> const Flag_Set*
 	if (res)
 		return res;
 
-	// attempt checking lower case spelling
-	auto t = to_lower(s, loc);
-	res = check_word(t, Casing::INIT_CAPITAL);
+	auto backup = Short_WString(s);
+	to_lower(backup, loc, s);
+	res = check_word(s, Casing::INIT_CAPITAL);
 
 	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
 	if (res && res->contains(keepcase_flag) &&
-	    !(checksharps && (t.find(L'\xDF') != t.npos))) {
+	    !(checksharps && (s.find(L'\xDF') != s.npos))) {
 		res = nullptr;
 	}
+	s = backup;
 	return res;
 }
 
@@ -2120,8 +2126,10 @@ auto Dict_Base::add_sug_if_correct(std::wstring& word, List_WStrings& out) const
 auto Dict_Base::uppercase_suggest(std::wstring& word, List_WStrings& out) const
     -> void
 {
-	auto word_upper = to_upper(word, icu_locale);
-	add_sug_if_correct(word_upper, out);
+	auto backup = word;
+	to_upper(word, icu_locale, word);
+	add_sug_if_correct(word, out);
+	word = backup;
 }
 
 auto Dict_Base::rep_suggest(std::wstring& word, List_WStrings& out) const
