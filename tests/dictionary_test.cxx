@@ -304,7 +304,7 @@ TEST_CASE("Dictionary suggestions extra_char_suggest", "[dictionary]")
 	CHECK(d.spell_priv(w) == false);
 
 	auto out_sug = List_WStrings();
-	auto expected_sug = List_WStrings{good};
+	auto expected_sug = List_WStrings{good, good};
 	d.extra_char_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 

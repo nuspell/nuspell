@@ -289,6 +289,8 @@ TEST_CASE("to_title", "[locale_utils]")
 	CHECK(L"İstanbul" == to_title(L"İSTANBUL", l));
 	CHECK(L"Istanbul" == to_title(L"ISTANBUL", l));
 
+	CHECK(to_title(L"ß", l) == L"Ss");
+
 	l = icu::Locale("tr_TR");
 	CHECK(L"İstanbul" == to_title(L"istanbul", l));
 	CHECK(L"İstanbul" == to_title(L"iSTANBUL", l));

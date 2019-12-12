@@ -402,6 +402,31 @@ auto to_lower(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 	icu_to_wide(us, out);
 }
 
+auto to_lower_char_at(std::wstring& s, size_t i, const icu::Locale& loc) -> void
+{
+	auto us = icu::UnicodeString(UChar32(s[i]));
+	us.toLower(loc);
+	if (likely(us.length() == 1)) {
+		s[i] = us[0];
+		return;
+	}
+	auto ws = wstring();
+	icu_to_wide(us, ws);
+	s.replace(i, 1, ws);
+}
+auto to_title_char_at(std::wstring& s, size_t i, const icu::Locale& loc) -> void
+{
+	auto us = icu::UnicodeString(UChar32(s[i]));
+	us.toTitle(nullptr, loc);
+	if (likely(us.length() == 1)) {
+		s[i] = us[0];
+		return;
+	}
+	auto ws = wstring();
+	icu_to_wide(us, ws);
+	s.replace(i, 1, ws);
+}
+
 /**
  * @brief Determines casing (capitalization) type for a word.
  *
@@ -522,5 +547,4 @@ auto count_appereances_of(const wstring& haystack, const wstring& needles)
 		return needles.find(c) != needles.npos;
 	});
 }
-
 } // namespace nuspell

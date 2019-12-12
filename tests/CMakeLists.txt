@@ -51,7 +51,6 @@ checksharpsutf.sug
 forceucase.sug
 i35725.sug
 i54633.sug
-i58202.sug
 keepcase.sug
 nosuggest.sug
 oconv.sug

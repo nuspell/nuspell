@@ -85,6 +85,10 @@ auto to_title(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
     -> void;
 auto to_lower(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
     -> void;
+auto to_lower_char_at(std::wstring& s, size_t i, const icu::Locale& loc)
+    -> void;
+auto to_title_char_at(std::wstring& s, size_t i, const icu::Locale& loc)
+    -> void;
 
 auto classify_casing(std::wstring_view s) -> Casing;
 

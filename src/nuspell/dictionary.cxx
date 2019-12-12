@@ -2088,9 +2088,16 @@ auto Dict_Base::check_compound_with_rules(
 	return {};
 }
 
+auto static insert_sug_first(const wstring& word, List_WStrings& out)
+{
+		out.insert(begin(out), word);
+}
+
 auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
     -> void
 {
+	if (word.empty())
+		return;
 	suggest_low(word, out);
 	auto backup = Short_WString(word);
 	auto casing = classify_casing(word);
@@ -2110,23 +2117,58 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 			auto casing_after_dot = classify_casing(after_dot);
 			if (casing_after_dot == Casing::INIT_CAPITAL) {
 				word.insert(dot_idx + 1, 1, ' ');
-				if (find(begin(out), end(out), word) ==
-				    end(out))
-					out.insert(begin(out), word);
+				insert_sug_first(word, out);
 				word.erase(dot_idx + 1, 1);
 			}
 		}
-		to_lower(word, icu_locale, word);
-		if (spell_priv(word) &&
-		    find(begin(out), end(out), word) == end(out))
-			out.insert(begin(out), word);
+		if (casing == Casing::PASCAL) {
+			to_lower_char_at(word, 0, icu_locale);
+			if (spell_priv(word))
+				insert_sug_first(word, out);
+			suggest_low(word, out);
+		}
+		to_lower(backup, icu_locale, word);
+		if (spell_priv(word))
+			insert_sug_first(word, out);
 		suggest_low(word, out);
+		if (casing == Casing::PASCAL) {
+			to_title(backup, icu_locale, word);
+			if (spell_priv(word))
+				insert_sug_first(word, out);
+			suggest_low(word, out);
+		}
+		for (auto it = begin(out); it != end(out); ++it) {
+			auto& sug = *it;
+			auto space_idx = sug.find(' ');
+			if (space_idx == sug.npos)
+				continue;
+			auto i = space_idx + 1;
+			auto len = sug.size() - i;
+			if (len > backup.size())
+				continue;
+			if (sug.compare(i, len, backup, backup.size() - len) ==
+			    0)
+				continue;
+			to_title_char_at(sug, i, icu_locale);
+			rotate(begin(out), it, it + 1);
+		}
 		break;
 	}
 	case Casing::ALL_CAPITAL:
 		break;
 	}
 	word = backup;
+
+	if (casing == Casing::INIT_CAPITAL || casing == Casing::PASCAL) {
+		for (auto& sug : out)
+			to_title_char_at(sug, 0, icu_locale);
+	}
+
+	auto it = begin(out);
+	auto last = end(out);
+	for (; it != last; ++it)
+		last = remove(it + 1, last, *it);
+	out.erase(last, end(out));
 }
 
 auto Dict_Base::suggest_low(std::wstring& word, List_WStrings& out) const
@@ -2150,8 +2192,6 @@ auto Dict_Base::suggest_low(std::wstring& word, List_WStrings& out) const
 auto Dict_Base::add_sug_if_correct(std::wstring& word, List_WStrings& out) const
     -> bool
 {
-	if (find(begin(out), end(out), word) != end(out))
-		return true;
 	auto res = check_word(word, Casing::SMALL, SKIP_HIDDEN_HOMONYM);
 	if (!res)
 		return false;

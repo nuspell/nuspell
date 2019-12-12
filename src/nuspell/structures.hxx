@@ -1619,6 +1619,8 @@ class Simple_Short_String {
 	auto operator=(const Simple_Short_String&)
 	    -> Simple_Short_String& = delete;
 	auto operator=(Simple_Short_String &&) -> Simple_Short_String& = delete;
+
+	auto size() const noexcept { return sz; }
 };
 using Short_WString = Simple_Short_String<wchar_t>;
 
