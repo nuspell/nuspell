@@ -2163,6 +2163,34 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		for (auto& sug : out)
 			to_title_char_at(sug, 0, icu_locale);
 	}
+	if ((casing == Casing::INIT_CAPITAL || casing == Casing::ALL_CAPITAL) &&
+	    (keepcase_flag != 0 || forbiddenword_flag != 0)) {
+		auto is_ok = [&](wstring& s) {
+			if (s.find(' ') != s.npos)
+				return true;
+			if (spell_priv(s))
+				return true;
+			to_lower(s, icu_locale, s);
+			if (spell_priv(s))
+				return true;
+			to_title(s, icu_locale, s);
+			return spell_priv(s);
+		};
+		auto it = begin(out);
+		auto last = end(out);
+		// Bellow is remove_if(it, last, is_not_ok);
+		// We don't use remove_if because is_ok modifies
+		// the argument.
+		for (; it != last; ++it)
+			if (!is_ok(*it))
+				break;
+		if (it != last) {
+			for (auto it2 = it + 1; it2 != last; ++it2)
+				if (is_ok(*it2))
+					*it++ = move(*it2);
+			out.erase(it, last);
+		}
+	}
 
 	auto it = begin(out);
 	auto last = end(out);
