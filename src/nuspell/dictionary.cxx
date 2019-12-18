@@ -2098,19 +2098,30 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 {
 	if (word.empty())
 		return;
-	suggest_low(word, out);
+	input_substr_replacer.replace(word);
+	auto abbreviation = word.back() == '.';
+	if (abbreviation) {
+		// trim trailing periods
+		auto i = word.find_last_not_of('.');
+		// if i == npos, i + 1 == 0, so no need for extra if.
+		word.erase(i + 1);
+		if (word.empty())
+			return;
+	}
 	auto backup = Short_WString(word);
 	auto casing = classify_casing(word);
 	switch (casing) {
 	case Casing::SMALL:
+		suggest_low(word, out);
 		break;
-	case Casing::INIT_CAPITAL: {
+	case Casing::INIT_CAPITAL:
+		suggest_low(word, out);
 		to_lower(word, icu_locale, word);
 		suggest_low(word, out);
 		break;
-	}
 	case Casing::CAMEL:
 	case Casing::PASCAL: {
+		suggest_low(word, out);
 		auto dot_idx = word.find('.');
 		if (dot_idx != word.npos) {
 			auto after_dot = wstring_view(word).substr(dot_idx + 1);
@@ -2155,6 +2166,14 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		break;
 	}
 	case Casing::ALL_CAPITAL:
+		to_lower(backup, icu_locale, word);
+		if (keepcase_flag != 0 && spell_priv(word))
+			insert_sug_first(word, out);
+		suggest_low(word, out);
+		to_title(backup, icu_locale, word);
+		suggest_low(word, out);
+		for (auto& sug : out)
+			to_upper(sug, icu_locale, sug);
 		break;
 	}
 	word = backup;
@@ -2163,6 +2182,10 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		for (auto& sug : out)
 			to_title_char_at(sug, 0, icu_locale);
 	}
+
+	// Suggest with dots can go here but nobody uses it so no point in
+	// implementing it.
+
 	if ((casing == Casing::INIT_CAPITAL || casing == Casing::ALL_CAPITAL) &&
 	    (keepcase_flag != 0 || forbiddenword_flag != 0)) {
 		auto is_ok = [&](wstring& s) {
@@ -2191,12 +2214,15 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 			out.erase(it, last);
 		}
 	}
-
-	auto it = begin(out);
-	auto last = end(out);
-	for (; it != last; ++it)
-		last = remove(it + 1, last, *it);
-	out.erase(last, end(out));
+	{
+		auto it = begin(out);
+		auto last = end(out);
+		for (; it != last; ++it)
+			last = remove(it + 1, last, *it);
+		out.erase(last, end(out));
+	}
+	for (auto& sug : out)
+		output_substr_replacer.replace(sug);
 }
 
 auto Dict_Base::suggest_low(std::wstring& word, List_WStrings& out) const
