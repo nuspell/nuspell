@@ -1,8 +1,8 @@
 # About Nuspell
 
-Nuspell is a spell checker library and command-line program designed for
-languages with rich morphology and complex word compounding. Nuspell is
-a pure C++ re-implementation of Hunspell.
+Nuspell is a free and open source spell checker library and command-line
+program designed for languages with rich morphology and complex word
+compounding. Nuspell is a pure C++ re-implementation of Hunspell.
 
 Main features of Nuspell spell checker:
 
@@ -10,7 +10,7 @@ Main features of Nuspell spell checker:
   - Backward compatibility with Hunspell dictionary file format
   - Twofold affix stripping (for agglutinative languages, like Azeri,
     Basque, Estonian, Finnish, Hungarian, Turkish, etc.)
-  - Support complex compounds (for example, Hungarian and German)
+  - Support complex compounds (for example, Hungarian, German and Dutch)
   - Support language specific features (for example, special casing of
     Azeri and Turkish dotted i, or German sharp s)
   - Handle conditional affixes, circumfixes, fogemorphemes, forbidden
