@@ -180,7 +180,7 @@ auto Dict_Base::spell_casing(std::wstring& s) const -> const Flag_Set*
 	case Casing::SMALL:
 	case Casing::CAMEL:
 	case Casing::PASCAL:
-		res = check_word(s, casing_type);
+		res = check_word(s);
 		break;
 	case Casing::ALL_CAPITAL:
 		res = spell_casing_upper(s);
@@ -202,7 +202,7 @@ auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
 {
 	auto& loc = icu_locale;
 
-	auto res = check_word(s, Casing::ALL_CAPITAL);
+	auto res = check_word(s, ALLOW_BAD_FORCEUCASE);
 	if (res)
 		return res;
 
@@ -216,12 +216,12 @@ auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
 		to_lower(part1, loc, part1);
 		to_title(part2, loc, part2);
 		auto t = part1 + part2;
-		res = check_word(t, Casing::ALL_CAPITAL);
+		res = check_word(t, ALLOW_BAD_FORCEUCASE);
 		if (res)
 			return res;
 		to_title(part1, loc, part1);
 		t = part1 + part2;
-		res = check_word(t, Casing::ALL_CAPITAL);
+		res = check_word(t, ALLOW_BAD_FORCEUCASE);
 		if (res)
 			return res;
 	}
@@ -242,12 +242,12 @@ auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
 			return res;
 	}
 	to_title(backup, loc, s);
-	res = check_word(s, Casing::ALL_CAPITAL);
+	res = check_word(s, ALLOW_BAD_FORCEUCASE);
 	if (res && !res->contains(keepcase_flag))
 		return res;
 
 	to_lower(backup, loc, s);
-	res = check_word(s, Casing::ALL_CAPITAL);
+	res = check_word(s, ALLOW_BAD_FORCEUCASE);
 	if (res && !res->contains(keepcase_flag))
 		return res;
 	return nullptr;
@@ -264,13 +264,13 @@ auto Dict_Base::spell_casing_title(std::wstring& s) const -> const Flag_Set*
 	auto& loc = icu_locale;
 
 	// check title case
-	auto res = check_word(s, Casing::INIT_CAPITAL, SKIP_HIDDEN_HOMONYM);
+	auto res = check_word(s, ALLOW_BAD_FORCEUCASE, SKIP_HIDDEN_HOMONYM);
 	if (res)
 		return res;
 
 	auto backup = Short_WString(s);
 	to_lower(backup, loc, s);
-	res = check_word(s, Casing::INIT_CAPITAL);
+	res = check_word(s, ALLOW_BAD_FORCEUCASE);
 
 	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
 	if (res && res->contains(keepcase_flag) &&
@@ -315,7 +315,7 @@ auto Dict_Base::spell_sharps(std::wstring& base, size_t pos, size_t n,
 			return res;
 	}
 	else if (rep > 0) {
-		return check_word(base, Casing::ALL_CAPITAL);
+		return check_word(base, ALLOW_BAD_FORCEUCASE);
 	}
 	return nullptr;
 }
@@ -330,7 +330,7 @@ auto Dict_Base::spell_sharps(std::wstring& base, size_t pos, size_t n,
  * @param s string to check spelling for.
  * @return The flags of the corresponding dictionary word.
  */
-auto Dict_Base::check_word(std::wstring& s, Casing input_word_casing,
+auto Dict_Base::check_word(std::wstring& s, Forceucase allow_bad_forceucase,
                            Hidden_Homonym skip_hidden_homonym) const
     -> const Flag_Set*
 {
@@ -338,7 +338,7 @@ auto Dict_Base::check_word(std::wstring& s, Casing input_word_casing,
 	auto ret1 = check_simple_word(s, skip_hidden_homonym);
 	if (ret1)
 		return ret1;
-	auto ret2 = check_compound(s, input_word_casing);
+	auto ret2 = check_compound(s, allow_bad_forceucase);
 	if (ret2)
 		return &ret2->second;
 
@@ -1511,21 +1511,22 @@ auto is_compound_forbidden_by_patterns(
 }
 
 auto Dict_Base::check_compound(std::wstring& word,
-                               Casing input_word_casing) const
+                               Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
 	auto part = std::wstring();
 
 	if (compound_flag || compound_begin_flag || compound_middle_flag ||
 	    compound_last_flag) {
-		auto ret = check_compound(word, 0, 0, part, input_word_casing);
+		auto ret =
+		    check_compound(word, 0, 0, part, allow_bad_forceucase);
 		if (ret)
 			return ret;
 	}
 	if (!compound_rules.empty()) {
 		auto words_data = vector<const Flag_Set*>();
 		return check_compound_with_rules(word, words_data, 0, part,
-		                                 input_word_casing);
+		                                 allow_bad_forceucase);
 	}
 
 	return {};
@@ -1534,7 +1535,7 @@ auto Dict_Base::check_compound(std::wstring& word,
 template <Affixing_Mode m>
 auto Dict_Base::check_compound(std::wstring& word, size_t start_pos,
                                size_t num_part, std::wstring& part,
-                               Casing input_word_casing) const
+                               Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
 	size_t min_length = 3;
@@ -1546,13 +1547,13 @@ auto Dict_Base::check_compound(std::wstring& word, size_t start_pos,
 	for (auto i = start_pos + min_length; i <= max_length; ++i) {
 
 		auto part1_entry = check_compound_classic<m>(
-		    word, start_pos, i, num_part, part, input_word_casing);
+		    word, start_pos, i, num_part, part, allow_bad_forceucase);
 
 		if (part1_entry)
 			return part1_entry;
 
 		part1_entry = check_compound_with_pattern_replacements<m>(
-		    word, start_pos, i, num_part, part, input_word_casing);
+		    word, start_pos, i, num_part, part, allow_bad_forceucase);
 
 		if (part1_entry)
 			return part1_entry;
@@ -1564,7 +1565,7 @@ template <Affixing_Mode m>
 auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
                                        size_t i, size_t num_part,
                                        std::wstring& part,
-                                       Casing input_word_casing) const
+                                       Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
 	auto old_num_part = num_part;
@@ -1605,15 +1606,10 @@ auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
 		if (is_rep_similar(part))
 			goto try_recursive;
 	}
-	if (compound_force_uppercase) {
-		if (input_word_casing == Casing::SMALL ||
-		    input_word_casing == Casing::CAMEL) {
-			// first letter lowercase
-			if (part2_entry->second.contains(
-			        compound_force_uppercase))
-				goto try_recursive;
-		}
-	}
+	if (compound_force_uppercase && !allow_bad_forceucase &&
+	    part2_entry->second.contains(compound_force_uppercase))
+		goto try_recursive;
+
 	old_num_part = num_part;
 	num_part += part2_entry.num_words_modifier;
 	num_part += compound_root_flag &&
@@ -1635,7 +1631,7 @@ auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
 
 try_recursive:
 	part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
-	    word, i, num_part + 1, part, input_word_casing);
+	    word, i, num_part + 1, part, allow_bad_forceucase);
 	if (!part2_entry)
 		goto try_simplified_triple;
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
@@ -1687,15 +1683,10 @@ try_simplified_triple:
 		if (is_rep_similar(part))
 			goto try_simplified_triple_recursive;
 	}
-	if (compound_force_uppercase) {
-		if (input_word_casing == Casing::SMALL ||
-		    input_word_casing == Casing::CAMEL) {
-			// first letter lowercase
-			if (part2_entry->second.contains(
-			        compound_force_uppercase))
-				goto try_simplified_triple_recursive;
-		}
-	}
+	if (compound_force_uppercase && !allow_bad_forceucase &&
+	    part2_entry->second.contains(compound_force_uppercase))
+		goto try_simplified_triple_recursive;
+
 	if (compound_max_word_count != 0 &&
 	    num_part + 1 >= compound_max_word_count)
 		return {};
@@ -1703,7 +1694,7 @@ try_simplified_triple:
 
 try_simplified_triple_recursive:
 	part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
-	    word, i, num_part + 1, part, input_word_casing);
+	    word, i, num_part + 1, part, allow_bad_forceucase);
 	if (!part2_entry)
 		return {};
 	if (is_compound_forbidden_by_patterns(compound_patterns, word, i,
@@ -1731,7 +1722,8 @@ try_simplified_triple_recursive:
 template <Affixing_Mode m>
 auto Dict_Base::check_compound_with_pattern_replacements(
     std::wstring& word, size_t start_pos, size_t i, size_t num_part,
-    std::wstring& part, Casing input_word_casing) const -> Compounding_Result
+    std::wstring& part, Forceucase allow_bad_forceucase) const
+    -> Compounding_Result
 {
 	for (auto& p : compound_patterns) {
 		if (p.replacement.empty())
@@ -1787,15 +1779,10 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			if (is_rep_similar(part))
 				goto try_recursive;
 		}
-		if (compound_force_uppercase) {
-			if (input_word_casing == Casing::SMALL ||
-			    input_word_casing == Casing::CAMEL) {
-				// first letter lowercase
-				if (part2_entry->second.contains(
-				        compound_force_uppercase))
-					goto try_recursive;
-			}
-		}
+		if (compound_force_uppercase && !allow_bad_forceucase &&
+		    part2_entry->second.contains(compound_force_uppercase))
+			goto try_recursive;
+
 		if (compound_max_word_count != 0 &&
 		    num_part + 1 >= compound_max_word_count)
 			return {};
@@ -1803,7 +1790,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 
 	try_recursive:
 		part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
-		    word, i, num_part + 1, part, input_word_casing);
+		    word, i, num_part + 1, part, allow_bad_forceucase);
 		if (!part2_entry)
 			goto try_simplified_triple;
 		if (p.second_word_flag != 0 &&
@@ -1855,15 +1842,10 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			if (is_rep_similar(part))
 				goto try_simplified_triple_recursive;
 		}
-		if (compound_force_uppercase) {
-			if (input_word_casing == Casing::SMALL ||
-			    input_word_casing == Casing::CAMEL) {
-				// first letter lowercase
-				if (part2_entry->second.contains(
-				        compound_force_uppercase))
-					goto try_simplified_triple_recursive;
-			}
-		}
+		if (compound_force_uppercase && !allow_bad_forceucase &&
+		    part2_entry->second.contains(compound_force_uppercase))
+			goto try_simplified_triple_recursive;
+
 		if (compound_max_word_count != 0 &&
 		    num_part + 1 >= compound_max_word_count)
 			return {};
@@ -1871,7 +1853,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 
 	try_simplified_triple_recursive:
 		part2_entry = check_compound<AT_COMPOUND_MIDDLE>(
-		    word, i, num_part + 1, part, input_word_casing);
+		    word, i, num_part + 1, part, allow_bad_forceucase);
 		if (!part2_entry)
 			continue;
 		if (p.second_word_flag != 0 &&
@@ -2018,7 +2000,7 @@ auto Dict_Base::count_syllables(const std::wstring& word) const -> size_t
 
 auto Dict_Base::check_compound_with_rules(
     std::wstring& word, std::vector<const Flag_Set*>& words_data,
-    size_t start_pos, std::wstring& part, Casing input_word_casing) const
+    size_t start_pos, std::wstring& part, Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
 	size_t min_length = 3;
@@ -2068,20 +2050,16 @@ auto Dict_Base::check_compound_with_rules(
 			auto m = compound_rules.match_any_rule(words_data);
 			if (!m)
 				goto try_recursive;
-			if (compound_force_uppercase) {
-				if (input_word_casing == Casing::SMALL ||
-				    input_word_casing == Casing::CAMEL) {
-					// first letter lowercase
-					if (part2_entry->second.contains(
-					        compound_force_uppercase))
-						goto try_recursive;
-				}
-			}
+			if (compound_force_uppercase && !allow_bad_forceucase &&
+			    part2_entry->second.contains(
+			        compound_force_uppercase))
+				goto try_recursive;
+
 			return {part1_entry};
 		}
 	try_recursive:
 		part2_entry = check_compound_with_rules(
-		    word, words_data, i, part, input_word_casing);
+		    word, words_data, i, part, allow_bad_forceucase);
 		if (part2_entry)
 			return {part2_entry};
 	}
@@ -2194,8 +2172,7 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 				for (auto& t : sugs_tmp) {
 					word = backup;
 					word.replace(i, j - i, t);
-					auto flg =
-					    check_word(word, Casing::SMALL);
+					auto flg = check_word(word);
 					if (!flg ||
 					    !flg->contains(forbiddenword_flag))
 						out.push_back(word);
@@ -2276,7 +2253,7 @@ auto Dict_Base::suggest_low(std::wstring& word, List_WStrings& out) const
 auto Dict_Base::add_sug_if_correct(std::wstring& word, List_WStrings& out) const
     -> bool
 {
-	auto res = check_word(word, Casing::SMALL, SKIP_HIDDEN_HOMONYM);
+	auto res = check_word(word, FORBID_BAD_FORCEUCASE, SKIP_HIDDEN_HOMONYM);
 	if (!res)
 		return false;
 	if (res->contains(forbiddenword_flag))
@@ -2355,7 +2332,7 @@ auto Dict_Base::try_rep_suggestion(std::wstring& word, List_WStrings& out) const
 	auto part = wstring();
 	for (; j != word.npos; i = j + 1, j = word.find(' ', i)) {
 		part.assign(word, i, j - i);
-		if (!check_word(part, Casing::SMALL))
+		if (!check_word(part))
 			return;
 	}
 	out.push_back(word);

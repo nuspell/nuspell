@@ -426,17 +426,6 @@ auto Substr_Replacer<CharT>::replace(Str& s) const -> Str&
 	return s;
 }
 
-/**
- * @brief Casing type enum, ignoring neutral case characters.
- */
-enum class Casing : char {
-	SMALL /**< all lower case or neutral case, e.g. "lowercase" or "123" */,
-	INIT_CAPITAL /**< start upper case, rest lower case, e.g. "Initcap" */,
-	ALL_CAPITAL /**< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
-	CAMEL /**< camel case, start lower case, e.g. "camelCase" */,
-	PASCAL /**< pascal case, start upper case, e.g. "PascalCase" */
-};
-
 template <class CharT>
 class Break_Table {
       public:

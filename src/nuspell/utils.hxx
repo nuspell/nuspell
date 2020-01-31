@@ -90,6 +90,17 @@ auto to_lower_char_at(std::wstring& s, size_t i, const icu::Locale& loc)
 auto to_title_char_at(std::wstring& s, size_t i, const icu::Locale& loc)
     -> void;
 
+/**
+ * @brief Casing type enum, ignoring neutral case characters.
+ */
+enum class Casing : char {
+	SMALL /**< all lower case or neutral case, e.g. "lowercase" or "123" */,
+	INIT_CAPITAL /**< start upper case, rest lower case, e.g. "Initcap" */,
+	ALL_CAPITAL /**< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
+	CAMEL /**< camel case, start lower case, e.g. "camelCase" */,
+	PASCAL /**< pascal case, start upper case, e.g. "PascalCase" */
+};
+
 auto classify_casing(std::wstring_view s) -> Casing;
 
 auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i)

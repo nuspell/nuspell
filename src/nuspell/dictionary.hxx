@@ -88,6 +88,11 @@ struct Compounding_Result {
 
 struct Dict_Base : public Aff_Data {
 
+	enum Forceucase : bool {
+		FORBID_BAD_FORCEUCASE = false,
+		ALLOW_BAD_FORCEUCASE = true
+	};
+
 	enum Hidden_Homonym : bool {
 		ACCEPT_HIDDEN_HOMONYM = false,
 		SKIP_HIDDEN_HOMONYM = true
@@ -101,7 +106,7 @@ struct Dict_Base : public Aff_Data {
 	auto spell_sharps(std::wstring& base, size_t n_pos = 0, size_t n = 0,
 	                  size_t rep = 0) const -> const Flag_Set*;
 
-	auto check_word(std::wstring& s, Casing input_word_casing,
+	auto check_word(std::wstring& s, Forceucase allow_bad_forceucase = {},
 	                Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> const Flag_Set*;
 	auto check_simple_word(std::wstring& word,
@@ -278,26 +283,27 @@ struct Dict_Base : public Aff_Data {
 	                       Hidden_Homonym skip_hidden_homonym) const
 	    -> Affixing_Result<>;
 
-	auto check_compound(std::wstring& word, Casing input_word_casing) const
+	auto check_compound(std::wstring& word,
+	                    Forceucase allow_bad_forceucase) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
 	auto check_compound(std::wstring& word, size_t start_pos,
 	                    size_t num_part, std::wstring& part,
-	                    Casing input_word_casing) const
+	                    Forceucase allow_bad_forceucase) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
 	auto check_compound_classic(std::wstring& word, size_t start_pos,
 	                            size_t i, size_t num_part,
 	                            std::wstring& part,
-	                            Casing input_word_casing) const
+	                            Forceucase allow_bad_forceucase) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
 	auto check_compound_with_pattern_replacements(
 	    std::wstring& word, size_t start_pos, size_t i, size_t num_part,
-	    std::wstring& part, Casing input_word_casing) const
+	    std::wstring& part, Forceucase allow_bad_forceucase) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m>
@@ -321,7 +327,7 @@ struct Dict_Base : public Aff_Data {
 	auto check_compound_with_rules(std::wstring& word,
 	                               std::vector<const Flag_Set*>& words_data,
 	                               size_t start_pos, std::wstring& part,
-	                               Casing input_word_casing) const
+	                               Forceucase allow_bad_forceucase) const
 
 	    -> Compounding_Result;
 
