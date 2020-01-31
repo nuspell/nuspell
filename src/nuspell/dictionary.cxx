@@ -2176,6 +2176,36 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 			to_upper(sug, icu_locale, sug);
 		break;
 	}
+
+	auto orig_word = wstring_view(backup);
+	auto has_dash = orig_word.find('-') != orig_word.npos;
+	auto has_dash_sug =
+	    has_dash && any_of(begin(out), end(out), [](const wstring& s) {
+		    return s.find('-') != s.npos;
+	    });
+	if (has_dash && !has_dash_sug) {
+		auto sugs_tmp = List_WStrings();
+		auto i = size_t();
+		for (;;) {
+			auto j = orig_word.find('-', i);
+			word.assign(orig_word, i, j - i);
+			if (!spell_priv(word)) {
+				suggest_priv(word, sugs_tmp);
+				for (auto& t : sugs_tmp) {
+					word = backup;
+					word.replace(i, j - i, t);
+					auto flg =
+					    check_word(word, Casing::SMALL);
+					if (!flg ||
+					    !flg->contains(forbiddenword_flag))
+						out.push_back(word);
+				}
+			}
+			if (j == orig_word.npos)
+				break;
+			i = j + 1;
+		}
+	}
 	word = backup;
 
 	if (casing == Casing::INIT_CAPITAL || casing == Casing::PASCAL) {

@@ -45,7 +45,6 @@ allcaps.sug
 allcaps_utf.sug
 base.sug
 base_utf.sug
-breakdefault.sug
 checksharps.sug
 checksharpsutf.sug
 forceucase.sug
