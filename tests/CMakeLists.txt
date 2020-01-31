@@ -47,7 +47,6 @@ base.sug
 base_utf.sug
 checksharps.sug
 checksharpsutf.sug
-forceucase.sug
 i35725.sug
 i54633.sug
 keepcase.sug

@@ -2090,6 +2090,13 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 	auto casing = classify_casing(word);
 	switch (casing) {
 	case Casing::SMALL:
+		if (compound_force_uppercase &&
+		    check_compound(word, ALLOW_BAD_FORCEUCASE)) {
+			to_title(word, icu_locale, word);
+			out.push_back(word);
+			word = backup;
+			return;
+		}
 		suggest_low(word, out);
 		break;
 	case Casing::INIT_CAPITAL:
