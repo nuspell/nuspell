@@ -28,7 +28,8 @@
 #include <utility>
 
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) ||               \
-                         (defined(__APPLE__) && defined(__MACH__)))
+                         (defined(__APPLE__) && defined(__MACH__)) ||          \
+                         defined(__HAIKU__))
 #include <unistd.h>
 #ifdef _POSIX_VERSION
 #include <dirent.h>

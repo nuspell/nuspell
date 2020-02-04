@@ -30,7 +30,8 @@
 #include <clocale>
 
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) ||               \
-                         (defined(__APPLE__) && defined(__MACH__)))
+                         (defined(__APPLE__) && defined(__MACH__)) ||               \
+                         defined(__HAIKU__))
 #include <unistd.h>
 #endif
 
@@ -133,7 +134,7 @@ class Encoding_Converter {
 };
 
 //#if _POSIX_VERSION >= 200809L
-#if defined(_POSIX_VERSION) && !defined(__NetBSD__)
+#if defined(_POSIX_VERSION) && !defined(__NetBSD__) && !defined(__HAIKU__)
 class Setlocale_To_C_In_Scope {
 	locale_t old_loc = nullptr;
 
