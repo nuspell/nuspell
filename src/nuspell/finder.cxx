@@ -37,6 +37,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #endif
+#if defined(__HAIKU__)
+#include <FindDirectory.h>
+#endif
 
 #elif defined(_WIN32)
 
@@ -80,7 +83,17 @@ auto get_default_search_paths(OutIt out) -> OutIt
 	if (dicpath) {
 		out = split(string(dicpath), PATHSEP, out);
 	}
-#ifdef _POSIX_VERSION
+#if defined(__HAIKU__)
+	char **paths;
+	size_t pathsCount;
+	if (find_paths(B_FIND_PATH_DATA_DIRECTORY, "hunspell",
+			&paths, &pathsCount) == B_OK) {
+		for (int i = 0; i < pathsCount; i++) {
+			*out++ = string(paths[i]);
+		}
+		free(paths);
+	}
+#elif defined(_POSIX_VERSION)
 	auto home = getenv("HOME");
 	if (home) {
 		*out++ = home + string("/.local/share/hunspell");
