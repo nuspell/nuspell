@@ -43,7 +43,7 @@ Without _FILE_, checks standard input.
 ## RETURN VALUES
 
 Returns error if the argument syntax is invalid or some file can not be opened.
-Otherwise, spell checking has occured and returns success.
+Otherwise, spell checking has occurred and returns success.
     
 ## BUGS
 

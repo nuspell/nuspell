@@ -15,7 +15,7 @@ Main features of Nuspell spell checker:
     Azeri and Turkish dotted i, or German sharp s)
   - Handle conditional affixes, circumfixes, fogemorphemes, forbidden
     words, pseudoroots and homonyms.
-  - Free software. Licensed under GNU LGPL v3.
+  - Free software. Licensed under GNU LGPL v3 or later.
 
 # Building Nuspell
 
