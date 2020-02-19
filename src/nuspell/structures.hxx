@@ -637,6 +637,12 @@ class Hash_Multiset {
 		    });
 		return {first, last.base()};
 	}
+
+	auto bucket_count() const -> size_type { return data.size(); }
+	auto bucket_data(size_type i) const
+	{
+		return boost::make_iterator_range(data[i]);
+	}
 };
 
 struct Condition_Exception : public std::runtime_error {

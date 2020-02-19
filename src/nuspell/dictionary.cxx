@@ -2650,6 +2650,88 @@ auto Dict_Base::phonetic_suggest(std::wstring& word, List_WStrings& out) const
 	word = backup;
 }
 
+namespace {
+auto ngram_similarity_low_level(size_t n, wstring_view a, wstring_view b)
+    -> ptrdiff_t
+{
+	auto score = ptrdiff_t(0);
+	n = min(n, a.size());
+	for (size_t k = 1; k != n + 1; ++k) {
+		for (size_t i = 0; i != a.size() - k; ++i) {
+			auto kgram = a.substr(i, k);
+			auto find = b.find(kgram);
+			if (find != b.npos) {
+				++score;
+			}
+		}
+	}
+	return score;
+}
+
+auto ngram_similarity_longer_worse(size_t n, wstring_view a, wstring_view b)
+    -> ptrdiff_t
+{
+	if (b.empty())
+		return 0;
+	auto score = ngram_similarity_low_level(n, a, b);
+	auto d = ptrdiff_t(b.size() - a.size()) - 2;
+	if (d > 0)
+		score -= d;
+	return score;
+}
+auto left_common_substring_length(wstring_view a, wstring_view b) -> ptrdiff_t
+{
+	if (a.empty() || b.empty())
+		return 0;
+	if (a[0] != b[0] && a[0] != u_tolower(b[0]))
+		return 0;
+	auto it = std::mismatch(begin(a) + 1, end(a), begin(b) + 1, end(b));
+	return it.first - begin(a);
+}
+} // namespace
+
+auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
+    -> void
+{
+	auto backup = Short_WString(word);
+	auto orig_word = wstring_view(backup);
+	struct Word_Score {
+		Word_List::const_pointer word_entry = {};
+		ptrdiff_t score = {};
+		auto operator<(const Word_Score& rhs) const
+		{
+			return score > rhs.score; // Greater than
+		}
+	};
+	(void)&Word_Score::operator<; // silence warning
+	auto roots = vector<Word_Score>();
+	for (size_t bucket = 0; bucket != words.bucket_count(); ++bucket) {
+		for (auto& word_entry : words.bucket_data(bucket)) {
+			auto& [dict_word, flags] = word_entry;
+			if (flags.contains(forbiddenword_flag) ||
+			    flags.contains(HIDDEN_HOMONYM_FLAG) ||
+			    flags.contains(nosuggest_flag) ||
+			    flags.contains(compound_onlyin_flag))
+				continue;
+			auto score =
+			    left_common_substring_length(orig_word, dict_word);
+			to_lower(dict_word, icu_locale, word);
+			score +=
+			    ngram_similarity_longer_worse(3, orig_word, word);
+			if (roots.size() != 100) {
+				roots.push_back({&word_entry, score});
+			}
+			else {
+				pop_heap(begin(roots), end(roots));
+				roots.back() = {&word_entry, score};
+			}
+			push_heap(begin(roots), end(roots));
+		}
+	}
+	sort_heap(begin(roots), end(roots));
+	(void)out;
+}
+
 Dictionary::Dictionary(std::istream& aff, std::istream& dic)
     : external_locale_known_utf8(true)
 {

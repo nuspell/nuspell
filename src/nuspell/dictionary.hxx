@@ -381,6 +381,9 @@ struct Dict_Base : public Aff_Data {
 	auto phonetic_suggest(std::wstring& word, List_WStrings& out) const
 	    -> void;
 
+	auto ngram_suggest(std::wstring& word, List_WStrings& out) const
+	    -> void;
+
       public:
 	Dict_Base()
 	    : Aff_Data() // we explicity do value init so content is zeroed
