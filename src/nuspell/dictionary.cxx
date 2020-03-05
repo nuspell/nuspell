@@ -2679,6 +2679,17 @@ auto ngram_similarity_longer_worse(size_t n, wstring_view a, wstring_view b)
 		score -= d;
 	return score;
 }
+auto ngram_similarity_any_mismatch(size_t n, wstring_view a, wstring_view b)
+    -> ptrdiff_t
+{
+	if (b.empty())
+		return 0;
+	auto score = ngram_similarity_low_level(n, a, b);
+	auto d = abs(ptrdiff_t(b.size() - a.size())) - 2;
+	if (d > 0)
+		score -= d;
+	return score;
+}
 auto left_common_substring_length(wstring_view a, wstring_view b) -> ptrdiff_t
 {
 	if (a.empty() || b.empty())
@@ -2728,6 +2739,18 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 			push_heap(begin(roots), end(roots));
 		}
 	}
+
+	auto threshold = ptrdiff_t();
+	for (auto k : {1u, 2u, 3u}) {
+		word = orig_word;
+		for (size_t i = k; i < word.size(); i += 4)
+			word[i] = '*';
+		threshold += ngram_similarity_any_mismatch(orig_word.size(),
+		                                           orig_word, word);
+	}
+	threshold = threshold / 3 - 1;
+	word = orig_word;
+
 	sort_heap(begin(roots), end(roots));
 	(void)out;
 }
