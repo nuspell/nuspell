@@ -384,6 +384,11 @@ struct Dict_Base : public Aff_Data {
 	auto ngram_suggest(std::wstring& word, List_WStrings& out) const
 	    -> void;
 
+	auto expand_root_word_for_ngram(Word_List::const_reference root,
+	                                const std::wstring& wrong,
+	                                List_WStrings& expanded_list,
+	                                std::vector<bool>& cross_affix) -> void;
+
       public:
 	Dict_Base()
 	    : Aff_Data() // we explicity do value init so content is zeroed

@@ -1291,6 +1291,9 @@ class Prefix_Table {
 		populate();
 		return *this;
 	}
+	auto begin() const { return table.data().begin(); }
+	auto end() const { return table.data().end(); }
+
 	auto has_continuation_flags() const
 	{
 		return all_cont_flags.size() != 0;
@@ -1337,6 +1340,9 @@ class Suffix_Table {
 		populate();
 		return *this;
 	}
+	auto begin() const { return table.data().begin(); }
+	auto end() const { return table.data().end(); }
+
 	auto has_continuation_flags() const
 	{
 		return all_cont_flags.size() != 0;

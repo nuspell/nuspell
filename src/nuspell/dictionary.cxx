@@ -2751,6 +2751,90 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 	(void)out;
 }
 
+auto Dict_Base::expand_root_word_for_ngram(
+    Word_List::const_reference root_entry, const std::wstring& wrong,
+    List_WStrings& expanded_list, std::vector<bool>& cross_affix) -> void
+{
+	expanded_list.clear();
+	cross_affix.clear();
+	auto& [root, flags] = root_entry;
+	if (!flags.contains(need_affix_flag)) {
+		expanded_list.push_back(root);
+		cross_affix.push_back(false);
+	}
+	if (flags.empty())
+		return;
+	for (auto& suffix : suffixes) {
+		if (!cross_valid_inner_outer(flags, suffix))
+			continue;
+		if (outer_affix_NOT_valid<FULL_WORD>(suffix))
+			continue;
+		if (is_circumfix(suffix))
+			continue;
+		// TODO Suffixes marked with needaffix or circumfix should not
+		// be just skipped as we can later add prefix. This is not
+		// handled in hunspell, too.
+		if (!ends_with(root, suffix.stripping))
+			continue;
+		if (!suffix.check_condition(root))
+			continue;
+
+		if (!suffix.appending.empty() &&
+		    !ends_with(wrong, suffix.appending))
+			continue;
+
+		auto& expanded = expanded_list.emplace_back(root);
+		suffix.to_derived(expanded);
+		cross_affix.push_back(suffix.cross_product);
+	}
+
+	for (size_t i = 0, n = expanded_list.size(); i != n; ++i) {
+		if (!cross_affix[i])
+			continue;
+
+		auto& root_sfx = expanded_list[i];
+		for (auto& prefix : prefixes) {
+			if (!cross_valid_inner_outer(flags, prefix))
+				continue;
+			if (outer_affix_NOT_valid<FULL_WORD>(prefix))
+				continue;
+			if (is_circumfix(prefix))
+				continue;
+			if (!begins_with(root_sfx, prefix.stripping))
+				continue;
+			if (!prefix.check_condition(root_sfx))
+				continue;
+
+			if (!prefix.appending.empty() &&
+			    !begins_with(wrong, prefix.appending))
+				continue;
+
+			auto& expanded = expanded_list.emplace_back(root_sfx);
+			prefix.to_derived(expanded);
+		}
+	}
+
+	for (auto& prefix : prefixes) {
+		if (!cross_valid_inner_outer(flags, prefix))
+			continue;
+		if (outer_affix_NOT_valid<FULL_WORD>(prefix))
+			continue;
+		if (is_circumfix(prefix))
+			continue;
+		if (!begins_with(root, prefix.stripping))
+			continue;
+		if (!prefix.check_condition(root))
+			continue;
+
+		if (!prefix.appending.empty() &&
+		    !begins_with(wrong, prefix.appending))
+			continue;
+
+		auto& expanded = expanded_list.emplace_back(root);
+		prefix.to_derived(expanded);
+	}
+}
+
 Dictionary::Dictionary(std::istream& aff, std::istream& dic)
     : external_locale_known_utf8(true)
 {
