@@ -289,5 +289,18 @@ auto is_number(const std::basic_string<CharT>& s) -> bool
 auto count_appereances_of(const std::wstring& haystack,
                           const std::wstring& needles) -> size_t;
 
+auto inline begins_with(std::wstring_view haystack, std::wstring_view needle)
+    -> bool
+{
+	return haystack.compare(0, needle.size(), needle) == 0;
+}
+auto inline ends_with(std::wstring_view haystack, std::wstring_view needle)
+    -> bool
+{
+	return haystack.size() >= needle.size() &&
+	       haystack.compare(haystack.size() - needle.size(), needle.size(),
+	                        needle) == 0;
+}
+
 } // namespace nuspell
 #endif // NUSPELL_UTILS_HXX

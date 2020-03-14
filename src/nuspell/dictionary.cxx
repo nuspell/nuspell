@@ -127,7 +127,7 @@ auto Dict_Base::spell_break(std::wstring& s, size_t depth) const -> bool
 
 	// handle break pattern at start of a word
 	for (auto& pat : break_table.start_word_breaks()) {
-		if (s.compare(0, pat.size(), pat) == 0) {
+		if (begins_with(s, pat)) {
 			auto substr = s.substr(pat.size());
 			auto res = spell_break(substr);
 			if (res)
@@ -137,9 +137,7 @@ auto Dict_Base::spell_break(std::wstring& s, size_t depth) const -> bool
 
 	// handle break pattern at end of a word
 	for (auto& pat : break_table.end_word_breaks()) {
-		if (pat.size() > s.size())
-			continue;
-		if (s.compare(s.size() - pat.size(), pat.size(), pat) == 0) {
+		if (ends_with(s, pat)) {
 			auto substr = s.substr(0, s.size() - pat.size());
 			auto res = spell_break(substr);
 			if (res)
@@ -2297,7 +2295,7 @@ auto Dict_Base::rep_suggest(std::wstring& word, List_WStrings& out) const
 	for (auto& r : reps.start_word_replacements()) {
 		auto& from = r.first;
 		auto& to = r.second;
-		if (word.compare(0, from.size(), from) == 0) {
+		if (begins_with(word, from)) {
 			word.replace(0, from.size(), to);
 			try_rep_suggestion(word, out);
 			word.replace(0, to.size(), from);
@@ -2306,9 +2304,8 @@ auto Dict_Base::rep_suggest(std::wstring& word, List_WStrings& out) const
 	for (auto& r : reps.end_word_replacements()) {
 		auto& from = r.first;
 		auto& to = r.second;
-		auto pos = word.size() - from.size();
-		if (from.size() <= word.size() &&
-		    word.compare(pos, word.npos, from) == 0) {
+		if (ends_with(word, from)) {
+			auto pos = word.size() - from.size();
 			word.replace(pos, word.npos, to);
 			try_rep_suggestion(word, out);
 			word.replace(pos, word.npos, from);
@@ -2362,7 +2359,7 @@ auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
 	for (auto& r : reps.start_word_replacements()) {
 		auto& from = r.first;
 		auto& to = r.second;
-		if (word.compare(0, from.size(), from) == 0) {
+		if (begins_with(word, from)) {
 			word.replace(0, from.size(), to);
 			auto ret = check_simple_word(word);
 			word.replace(0, to.size(), from);
@@ -2373,9 +2370,8 @@ auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
 	for (auto& r : reps.end_word_replacements()) {
 		auto& from = r.first;
 		auto& to = r.second;
-		auto pos = word.size() - from.size();
-		if (from.size() <= word.size() &&
-		    word.compare(pos, word.npos, from) == 0) {
+		if (ends_with(word, from)) {
+			auto pos = word.size() - from.size();
 			word.replace(pos, word.npos, to);
 			auto ret = check_simple_word(word);
 			word.replace(pos, word.npos, from);
