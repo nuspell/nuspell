@@ -2702,16 +2702,16 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 {
 	auto backup = Short_WString(word);
 	auto orig_word = wstring_view(backup);
-	struct Word_Score {
+	struct Word_Entry_And_Score {
 		Word_List::const_pointer word_entry = {};
 		ptrdiff_t score = {};
-		auto operator<(const Word_Score& rhs) const
+		auto operator<(const Word_Entry_And_Score& rhs) const
 		{
 			return score > rhs.score; // Greater than
 		}
 	};
-	(void)&Word_Score::operator<; // silence warning
-	auto roots = vector<Word_Score>();
+	(void)&Word_Entry_And_Score::operator<; // silence warning
+	auto roots = vector<Word_Entry_And_Score>();
 	for (size_t bucket = 0; bucket != words.bucket_count(); ++bucket) {
 		for (auto& word_entry : words.bucket_data(bucket)) {
 			auto& [dict_word, flags] = word_entry;
@@ -2727,12 +2727,13 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 			    ngram_similarity_longer_worse(3, orig_word, word);
 			if (roots.size() != 100) {
 				roots.push_back({&word_entry, score});
+				push_heap(begin(roots), end(roots));
 			}
-			else {
+			else if (score > roots.front().score) {
 				pop_heap(begin(roots), end(roots));
 				roots.back() = {&word_entry, score};
+				push_heap(begin(roots), end(roots));
 			}
-			push_heap(begin(roots), end(roots));
 		}
 	}
 
@@ -2744,16 +2745,56 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 		threshold += ngram_similarity_any_mismatch(orig_word.size(),
 		                                           orig_word, word);
 	}
-	threshold = threshold / 3 - 1;
+	threshold /= 3;
+
+	struct Word_And_Score {
+		wstring word = {};
+		ptrdiff_t score = {};
+		auto operator<(const Word_And_Score& rhs) const
+		{
+			return score > rhs.score; // Greater than
+		}
+	};
+	(void)&Word_And_Score::operator<; // silence warning
+
+	auto expanded_list = List_WStrings();
+	auto expanded_cross_afx = vector<bool>();
+	auto guess_words = vector<Word_And_Score>();
+	for (auto& root : roots) {
+		expand_root_word_for_ngram(*root.word_entry, orig_word,
+		                           expanded_list, expanded_cross_afx);
+		for (auto& expanded_word : expanded_list) {
+			auto score = left_common_substring_length(
+			    orig_word, expanded_word);
+			to_lower(expanded_word, icu_locale, word);
+			score +=
+			    ngram_similarity_any_mismatch(3, orig_word, word);
+			if (score < threshold)
+				continue;
+
+			if (guess_words.size() != 200) {
+				guess_words.push_back(
+				    {std::move(expanded_word), score});
+				push_heap(begin(guess_words), end(guess_words));
+			}
+			else if (score > guess_words.front().score) {
+				pop_heap(begin(guess_words), end(guess_words));
+				guess_words.back() = {std::move(expanded_word),
+				                      score};
+				push_heap(begin(guess_words), end(guess_words));
+			}
+		}
+	}
+	sort_heap(begin(guess_words), end(guess_words));
+
 	word = orig_word;
 
-	sort_heap(begin(roots), end(roots));
 	(void)out;
 }
 
 auto Dict_Base::expand_root_word_for_ngram(
-    Word_List::const_reference root_entry, const std::wstring& wrong,
-    List_WStrings& expanded_list, std::vector<bool>& cross_affix) -> void
+    Word_List::const_reference root_entry, std::wstring_view wrong,
+    List_WStrings& expanded_list, std::vector<bool>& cross_affix) const -> void
 {
 	expanded_list.clear();
 	cross_affix.clear();

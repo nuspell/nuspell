@@ -385,9 +385,10 @@ struct Dict_Base : public Aff_Data {
 	    -> void;
 
 	auto expand_root_word_for_ngram(Word_List::const_reference root,
-	                                const std::wstring& wrong,
+	                                std::wstring_view wrong,
 	                                List_WStrings& expanded_list,
-	                                std::vector<bool>& cross_affix) -> void;
+	                                std::vector<bool>& cross_affix) const
+	    -> void;
 
       public:
 	Dict_Base()
