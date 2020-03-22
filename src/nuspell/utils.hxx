@@ -302,5 +302,16 @@ auto inline ends_with(std::wstring_view haystack, std::wstring_view needle)
 	                        needle) == 0;
 }
 
+template <class T>
+auto begin_ptr(T& x)
+{
+	return x.data();
+}
+template <class T>
+auto end_ptr(T& x)
+{
+	return x.data() + x.size();
+}
+
 } // namespace nuspell
 #endif // NUSPELL_UTILS_HXX

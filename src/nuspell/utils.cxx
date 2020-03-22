@@ -197,10 +197,10 @@ auto to_wide(const std::string& in, const std::locale& loc, std::wstring& out)
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
 	out.resize(in.size(), L'\0');
 	auto state = mbstate_t();
-	auto in_ptr = &in[0];
-	auto in_last = &in[in.size()];
-	auto out_ptr = &out[0];
-	auto out_last = &out[out.size()];
+	auto in_ptr = begin_ptr(in);
+	auto in_last = end_ptr(in);
+	auto out_ptr = begin_ptr(out);
+	auto out_last = end_ptr(out);
 	auto valid = true;
 	for (;;) {
 		auto err = cvt.in(state, in_ptr, in_last, in_ptr, out_ptr,
@@ -210,10 +210,10 @@ auto to_wide(const std::string& in, const std::locale& loc, std::wstring& out)
 		}
 		else if (err == cvt.partial && out_ptr == out_last) {
 			// no space in output buf
-			auto idx = out_ptr - &out[0];
+			auto idx = out_ptr - begin_ptr(out);
 			out.resize(out.size() * 2);
 			out_ptr = &out[idx];
-			out_last = &out[out.size()];
+			out_last = end_ptr(out);
 		}
 		else if (err == cvt.partial && out_ptr != out_last) {
 			// incomplete sequence at the end
@@ -223,17 +223,17 @@ auto to_wide(const std::string& in, const std::locale& loc, std::wstring& out)
 		}
 		else if (err == cvt.error) {
 			if (out_ptr == out_last) {
-				auto idx = out_ptr - &out[0];
+				auto idx = out_ptr - begin_ptr(out);
 				out.resize(out.size() * 2);
 				out_ptr = &out[idx];
-				out_last = &out[out.size()];
+				out_last = end_ptr(out);
 			}
 			in_ptr++;
 			*out_ptr++ = L'\uFFFD';
 			valid = false;
 		}
 	}
-	out.erase(out_ptr - &out[0]);
+	out.erase(out_ptr - begin_ptr(out));
 	return valid;
 }
 
@@ -250,10 +250,10 @@ auto to_narrow(const std::wstring& in, std::string& out, const std::locale& loc)
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
 	out.resize(in.size(), '\0');
 	auto state = mbstate_t();
-	auto in_ptr = &in[0];
-	auto in_last = &in[in.size()];
-	auto out_ptr = &out[0];
-	auto out_last = &out[out.size()];
+	auto in_ptr = begin_ptr(in);
+	auto in_last = end_ptr(in);
+	auto out_ptr = begin_ptr(out);
+	auto out_last = end_ptr(out);
 	auto valid = true;
 	for (size_t i = 2;;) {
 		auto err = cvt.out(state, in_ptr, in_last, in_ptr, out_ptr,
@@ -263,10 +263,10 @@ auto to_narrow(const std::wstring& in, std::string& out, const std::locale& loc)
 		}
 		else if (err == cvt.partial && i != 0) {
 			// probably no space in output buf
-			auto idx = out_ptr - &out[0];
+			auto idx = out_ptr - begin_ptr(out);
 			out.resize(out.size() * 2);
 			out_ptr = &out[idx];
-			out_last = &out[out.size()];
+			out_last = end_ptr(out);
 			--i;
 		}
 		else if (err == cvt.partial && i == 0) {
@@ -278,10 +278,10 @@ auto to_narrow(const std::wstring& in, std::string& out, const std::locale& loc)
 		}
 		else if (err == cvt.error) {
 			if (out_ptr == out_last) {
-				auto idx = out_ptr - &out[0];
+				auto idx = out_ptr - begin_ptr(out);
 				out.resize(out.size() * 2);
 				out_ptr = &out[idx];
-				out_last = &out[out.size()];
+				out_last = end_ptr(out);
 				--i;
 			}
 			in_ptr++;
@@ -289,7 +289,7 @@ auto to_narrow(const std::wstring& in, std::string& out, const std::locale& loc)
 			valid = false;
 		}
 	}
-	out.erase(out_ptr - &out[0]);
+	out.erase(out_ptr - begin_ptr(out));
 	return valid;
 }
 
@@ -303,7 +303,7 @@ auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
 auto to_upper_ascii(std::string& s) -> void
 {
 	auto& char_type = use_facet<ctype<char>>(locale::classic());
-	char_type.toupper(&s[0], &s[s.size()]);
+	char_type.toupper(begin_ptr(s), end_ptr(s));
 }
 
 auto is_locale_known_utf8(const locale& loc) -> bool
@@ -351,7 +351,7 @@ auto icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool
 	int32_t len;
 	auto err = U_ZERO_ERROR;
 	out.resize(in.length());
-	u_strToWCS(&out[0], out.size(), &len, in.getBuffer(), in.length(),
+	u_strToWCS(out.data(), out.size(), &len, in.getBuffer(), in.length(),
 	           &err);
 	if (U_SUCCESS(err)) {
 		out.erase(len);
@@ -523,7 +523,7 @@ auto Encoding_Converter::to_wide(const string& in, wstring& out) -> bool
 		return utf8_to_wide(in, out);
 
 	auto err = U_ZERO_ERROR;
-	auto us = icu::UnicodeString(in.c_str(), in.size(), cnv, err);
+	auto us = icu::UnicodeString(in.data(), in.size(), cnv, err);
 	if (U_FAILURE(err)) {
 		out.clear();
 		return false;

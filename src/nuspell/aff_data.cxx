@@ -166,7 +166,7 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
 				return Err::FLAG_ABOVE_65535;
 			out.push_back(flag);
 
-			if (p2 == &s[s.size()] || *p2 != ',')
+			if (p2 == end_ptr(s) || *p2 != ',')
 				break;
 
 			p = p2 + 1;
@@ -349,7 +349,7 @@ auto strip_utf8_bom(std::istream& in) -> void
 	if (!in.good())
 		return;
 	auto bom = string(3, '\0');
-	in.read(&bom[0], 3);
+	in.read(bom.data(), 3);
 	if (in && bom == "\xEF\xBB\xBF")
 		return;
 	if (in.bad())
@@ -1103,8 +1103,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			// slash found, word until slash
 			word.assign(line, 0, slash_pos);
 			auto ptr = ctype.scan_is(ctype.space, &line[slash_pos],
-			                         &line[line.size()]);
-			auto end_flags_pos = ptr - &line[0];
+			                         end_ptr(line));
+			auto end_flags_pos = ptr - begin_ptr(line);
 			flags_str.assign(line, slash_pos + 1,
 			                 end_flags_pos - (slash_pos + 1));
 			auto err = decode_flags_possible_alias(
