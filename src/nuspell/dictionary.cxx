@@ -2653,13 +2653,39 @@ auto ngram_similarity_low_level(size_t n, wstring_view a, wstring_view b)
 	auto score = ptrdiff_t(0);
 	n = min(n, a.size());
 	for (size_t k = 1; k != n + 1; ++k) {
-		for (size_t i = 0; i != a.size() - k; ++i) {
+		auto k_score = ptrdiff_t(0);
+		for (size_t i = 0; i != a.size() - k + 1; ++i) {
+			auto kgram = a.substr(i, k);
+			auto find = b.find(kgram);
+			if (find != b.npos)
+				++k_score;
+		}
+		score += k_score;
+		if (k_score < 2)
+			break;
+	}
+	return score;
+}
+auto ngram_similarity_weighted_low_level(size_t n, wstring_view a,
+                                         wstring_view b) -> ptrdiff_t
+{
+	auto score = ptrdiff_t(0);
+	n = min(n, a.size());
+	for (size_t k = 1; k != n + 1; ++k) {
+		auto k_score = ptrdiff_t(0);
+		for (size_t i = 0; i != a.size() - k + 1; ++i) {
 			auto kgram = a.substr(i, k);
 			auto find = b.find(kgram);
 			if (find != b.npos) {
-				++score;
+				++k_score;
+			}
+			else {
+				--k_score;
+				if (i == 0 || i == a.size() - k)
+					--k_score;
 			}
 		}
+		score += k_score;
 	}
 	return score;
 }
@@ -2686,6 +2712,18 @@ auto ngram_similarity_any_mismatch(size_t n, wstring_view a, wstring_view b)
 		score -= d;
 	return score;
 }
+auto ngram_similarity_any_mismatch_weighted(size_t n, wstring_view a,
+                                            wstring_view b) -> ptrdiff_t
+{
+	if (b.empty())
+		return 0;
+	auto score = ngram_similarity_weighted_low_level(n, a, b);
+	auto d = abs(ptrdiff_t(b.size() - a.size())) - 2;
+	if (d > 0)
+		score -= d;
+	return score;
+}
+
 auto left_common_substring_length(wstring_view a, wstring_view b) -> ptrdiff_t
 {
 	if (a.empty() || b.empty())
@@ -2694,6 +2732,52 @@ auto left_common_substring_length(wstring_view a, wstring_view b) -> ptrdiff_t
 		return 0;
 	auto it = std::mismatch(begin(a) + 1, end(a), begin(b) + 1, end(b));
 	return it.first - begin(a);
+}
+auto longest_common_subsequence_length(wstring_view a, wstring_view b,
+                                       vector<size_t>& state_buffer)
+    -> ptrdiff_t
+{
+	state_buffer.assign(b.size(), 0);
+	auto row1_prev = size_t(0);
+	for (size_t i = 0; i != a.size(); ++i) {
+		row1_prev = size_t(0);
+		auto row2_prev = size_t(0);
+		for (size_t j = 0; j != b.size(); ++j) {
+			auto row1_current = state_buffer[j];
+			auto& row2_current = state_buffer[j];
+			if (a[i] == b[j])
+				row2_current = row1_prev + 1;
+			else
+				row2_current = max(row1_current, row2_prev);
+			row1_prev = row1_current;
+			row2_prev = row2_current;
+		}
+		row1_prev = row2_prev;
+	}
+	return ptrdiff_t(row1_prev);
+}
+struct Count_Eq_Chars_At_Same_Pos_Result {
+	ptrdiff_t num_eq;
+	bool is_swap;
+};
+auto count_eq_chars_at_same_pos(wstring_view a, wstring_view b)
+    -> Count_Eq_Chars_At_Same_Pos_Result
+{
+	auto n = min(a.size(), b.size());
+	auto count = size_t();
+	for (size_t i = 0; i != n; ++i) {
+		if (a[i] == b[i])
+			++count;
+	}
+	auto is_swap = false;
+	if (a.size() == b.size() && n - count == 2) {
+		auto miss1 = mismatch(begin(a), end(a), begin(b));
+		auto miss2 =
+		    mismatch(miss1.first + 1, end(a), miss1.second + 1);
+		is_swap = *miss1.first == *miss2.second &&
+		          *miss1.second == *miss2.first;
+	}
+	return {ptrdiff_t(count), is_swap};
 }
 } // namespace
 
@@ -2786,6 +2870,10 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 		}
 	}
 	sort_heap(begin(guess_words), end(guess_words));
+
+	(void)ngram_similarity_any_mismatch_weighted;
+	(void)longest_common_subsequence_length;
+	(void)count_eq_chars_at_same_pos;
 
 	word = orig_word;
 
