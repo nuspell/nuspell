@@ -2757,7 +2757,7 @@ auto longest_common_subsequence_length(wstring_view a, wstring_view b,
 	return ptrdiff_t(row1_prev);
 }
 struct Count_Eq_Chars_At_Same_Pos_Result {
-	ptrdiff_t num_eq;
+	ptrdiff_t num;
 	bool is_swap;
 };
 auto count_eq_chars_at_same_pos(wstring_view a, wstring_view b)
@@ -2785,7 +2785,7 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
     -> void
 {
 	auto backup = Short_WString(word);
-	auto orig_word = wstring_view(backup);
+	auto wrong_word = wstring_view(backup);
 	struct Word_Entry_And_Score {
 		Word_List::const_pointer word_entry = {};
 		ptrdiff_t score = {};
@@ -2805,10 +2805,11 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 			    flags.contains(compound_onlyin_flag))
 				continue;
 			auto score =
-			    left_common_substring_length(orig_word, dict_word);
-			to_lower(dict_word, icu_locale, word);
-			score +=
-			    ngram_similarity_longer_worse(3, orig_word, word);
+			    left_common_substring_length(wrong_word, dict_word);
+			auto& lower_dict_word = word;
+			to_lower(dict_word, icu_locale, lower_dict_word);
+			score += ngram_similarity_longer_worse(3, wrong_word,
+			                                       lower_dict_word);
 			if (roots.size() != 100) {
 				roots.push_back({&word_entry, score});
 				push_heap(begin(roots), end(roots));
@@ -2823,11 +2824,12 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 
 	auto threshold = ptrdiff_t();
 	for (auto k : {1u, 2u, 3u}) {
-		word = orig_word;
-		for (size_t i = k; i < word.size(); i += 4)
-			word[i] = '*';
-		threshold += ngram_similarity_any_mismatch(orig_word.size(),
-		                                           orig_word, word);
+		auto& mangled_wrong_word = word;
+		mangled_wrong_word = wrong_word;
+		for (size_t i = k; i < mangled_wrong_word.size(); i += 4)
+			mangled_wrong_word[i] = '*';
+		threshold += ngram_similarity_any_mismatch(
+		    wrong_word.size(), wrong_word, mangled_wrong_word);
 	}
 	threshold /= 3;
 
@@ -2845,14 +2847,16 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 	auto expanded_cross_afx = vector<bool>();
 	auto guess_words = vector<Word_And_Score>();
 	for (auto& root : roots) {
-		expand_root_word_for_ngram(*root.word_entry, orig_word,
+		expand_root_word_for_ngram(*root.word_entry, wrong_word,
 		                           expanded_list, expanded_cross_afx);
 		for (auto& expanded_word : expanded_list) {
 			auto score = left_common_substring_length(
-			    orig_word, expanded_word);
-			to_lower(expanded_word, icu_locale, word);
-			score +=
-			    ngram_similarity_any_mismatch(3, orig_word, word);
+			    wrong_word, expanded_word);
+			auto& lower_expanded_word = word;
+			to_lower(expanded_word, icu_locale,
+			         lower_expanded_word);
+			score += ngram_similarity_any_mismatch(
+			    3, wrong_word, lower_expanded_word);
 			if (score < threshold)
 				continue;
 
@@ -2869,13 +2873,47 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 			}
 		}
 	}
-	sort_heap(begin(guess_words), end(guess_words));
+	sort_heap(begin(guess_words), end(guess_words)); // is this needed?
 
-	(void)ngram_similarity_any_mismatch_weighted;
-	(void)longest_common_subsequence_length;
-	(void)count_eq_chars_at_same_pos;
+	auto lcs_state = vector<size_t>();
+	for (auto& [guess_word, score] : guess_words) {
+		auto& lower_guess_word = word;
+		to_lower(wrong_word, icu_locale, lower_guess_word);
+		auto lcs = longest_common_subsequence_length(
+		    wrong_word, lower_guess_word, lcs_state);
 
-	word = orig_word;
+		if (wrong_word.size() == lower_guess_word.size() &&
+		    wrong_word.size() == size_t(lcs)) {
+			score += 2000;
+			break;
+		}
+
+		auto ngram2 = ngram_similarity_any_mismatch_weighted(
+		    2, wrong_word, lower_guess_word);
+		ngram2 += ngram_similarity_any_mismatch_weighted(
+		    2, lower_guess_word, wrong_word);
+		auto ngram4 = ngram_similarity_any_mismatch(4, wrong_word,
+		                                            lower_guess_word);
+		auto left_common =
+		    left_common_substring_length(wrong_word, lower_guess_word);
+		auto num_eq_chars_same_pos =
+		    count_eq_chars_at_same_pos(wrong_word, lower_guess_word);
+
+		score = 2 * lcs;
+		score -=
+		    abs(ptrdiff_t(wrong_word.size() - lower_guess_word.size()));
+		score += left_common + ngram2 + ngram4;
+		if (num_eq_chars_same_pos.num != 0)
+			score += 1;
+		if (num_eq_chars_same_pos.is_swap)
+			score += 10;
+		if (5 * ngram2 <
+		    ptrdiff_t(wrong_word.size() + lower_guess_word.size()) *
+		        (10 - max_diff_factor))
+			score -= 1000;
+	}
+
+	word = wrong_word;
 
 	(void)out;
 }

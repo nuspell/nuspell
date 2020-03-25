@@ -803,6 +803,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	auto phonetic_replacements = vector<pair<wstring, wstring>>();
 
 	flag_type = Flag_Type::SINGLE_CHAR;
+	max_diff_factor = 5;
 
 	unordered_map<string, wstring*> command_wstrings = {
 	    {"IGNORE", &ignored_chars},
@@ -914,9 +915,10 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		else if (command_shorts.count(command)) {
 			auto ptr = command_shorts[command];
 			ss >> *ptr;
-			if (ptr == &compound_min_length && *ptr == 0) {
+			if (ptr == &compound_min_length && *ptr == 0)
 				compound_min_length = 1;
-			}
+			if (ptr == &max_diff_factor && max_diff_factor > 10)
+				max_diff_factor = 5;
 		}
 		else if (command_flag.count(command)) {
 			ss >> *command_flag[command];
