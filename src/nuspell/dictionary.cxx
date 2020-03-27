@@ -2160,6 +2160,19 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		break;
 	}
 
+	if (out.empty() && max_ngram_suggestions != 0) {
+		if (casing == Casing::SMALL)
+			word = backup;
+		else
+			to_lower(backup, icu_locale, word);
+		auto old_size = out.size();
+		ngram_suggest(word, out);
+		if (casing == Casing::ALL_CAPITAL) {
+			for (auto i = old_size; i != out.size(); ++i)
+				to_upper(out[i], icu_locale, out[i]);
+		}
+	}
+
 	auto orig_word = wstring_view(backup);
 	auto has_dash = orig_word.find('-') != orig_word.npos;
 	auto has_dash_sug =
@@ -2862,12 +2875,12 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 
 			if (guess_words.size() != 200) {
 				guess_words.push_back(
-				    {std::move(expanded_word), score});
+				    {move(expanded_word), score});
 				push_heap(begin(guess_words), end(guess_words));
 			}
 			else if (score > guess_words.front().score) {
 				pop_heap(begin(guess_words), end(guess_words));
-				guess_words.back() = {std::move(expanded_word),
+				guess_words.back() = {move(expanded_word),
 				                      score};
 				push_heap(begin(guess_words), end(guess_words));
 			}
@@ -2912,8 +2925,25 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 		        (10 - max_diff_factor))
 			score -= 1000;
 	}
-
 	word = wrong_word;
+
+	sort(begin(guess_words), end(guess_words));
+
+	auto more_selective =
+	    !guess_words.empty() && guess_words.front().score > 1000;
+	auto old_num_sugs = guess_words.size();
+	auto max_sug =
+	    min(MAX_SUGGESTIONS, old_num_sugs + max_ngram_suggestions);
+	for (auto& [guess_word, score] : guess_words) {
+		if (out.size() == max_sug)
+			break;
+		if (more_selective && score <= 1000)
+			break;
+		if (score < -100 &&
+		    (old_num_sugs != guess_words.size() || only_max_diff))
+			break;
+		out.push_back(move(guess_word));
+	}
 
 	(void)out;
 }

@@ -802,8 +802,10 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	auto map_related_chars = vector<wstring>();
 	auto phonetic_replacements = vector<pair<wstring, wstring>>();
 
-	flag_type = Flag_Type::SINGLE_CHAR;
+	max_compound_suggestions = 3;
+	max_ngram_suggestions = 4;
 	max_diff_factor = 5;
+	flag_type = Flag_Type::SINGLE_CHAR;
 
 	unordered_map<string, wstring*> command_wstrings = {
 	    {"IGNORE", &ignored_chars},
