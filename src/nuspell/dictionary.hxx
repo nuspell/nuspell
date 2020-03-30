@@ -98,6 +98,11 @@ struct Dict_Base : public Aff_Data {
 		SKIP_HIDDEN_HOMONYM = true
 	};
 
+	enum High_Quality_Sugs : bool {
+		ALL_LOW_QUALITY_SUGS = false,
+		HAS_HIGH_QUALITY_SUGS = true
+	};
+
 	auto spell_priv(std::wstring& s) const -> bool;
 	auto spell_break(std::wstring& s, size_t depth = 0) const -> bool;
 	auto spell_casing(std::wstring& s) const -> const Flag_Set*;
@@ -333,7 +338,8 @@ struct Dict_Base : public Aff_Data {
 
 	auto suggest_priv(std::wstring& word, List_WStrings& out) const -> void;
 
-	auto suggest_low(std::wstring& word, List_WStrings& out) const -> void;
+	auto suggest_low(std::wstring& word, List_WStrings& out) const
+	    -> High_Quality_Sugs;
 
 	auto add_sug_if_correct(std::wstring& word, List_WStrings& out) const
 	    -> bool;

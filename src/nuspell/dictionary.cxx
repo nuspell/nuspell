@@ -2069,6 +2069,13 @@ auto static insert_sug_first(const wstring& word, List_WStrings& out)
 		out.insert(begin(out), word);
 }
 
+auto& operator|=(Dict_Base::High_Quality_Sugs& lhs,
+                 Dict_Base::High_Quality_Sugs rhs)
+{
+	lhs = Dict_Base::High_Quality_Sugs(lhs || rhs);
+	return lhs;
+}
+
 auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
     -> void
 {
@@ -2086,6 +2093,7 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 	}
 	auto backup = Short_WString(word);
 	auto casing = classify_casing(word);
+	auto hq_sugs = High_Quality_Sugs();
 	switch (casing) {
 	case Casing::SMALL:
 		if (compound_force_uppercase &&
@@ -2095,16 +2103,16 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 			word = backup;
 			return;
 		}
-		suggest_low(word, out);
+		hq_sugs |= suggest_low(word, out);
 		break;
 	case Casing::INIT_CAPITAL:
-		suggest_low(word, out);
+		hq_sugs |= suggest_low(word, out);
 		to_lower(word, icu_locale, word);
-		suggest_low(word, out);
+		hq_sugs |= suggest_low(word, out);
 		break;
 	case Casing::CAMEL:
 	case Casing::PASCAL: {
-		suggest_low(word, out);
+		hq_sugs |= suggest_low(word, out);
 		auto dot_idx = word.find('.');
 		if (dot_idx != word.npos) {
 			auto after_dot = wstring_view(word).substr(dot_idx + 1);
@@ -2119,17 +2127,17 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 			to_lower_char_at(word, 0, icu_locale);
 			if (spell_priv(word))
 				insert_sug_first(word, out);
-			suggest_low(word, out);
+			hq_sugs |= suggest_low(word, out);
 		}
 		to_lower(backup, icu_locale, word);
 		if (spell_priv(word))
 			insert_sug_first(word, out);
-		suggest_low(word, out);
+		hq_sugs |= suggest_low(word, out);
 		if (casing == Casing::PASCAL) {
 			to_title(backup, icu_locale, word);
 			if (spell_priv(word))
 				insert_sug_first(word, out);
-			suggest_low(word, out);
+			hq_sugs |= suggest_low(word, out);
 		}
 		for (auto it = begin(out); it != end(out); ++it) {
 			auto& sug = *it;
@@ -2152,15 +2160,15 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		to_lower(backup, icu_locale, word);
 		if (keepcase_flag != 0 && spell_priv(word))
 			insert_sug_first(word, out);
-		suggest_low(word, out);
+		hq_sugs |= suggest_low(word, out);
 		to_title(backup, icu_locale, word);
-		suggest_low(word, out);
+		hq_sugs |= suggest_low(word, out);
 		for (auto& sug : out)
 			to_upper(sug, icu_locale, sug);
 		break;
 	}
 
-	if (out.empty() && max_ngram_suggestions != 0) {
+	if (!hq_sugs && max_ngram_suggestions != 0) {
 		if (casing == Casing::SMALL)
 			word = backup;
 		else
@@ -2251,11 +2259,14 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 }
 
 auto Dict_Base::suggest_low(std::wstring& word, List_WStrings& out) const
-    -> void
+    -> High_Quality_Sugs
 {
+	auto ret = ALL_LOW_QUALITY_SUGS;
+	auto old_size = out.size();
 	uppercase_suggest(word, out);
 	rep_suggest(word, out);
 	map_suggest(word, out);
+	ret = High_Quality_Sugs(old_size != out.size());
 	adjacent_swap_suggest(word, out);
 	distant_swap_suggest(word, out);
 	keyboard_suggest(word, out);
@@ -2266,6 +2277,7 @@ auto Dict_Base::suggest_low(std::wstring& word, List_WStrings& out) const
 	doubled_two_chars_suggest(word, out);
 	two_words_suggest(word, out);
 	phonetic_suggest(word, out);
+	return ret;
 }
 
 auto Dict_Base::add_sug_if_correct(std::wstring& word, List_WStrings& out) const
