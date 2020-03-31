@@ -56,9 +56,10 @@ struct Args_t {
 	string program_name = "verify";
 	string dictionary;
 	string encoding;
-	bool print_false = false;
 	vector<string> other_dicts;
 	vector<string> files;
+	bool print_false = false;
+	bool sugs = false;
 
 	Args_t() = default;
 	Args_t(int argc, char* argv[]) { parse_args(argc, argv); }
@@ -75,7 +76,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	int c;
 	// The program can run in various modes depending on the
 	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:Fhv";
+	const char* shortopts = ":d:i:fshv";
 	const struct option longopts[] = {
 	    {"version", 0, nullptr, 'v'},
 	    {"help", 0, nullptr, 'h'},
@@ -98,9 +99,12 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 			encoding = optarg;
 
 			break;
-		case 'F':
+		case 'f':
 			print_false = true;
 
+			break;
+		case 's':
+			sugs = true;
 			break;
 		case 'h':
 			if (mode == DEFAULT_MODE)
@@ -145,43 +149,27 @@ auto print_help(const string& program_name) -> void
 	auto& o = cout;
 	o << "Usage:\n"
 	     "\n";
-	o << p << " [-d dict_NAME] [-i enc] [file_name]...\n";
+	o << p << " [-d dict_NAME] [-i enc] [-f] [-s] [file_name]...\n";
 	o << p << " -h|--help|-v|--version\n";
 	o << "\n"
-	     "Verification testing spell check of each FILE. Without FILE, "
-	     "check "
-	     "standard "
-	     "input.\n"
+	     "Verification testing spell check of each FILE.\n"
+	     "Without FILE, check standard input.\n"
 	     "For simple test, use /usr/share/dict/american-english for FILE.\n"
 	     "\n"
 	     "  -d di_CT      use di_CT dictionary. Only one dictionary is\n"
 	     "                currently supported\n"
 	     "  -i enc        input encoding, default is active locale\n"
-	     "  -F            print false negative and false positive words\n"
+	     "  -f            print false negative and false positive words\n"
+	     "  -s            also test suggestions (usable only in debugger)\n"
 	     "  -h, --help    print this help and exit\n"
 	     "  -v, --version print version number and exit\n"
 	     "\n";
 	o << "Example: " << p << " -d en_US file.txt\n";
 	o << "\n"
-	     "All word for which results differ with Hunspell are printed\n"
-	     "standard output. At the end of each presented file, space-\n"
-	     "separated statistics are printed to standard output, being:\n"
-	     "  Total Words         [0,1,..]\n"
-	     "  True Positives      [0,1,..]\n"
-	     "  True Negatives      [0,1,..]\n"
-	     "  False Positives     [0,1,..]\n"
-	     "  False Negatives     [0,1,..]\n"
-	     "  Accuracy            [0.000,..,1.000]\n"
-	     "  Precision           [0.000,..,1.000]\n"
-	     "  Duration Nuspell    [0,1,..] nanoseconds\n"
-	     "  Duration Hunspell   [0,1,..] nanoseconds\n"
-	     "  Speedup Rate        [0.00,..,9.99]\n"
-	     "All durations are highly machine and platform dependent.\n"
-	     "Even on the same machine it varies a lot in the second decimal!\n"
-	     "If speedup is 1.60, Nuspell is 1.60 times faster as Hunspell.\n"
-	     "Use only executable from production build with optimizations.\n"
-	     "The last line contains a summary for easy Nuspell performance\n"
-	     "reporting only. It contains, space-separated, the following:\n"
+	     "All word for which results differ with Hunspell are printed to"
+	     "standard output.\n"
+	     "Then some statistics for correctness and "
+	     "performance are printed to standard output, being:\n"
 	     "  Total Words\n"
 	     "  True Positives\n"
 	     "  True Negatives\n"
@@ -189,17 +177,17 @@ auto print_help(const string& program_name) -> void
 	     "  False Negatives\n"
 	     "  Accuracy\n"
 	     "  Precision\n"
-	     "  Duration Nuspell\n"
+	     "  Duration Nuspell (type varies, but usually in nanoseconds)\n"
+	     "  Duration Hunspell (type varies, but usually in nanoseconds)\n"
 	     "  Speedup Rate\n"
+	     "All durations are highly machine and platform dependent.\n"
+	     "Even on the same machine it varies a lot in the second decimal!\n"
+	     "If speedup is 1.60, Nuspell is 1.60 times faster as Hunspell.\n"
+	     "Use only executable from production build with optimizations.\n"
 	     "\n"
 	     "Please note, messages containing:\n"
 	     "  This UTF-8 encoding can't convert to UTF-16:"
 	     "are caused by Hunspell and can be ignored.\n";
-	o << "\n"
-	     "Bug reports: <https://github.com/nuspell/nuspell/issues>\n"
-	     "Full documentation: "
-	     "<https://github.com/nuspell/nuspell/wiki>\n"
-	     "Home page: <http://nuspell.github.io/>\n";
 }
 
 /**
@@ -209,7 +197,7 @@ auto print_version() -> void
 {
 	cout << PACKAGE_STRING
 	    "\n"
-	    "Copyright (C) 2018 Dimitrij Mijoski and Sander van Geloven\n"
+	    "Copyright (C) 2018-2020 Dimitrij Mijoski and Sander van Geloven\n"
 	    "License LGPLv3+: GNU LGPL version 3 or later "
 	    "<http://gnu.org/licenses/lgpl.html>.\n"
 	    "This is free software: you are free to change and "
@@ -221,7 +209,7 @@ auto print_version() -> void
 }
 
 auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
-                 locale& hloc, bool print_false = false)
+                 locale& hloc, bool print_false = false, bool test_sugs = false)
 {
 	auto word = string();
 	auto wide_word = wstring();
@@ -271,6 +259,12 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 			}
 		}
 		++total;
+		if (test_sugs && !res_nu && !res_hun) {
+			auto nus_sugs = vector<string>();
+			auto hun_sugs = vector<string>();
+			dic.suggest(word, nus_sugs);
+			hun.suggest(narrow_word);
+		}
 	}
 
 	// prevent devision by zero
@@ -298,12 +292,6 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	out << "Duration Nuspell    " << duration_nu.count() << '\n';
 	out << "Duration Hunspell   " << duration_hun.count() << '\n';
 	out << "Speedup Rate        " << speedup << '\n';
-
-	// summarey for easy reporting
-	out << fixed << total << ' ' << true_pos << ' ' << true_neg << ' '
-	    << false_pos << ' ' << false_neg << ' ' << accuracy << ' '
-	    << precision << ' ' << duration_nu.count() << ' ' << speedup
-	    << endl;
 }
 
 namespace std {
@@ -403,7 +391,8 @@ int main(int argc, char* argv[])
 	    "en_US." + Encoding(hun.get_dict_encoding()).value_or_default());
 
 	if (args.files.empty()) {
-		normal_loop(cin, cout, dic, hun, hun_loc, args.print_false);
+		normal_loop(cin, cout, dic, hun, hun_loc, args.print_false,
+		            args.sugs);
 	}
 	else {
 		for (auto& file_name : args.files) {
