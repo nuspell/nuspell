@@ -43,7 +43,6 @@ base.sug
 base_utf.sug
 checksharps.sug
 checksharpsutf.sug
-i35725.sug
 nosuggest.sug
 opentaal_keepcase.sug
 phone.sug
