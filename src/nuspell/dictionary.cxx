@@ -2804,6 +2804,22 @@ auto count_eq_chars_at_same_pos(wstring_view a, wstring_view b)
 	}
 	return {ptrdiff_t(count), is_swap};
 }
+struct Word_Entry_And_Score {
+	Word_List::const_pointer word_entry = {};
+	ptrdiff_t score = {};
+	[[maybe_unused]] auto operator<(const Word_Entry_And_Score& rhs) const
+	{
+		return score > rhs.score; // Greater than
+	}
+};
+struct Word_And_Score {
+	wstring word = {};
+	ptrdiff_t score = {};
+	[[maybe_unused]] auto operator<(const Word_And_Score& rhs) const
+	{
+		return score > rhs.score; // Greater than
+	}
+};
 } // namespace
 
 auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
@@ -2811,15 +2827,6 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 {
 	auto backup = Short_WString(word);
 	auto wrong_word = wstring_view(backup);
-	struct Word_Entry_And_Score {
-		Word_List::const_pointer word_entry = {};
-		ptrdiff_t score = {};
-		auto operator<(const Word_Entry_And_Score& rhs) const
-		{
-			return score > rhs.score; // Greater than
-		}
-	};
-	(void)&Word_Entry_And_Score::operator<; // silence warning
 	auto roots = vector<Word_Entry_And_Score>();
 	for (size_t bucket = 0; bucket != words.bucket_count(); ++bucket) {
 		for (auto& word_entry : words.bucket_data(bucket)) {
@@ -2858,16 +2865,6 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 	}
 	threshold /= 3;
 
-	struct Word_And_Score {
-		wstring word = {};
-		ptrdiff_t score = {};
-		auto operator<(const Word_And_Score& rhs) const
-		{
-			return score > rhs.score; // Greater than
-		}
-	};
-	(void)&Word_And_Score::operator<; // silence warning
-
 	auto expanded_list = List_WStrings();
 	auto expanded_cross_afx = vector<bool>();
 	auto guess_words = vector<Word_And_Score>();
@@ -2881,7 +2878,7 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 			to_lower(expanded_word, icu_locale,
 			         lower_expanded_word);
 			score += ngram_similarity_any_mismatch(
-			    3, wrong_word, lower_expanded_word);
+			    wrong_word.size(), wrong_word, lower_expanded_word);
 			if (score < threshold)
 				continue;
 
@@ -2903,7 +2900,7 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 	auto lcs_state = vector<size_t>();
 	for (auto& [guess_word, score] : guess_words) {
 		auto& lower_guess_word = word;
-		to_lower(wrong_word, icu_locale, lower_guess_word);
+		to_lower(guess_word, icu_locale, lower_guess_word);
 		auto lcs = longest_common_subsequence_length(
 		    wrong_word, lower_guess_word, lcs_state);
 
@@ -2943,7 +2940,7 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 
 	auto more_selective =
 	    !guess_words.empty() && guess_words.front().score > 1000;
-	auto old_num_sugs = guess_words.size();
+	auto old_num_sugs = out.size();
 	auto max_sug =
 	    min(MAX_SUGGESTIONS, old_num_sugs + max_ngram_suggestions);
 	for (auto& [guess_word, score] : guess_words) {
@@ -2952,12 +2949,10 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 		if (more_selective && score <= 1000)
 			break;
 		if (score < -100 &&
-		    (old_num_sugs != guess_words.size() || only_max_diff))
+		    (old_num_sugs != out.size() || only_max_diff))
 			break;
 		out.push_back(move(guess_word));
 	}
-
-	(void)out;
 }
 
 auto Dict_Base::expand_root_word_for_ngram(
