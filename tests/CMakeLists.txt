@@ -39,8 +39,6 @@ endforeach()
 set_tests_properties(
 base_utf.dic
 nepali.dic
-base.sug
-base_utf.sug
 checksharps.sug
 checksharpsutf.sug
 nosuggest.sug

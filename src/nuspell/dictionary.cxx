@@ -2953,8 +2953,12 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 			break;
 		if (any_of(begin(out), end(out), [& g = guess_word](auto& sug) {
 			    return g.find(sug) != g.npos;
-		    }))
-			continue;
+		    })) {
+			if (score < -100)
+				break;
+			else
+				continue;
+		}
 		out.push_back(move(guess_word));
 	}
 }
