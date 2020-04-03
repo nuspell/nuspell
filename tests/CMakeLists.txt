@@ -42,7 +42,6 @@ nepali.dic
 checksharps.sug
 checksharpsutf.sug
 nosuggest.sug
-opentaal_keepcase.sug
 phone.sug
 utf8_nonbmp.sug
 

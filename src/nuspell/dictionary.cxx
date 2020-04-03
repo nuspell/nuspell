@@ -2361,7 +2361,8 @@ auto Dict_Base::try_rep_suggestion(std::wstring& word, List_WStrings& out) const
 	auto part = wstring();
 	for (; j != word.npos; i = j + 1, j = word.find(' ', i)) {
 		part.assign(word, i, j - i);
-		if (!check_word(part))
+		if (!check_word(part, FORBID_BAD_FORCEUCASE,
+		                SKIP_HIDDEN_HOMONYM))
 			return;
 	}
 	out.push_back(word);
@@ -2375,7 +2376,7 @@ auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
 		auto& to = r.second;
 		if (word == from) {
 			word = to;
-			auto ret = check_simple_word(word);
+			auto ret = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
 			word = from;
 			if (ret)
 				return true;
@@ -2386,7 +2387,7 @@ auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
 		auto& to = r.second;
 		if (begins_with(word, from)) {
 			word.replace(0, from.size(), to);
-			auto ret = check_simple_word(word);
+			auto ret = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
 			word.replace(0, to.size(), from);
 			if (ret)
 				return true;
@@ -2398,7 +2399,7 @@ auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
 		if (ends_with(word, from)) {
 			auto pos = word.size() - from.size();
 			word.replace(pos, word.npos, to);
-			auto ret = check_simple_word(word);
+			auto ret = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
 			word.replace(pos, word.npos, from);
 			if (ret)
 				return true;
@@ -2410,7 +2411,7 @@ auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
 		for (auto i = word.find(from); i != word.npos;
 		     i = word.find(from, i + 1)) {
 			word.replace(i, from.size(), to);
-			auto ret = check_simple_word(word);
+			auto ret = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
 			word.replace(i, to.size(), from);
 			if (ret)
 				return true;
@@ -2630,13 +2631,14 @@ auto Dict_Base::two_words_suggest(std::wstring& word, List_WStrings& out) const
 	word.erase();
 	for (size_t i = 0; i != backup.size() - 1; ++i) {
 		word += backup[i];
-		auto w1 = check_simple_word(word);
+		// TODO: maybe switch to check_word()
+		auto w1 = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
 		if (!w1)
 			continue;
 		auto sz1 = i + 1;
 		auto sz2 = backup.size() - sz1;
 		word.assign(backup, i + 1, sz2);
-		auto w2 = check_simple_word(word);
+		auto w2 = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
 		word.assign(backup, 0, sz1);
 		if (!w2)
 			continue;
