@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2020-04-07
+### Added
+- Add so called hidden homonym feature. This feature enables words in mixed case
+  in the dictionary to be accepted when met in uppercase in the input text. Also
+  enables uppercase word to get lowercase suffix, and the whole derived word be
+  accepted in all uppercase in some input text.
+- Improve suggestions to handle words in various casing.
+- Add new complex method for giving suggestions based on ngram similarity of the
+  wrong word with the words in the dictionary.
+
 ## [3.0.0] - 2019-11-23
 ### Added
 - Added compounding features: CHECKCOMPOUNDREP, FORCEUCASE, COMPOUNDWORDMAX.
@@ -88,7 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/nuspell/nuspell/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/nuspell/nuspell/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/nuspell/nuspell/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/nuspell/nuspell/compare/v2.1.0...v2.2.0
