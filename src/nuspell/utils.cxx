@@ -311,54 +311,35 @@ auto is_locale_known_utf8(const locale& loc) -> bool
 	return has_facet<boost::locale::utf8_codecvt<wchar_t>>(loc);
 }
 
-auto wide_to_icu(wstring_view in, icu::UnicodeString& out) -> bool
+auto static wide_to_icu(wstring_view in) -> icu::UnicodeString
 {
-	int32_t capacity = in.size();
-	if (in.size() > numeric_limits<int32_t>::max()) {
-		out.remove();
-		return false;
-	}
-#if U_SIZEOF_WCHAR_T == 4
-	if (capacity < out.getCapacity())
-		capacity = out.getCapacity();
+#if U_SIZEOF_WCHAR_T == 2
+	// TODO: consider using aliasing features of UnicodeString
+	return icu::UnicodeString(in.data(), in.size());
+#elif U_SIZEOF_WCHAR_T == 4
+	return icu::UnicodeString::fromUTF32(
+	    reinterpret_cast<const UChar32*>(in.data()), in.size());
+#else
+#error "wchar_t can not fit utf-16 or utf-32"
 #endif
-	auto buf = out.getBuffer(capacity);
-	int32_t len;
-	auto err = U_ZERO_ERROR;
-	u_strFromWCS(buf, capacity, &len, in.data(), in.size(), &err);
-	if (U_SUCCESS(err)) {
-		out.releaseBuffer(len);
-		return true;
-	}
-#if U_SIZEOF_WCHAR_T == 4
-	if (err == U_BUFFER_OVERFLOW_ERROR) {
-		out.releaseBuffer(0);
-		// handle buffer overflow
-		buf = out.getBuffer(len);
-		err = U_ZERO_ERROR;
-		u_strFromWCS(buf, len, nullptr, in.data(), in.size(), &err);
-		if (U_SUCCESS(err)) {
-			out.releaseBuffer(len);
-			return true;
-		}
-	}
-#endif
-	out.releaseBuffer(0);
-	return false;
 }
-auto icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool
+auto static icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool
 {
-	int32_t len;
-	auto err = U_ZERO_ERROR;
 	out.resize(in.length());
-	u_strToWCS(out.data(), out.size(), &len, in.getBuffer(), in.length(),
-	           &err);
+#if U_SIZEOF_WCHAR_T == 2
+	in.extract(0, in.length(), out.data());
+	return true;
+#elif U_SIZEOF_WCHAR_T == 4
+	auto err = U_ZERO_ERROR;
+	auto len =
+	    in.toUTF32(reinterpret_cast<UChar32*>(out.data()), out.size(), err);
 	if (U_SUCCESS(err)) {
 		out.erase(len);
 		return true;
 	}
 	out.clear();
 	return false;
+#endif
 }
 
 auto to_upper(wstring_view in, const icu::Locale& loc) -> std::wstring
@@ -382,22 +363,19 @@ auto to_lower(wstring_view in, const icu::Locale& loc) -> std::wstring
 
 auto to_upper(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 {
-	auto us = icu::UnicodeString();
-	wide_to_icu(in, us);
+	auto us = wide_to_icu(in);
 	us.toUpper(loc);
 	icu_to_wide(us, out);
 }
 auto to_title(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 {
-	auto us = icu::UnicodeString();
-	wide_to_icu(in, us);
+	auto us = wide_to_icu(in);
 	us.toTitle(nullptr, loc);
 	icu_to_wide(us, out);
 }
 auto to_lower(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 {
-	auto us = icu::UnicodeString();
-	wide_to_icu(in, us);
+	auto us = wide_to_icu(in);
 	us.toLower(loc);
 	icu_to_wide(us, out);
 }

@@ -69,9 +69,6 @@ auto to_upper_ascii(std::string& s) -> void;
 
 auto is_locale_known_utf8(const std::locale& loc) -> bool;
 
-auto wide_to_icu(std::wstring_view in, icu::UnicodeString& out) -> bool;
-auto icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool;
-
 [[nodiscard]] auto to_upper(std::wstring_view in, const icu::Locale& loc)
     -> std::wstring;
 [[nodiscard]] auto to_title(std::wstring_view in, const icu::Locale& loc)
@@ -136,7 +133,7 @@ class Encoding_Converter {
 };
 
 //#if _POSIX_VERSION >= 200809L
-#ifdef _POSIX_VERSION
+#if defined(_POSIX_VERSION) && !defined(__NetBSD__)
 class Setlocale_To_C_In_Scope {
 	locale_t old_loc = nullptr;
 

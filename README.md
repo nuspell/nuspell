@@ -138,7 +138,7 @@ Download the above mentioned dependencies with Cygwin package manager.
 Then compile the same way as on Linux. Cygwin builds depend on
 Cygwin1.dll.
 
-## Building on FreeBSD (experimental)
+## Building on FreeBSD
 
 Install the following required packages
 
