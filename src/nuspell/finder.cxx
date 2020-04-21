@@ -66,51 +66,38 @@ const auto SEPARATORS = '/';
 #endif
 
 /**
- * @brief Gets the default search paths.
- *
- * @param out Output iterator, begin of the output range.
- * @return End of the output range.
+ * @brief Adds the default directory paths to the list of search directories.
  */
-template <class OutIt>
-auto get_default_search_paths(OutIt out) -> OutIt
+auto Finder::add_default_dir_paths() -> void
 {
-	*out++ = ".";
+	paths.push_back(".");
 	auto dicpath = getenv("DICPATH");
 	if (dicpath) {
-		out = split(string(dicpath), PATHSEP, out);
+		split(string(dicpath), PATHSEP, paths);
 	}
 #ifdef _POSIX_VERSION
 	auto home = getenv("HOME");
 	if (home) {
-		*out++ = home + string("/.local/share/hunspell");
+		paths.push_back(home + string("/.local/share/hunspell"));
 	}
-	*out++ = "/usr/local/share/hunspell";
-	*out++ = "/usr/share/hunspell";
+	paths.push_back("/usr/local/share/hunspell");
+	paths.push_back("/usr/share/hunspell");
 #if defined(__APPLE__) && defined(__MACH__)
 	auto osx = string("/Library/Spelling");
 	if (home) {
-		*out++ = home + osx;
+		paths.push_back(home + osx);
 	}
-	*out++ = osx;
+	paths.push_back(osx);
 #endif
 #endif
 #ifdef _WIN32
 	auto winpaths = {getenv("LOCALAPPDATA"), getenv("PROGRAMDATA")};
 	for (auto& p : winpaths) {
 		if (p) {
-			*out++ = string(p) + "\\hunspell";
+			paths.push_back(string(p) + "\\hunspell");
 		}
 	}
 #endif
-	return out;
-}
-
-/**
- * @brief Adds the default directory paths which may containt dictionaries.
- */
-auto Finder::add_default_dir_paths() -> void
-{
-	get_default_search_paths(back_inserter(paths));
 }
 
 #ifdef _WIN32
@@ -252,13 +239,10 @@ class Globber {
 	}
 	auto begin() -> const char* const* { return g.gl_pathv; }
 	auto end() -> const char* const* { return begin() + g.gl_pathc; }
-	template <class OutIt>
-	auto copy_glob_paths(OutIt out) -> OutIt
+	auto append_glob_paths_to(vector<string>& out) -> void
 	{
-		if (ret == 0) {
-			out = copy(begin(), end(), out);
-		}
-		return out;
+		if (ret == 0)
+			out.insert(out.end(), begin(), end());
 	}
 	~Globber() { globfree(&g); }
 };
@@ -285,7 +269,7 @@ class Globber {
 		auto q2 = q1;
 		auto v = q1;
 
-		split_on_any_of(pattern, "\\/", back_inserter(v));
+		split_on_any_of(pattern, "\\/", v);
 		auto i = v.begin();
 		if (i == v.end())
 			return false;
@@ -329,11 +313,9 @@ class Globber {
 	}
 	auto begin() -> vector<string>::iterator { return data.begin(); }
 	auto end() -> vector<string>::iterator { return data.end(); }
-	template <class OutIt>
-	auto copy_glob_paths(OutIt out) -> OutIt
+	auto append_glob_paths_to(vector<string>& out) -> void
 	{
-		out = copy(begin(), end(), out);
-		return out;
+		out.insert(out.end(), begin(), end());
 	}
 };
 #else
@@ -345,99 +327,21 @@ struct Globber {
 	auto glob(const string& pattern) -> bool { return false; }
 	auto begin() -> char** { return nullptr; }
 	auto end() -> char** { return nullptr; }
-	template <class OutIt>
-	auto copy_glob_paths(OutIt out) -> OutIt
-	{
-		return out;
-	}
+	auto append_glob_paths_to(vector<string>& out) -> void {}
 };
 #endif
 
 /**
- * @brief Gets the Mozilla search paths.
- *
- * @param out Output iterator, begin of the output range.
- * @return End of the output range.
+ * @brief Adds the Mozilla directory paths to the list of search directories.
+ * @deprecated Don't use this, Firefox does not offer unpacked dictionaries any
+ * more. They are all inside archive, either in omni.ja or in extension in .xpi.
  */
-template <class OutIt>
-auto get_mozilla_paths(OutIt out) -> OutIt
-{
-#ifdef _POSIX_VERSION
-	// add Mozilla Linux global path
-	auto dirs = {"/usr/local/lib/firefox/dictionaries",
-	             "/usr/lib/firefox/dictionaries",
-	             "/usr/local/lib/thunderbird/dictionaries",
-	             "/usr/lib/thunderbird/dictionaries"};
-	struct stat dir_stat;
-	for (auto& dir : dirs) {
-		if (lstat(dir, &dir_stat) == 0) {
-			if (S_ISDIR(dir_stat.st_mode)) {
-				*out++ = dir;
-			}
-			// if SYMLINK do not add
-		}
-	}
-
-	// add Mozilla Linux user path
-	auto home = getenv("HOME");
-	if (home == nullptr) {
-		return out;
-	}
-	auto moz = string(home);
-	moz += "/.mozilla/firefox/*/extensions/*/dictionaries";
-	Globber g(moz);
-	out = g.copy_glob_paths(out);
-
-	moz = home;
-	moz += "/.thunderbird/*/extensions/*/dictionaries";
-	g.glob(moz);
-	out = g.copy_glob_paths(out);
-
-#elif defined(_WIN32)
-	// add Mozilla Windows global path
-	auto winpaths = {getenv("PROGRAMFILES"), getenv("PROGRAMFILES(x86)")};
-	for (auto& p : winpaths) {
-		if (p) {
-			*out++ = string(p) + "\\Mozilla Firefox\\dictionaries";
-			*out++ =
-			    string(p) + "\\Mozilla Thunderbird\\dictionaries";
-		}
-	}
-	// add Mozilla Windows local path
-	char* home = getenv("APPDATA");
-	if (home == nullptr) {
-		return out;
-	}
-	string moz = home;
-	moz += "\\Mozilla\\Firefox\\Profiles\\*\\extensions\\*\\dictionaries";
-	Globber g(moz);
-	out = g.copy_glob_paths(out);
-
-	moz = home;
-	moz +=
-	    "\\Mozilla\\Thunderbird\\Profiles\\*\\extensions\\*\\dictionaries";
-	g.glob(moz);
-	out = g.copy_glob_paths(out);
-#endif
-	return out;
-}
+auto Finder::add_mozilla_dir_paths() -> void {}
 
 /**
- * Adds the Mozilla directory paths which may containt dictionaries.
+ * @brief Adds the LibreOffice directory paths which may containt dictionaries.
  */
-auto Finder::add_mozilla_dir_paths() -> void
-{
-	get_mozilla_paths(back_inserter(paths));
-}
-
-/**
- * @brief Gets the LibreOffice search paths.
- *
- * @param out Output iterator, begin of the output range.
- * @return End of the output range.
- */
-template <class OutIt>
-auto get_libreoffice_paths(OutIt out) -> OutIt
+auto Finder::add_libreoffice_dir_paths() -> void
 {
 	auto lo_user_glob = string();
 #ifdef _POSIX_VERSION
@@ -446,15 +350,14 @@ auto get_libreoffice_paths(OutIt out) -> OutIt
 	                 "/opt/libreoffice*"};
 	for (auto& prefix : prefixes) {
 		Globber g(string(prefix) + "/share/extensions/dict-*");
-		out = g.copy_glob_paths(out);
+		g.append_glob_paths_to(paths);
 	}
 
 	// add LibreOffice Linux local
 
 	auto home = getenv("HOME");
-	if (home == nullptr) {
-		return out;
-	}
+	if (home == nullptr)
+		return;
 	lo_user_glob = home;
 	lo_user_glob += "/.config/libreoffice/?/user/uno_packages/cache"
 	                "/uno_packages/*/*.oxt/";
@@ -462,157 +365,69 @@ auto get_libreoffice_paths(OutIt out) -> OutIt
 	// add Libreoffice Windows global paths
 	auto prefixes = {getenv("PROGRAMFILES"), getenv("PROGRAMFILES(x86)")};
 	for (auto& prefix : prefixes) {
-		if (prefix == nullptr) {
+		if (prefix == nullptr)
 			continue;
-		}
 		Globber g(string(prefix) +
 		          "\\LibreOffice ?\\share\\extensions\\dict-*");
-		out = g.copy_glob_paths(out);
+		g.append_glob_paths_to(paths);
 	}
 
 	auto home = getenv("APPDATA");
-	if (home == nullptr) {
-		return out;
-	}
+	if (home == nullptr)
+		return;
 	lo_user_glob = home;
 	lo_user_glob += "\\libreoffice\\?\\user\\uno_packages\\cache"
 	                "\\uno_packages\\*\\*.oxt\\";
 #else
-	return out;
+	return;
 #endif
 	// finish adding LibreOffice user path dicts (Linux and Windows)
 	Globber g(lo_user_glob + "dict*");
-	out = g.copy_glob_paths(out);
+	g.append_glob_paths_to(paths);
 
 	g.glob(lo_user_glob + "*.aff");
 	auto path_str = string();
 	for (auto& path : g) {
 		path_str = path;
 		path_str.erase(path_str.rfind(DIRSEP));
-		*out = path_str;
-		++out;
+		paths.push_back(path_str);
 	}
-	return out;
 }
 
 /**
- * @brief Adds the LibreOffice directory paths which may containt dictionaries.
+ * @brief Adds the OpenOffice directory paths to the list of search directories.
+ * @deprecated Does nothing now, please switch to Libreoffice.
  */
-auto Finder::add_libreoffice_dir_paths() -> void
-{
-	get_libreoffice_paths(back_inserter(paths));
-}
-
-/**
- * @brief Gets the Apache OpenOffice search paths.
- *
- * @param out Output iterator, begin of the output range.
- * @return End of the output range.
- */
-template <class OutIt>
-auto get_openoffice_paths(OutIt out) -> OutIt
-{
-	// Note that Apache OpenOffice is no longer available on Debian and
-	// Ubuntu. For legacy reasons, all paths are still supported.
-	auto aoo_user_glob = string();
-#ifdef _POSIX_VERSION
-	// add Apache OpenOffice Linux global paths
-	auto prefixes = {"/usr/local/lib/openoffice", "/usr/lib/openoffice",
-	                 "/opt/openoffice*"};
-	for (auto& prefix : prefixes) {
-		Globber g(string(prefix) + "/share/extensions/dict-*");
-		out = g.copy_glob_paths(out);
-	}
-
-	// add Apache OpenOffice Linux local
-
-	auto home = getenv("HOME");
-	if (home == nullptr) {
-		return out;
-	}
-	aoo_user_glob = home;
-	aoo_user_glob += "/.config/openoffice/?/user/uno_packages/cache"
-	                 "/uno_packages/*/*.oxt/";
-#elif defined(_WIN32)
-	// add Apache OpenOffice Windows global paths
-	auto prefixes = {getenv("PROGRAMFILES"), getenv("PROGRAMFILES(x86)")};
-	for (auto& prefix : prefixes) {
-		if (prefix == nullptr) {
-			continue;
-		}
-		Globber g(string(prefix) +
-		          "\\OpenOffice ?\\share\\extensions\\dict-*");
-		out = g.copy_glob_paths(out);
-	}
-
-	auto home = getenv("APPDATA");
-	if (home == nullptr) {
-		return out;
-	}
-	aoo_user_glob = home;
-	aoo_user_glob += "\\openoffice\\?\\user\\uno_packages\\cache"
-	                 "\\uno_packages\\*\\*.oxt\\";
-#else
-	return out;
-#endif
-	// finish adding Apache OpenOffice user path dicts (Linux and Windows)
-	Globber g(aoo_user_glob + "dict*");
-	out = g.copy_glob_paths(out);
-
-	g.glob(aoo_user_glob + "*.aff");
-	string path_str;
-	for (auto& path : g) {
-		path_str = path;
-		path_str.erase(path_str.rfind(DIRSEP));
-		*out = path_str;
-		++out;
-	}
-	return out;
-}
-
-/**
- * @brief Adds the OpenOffice directory paths which may containt dictionaries.
- */
-auto Finder::add_openoffice_dir_paths() -> void
-{
-	get_openoffice_paths(back_inserter(paths));
-}
+auto Finder::add_openoffice_dir_paths() -> void {}
 
 /**
  * @brief Searches directory for dictionaries.
  *
  * @param dir directory path.
- * @param out output iter where to append the found dictionary names.
- * @return end of the output range
+ * @param out vector where to append the found dictionary names.
  */
-template <class OutIt>
-auto search_path_for_dicts(const string& dir, OutIt out) -> OutIt
+auto static search_path_for_dicts(const string& dir,
+                                  vector<pair<string, string>>& out) -> void
 {
 	Directory d;
-	if (d.open(dir) == false) {
-		return out;
-	}
+	if (d.open(dir) == false)
+		return;
+
 	unordered_set<string> dics;
 	string file_name;
-	while (d.next()) { // Ideally process file names in alphabetical
-		           // order, output is now:
-		// nl_BE	/usr/share/hunspell/nl_BE
-		// en_US	/usr/share/hunspell/en_US
-		// nl_NL	/usr/share/hunspell/nl_NL
-		// en_GB	/usr/share/hunspell/en_GB
+	while (d.next()) {
 		file_name = d.entry_name();
 		auto sz = file_name.size();
-		if (sz < 4) {
+		if (sz < 4)
 			continue;
-		}
+
 		if (file_name.compare(sz - 4, 4, ".dic") == 0) {
 			dics.insert(file_name);
 			file_name.replace(sz - 4, 4, ".aff");
 			if (dics.count(file_name)) {
 				file_name.erase(sz - 4);
 				auto full_path = dir + DIRSEP + file_name;
-				*out = make_pair(file_name, full_path);
-				out++;
+				out.emplace_back(file_name, full_path);
 			}
 		}
 		else if (file_name.compare(sz - 4, 4, ".aff") == 0) {
@@ -621,12 +436,10 @@ auto search_path_for_dicts(const string& dir, OutIt out) -> OutIt
 			if (dics.count(file_name)) {
 				file_name.erase(sz - 4);
 				auto full_path = dir + DIRSEP + file_name;
-				*out = make_pair(file_name, full_path);
-				out++;
+				out.emplace_back(file_name, full_path);
 			}
 		}
 	}
-	return out;
 }
 
 /**
@@ -636,7 +449,7 @@ auto Finder::search_for_dictionaries() -> void
 {
 	dictionaries.clear();
 	for (auto& path : paths) {
-		search_path_for_dicts(path, back_inserter(dictionaries));
+		search_path_for_dicts(path, dictionaries);
 	}
 	stable_sort(dictionaries.begin(), dictionaries.end(),
 	            [](auto& a, auto& b) { return a.first < b.first; });
@@ -650,9 +463,7 @@ auto Finder::search_all_dirs_for_dicts() -> Finder
 {
 	auto ret = Finder();
 	ret.add_default_dir_paths();
-	ret.add_mozilla_dir_paths();
 	ret.add_libreoffice_dir_paths();
-	ret.add_openoffice_dir_paths();
 	ret.search_for_dictionaries();
 	return ret;
 }

@@ -341,7 +341,7 @@ TEST_CASE("split_on_any_of", "[string_utils]")
 	auto in = string("^abc;.qwe/zxc/");
 	auto exp = vector<string>{"", "abc", "", "qwe", "zxc", ""};
 	auto out = vector<string>();
-	split_on_any_of(in, ".;^/", back_inserter(out));
+	split_on_any_of(in, ".;^/", out);
 	CHECK(exp == out);
 }
 

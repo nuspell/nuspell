@@ -39,9 +39,9 @@ class Finder {
 	using const_iterator = Dict_List::const_iterator;
 
 	auto add_default_dir_paths() -> void;
-	auto add_mozilla_dir_paths() -> void;
+	[[deprecated]] auto add_mozilla_dir_paths() -> void;
 	auto add_libreoffice_dir_paths() -> void;
-	auto add_openoffice_dir_paths() -> void;
+	[[deprecated]] auto add_openoffice_dir_paths() -> void;
 	auto search_for_dictionaries() -> void;
 
 	auto static search_all_dirs_for_dicts() -> Finder;

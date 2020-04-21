@@ -26,8 +26,11 @@
 
 #include "structures.hxx"
 
-#include <locale>
 #include <clocale>
+#include <locale>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) ||               \
                          (defined(__APPLE__) && defined(__MACH__)))
@@ -188,20 +191,18 @@ class Setlocale_To_C_In_Scope {
  *
  * @param s string to split.
  * @param sep seperator(s) to split on.
- * @param out start of the output range where separated strings are
- * appended.
- * @return The end of the output range where separated strings are appended.
+ * @param out vector where separated strings are appended.
+ * @return @p out.
  */
-template <class CharT, class SepT, class OutIt>
-auto split_on_any_of(const std::basic_string<CharT>& s, const SepT& sep,
-                     OutIt out)
+template <class SepT>
+auto& split_on_any_of(const std::string& s, const SepT& sep,
+                      std::vector<std::string>& out)
 {
-	using size_type = typename std::basic_string<CharT>::size_type;
-	size_type i1 = 0;
-	size_type i2;
+	size_t i1 = 0;
+	size_t i2;
 	do {
 		i2 = s.find_first_of(sep, i1);
-		*out++ = s.substr(i1, i2 - i1);
+		out.push_back(s.substr(i1, i2 - i1));
 		i1 = i2 + 1; // we can only add +1 if sep is single char.
 
 		// i2 gets s.npos after the last separator.
@@ -217,12 +218,11 @@ auto split_on_any_of(const std::basic_string<CharT>& s, const SepT& sep,
  *
  * @param s string to split.
  * @param sep char that acts as separator to split on.
- * @param out start of the output range where separated strings are
- * appended.
- * @return The iterator that indicates the end of the output range.
+ * @param out vector where separated strings are appended.
+ * @return @p out.
  */
-template <class CharT, class OutIt>
-auto split(const std::basic_string<CharT>& s, CharT sep, OutIt out)
+inline auto& split(const std::string& s, char sep,
+                   std::vector<std::string>& out)
 {
 	return split_on_any_of(s, sep, out);
 }
