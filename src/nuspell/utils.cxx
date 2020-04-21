@@ -18,6 +18,7 @@
 
 #include "utils.hxx"
 
+#include <algorithm>
 #include <limits>
 
 #include <boost/locale/utf8_codecvt.hpp>
@@ -37,18 +38,60 @@
 namespace nuspell {
 using namespace std;
 
-#ifdef __GNUC__
-#define likely(expr) __builtin_expect(!!(expr), 1)
-#define unlikely(expr) __builtin_expect(!!(expr), 0)
-#else
-#define likely(expr) (expr)
-#define unlikely(expr) (expr)
-#endif
+template <class SepT>
+static auto& split_on_any_of_low(const std::string& s, const SepT& sep,
+                                 std::vector<std::string>& out)
+{
+	size_t i1 = 0;
+	size_t i2;
+	do {
+		i2 = s.find_first_of(sep, i1);
+		out.push_back(s.substr(i1, i2 - i1));
+		i1 = i2 + 1; // we can only add +1 if sep is single char.
+
+		// i2 gets s.npos after the last separator.
+		// Length of i2-i1 will always go past the end. That is defined.
+	} while (i2 != s.npos);
+	return out;
+}
+
+/**
+ * @brief Splits string on single char seperator.
+ *
+ * Consecutive separators are treated as separate and will emit empty strings.
+ *
+ * @param s string to split.
+ * @param sep char that acts as separator to split on.
+ * @param out vector where separated strings are appended.
+ * @return @p out.
+ */
+auto split(const std::string& s, char sep, std::vector<std::string>& out)
+    -> std::vector<std::string>&
+{
+	return split_on_any_of_low(s, sep, out);
+}
+
+/**
+ * @brief Splits string on set of single char seperators.
+ *
+ * Consecutive separators are treated as separate and will emit empty strings.
+ *
+ * @param s string to split.
+ * @param sep seperator(s) to split on.
+ * @param out vector where separated strings are appended.
+ * @return @p out.
+ */
+auto split_on_any_of(const std::string& s, const char* sep,
+                     std::vector<std::string>& out) -> std::vector<std::string>&
+{
+	return split_on_any_of_low(s, sep, out);
+}
 
 enum class Utf_Error_Handling { ALWAYS_VALID, REPLACE, SKIP };
 
 template <Utf_Error_Handling eh, class InChar, class OutContainer>
-auto utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out) -> bool
+auto static utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out)
+    -> bool
 {
 	using OutChar = typename OutContainer::value_type;
 	using namespace boost::locale::utf;
@@ -99,15 +142,15 @@ auto utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out) -> bool
 }
 
 template <class InChar, class OutContainer>
-auto valid_utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out)
-    -> void
+auto static valid_utf_to_utf(const std::basic_string<InChar>& in,
+                             OutContainer& out) -> void
 {
 	utf_to_utf<Utf_Error_Handling::ALWAYS_VALID>(in, out);
 }
 
 template <class InChar, class OutContainer>
-auto utf_to_utf_my(const std::basic_string<InChar>& in, OutContainer& out)
-    -> bool
+auto static utf_to_utf_my(const std::basic_string<InChar>& in,
+                          OutContainer& out) -> bool
 {
 	return utf_to_utf<Utf_Error_Handling::REPLACE>(in, out);
 }
@@ -157,15 +200,17 @@ bool utf8_to_16(const std::string& in, std::u16string& out)
 	return utf_to_utf_my(in, out);
 }
 
-auto is_ascii(char c) -> bool { return static_cast<unsigned char>(c) <= 127; }
+auto static is_ascii(char c) -> bool
+{
+	return static_cast<unsigned char>(c) <= 127;
+}
 
 auto is_all_ascii(const std::string& s) -> bool
 {
 	return all_of(begin(s), end(s), is_ascii);
 }
 
-template <class CharT>
-auto widen_latin1(char c) -> CharT
+auto static widen_latin1(char c) -> char16_t
 {
 	return static_cast<unsigned char>(c);
 }
@@ -179,10 +224,10 @@ auto latin1_to_ucs2(const std::string& s) -> std::u16string
 auto latin1_to_ucs2(const std::string& s, std::u16string& out) -> void
 {
 	out.resize(s.size());
-	transform(begin(s), end(s), begin(out), widen_latin1<char16_t>);
+	transform(begin(s), end(s), begin(out), widen_latin1);
 }
 
-auto is_surrogate_pair(char16_t c) -> bool
+auto static is_surrogate_pair(char16_t c) -> bool
 {
 	return 0xD800 <= c && c <= 0xDFFF;
 }
@@ -518,8 +563,58 @@ auto Encoding_Converter::to_wide(const string& in) -> wstring
 	return out;
 }
 
-auto count_appereances_of(const wstring& haystack, const wstring& needles)
-    -> size_t
+auto replace_char(wstring& s, wchar_t from, wchar_t to) -> void
+{
+	for (auto i = s.find(from); i != s.npos; i = s.find(from, i + 1)) {
+		s[i] = to;
+	}
+}
+
+auto erase_chars(wstring& s, wstring_view erase_chars) -> void
+{
+	if (erase_chars.empty())
+		return;
+	auto is_erasable = [&](auto c) {
+		return erase_chars.find(c) != erase_chars.npos;
+	};
+	auto it = remove_if(begin(s), end(s), is_erasable);
+	s.erase(it, end(s));
+	return;
+}
+
+/**
+ * @brief Tests if word is a number.
+ *
+ * Allow numbers with dots ".", dashes "-" and commas ",", but forbids double
+ * separators such as "..", "--" and ".,".  This implementation increases
+ * performance over the regex implementation in the standard library.
+ */
+auto is_number(wstring_view s) -> bool
+{
+	if (s.empty())
+		return false;
+
+	auto it = begin(s);
+	if (s[0] == '-')
+		++it;
+	while (it != end(s)) {
+		auto next = std::find_if(
+		    it, end(s), [](auto c) { return c < '0' || c > '9'; });
+		if (next == it)
+			return false;
+		if (next == end(s))
+			return true;
+		it = next;
+		auto c = *it;
+		if (c == '.' || c == ',' || c == '-')
+			++it;
+		else
+			return false;
+	}
+	return false;
+}
+
+auto count_appereances_of(wstring_view haystack, wstring_view needles) -> size_t
 {
 	return std::count_if(begin(haystack), end(haystack), [&](auto c) {
 		return needles.find(c) != needles.npos;

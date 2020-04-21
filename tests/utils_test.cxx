@@ -24,13 +24,6 @@
 using namespace std;
 using namespace nuspell;
 
-TEST_CASE("is_ascii", "[locale_utils]")
-{
-	CHECK(is_ascii('a'));
-	CHECK(is_ascii('\t'));
-	CHECK_FALSE(is_ascii('\x80'));
-}
-
 TEST_CASE("is_all_ascii", "[locale_utils]")
 {
 	CHECK(is_all_ascii(""));
@@ -347,63 +340,63 @@ TEST_CASE("split_on_any_of", "[string_utils]")
 
 TEST_CASE("is_number", "[string_utils]")
 {
-	CHECK_FALSE(is_number(""s));
-	CHECK_FALSE(is_number("a"s));
-	CHECK_FALSE(is_number("1a"s));
-	CHECK_FALSE(is_number("a1"s));
-	CHECK_FALSE(is_number(".a"s));
-	CHECK_FALSE(is_number("a."s));
-	CHECK_FALSE(is_number(",a"s));
-	CHECK_FALSE(is_number("a,"s));
-	CHECK_FALSE(is_number("-a"s));
-	CHECK_FALSE(is_number("a-"s));
+	CHECK_FALSE(is_number(L""));
+	CHECK_FALSE(is_number(L"a"));
+	CHECK_FALSE(is_number(L"1a"));
+	CHECK_FALSE(is_number(L"a1"));
+	CHECK_FALSE(is_number(L".a"));
+	CHECK_FALSE(is_number(L"a."));
+	CHECK_FALSE(is_number(L",a"));
+	CHECK_FALSE(is_number(L"a,"));
+	CHECK_FALSE(is_number(L"-a"));
+	CHECK_FALSE(is_number(L"a-"));
 
-	CHECK_FALSE(is_number("1..1"s));
-	CHECK_FALSE(is_number("1.,1"s));
-	CHECK_FALSE(is_number("1.-1"s));
-	CHECK_FALSE(is_number("1,.1"s));
-	CHECK_FALSE(is_number("1,,1"s));
-	CHECK_FALSE(is_number("1,-1"s));
-	CHECK_FALSE(is_number("1-.1"s));
-	CHECK_FALSE(is_number("1-,1"s));
-	CHECK_FALSE(is_number("1--1"s));
+	CHECK_FALSE(is_number(L"1..1"));
+	CHECK_FALSE(is_number(L"1.,1"));
+	CHECK_FALSE(is_number(L"1.-1"));
+	CHECK_FALSE(is_number(L"1,.1"));
+	CHECK_FALSE(is_number(L"1,,1"));
+	CHECK_FALSE(is_number(L"1,-1"));
+	CHECK_FALSE(is_number(L"1-.1"));
+	CHECK_FALSE(is_number(L"1-,1"));
+	CHECK_FALSE(is_number(L"1--1"));
 
-	CHECK(is_number("1,1111"s));
-	CHECK(is_number("-1,1111"s));
-	CHECK(is_number("1,1111.00"s));
-	CHECK(is_number("-1,1111.00"s));
-	CHECK(is_number("1.1111"s));
-	CHECK(is_number("-1.1111"s));
-	CHECK(is_number("1.1111,00"s));
-	CHECK(is_number("-1.1111,00"s));
+	CHECK(is_number(L"1,1111"));
+	CHECK(is_number(L"-1,1111"));
+	CHECK(is_number(L"1,1111.00"));
+	CHECK(is_number(L"-1,1111.00"));
+	CHECK(is_number(L"1.1111"));
+	CHECK(is_number(L"-1.1111"));
+	CHECK(is_number(L"1.1111,00"));
+	CHECK(is_number(L"-1.1111,00"));
 
 	// below needs extra review
 
-	CHECK(is_number("1"s));
-	CHECK(is_number("-1"s));
-	CHECK_FALSE(is_number("1-"s));
+	CHECK(is_number(L"1"));
+	CHECK(is_number(L"-1"));
+	CHECK_FALSE(is_number(L"1-"));
 
-	CHECK_FALSE(is_number("1."s));
-	CHECK_FALSE(is_number("-1."s));
-	CHECK_FALSE(is_number("1.-"s));
+	CHECK_FALSE(is_number(L"1."));
+	CHECK_FALSE(is_number(L"-1."));
+	CHECK_FALSE(is_number(L"1.-"));
 
-	CHECK_FALSE(is_number("1,"s));
-	CHECK_FALSE(is_number("-1,"s));
-	CHECK_FALSE(is_number("1,-"s));
+	CHECK_FALSE(is_number(L"1,"));
+	CHECK_FALSE(is_number(L"-1,"));
+	CHECK_FALSE(is_number(L"1,-"));
 
-	CHECK(is_number("1.1"s));
-	CHECK(is_number("-1.1"s));
-	CHECK_FALSE(is_number("1.1-"s));
+	CHECK(is_number(L"1.1"));
+	CHECK(is_number(L"-1.1"));
+	CHECK_FALSE(is_number(L"1.1-"));
 
-	CHECK(is_number("1,1"s));
-	CHECK(is_number("-1,1"s));
-	CHECK_FALSE(is_number("1,1-"s));
+	CHECK(is_number(L"1,1"));
+	CHECK(is_number(L"-1,1"));
+	CHECK_FALSE(is_number(L"1,1-"));
 
-	CHECK_FALSE(is_number(".1"s));
-	CHECK_FALSE(is_number("-.1"s));
-	CHECK_FALSE(is_number(".1-"s));
+	CHECK_FALSE(is_number(L".1"));
+	CHECK_FALSE(is_number(L"-.1"));
+	CHECK_FALSE(is_number(L".1-"));
 
-	CHECK_FALSE(is_number(",1"s));
-	CHECK_FALSE(is_number("-,1"s));
-	CHECK_FALSE(is_number(",1-"s));
+	CHECK_FALSE(is_number(L",1"));
+	CHECK_FALSE(is_number(L"-,1"));
+	CHECK_FALSE(is_number(L",1-"));
 }

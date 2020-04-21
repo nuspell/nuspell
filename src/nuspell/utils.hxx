@@ -24,8 +24,6 @@
 #ifndef NUSPELL_UTILS_HXX
 #define NUSPELL_UTILS_HXX
 
-#include "structures.hxx"
-
 #include <clocale>
 #include <locale>
 #include <string>
@@ -39,9 +37,23 @@
 
 #include <unicode/locid.h>
 
+#ifdef __GNUC__
+#define likely(expr) __builtin_expect(!!(expr), 1)
+#define unlikely(expr) __builtin_expect(!!(expr), 0)
+#else
+#define likely(expr) (expr)
+#define unlikely(expr) (expr)
+#endif
+
 struct UConverter; // unicode/ucnv.h
 
 namespace nuspell {
+
+auto split(const std::string& s, char sep, std::vector<std::string>& out)
+    -> std::vector<std::string>&;
+auto split_on_any_of(const std::string& s, const char* sep,
+                     std::vector<std::string>& out)
+    -> std::vector<std::string>&;
 
 auto wide_to_utf8(const std::wstring& in, std::string& out) -> void;
 auto wide_to_utf8(const std::wstring& in) -> std::string;
@@ -52,7 +64,6 @@ auto utf8_to_wide(const std::string& in) -> std::wstring;
 auto utf8_to_16(const std::string& in) -> std::u16string;
 auto utf8_to_16(const std::string& in, std::u16string& out) -> bool;
 
-auto is_ascii(char c) -> bool;
 auto is_all_ascii(const std::string& s) -> bool;
 
 auto latin1_to_ucs2(const std::string& s) -> std::u16string;
@@ -184,107 +195,11 @@ class Setlocale_To_C_In_Scope {
 };
 #endif
 
-/**
- * @brief Splits string on set of single char seperators.
- *
- * Consecutive separators are treated as separate and will emit empty strings.
- *
- * @param s string to split.
- * @param sep seperator(s) to split on.
- * @param out vector where separated strings are appended.
- * @return @p out.
- */
-template <class SepT>
-auto& split_on_any_of(const std::string& s, const SepT& sep,
-                      std::vector<std::string>& out)
-{
-	size_t i1 = 0;
-	size_t i2;
-	do {
-		i2 = s.find_first_of(sep, i1);
-		out.push_back(s.substr(i1, i2 - i1));
-		i1 = i2 + 1; // we can only add +1 if sep is single char.
-
-		// i2 gets s.npos after the last separator.
-		// Length of i2-i1 will always go past the end. That is defined.
-	} while (i2 != s.npos);
-	return out;
-}
-
-/**
- * @brief Splits string on single char seperator.
- *
- * Consecutive separators are treated as separate and will emit empty strings.
- *
- * @param s string to split.
- * @param sep char that acts as separator to split on.
- * @param out vector where separated strings are appended.
- * @return @p out.
- */
-inline auto& split(const std::string& s, char sep,
-                   std::vector<std::string>& out)
-{
-	return split_on_any_of(s, sep, out);
-}
-
-template <class CharT>
-auto& erase_chars(std::basic_string<CharT>& s,
-                  const std::basic_string<CharT>& erase_chars)
-{
-	if (erase_chars.empty())
-		return s;
-	auto is_erasable = [&](CharT c) {
-		return erase_chars.find(c) != erase_chars.npos;
-	};
-	auto it = remove_if(begin(s), end(s), is_erasable);
-	s.erase(it, end(s));
-	return s;
-}
-
-template <class CharT>
-auto& replace_char(std::basic_string<CharT>& s, CharT from, CharT to)
-{
-	for (auto i = s.find(from); i != s.npos; i = s.find(from, i + 1)) {
-		s[i] = to;
-	}
-	return s;
-}
-
-/**
- * @brief Tests if word is a number.
- *
- * Allow numbers with dots ".", dashes "-" and commas ",", but forbids double
- * separators such as "..", "--" and ".,".  This implementation increases
- * performance over the regex implementation in the standard library.
- */
-template <class CharT>
-auto is_number(const std::basic_string<CharT>& s) -> bool
-{
-	if (s.empty())
-		return false;
-
-	auto it = begin(s);
-	if (s[0] == '-')
-		++it;
-	while (it != end(s)) {
-		auto next = find_if(it, end(s),
-		                    [](auto c) { return c < '0' || c > '9'; });
-		if (next == it)
-			return false;
-		if (next == end(s))
-			return true;
-		it = next;
-		auto c = *it;
-		if (c == '.' || c == ',' || c == '-')
-			++it;
-		else
-			return false;
-	}
-	return false;
-}
-
-auto count_appereances_of(const std::wstring& haystack,
-                          const std::wstring& needles) -> size_t;
+auto replace_char(std::wstring& s, wchar_t from, wchar_t to) -> void;
+auto erase_chars(std::wstring& s, std::wstring_view erase_chars) -> void;
+auto is_number(std::wstring_view s) -> bool;
+auto count_appereances_of(std::wstring_view haystack, std::wstring_view needles)
+    -> size_t;
 
 auto inline begins_with(std::wstring_view haystack, std::wstring_view needle)
     -> bool
@@ -309,6 +224,5 @@ auto end_ptr(T& x)
 {
 	return x.data() + x.size();
 }
-
 } // namespace nuspell
 #endif // NUSPELL_UTILS_HXX
