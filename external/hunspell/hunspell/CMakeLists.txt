@@ -6,4 +6,4 @@ add_library(hunspell STATIC affentry.cxx affentry.hxx affixmgr.cxx affixmgr.hxx
     phonet.cxx phonet.hxx replist.cxx replist.hxx
     suggestmgr.cxx suggestmgr.hxx utf_info.hxx w_char.hxx)
 target_compile_definitions(hunspell PUBLIC HUNSPELL_STATIC)
-target_include_directories(hunspell INTERFACE ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(hunspell INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/..)
