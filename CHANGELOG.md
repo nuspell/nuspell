@@ -6,6 +6,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2020-05-04
+### Changed
+- Updated description in README. Packagers are encouraged to update it in their
+  packages.
+- Moved Hunspell files from the directory "src" into the directory named
+  "external" to clarify that it is third-party dependency. Previously, some
+  packagers confused Hunspell's license notices as part of Nuspell. Hunspell is
+  used only for testing and it is not part of the main program.
+
+### Fixed
+- Fixed bugs on FreeBSD and other BSDs related to encoding conversions. Now
+  all tests pass on FreeBSD and the support for it is not experimental anymore.
+- Fixed compiling on NetBSD.
+
 ## [3.1.0] - 2020-04-07
 ### Added
 - Add so called hidden homonym feature. This feature enables words in mixed case
@@ -98,7 +112,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v3.1.1...HEAD
+[3.1.1]: https://github.com/nuspell/nuspell/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/nuspell/nuspell/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/nuspell/nuspell/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/nuspell/nuspell/compare/v2.2.0...v2.3.0

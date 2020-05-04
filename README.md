@@ -1,21 +1,23 @@
 # About Nuspell
 
-Nuspell is a free and open source spell checker library and command-line
-program designed for languages with rich morphology and complex word
-compounding. Nuspell is a pure C++ re-implementation of Hunspell.
+Nuspell is a fast and safe spelling checker software program. It is designed
+for languages with rich morphology and complex word compounding.
+Nuspell is written in modern C++ and it supports Hunspell dictionaries.
 
-Main features of Nuspell spell checker:
+Main features of Nuspell spelling checker:
 
-  - Full unicode support backed by ICU
-  - Backward compatibility with Hunspell dictionary file format
+  - Provides software library and command-line tool.
+  - Suggests high-quality spelling corrections.
+  - Backward compatibility with Hunspell dictionary file format.
+  - Up to 3 times faster than Hunspell.
+  - Full Unicode support backed by ICU.
   - Twofold affix stripping (for agglutinative languages, like Azeri,
-    Basque, Estonian, Finnish, Hungarian, Turkish, etc.)
-  - Support complex compounds (for example, Hungarian, German and Dutch)
-  - Support language specific features (for example, special casing of
-    Azeri and Turkish dotted i, or German sharp s)
-  - Handle conditional affixes, circumfixes, fogemorphemes, forbidden
-    words, pseudoroots and homonyms.
-  - Free software. Licensed under GNU LGPL v3 or later.
+    Basque, Estonian, Finnish, Hungarian, Turkish, etc.).
+  - Supports complex compounds (for example, Hungarian, German and Dutch).
+  - Supports advanced features, for example: special casing rules
+    (Turkish dotted i or German sharp s), conditional affixes, circumfixes,
+    fogemorphemes, forbidden words, pseudoroots and homonyms.
+  - Free and open source software. Licensed under GNU LGPL v3 or later.
 
 # Building Nuspell
 
@@ -191,6 +193,7 @@ The src/tools directory contains ten executables after compiling.
 Sample program:
 
 ```cpp
+#include <iostream>
 #include <nuspell/dictionary.hxx>
 #include <nuspell/finder.hxx>
 
@@ -226,9 +229,9 @@ int main()
 On the command line you can link like this:
 
 ```bash
-g++ example.cxx -lnuspell -licuuc -licudata
+g++ example.cxx -std=c++17 -lnuspell -licuuc -licudata
 # or better, use pkg-config
-g++ example.cxx $(pkg-config --cflags --libs nuspell)
+g++ example.cxx -std=c++17 $(pkg-config --cflags --libs nuspell)
 ```
 
 Within Cmake you can use `find_package()` to link. For example:
