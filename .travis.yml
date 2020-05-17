@@ -4,6 +4,7 @@ dist: bionic
 os:
 - linux
 - osx
+- freebsd
 
 env:
   global:
@@ -65,6 +66,10 @@ install:
     BUILD_ARGS+=" -- -j 4"                 #parallel build
   fi
 - |
+  if [ "$TRAVIS_OS_NAME" = freebsd ]; then
+    export CMAKE_BUILD_PARALLEL_LEVEL=4
+  fi
+- |
   if [ "$TRAVIS_OS_NAME" = windows ]; then
     CONFIGURE_ARGS+=" -DCMAKE_TOOLCHAIN_FILE=../vcpkg-export/scripts/buildsystems/vcpkg.cmake -A Win32"
   fi
@@ -87,3 +92,7 @@ addons:
     packages:
     - icu4c
     - boost
+  pkg:
+    packages:
+    - icu
+    - boost-libs
