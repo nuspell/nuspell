@@ -41,9 +41,9 @@ class Encoding {
 	enum Enc_Type { SINGLEBYTE = false, UTF8 = true };
 
 	Encoding() = default;
-	Encoding(const std::string& e) : name(e) { normalize_name(); }
-	Encoding(std::string&& e) : name(move(e)) { normalize_name(); }
-	Encoding(const char* e) : name(e) { normalize_name(); }
+	explicit Encoding(const std::string& e) : name(e) { normalize_name(); }
+	explicit Encoding(std::string&& e) : name(move(e)) { normalize_name(); }
+	explicit Encoding(const char* e) : name(e) { normalize_name(); }
 	auto& operator=(const std::string& e)
 	{
 		name = e;
@@ -63,7 +63,6 @@ class Encoding {
 		return *this;
 	}
 	auto empty() const { return name.empty(); }
-	operator const std::string&() const { return name; }
 	auto& value() const { return name; }
 	auto is_utf8() const { return name == "UTF-8"; }
 	auto value_or_default() const -> std::string

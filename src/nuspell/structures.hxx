@@ -100,9 +100,9 @@ class String_Set {
 	using const_reverse_iterator = typename Str::const_reverse_iterator;
 
 	String_Set() = default;
-	String_Set(const Str& s) : d(s) { sort_uniq(); }
-	String_Set(Str&& s) : d(move(s)) { sort_uniq(); }
-	String_Set(const CharT* s) : d(s) { sort_uniq(); }
+	explicit String_Set(const Str& s) : d(s) { sort_uniq(); }
+	explicit String_Set(Str&& s) : d(move(s)) { sort_uniq(); }
+	explicit String_Set(const CharT* s) : d(s) { sort_uniq(); }
 	template <class InputIterator>
 	String_Set(InputIterator first, InputIterator last) : d(first, last)
 	{
@@ -319,8 +319,14 @@ class Substr_Replacer {
 
       public:
 	Substr_Replacer() = default;
-	Substr_Replacer(const Table_Pairs& v) : table(v) { sort_uniq(); }
-	Substr_Replacer(Table_Pairs&& v) : table(move(v)) { sort_uniq(); }
+	explicit Substr_Replacer(const Table_Pairs& v) : table(v)
+	{
+		sort_uniq();
+	}
+	explicit Substr_Replacer(Table_Pairs&& v) : table(move(v))
+	{
+		sort_uniq();
+	}
 
 	auto& operator=(const Table_Pairs& v)
 	{
@@ -443,8 +449,11 @@ class Break_Table {
 
       public:
 	Break_Table() = default;
-	Break_Table(const Table_Str& v) : table(v) { order_entries(); }
-	Break_Table(Table_Str&& v) : table(move(v)) { order_entries(); }
+	explicit Break_Table(const Table_Str& v) : table(v) { order_entries(); }
+	explicit Break_Table(Table_Str&& v) : table(move(v))
+	{
+		order_entries();
+	}
 
 	auto& operator=(const Table_Str& v)
 	{
@@ -683,9 +692,18 @@ class Condition {
 
       public:
 	Condition() = default;
-	Condition(const Str& condition) : cond(condition) { construct(); }
-	Condition(Str&& condition) : cond(move(condition)) { construct(); }
-	Condition(const CharT* condition) : cond(condition) { construct(); }
+	explicit Condition(const Str& condition) : cond(condition)
+	{
+		construct();
+	}
+	explicit Condition(Str&& condition) : cond(move(condition))
+	{
+		construct();
+	}
+	explicit Condition(const CharT* condition) : cond(condition)
+	{
+		construct();
+	}
 	auto& operator=(const Str& condition)
 	{
 		cond = condition;
@@ -827,8 +845,7 @@ auto Condition<CharT>::match(const Str& s, size_t pos, size_t len) const -> bool
 }
 
 template <class CharT>
-class Prefix {
-      public:
+struct Prefix {
 	using Str = std::basic_string<CharT>;
 	using Cond = Condition<CharT>;
 	using value_type = CharT;
@@ -867,8 +884,7 @@ class Prefix {
 };
 
 template <class CharT>
-class Suffix {
-      public:
+struct Suffix {
 	using Str = std::basic_string<CharT>;
 	using Cond = Condition<CharT>;
 	using value_type = CharT;
@@ -986,18 +1002,18 @@ class Prefix_Multiset {
 
       public:
 	Prefix_Multiset() = default;
-	Prefix_Multiset(Key_Extr ke, Key_Transform kt = {})
+	explicit Prefix_Multiset(Key_Extr ke, Key_Transform kt = {})
 	    : ebo{{ke}, {kt}, {}}
 	{
 	}
-	Prefix_Multiset(const Vector_Type& v, Key_Extr ke = {},
-	                Key_Transform kt = {})
+	explicit Prefix_Multiset(const Vector_Type& v, Key_Extr ke = {},
+	                         Key_Transform kt = {})
 	    : ebo{{ke}, {kt}, v}
 	{
 		sort();
 	}
-	Prefix_Multiset(Vector_Type&& v, Key_Extr ke = {},
-	                Key_Transform kt = {})
+	explicit Prefix_Multiset(Vector_Type&& v, Key_Extr ke = {},
+	                         Key_Transform kt = {})
 	    : ebo{{ke}, {kt}, std::move(v)}
 	{
 		sort();
@@ -1082,7 +1098,7 @@ class Prefix_Multiset {
 			return old;
 		}
 		auto& operator*() const { return *it; }
-		auto operator-> () const { return &*it; }
+		auto operator->() const { return &*it; }
 		auto operator==(const Iter_Prefixes_Of& other) const
 		{
 			return valid == other.valid;
@@ -1223,7 +1239,10 @@ class Reversed_String_View {
 
       public:
 	Reversed_String_View() = default;
-	Reversed_String_View(const Str& s) : first(s.rbegin()), sz(s.size()) {}
+	explicit Reversed_String_View(const Str& s)
+	    : first(s.rbegin()), sz(s.size())
+	{
+	}
 	Reversed_String_View(Str&& s) = delete;
 	auto& operator[](size_type i) const { return first[i]; }
 	auto size() const { return sz; }
@@ -1277,8 +1296,11 @@ class Prefix_Table {
 
       public:
 	Prefix_Table() = default;
-	Prefix_Table(const Vector_Type& t) : table(t) { populate(); }
-	Prefix_Table(Vector_Type&& t) : table(std::move(t)) { populate(); }
+	explicit Prefix_Table(const Vector_Type& t) : table(t) { populate(); }
+	explicit Prefix_Table(Vector_Type&& t) : table(std::move(t))
+	{
+		populate();
+	}
 	auto& operator=(const Vector_Type& t)
 	{
 		table = t;
@@ -1326,8 +1348,11 @@ class Suffix_Table {
 
       public:
 	Suffix_Table() = default;
-	Suffix_Table(const Vector_Type& t) : table(t) { populate(); }
-	Suffix_Table(Vector_Type&& t) : table(std::move(t)) { populate(); }
+	explicit Suffix_Table(const Vector_Type& t) : table(t) { populate(); }
+	explicit Suffix_Table(Vector_Type&& t) : table(std::move(t))
+	{
+		populate();
+	}
 	auto& operator=(const Vector_Type& t)
 	{
 		table = t;
@@ -1427,11 +1452,12 @@ class Compound_Rule_Table {
 
       public:
 	Compound_Rule_Table() = default;
-	Compound_Rule_Table(const std::vector<std::u16string>& tbl) : rules(tbl)
+	explicit Compound_Rule_Table(const std::vector<std::u16string>& tbl)
+	    : rules(tbl)
 	{
 		fill_all_flags();
 	}
-	Compound_Rule_Table(std::vector<std::u16string>&& tbl)
+	explicit Compound_Rule_Table(std::vector<std::u16string>&& tbl)
 	    : rules(move(tbl))
 	{
 		fill_all_flags();
@@ -2014,8 +2040,14 @@ class Replacement_Table {
 
       public:
 	Replacement_Table() = default;
-	Replacement_Table(const Table_Str& v) : table(v) { order_entries(); }
-	Replacement_Table(Table_Str&& v) : table(move(v)) { order_entries(); }
+	explicit Replacement_Table(const Table_Str& v) : table(v)
+	{
+		order_entries();
+	}
+	explicit Replacement_Table(Table_Str&& v) : table(move(v))
+	{
+		order_entries();
+	}
 
 	auto& operator=(const Table_Str& v)
 	{
@@ -2094,7 +2126,7 @@ struct Similarity_Group {
 
 	auto parse(const Str& s) -> void;
 	Similarity_Group() = default;
-	Similarity_Group(const Str& s) { parse(s); }
+	explicit Similarity_Group(const Str& s) { parse(s); }
 	auto& operator=(const Str& s)
 	{
 		parse(s);
@@ -2144,8 +2176,14 @@ class Phonetic_Table {
 
       public:
 	Phonetic_Table() = default;
-	Phonetic_Table(const std::vector<Pair_Str>& v) : table(v) { order(); }
-	Phonetic_Table(std::vector<Pair_Str>&& v) : table(move(v)) { order(); }
+	explicit Phonetic_Table(const std::vector<Pair_Str>& v) : table(v)
+	{
+		order();
+	}
+	explicit Phonetic_Table(std::vector<Pair_Str>&& v) : table(move(v))
+	{
+		order();
+	}
 	auto& operator=(const std::vector<Pair_Str>& v)
 	{
 		table = v;

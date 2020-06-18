@@ -2058,7 +2058,7 @@ auto Dict_Base::check_compound_with_rules(
 
 auto static insert_sug_first(const wstring& word, List_WStrings& out)
 {
-		out.insert(begin(out), word);
+	out.insert(begin(out), word);
 }
 
 auto& operator|=(Dict_Base::High_Quality_Sugs& lhs,
@@ -2945,7 +2945,7 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 		if (score < -100 &&
 		    (old_num_sugs != out.size() || only_max_diff))
 			break;
-		if (any_of(begin(out), end(out), [& g = guess_word](auto& sug) {
+		if (any_of(begin(out), end(out), [&g = guess_word](auto& sug) {
 			    return g.find(sug) != g.npos;
 		    })) {
 			if (score < -100)

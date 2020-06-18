@@ -60,7 +60,8 @@ TEST_CASE("Dictionary::spell_priv suffixes", "[dictionary]")
 	d.words.emplace(L"May", u"T");
 	d.words.emplace(L"vary", u"");
 
-	d.suffixes = {{u'T', true, L"y", L"ies", Flag_Set(), L".[^aeiou]y"}};
+	d.suffixes = {{u'T', true, L"y", L"ies", Flag_Set(),
+	               Condition<wchar_t>(L".[^aeiou]y")}};
 
 	auto good = {L"berry", L"Berry", L"berries", L"BERRIES",
 	             L"May",   L"MAY",   L"vary"};
@@ -77,8 +78,10 @@ TEST_CASE("Dictionary::spell_priv complex_prefixes", "[dictionary]")
 	auto d = Dict_Test();
 
 	d.words.emplace(L"drink", u"X");
-	d.suffixes = {{u'Y', true, L"", L"s", Flag_Set(), L"."},
-	              {u'X', true, L"", L"able", Flag_Set(u"Y"), L"."}};
+	d.suffixes = {
+	    {u'Y', true, L"", L"s", Flag_Set(), Condition<wchar_t>(L".")},
+	    {u'X', true, L"", L"able", Flag_Set(u"Y"),
+	     Condition<wchar_t>(L".")}};
 
 	auto good = {L"drink", L"drinkable", L"drinkables"};
 	for (auto& g : good)
@@ -98,12 +101,14 @@ TEST_CASE("Dictionary::spell_priv extra_stripping", "[dictionary]")
 	d.words.emplace(L"aa", u"ABC");
 	d.words.emplace(L"bb", u"XYZ");
 
-	d.prefixes = {{u'A', true, L"", L"W", Flag_Set(u"B"), L"aa"},
-	              {u'B', true, L"", L"Q", Flag_Set(u"C"), L"Wa"},
-	              {u'X', true, L"b", L"1", Flag_Set(u"Y"), L"b"},
-	              {u'Z', true, L"", L"3", Flag_Set(), L"1"}};
-	d.suffixes = {{u'C', true, L"", L"E", Flag_Set(), L"a"},
-	              {u'Y', true, L"", L"2", Flag_Set(u"Z"), L"b"}};
+	d.prefixes = {
+	    {u'A', true, L"", L"W", Flag_Set(u"B"), Condition<wchar_t>(L"aa")},
+	    {u'B', true, L"", L"Q", Flag_Set(u"C"), Condition<wchar_t>(L"Wa")},
+	    {u'X', true, L"b", L"1", Flag_Set(u"Y"), Condition<wchar_t>(L"b")},
+	    {u'Z', true, L"", L"3", Flag_Set(), Condition<wchar_t>(L"1")}};
+	d.suffixes = {
+	    {u'C', true, L"", L"E", Flag_Set(), Condition<wchar_t>(L"a")},
+	    {u'Y', true, L"", L"2", Flag_Set(u"Z"), Condition<wchar_t>(L"b")}};
 	// complex strip suffix prefix prefix
 	CHECK(d.spell_priv(L"QWaaE") == true);
 	// complex strip prefix suffix prefix

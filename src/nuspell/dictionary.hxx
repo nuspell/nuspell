@@ -43,7 +43,7 @@ struct Affixing_Result_Base {
 
 	operator Word_List::const_pointer() const { return root_word; }
 	auto& operator*() const { return *root_word; }
-	auto operator-> () const { return root_word; }
+	auto operator->() const { return root_word; }
 };
 
 template <class T1 = void, class T2 = void>
@@ -83,7 +83,7 @@ struct Compounding_Result {
 	bool affixed_and_modified = {}; /**< non-zero affix */
 	operator Word_List::const_pointer() const { return word_entry; }
 	auto& operator*() const { return *word_entry; }
-	auto operator-> () const { return word_entry; }
+	auto operator->() const { return word_entry; }
 };
 
 struct Dict_Base : public Aff_Data {

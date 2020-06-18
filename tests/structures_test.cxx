@@ -61,10 +61,11 @@ TEST_CASE("String_Set::size", "[structures]")
 
 TEST_CASE("String_Set::begin end", "[structures]")
 {
-	auto ss1 = String_Set<char16_t>();
+	using U16Str_Set = String_Set<char16_t>;
+	auto ss1 = U16Str_Set();
 	ss1.insert(u"aa");
 	ss1.insert(u"bb");
-	CHECK(ss1 == u"ab");
+	CHECK(ss1 == U16Str_Set(u"ab"));
 
 	auto b = ss1.begin();
 	auto e = ss1.end();
@@ -422,7 +423,8 @@ TEST_CASE("Condition<wchar_t> real-life examples", "[structures]")
 
 TEST_CASE("Prefix", "[structures]")
 {
-	auto pfx_tests = Prefix<char>{u'U', true, "", "un", {}, "wr."};
+	auto pfx_tests =
+	    Prefix<char>{u'U', true, "", "un", {}, Condition<char>("wr.")};
 	auto word = string("unwry");
 	CHECK("wry" == pfx_tests.to_root(word));
 	CHECK("wry" == word);
@@ -445,7 +447,8 @@ TEST_CASE("Prefix", "[structures]")
 
 TEST_CASE("Suffix", "[structures]")
 {
-	auto sfx_tests = Suffix<char>{u'T', true, "y", "ies", {}, ".[^aeiou]y"};
+	auto sfx_tests = Suffix<char>{
+	    u'T', true, "y", "ies", {}, Condition<char>(".[^aeiou]y")};
 	auto word = string("wries");
 	CHECK("wry" == sfx_tests.to_root(word));
 	CHECK("wry" == word);
