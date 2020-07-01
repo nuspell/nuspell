@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.2] - 2020-07-01
+### Fixed
+- Internal refactorings that reduce function templates in `utils` and `finder`.
+
+### Changed
+- File `utils.hxx` is not installed any more. It is a private header.
+
+### Deprecated
+- Some functions for searching dictionaries in class `Finder` are deprecated as
+  they were searching in directories that no longer contain dictionaries.
+
 ## [3.1.1] - 2020-05-04
 ### Changed
 - Updated description in README. Packagers are encouraged to update it in their
@@ -112,7 +123,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v3.1.1...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v3.1.2...HEAD
+[3.1.2]: https://github.com/nuspell/nuspell/compare/v3.1.1...v3.1.2
 [3.1.1]: https://github.com/nuspell/nuspell/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/nuspell/nuspell/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/nuspell/nuspell/compare/v2.3.0...v3.0.0

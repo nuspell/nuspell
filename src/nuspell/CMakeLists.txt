@@ -7,8 +7,7 @@ utils.cxx        utils.hxx
 
 add_library(Nuspell::nuspell ALIAS nuspell)
 
-get_target_property(nuspell_headers nuspell SOURCES)
-list(FILTER nuspell_headers INCLUDE REGEX [=[.*\.hxx$]=])
+set(nuspell_headers aff_data.hxx dictionary.hxx finder.hxx structures.hxx)
 set_target_properties(nuspell PROPERTIES
     PUBLIC_HEADER "${nuspell_headers}"
     VERSION ${PROJECT_VERSION}
