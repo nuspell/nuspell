@@ -36,7 +36,6 @@
 #include <vector>
 
 #include <boost/container/small_vector.hpp>
-#include <boost/range/iterator_range_core.hpp>
 
 namespace nuspell {
 inline namespace v3 {
@@ -54,6 +53,30 @@ auto constexpr literal_choose<wchar_t>(const char*, const wchar_t* wide)
 {
 	return wide;
 }
+
+template <class It>
+class Subrange {
+	using Iter_Category =
+	    typename std::iterator_traits<It>::iterator_category;
+	It a = {};
+	It b = {};
+
+      public:
+	Subrange() = default;
+	Subrange(std::pair<It, It> p) : a(p.first), b(p.second) {}
+	Subrange(It first, It last) : a(first), b(last) {}
+	template <class Range>
+	Subrange(Range& r) : a(r.begin()), b(r.end())
+	{
+	}
+	auto begin() const -> It { return a; }
+	auto end() const -> It { return b; }
+};
+// CTAD
+template <class Range>
+Subrange(const Range& r) -> Subrange<typename Range::const_iterator>;
+template <class Range>
+Subrange(Range& r) -> Subrange<typename Range::iterator>;
 
 /**
  * @brief A Set class backed by a string. Very useful for small sets.
@@ -469,17 +492,17 @@ class Break_Table {
 		return *this;
 	}
 
-	auto start_word_breaks() const -> boost::iterator_range<const_iterator>
+	auto start_word_breaks() const -> Subrange<const_iterator>
 	{
 		return {begin(table),
 		        begin(table) + start_word_breaks_last_idx};
 	}
-	auto end_word_breaks() const -> boost::iterator_range<const_iterator>
+	auto end_word_breaks() const -> Subrange<const_iterator>
 	{
 		return {begin(table) + start_word_breaks_last_idx,
 		        begin(table) + end_word_breaks_last_idx};
 	}
-	auto middle_word_breaks() const -> boost::iterator_range<const_iterator>
+	auto middle_word_breaks() const -> Subrange<const_iterator>
 	{
 		return {begin(table) + end_word_breaks_last_idx, end(table)};
 	}
@@ -648,10 +671,7 @@ class Hash_Multiset {
 	}
 
 	auto bucket_count() const -> size_type { return data.size(); }
-	auto bucket_data(size_type i) const
-	{
-		return boost::make_iterator_range(data[i]);
-	}
+	auto bucket_data(size_type i) const { return Subrange(data[i]); }
 };
 
 struct Condition_Exception : public std::runtime_error {
@@ -2063,25 +2083,21 @@ class Replacement_Table {
 		return *this;
 	}
 
-	auto whole_word_replacements() const
-	    -> boost::iterator_range<const_iterator>
+	auto whole_word_replacements() const -> Subrange<const_iterator>
 	{
 		return {begin(table), begin(table) + whole_word_reps_last_idx};
 	}
-	auto start_word_replacements() const
-	    -> boost::iterator_range<const_iterator>
+	auto start_word_replacements() const -> Subrange<const_iterator>
 	{
 		return {begin(table) + whole_word_reps_last_idx,
 		        begin(table) + start_word_reps_last_idx};
 	}
-	auto end_word_replacements() const
-	    -> boost::iterator_range<const_iterator>
+	auto end_word_replacements() const -> Subrange<const_iterator>
 	{
 		return {begin(table) + start_word_reps_last_idx,
 		        begin(table) + end_word_reps_last_idx};
 	}
-	auto any_place_replacements() const
-	    -> boost::iterator_range<const_iterator>
+	auto any_place_replacements() const -> Subrange<const_iterator>
 	{
 		return {begin(table) + end_word_reps_last_idx, end(table)};
 	}
@@ -2293,7 +2309,6 @@ auto Phonetic_Table<CharT>::match(const Str& data, size_t i, const Str& pattern,
 template <class CharT>
 auto Phonetic_Table<CharT>::replace(Str& word) const -> bool
 {
-	using boost::make_iterator_range;
 	struct Cmp {
 		auto operator()(CharT c, const Pair_Str& s)
 		{
@@ -2312,7 +2327,7 @@ auto Phonetic_Table<CharT>::replace(Str& word) const -> bool
 	for (size_t i = 0; i != word.size(); ++i) {
 		auto rules =
 		    equal_range(begin(table), end(table), word[i], Cmp());
-		for (auto& r : make_iterator_range(rules)) {
+		for (auto& r : Subrange(rules)) {
 			auto rule = &r;
 			auto m1 = match(word, i, r.first, treat_next_as_begin);
 			if (!m1)
@@ -2321,7 +2336,7 @@ auto Phonetic_Table<CharT>::replace(Str& word) const -> bool
 				auto j = i + m1.count_matched - 1;
 				auto rules2 = equal_range(
 				    begin(table), end(table), word[j], Cmp());
-				for (auto& r2 : make_iterator_range(rules2)) {
+				for (auto& r2 : Subrange(rules2)) {
 					auto m2 =
 					    match(word, j, r2.first, false);
 					if (m2 && m2.priority >= m1.priority) {

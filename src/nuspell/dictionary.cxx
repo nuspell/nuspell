@@ -28,7 +28,6 @@
 namespace nuspell {
 
 using namespace std;
-using boost::make_iterator_range;
 
 template <class L>
 class At_Scope_Exit {
@@ -340,7 +339,7 @@ auto Dict_Base::check_simple_word(std::wstring& s,
     -> const Flag_Set*
 {
 
-	for (auto& we : make_iterator_range(words.equal_range(s))) {
+	for (auto& we : Subrange(words.equal_range(s))) {
 		auto& word_flags = we.second;
 		if (word_flags.contains(need_affix_flag))
 			continue;
@@ -505,8 +504,7 @@ auto Dict_Base::strip_prefix_only(std::wstring& word,
 		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, e);
 		if (!e.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(word_flags, e))
 				continue;
@@ -545,8 +543,7 @@ auto Dict_Base::strip_suffix_only(std::wstring& word,
 		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, e);
 		if (!e.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(word_flags, e))
 				continue;
@@ -608,8 +605,7 @@ auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<wchar_t>& pe,
 		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se);
 		if (!se.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(se, pe) &&
 			    !cross_valid_inner_outer(word_flags, pe))
@@ -676,8 +672,7 @@ auto Dict_Base::strip_sfx_then_pfx_2(const Suffix<wchar_t>& se,
 		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe);
 		if (!pe.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(pe, se) &&
 			    !cross_valid_inner_outer(word_flags, se))
@@ -748,8 +743,7 @@ auto Dict_Base::strip_pfx_then_sfx_comm_2(
 		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se);
 		if (!se.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 
 			auto valid_cross_pe_outer =
@@ -838,8 +832,7 @@ auto Dict_Base::strip_sfx_then_sfx_2(const Suffix<wchar_t>& se1,
 		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se2);
 		if (!se2.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(word_flags, se2))
 				continue;
@@ -907,8 +900,7 @@ auto Dict_Base::strip_pfx_then_pfx_2(const Prefix<wchar_t>& pe1,
 		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe2);
 		if (!pe2.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(word_flags, pe2))
 				continue;
@@ -991,8 +983,7 @@ auto Dict_Base::strip_pfx_2_sfx_3(const Prefix<wchar_t>& pe1,
 		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se2);
 		if (!se2.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(se1, pe1) &&
 			    !cross_valid_inner_outer(word_flags, pe1))
@@ -1085,8 +1076,7 @@ auto Dict_Base::strip_s_p_s_3(const Suffix<wchar_t>& se1,
 		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se2);
 		if (!se2.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(se2, pe1) &&
 			    !cross_valid_inner_outer(word_flags, pe1))
@@ -1176,8 +1166,7 @@ auto Dict_Base::strip_2_sfx_pfx_3(const Suffix<wchar_t>& se1,
 		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(pe1, se2) &&
 			    !cross_valid_inner_outer(word_flags, se2))
@@ -1264,8 +1253,7 @@ auto Dict_Base::strip_sfx_2_pfx_3(const Suffix<wchar_t>& se1,
 		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe2);
 		if (!pe2.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(pe1, se1) &&
 			    !cross_valid_inner_outer(word_flags, se1))
@@ -1357,8 +1345,7 @@ auto Dict_Base::strip_p_s_p_3(const Prefix<wchar_t>& pe1,
 		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe2);
 		if (!pe2.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(pe2, se1) &&
 			    !cross_valid_inner_outer(word_flags, se1))
@@ -1447,8 +1434,7 @@ auto Dict_Base::strip_2_pfx_sfx_3(const Prefix<wchar_t>& pe1,
 		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
-		for (auto& word_entry :
-		     make_iterator_range(dic.equal_range(word))) {
+		for (auto& word_entry : Subrange(dic.equal_range(word))) {
 			auto& word_flags = word_entry.second;
 			if (!cross_valid_inner_outer(se1, pe2) &&
 			    !cross_valid_inner_outer(word_flags, pe2))
@@ -1893,7 +1879,7 @@ auto Dict_Base::check_word_in_compound(std::wstring& word) const
 		cpd_flag = compound_last_flag;
 
 	auto range = words.equal_range(word);
-	for (auto& we : make_iterator_range(range)) {
+	for (auto& we : Subrange(range)) {
 		auto& word_flags = we.second;
 		if (word_flags.contains(need_affix_flag))
 			continue;
@@ -2004,7 +1990,7 @@ auto Dict_Base::check_compound_with_rules(
 		part.assign(word, start_pos, i - start_pos);
 		auto part1_entry = Word_List::const_pointer();
 		auto range = words.equal_range(part);
-		for (auto& we : make_iterator_range(range)) {
+		for (auto& we : Subrange(range)) {
 			auto& word_flags = we.second;
 			if (word_flags.contains(need_affix_flag))
 				continue;
@@ -2021,7 +2007,7 @@ auto Dict_Base::check_compound_with_rules(
 		part.assign(word, i, word.npos);
 		auto part2_entry = Word_List::const_pointer();
 		range = words.equal_range(part);
-		for (auto& we : make_iterator_range(range)) {
+		for (auto& we : Subrange(range)) {
 			auto& word_flags = we.second;
 			if (word_flags.contains(need_affix_flag))
 				continue;
