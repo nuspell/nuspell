@@ -18,7 +18,6 @@
 
 #include "dictionary.hxx"
 #include "finder.hxx"
-#include "utils.hxx"
 
 #include <fstream>
 #include <iomanip>
@@ -193,67 +192,6 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 #endif
 }
 
-class My_Dictionary : public Dictionary {
-	Hash_Multiset<string> personal;
-
-      public:
-	auto& operator=(const Dictionary& d)
-	{
-		static_cast<Dictionary&>(*this) = d;
-		return *this;
-	}
-	auto& operator=(Dictionary&& d)
-	{
-		static_cast<Dictionary&>(*this) = move(d);
-		return *this;
-	}
-	auto spell(const string& word) const
-	{
-		auto correct = Dictionary::spell(word);
-		if (correct)
-			return true;
-		auto r = personal.equal_range(word);
-		correct = r.first != r.second;
-		return correct;
-	}
-	auto parse_personal_dict(istream& in, const locale& external_locale)
-	{
-		auto word = string();
-		auto wide_word = wstring();
-		while (getline(in, word)) {
-			auto ok = utf8_to_wide(word, wide_word);
-			ok &= to_narrow(wide_word, word, external_locale);
-			if (!ok)
-				continue;
-			personal.insert(word);
-		}
-		return in.eof();
-	}
-	auto parse_personal_dict(std::string name,
-	                         const locale& external_locale)
-	{
-#ifdef _WIN32
-		auto const PATH_SEPS = "\\/";
-#else
-		auto const PATH_SEPS = '/';
-#endif
-		auto file = ifstream();
-		auto path_sep_idx = name.find_last_of(PATH_SEPS);
-		if (path_sep_idx != name.npos)
-			name.erase(0, path_sep_idx + 1);
-		name.insert(0, ".nuspell_");
-		auto home = getenv("HOME");
-		if (home) {
-			name.insert(0, "/");
-			name.insert(0, home);
-		}
-		file.open(name);
-		if (file.is_open())
-			return parse_personal_dict(file, external_locale);
-		return true;
-	}
-};
-
 /**
  * @brief Prints help information to standard output.
  *
@@ -345,7 +283,7 @@ auto list_dictionaries(const Finder& f) -> void
 }
 
 auto process_word(
-    Mode mode, const My_Dictionary& dic, const string& line, streampos pos_line,
+    Mode mode, const Dictionary& dic, const string& line, streampos pos_line,
     string::const_iterator b, string::const_iterator c, bool tellg_supported,
     string& word,
     vector<pair<string::const_iterator, string::const_iterator>>& wrong_words,
@@ -414,7 +352,7 @@ auto process_line(
 }
 
 auto whitespace_segmentation_loop(istream& in, ostream& out,
-                                  const My_Dictionary& dic, Mode mode)
+                                  const Dictionary& dic, Mode mode)
 {
 	auto line = string();
 	auto word = string();
@@ -453,8 +391,8 @@ auto whitespace_segmentation_loop(istream& in, ostream& out,
 	}
 }
 
-auto unicode_segentation_loop(istream& in, ostream& out,
-                              const My_Dictionary& dic, Mode mode)
+auto unicode_segentation_loop(istream& in, ostream& out, const Dictionary& dic,
+                              Mode mode)
 {
 	namespace b = boost::locale::boundary;
 	auto line = string();
@@ -578,10 +516,9 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
-	auto dic = My_Dictionary();
+	auto dic = Dictionary();
 	try {
 		dic = Dictionary::load_from_path(filename);
-		dic.parse_personal_dict(args.dictionary, loc);
 	}
 	catch (const Dictionary_Loading_Error& e) {
 		cerr << e.what() << '\n';

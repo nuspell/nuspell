@@ -332,13 +332,6 @@ struct Globber {
 #endif
 
 /**
- * @brief Adds the Mozilla directory paths to the list of search directories.
- * @deprecated Don't use this, Firefox does not offer unpacked dictionaries any
- * more. They are all inside archive, either in omni.ja or in extension in .xpi.
- */
-auto Finder::add_mozilla_dir_paths() -> void {}
-
-/**
  * @brief Adds the LibreOffice directory paths which may containt dictionaries.
  */
 auto Finder::add_libreoffice_dir_paths() -> void
@@ -393,12 +386,6 @@ auto Finder::add_libreoffice_dir_paths() -> void
 		paths.push_back(path_str);
 	}
 }
-
-/**
- * @brief Adds the OpenOffice directory paths to the list of search directories.
- * @deprecated Does nothing now, please switch to Libreoffice.
- */
-auto Finder::add_openoffice_dir_paths() -> void {}
 
 /**
  * @brief Searches directory for dictionaries.
