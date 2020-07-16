@@ -26,9 +26,9 @@
 
 #include <unicode/uchar.h>
 
-namespace nuspell {
-
 using namespace std;
+
+namespace nuspell {
 
 template <class L>
 class At_Scope_Exit {

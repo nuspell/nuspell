@@ -24,10 +24,19 @@
 #ifndef NUSPELL_AFF_DATA_HXX
 #define NUSPELL_AFF_DATA_HXX
 
+#include "nuspell_export.h"
 #include "structures.hxx"
 
 #include <iosfwd>
 #include <unicode/locid.h>
+
+#ifdef _MSC_VER
+#define NUSPELL_MSVC_PRAGMA_WARNING(x) __pragma(warning(x))
+#else
+#define NUSPELL_MSVC_PRAGMA_WARNING(x)
+#endif
+NUSPELL_MSVC_PRAGMA_WARNING(push)
+NUSPELL_MSVC_PRAGMA_WARNING(disable: 4251)
 
 namespace nuspell {
 inline namespace v4 {
@@ -35,7 +44,7 @@ inline namespace v4 {
 class Encoding {
 	std::string name;
 
-	auto normalize_name() -> void;
+	NUSPELL_EXPORT auto normalize_name() -> void;
 
       public:
 	enum Enc_Type { SINGLEBYTE = false, UTF8 = true };
@@ -101,7 +110,7 @@ struct Extractor_First_of_Word_Pair {
 using Word_List = Hash_Multiset<std::pair<std::wstring, Flag_Set>, std::wstring,
                                 Extractor_First_of_Word_Pair>;
 
-struct Aff_Data {
+struct NUSPELL_EXPORT Aff_Data {
 	static constexpr auto HIDDEN_HOMONYM_FLAG = char16_t(-1);
 	static constexpr auto MAX_SUGGESTIONS = size_t(16);
 
@@ -186,5 +195,5 @@ struct Aff_Data {
 };
 } // namespace v4
 } // namespace nuspell
-
+NUSPELL_MSVC_PRAGMA_WARNING(pop)
 #endif // NUSPELL_AFF_DATA_HXX

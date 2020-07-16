@@ -30,6 +30,14 @@
 #include <utility>
 #include <vector>
 
+#ifdef _MSC_VER
+#define NUSPELL_MSVC_PRAGMA_WARNING(x) __pragma(warning(x))
+#else
+#define NUSPELL_MSVC_PRAGMA_WARNING(x)
+#endif
+NUSPELL_MSVC_PRAGMA_WARNING(push)
+NUSPELL_MSVC_PRAGMA_WARNING(disable : 4251)
+
 namespace nuspell {
 inline namespace v4 {
 class NUSPELL_EXPORT Finder {
@@ -58,5 +66,5 @@ class NUSPELL_EXPORT Finder {
 };
 } // namespace v4
 } // namespace nuspell
-
+NUSPELL_MSVC_PRAGMA_WARNING(pop)
 #endif // NUSPELL_FINDER_HXX

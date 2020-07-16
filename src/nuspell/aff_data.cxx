@@ -61,6 +61,8 @@
  * }
  */
 
+using namespace std;
+
 /**
  * @brief Library main namespace
  */
@@ -77,8 +79,6 @@ namespace nuspell {
  */
 inline namespace v4 {
 }
-
-using namespace std;
 
 auto Encoding::normalize_name() -> void
 {

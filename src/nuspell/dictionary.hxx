@@ -25,9 +25,11 @@
 #define NUSPELL_DICTIONARY_HXX
 
 #include "aff_data.hxx"
-#include "nuspell_export.h"
 
 #include <locale>
+
+NUSPELL_MSVC_PRAGMA_WARNING(push)
+NUSPELL_MSVC_PRAGMA_WARNING(disable : 4251 4275)
 
 namespace nuspell {
 inline namespace v4 {
@@ -87,7 +89,7 @@ struct Compounding_Result {
 	auto operator->() const { return word_entry; }
 };
 
-struct Dict_Base : public Aff_Data {
+struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 
 	enum Forceucase : bool {
 		FORBID_BAD_FORCEUCASE = false,
@@ -441,4 +443,5 @@ class NUSPELL_EXPORT Dictionary : private Dict_Base {
 };
 } // namespace v4
 } // namespace nuspell
+NUSPELL_MSVC_PRAGMA_WARNING(pop)
 #endif // NUSPELL_DICTIONARY_HXX

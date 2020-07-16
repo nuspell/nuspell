@@ -35,8 +35,10 @@
 #error "Basic wide execution character set is not ASCII-compatible"
 #endif
 
-namespace nuspell {
 using namespace std;
+
+namespace nuspell {
+inline namespace v4 {
 
 template <class SepT>
 static auto& split_on_any_of_low(std::string_view s, const SepT& sep,
@@ -560,7 +562,6 @@ auto classify_casing(wstring_view s) -> Casing
 	// https://www.unicode.org/versions/Unicode11.0.0/ch03.pdf
 	// See Chapter 13.3. This might be feature for ICU.
 
-	using namespace std;
 	size_t upper = 0;
 	size_t lower = 0;
 	for (auto& c : s) {
@@ -716,4 +717,5 @@ auto count_appereances_of(wstring_view haystack, wstring_view needles) -> size_t
 		return needles.find(c) != needles.npos;
 	});
 }
+} // namespace v4
 } // namespace nuspell
