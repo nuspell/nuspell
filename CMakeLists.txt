@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.8)
 project(nuspell VERSION 4.0.0)
 set(PROJECT_HOMEPAGE_URL "https://nuspell.github.io/")
 
+option(BUILD_SHARED_LIBS "Buils as shared library" ON)
+
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 

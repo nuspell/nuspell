@@ -25,6 +25,7 @@
 #define NUSPELL_DICTIONARY_HXX
 
 #include "aff_data.hxx"
+#include "nuspell_export.h"
 
 #include <locale>
 
@@ -406,7 +407,7 @@ struct Dict_Base : public Aff_Data {
 /**
  * @brief The only important public exception
  */
-class Dictionary_Loading_Error : public std::runtime_error {
+class NUSPELL_EXPORT Dictionary_Loading_Error : public std::runtime_error {
       public:
 	using std::runtime_error::runtime_error;
 };
@@ -414,7 +415,7 @@ class Dictionary_Loading_Error : public std::runtime_error {
 /**
  * @brief The only important public class
  */
-class Dictionary : private Dict_Base {
+class NUSPELL_EXPORT Dictionary : private Dict_Base {
 	std::locale external_locale;
 	bool external_locale_known_utf8;
 

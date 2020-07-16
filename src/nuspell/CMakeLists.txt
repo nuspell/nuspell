@@ -7,16 +7,21 @@ utils.cxx        utils.hxx
 
 add_library(Nuspell::nuspell ALIAS nuspell)
 
-set(nuspell_headers aff_data.hxx dictionary.hxx finder.hxx structures.hxx)
+include(GenerateExportHeader)
+generate_export_header(nuspell)
+
+set(nuspell_headers aff_data.hxx dictionary.hxx finder.hxx structures.hxx
+    {CMAKE_CURRENT_BINARY_DIR}/nuspell_export.h)
 set_target_properties(nuspell PROPERTIES
     PUBLIC_HEADER "${nuspell_headers}"
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
-    WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    CXX_VISIBILITY_PRESET hidden)
 
 target_compile_features(nuspell PUBLIC cxx_std_17)
 
 target_include_directories(nuspell
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
 target_link_libraries(nuspell PUBLIC ICU::uc ICU::data)

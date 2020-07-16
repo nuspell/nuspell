@@ -23,13 +23,16 @@
 
 #ifndef NUSPELL_FINDER_HXX
 #define NUSPELL_FINDER_HXX
+
+#include "nuspell_export.h"
+
 #include <string>
 #include <utility>
 #include <vector>
 
 namespace nuspell {
 inline namespace v4 {
-class Finder {
+class NUSPELL_EXPORT Finder {
 	using Dict_List = std::vector<std::pair<std::string, std::string>>;
 
 	std::vector<std::string> paths;
