@@ -49,9 +49,9 @@ struct UConverter; // unicode/ucnv.h
 
 namespace nuspell {
 
-auto split(const std::string& s, char sep, std::vector<std::string>& out)
+auto split(std::string_view s, char sep, std::vector<std::string>& out)
     -> std::vector<std::string>&;
-auto split_on_any_of(const std::string& s, const char* sep,
+auto split_on_any_of(std::string_view s, const char* sep,
                      std::vector<std::string>& out)
     -> std::vector<std::string>&;
 
@@ -64,20 +64,19 @@ auto utf8_to_wide(std::string_view in) -> std::wstring;
 auto utf8_to_16(std::string_view in) -> std::u16string;
 auto utf8_to_16(std::string_view in, std::u16string& out) -> bool;
 
-auto is_all_ascii(const std::string& s) -> bool;
+auto is_all_ascii(std::string_view s) -> bool;
 
-auto latin1_to_ucs2(const std::string& s) -> std::u16string;
-auto latin1_to_ucs2(const std::string& s, std::u16string& out) -> void;
+auto latin1_to_ucs2(std::string_view s) -> std::u16string;
+auto latin1_to_ucs2(std::string_view s, std::u16string& out) -> void;
 
-auto is_all_bmp(const std::u16string& s) -> bool;
+auto is_all_bmp(std::u16string_view s) -> bool;
 
-auto to_wide(const std::string& in, const std::locale& inloc, std::wstring& out)
+auto to_wide(std::string_view in, const std::locale& inloc, std::wstring& out)
     -> bool;
-auto to_wide(const std::string& in, const std::locale& inloc) -> std::wstring;
-auto to_narrow(const std::wstring& in, std::string& out,
+auto to_wide(std::string_view in, const std::locale& inloc) -> std::wstring;
+auto to_narrow(std::wstring_view in, std::string& out,
                const std::locale& outloc) -> bool;
-auto to_narrow(const std::wstring& in, const std::locale& outloc)
-    -> std::string;
+auto to_narrow(std::wstring_view in, const std::locale& outloc) -> std::string;
 
 auto to_upper_ascii(std::string& s) -> void;
 
@@ -112,7 +111,7 @@ enum class Casing : char {
 
 auto classify_casing(std::wstring_view s) -> Casing;
 
-auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i)
+auto has_uppercase_at_compound_word_boundary(std::wstring_view word, size_t i)
     -> bool;
 
 class Encoding_Converter {
@@ -139,8 +138,8 @@ class Encoding_Converter {
 		std::swap(cnv, other.cnv);
 		return *this;
 	}
-	auto to_wide(const std::string& in, std::wstring& out) -> bool;
-	auto to_wide(const std::string& in) -> std::wstring;
+	auto to_wide(std::string_view in, std::wstring& out) -> bool;
+	auto to_wide(std::string_view in) -> std::wstring;
 	auto valid() -> bool { return cnv != nullptr; }
 };
 

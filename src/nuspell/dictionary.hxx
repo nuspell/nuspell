@@ -419,11 +419,11 @@ class Dictionary : private Dict_Base {
 	bool external_locale_known_utf8;
 
 	Dictionary(std::istream& aff, std::istream& dic);
-	auto external_to_internal_encoding(const std::string& in,
+	auto external_to_internal_encoding(std::string_view in,
 	                                   std::wstring& wide_out) const
 	    -> bool;
 
-	auto internal_to_external_encoding(const std::wstring& wide_in,
+	auto internal_to_external_encoding(std::wstring_view wide_in,
 	                                   std::string& out) const -> bool;
 
       public:
@@ -434,9 +434,9 @@ class Dictionary : private Dict_Base {
 	    const std::string& file_path_without_extension) -> Dictionary;
 	auto imbue(const std::locale& loc) -> void;
 	auto imbue_utf8() -> void;
-	auto spell(const std::string& word) const -> bool;
-	auto suggest(const std::string& word,
-	             std::vector<std::string>& out) const -> void;
+	auto spell(std::string_view word) const -> bool;
+	auto suggest(std::string_view word, std::vector<std::string>& out) const
+	    -> void;
 };
 } // namespace v4
 } // namespace nuspell

@@ -39,14 +39,14 @@ namespace nuspell {
 using namespace std;
 
 template <class SepT>
-static auto& split_on_any_of_low(const std::string& s, const SepT& sep,
+static auto& split_on_any_of_low(std::string_view s, const SepT& sep,
                                  std::vector<std::string>& out)
 {
 	size_t i1 = 0;
 	size_t i2;
 	do {
 		i2 = s.find_first_of(sep, i1);
-		out.push_back(s.substr(i1, i2 - i1));
+		out.push_back(std::string(s.substr(i1, i2 - i1)));
 		i1 = i2 + 1; // we can only add +1 if sep is single char.
 
 		// i2 gets s.npos after the last separator.
@@ -65,7 +65,7 @@ static auto& split_on_any_of_low(const std::string& s, const SepT& sep,
  * @param out vector where separated strings are appended.
  * @return @p out.
  */
-auto split(const std::string& s, char sep, std::vector<std::string>& out)
+auto split(std::string_view s, char sep, std::vector<std::string>& out)
     -> std::vector<std::string>&
 {
 	return split_on_any_of_low(s, sep, out);
@@ -81,7 +81,7 @@ auto split(const std::string& s, char sep, std::vector<std::string>& out)
  * @param out vector where separated strings are appended.
  * @return @p out.
  */
-auto split_on_any_of(const std::string& s, const char* sep,
+auto split_on_any_of(std::string_view s, const char* sep,
                      std::vector<std::string>& out) -> std::vector<std::string>&
 {
 	return split_on_any_of_low(s, sep, out);
@@ -304,7 +304,7 @@ auto static is_ascii(char c) -> bool
 	return static_cast<unsigned char>(c) <= 127;
 }
 
-auto is_all_ascii(const std::string& s) -> bool
+auto is_all_ascii(std::string_view s) -> bool
 {
 	return all_of(begin(s), end(s), is_ascii);
 }
@@ -314,13 +314,13 @@ auto static widen_latin1(char c) -> char16_t
 	return static_cast<unsigned char>(c);
 }
 
-auto latin1_to_ucs2(const std::string& s) -> std::u16string
+auto latin1_to_ucs2(std::string_view s) -> std::u16string
 {
 	u16string ret;
 	latin1_to_ucs2(s, ret);
 	return ret;
 }
-auto latin1_to_ucs2(const std::string& s, std::u16string& out) -> void
+auto latin1_to_ucs2(std::string_view s, std::u16string& out) -> void
 {
 	out.resize(s.size());
 	transform(begin(s), end(s), begin(out), widen_latin1);
@@ -330,12 +330,12 @@ auto static is_surrogate_pair(char16_t c) -> bool
 {
 	return 0xD800 <= c && c <= 0xDFFF;
 }
-auto is_all_bmp(const std::u16string& s) -> bool
+auto is_all_bmp(std::u16string_view s) -> bool
 {
 	return none_of(begin(s), end(s), is_surrogate_pair);
 }
 
-auto to_wide(const std::string& in, const std::locale& loc, std::wstring& out)
+auto to_wide(std::string_view in, const std::locale& loc, std::wstring& out)
     -> bool
 {
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
@@ -385,14 +385,14 @@ auto to_wide(const std::string& in, const std::locale& loc, std::wstring& out)
 	return valid;
 }
 
-auto to_wide(const std::string& in, const std::locale& loc) -> std::wstring
+auto to_wide(std::string_view in, const std::locale& loc) -> std::wstring
 {
 	auto ret = wstring();
 	to_wide(in, loc, ret);
 	return ret;
 }
 
-auto to_narrow(const std::wstring& in, std::string& out, const std::locale& loc)
+auto to_narrow(std::wstring_view in, std::string& out, const std::locale& loc)
     -> bool
 {
 	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
@@ -439,7 +439,7 @@ auto to_narrow(const std::wstring& in, std::string& out, const std::locale& loc)
 	return valid;
 }
 
-auto to_narrow(const std::wstring& in, const std::locale& loc) -> std::string
+auto to_narrow(std::wstring_view in, const std::locale& loc) -> std::string
 {
 	auto ret = string();
 	to_narrow(in, ret, loc);
@@ -597,7 +597,7 @@ auto classify_casing(wstring_view s) -> Casing
  * @param loc
  * @return true if at least one is uppercase, false otherwise.
  */
-auto has_uppercase_at_compound_word_boundary(const std::wstring& word, size_t i)
+auto has_uppercase_at_compound_word_boundary(wstring_view word, size_t i)
     -> bool
 {
 	if (u_isupper(word[i])) {
@@ -636,7 +636,7 @@ auto Encoding_Converter::operator=(const Encoding_Converter& other)
 	return *this;
 }
 
-auto Encoding_Converter::to_wide(const string& in, wstring& out) -> bool
+auto Encoding_Converter::to_wide(string_view in, wstring& out) -> bool
 {
 	if (ucnv_getType(cnv) == UCNV_UTF8)
 		return utf8_to_wide(in, out);
@@ -652,7 +652,7 @@ auto Encoding_Converter::to_wide(const string& in, wstring& out) -> bool
 	return false;
 }
 
-auto Encoding_Converter::to_wide(const string& in) -> wstring
+auto Encoding_Converter::to_wide(string_view in) -> wstring
 {
 	auto out = wstring();
 	this->to_wide(in, out);
