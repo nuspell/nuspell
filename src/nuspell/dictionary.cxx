@@ -19,6 +19,7 @@
 #include "dictionary.hxx"
 #include "utils.hxx"
 
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>

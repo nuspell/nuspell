@@ -19,8 +19,7 @@ target_compile_features(nuspell PUBLIC cxx_std_17)
 target_include_directories(nuspell
     INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
-target_link_libraries(nuspell
-    PUBLIC Boost::boost ICU::uc ICU::data)
+target_link_libraries(nuspell PUBLIC ICU::uc ICU::data)
 
 add_executable(nuspell-bin main.cxx)
 set_target_properties(nuspell-bin PROPERTIES

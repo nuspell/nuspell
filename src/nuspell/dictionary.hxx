@@ -29,7 +29,7 @@
 #include <locale>
 
 namespace nuspell {
-inline namespace v3 {
+inline namespace v4 {
 
 enum Affixing_Mode {
 	FULL_WORD,
@@ -438,6 +438,6 @@ class Dictionary : private Dict_Base {
 	auto suggest(const std::string& word,
 	             std::vector<std::string>& out) const -> void;
 };
-} // namespace v3
+} // namespace v4
 } // namespace nuspell
 #endif // NUSPELL_DICTIONARY_HXX

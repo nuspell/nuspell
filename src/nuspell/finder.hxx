@@ -28,7 +28,7 @@
 #include <vector>
 
 namespace nuspell {
-inline namespace v3 {
+inline namespace v4 {
 class Finder {
 	using Dict_List = std::vector<std::pair<std::string, std::string>>;
 
@@ -55,7 +55,7 @@ class Finder {
 	    -> std::pair<const_iterator, const_iterator>;
 	auto get_dictionary_path(const std::string& dict) const -> std::string;
 };
-} // namespace v3
+} // namespace v4
 } // namespace nuspell
 
 #endif // NUSPELL_FINDER_HXX

@@ -35,10 +35,8 @@
 #include <utility>
 #include <vector>
 
-#include <boost/container/small_vector.hpp>
-
 namespace nuspell {
-inline namespace v3 {
+inline namespace v4 {
 #define NUSPELL_LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
 
 template <class CharT>
@@ -544,7 +542,7 @@ struct identity {
 template <class Value, class Key = Value, class KeyExtract = identity>
 class Hash_Multiset {
       private:
-	using bucket_type = boost::container::small_vector<Value, 1>;
+	using bucket_type = std::vector<Value>;
 	static constexpr float max_load_fact = 7.0 / 8.0;
 	std::vector<bucket_type> data;
 	size_t sz = 0;
@@ -648,18 +646,20 @@ class Hash_Multiset {
 		auto h_mod = h & (data.size() - 1);
 		auto& bucket = data[h_mod];
 		if (bucket.empty())
-			return {};
+			return {begin(bucket), begin(bucket)}; // ret empty
+		// return {} here  ^^^^^^^ is OK bug GCC debug iterators have
+		// this bug https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70303
 		if (bucket.size() == 1) {
 			if (key == key_extract(bucket.front()))
 				return {begin(bucket), end(bucket)};
-			return {};
+			return {begin(bucket), begin(bucket)}; // ret empty
 		}
 		auto first =
 		    std::find_if(begin(bucket), end(bucket), [&](auto& x) {
 			    return key == key_extract(x);
 		    });
 		if (first == end(bucket))
-			return {};
+			return {begin(bucket), begin(bucket)}; // ret empty
 		auto next = first + 1;
 		if (next == end(bucket) || key != key_extract(*next))
 			return {first, next};
@@ -2365,6 +2365,6 @@ auto Phonetic_Table<CharT>::replace(Str& word) const -> bool
 	}
 	return ret;
 }
-} // namespace v3
+} // namespace v4
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX

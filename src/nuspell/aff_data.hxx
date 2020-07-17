@@ -30,7 +30,7 @@
 #include <unicode/locid.h>
 
 namespace nuspell {
-inline namespace v3 {
+inline namespace v4 {
 
 class Encoding {
 	std::string name;
@@ -184,7 +184,7 @@ struct Aff_Data {
 		return false;
 	}
 };
-} // namespace v3
+} // namespace v4
 } // namespace nuspell
 
 #endif // NUSPELL_AFF_DATA_HXX

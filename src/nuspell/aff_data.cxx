@@ -75,7 +75,7 @@ namespace nuspell {
  * code. Thus, the client code directly calls the destructors of all the private
  * data members of our class Dictionary.
  */
-inline namespace v3 {
+inline namespace v4 {
 }
 
 using namespace std;
