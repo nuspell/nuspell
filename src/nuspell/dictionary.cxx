@@ -63,7 +63,7 @@ auto Dict_Base::spell_priv(std::wstring& s) const -> bool
 	input_substr_replacer.replace(s);
 
 	// triming whitespace should be part of tokenization, not here
-	// boost::trim(s, locale_aff);
+
 	if (s.empty())
 		return true;
 	bool abbreviation = s.back() == '.';
@@ -3118,7 +3118,7 @@ auto Dictionary::load_from_path(const std::string& file_path_without_extension)
 auto Dictionary::imbue(const locale& loc) -> void
 {
 	external_locale = loc;
-	external_locale_known_utf8 = is_locale_known_utf8(external_locale);
+	external_locale_known_utf8 = false;
 }
 
 /**

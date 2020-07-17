@@ -382,7 +382,8 @@ int main(int argc, char* argv[])
 		cerr << e.what() << '\n';
 		return 1;
 	}
-	dic.imbue(loc);
+	if (!use_facet<boost::locale::info>(loc).utf8())
+		dic.imbue(loc);
 
 	auto aff_name = filename + ".aff";
 	auto dic_name = filename + ".dic";

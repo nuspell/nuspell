@@ -587,7 +587,8 @@ int main(int argc, char* argv[])
 		cerr << e.what() << '\n';
 		return 1;
 	}
-	dic.imbue(loc);
+	if (!use_facet<boost::locale::info>(loc).utf8())
+		dic.imbue(loc);
 	auto loop_function = unicode_segentation_loop;
 	if (args.whitespace_segmentation)
 		loop_function = whitespace_segmentation_loop;

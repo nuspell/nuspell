@@ -21,12 +21,12 @@
 #include <algorithm>
 #include <limits>
 
-#include <boost/locale/utf8_codecvt.hpp>
-
 #include <unicode/uchar.h>
 #include <unicode/ucnv.h>
 #include <unicode/unistr.h>
 #include <unicode/ustring.h>
+#include <unicode/utf16.h>
+#include <unicode/utf8.h>
 
 #if ' ' != 32 || '.' != 46 || 'A' != 65 || 'Z' != 90 || 'a' != 97 || 'z' != 122
 #error "Basic execution character set is not ASCII"
@@ -87,37 +87,146 @@ auto split_on_any_of(const std::string& s, const char* sep,
 	return split_on_any_of_low(s, sep, out);
 }
 
+template <class CharT>
+struct UTF8_Traits {
+	static_assert(sizeof(CharT) == 1);
+
+	using String_View = std::basic_string_view<CharT>;
+
+	static constexpr size_t max_width = U8_MAX_LENGTH;
+
+	struct Encoded_CP {
+		CharT seq[max_width];
+		size_t size = 0;
+		Encoded_CP(char32_t cp) { U8_APPEND_UNSAFE(seq, size, cp); }
+	};
+	UTF8_Traits() = delete;
+	auto static decode(String_View s, size_t& i) -> int32_t
+	{
+		int32_t c;
+#if U_ICU_VERSION_MAJOR_NUM <= 60
+		auto s_ptr = s.data();
+		int32_t idx = i;
+		int32_t len = s.size();
+		U8_NEXT(s_ptr, idx, len, c);
+		i = idx;
+#else
+		auto len = s.size();
+		U8_NEXT(s, i, len, c);
+#endif
+		return c;
+	}
+	auto static is_decoded_cp_error(int32_t cp) -> bool { return cp < 0; }
+	auto static decode_valid(String_View s, size_t& i) -> int32_t
+	{
+		int32_t c;
+		U8_NEXT_UNSAFE(s, i, c);
+		return c;
+	}
+	auto static encode_valid(char32_t cp) -> Encoded_CP { return cp; }
+};
+
+template <class CharT>
+struct UTF16_Traits {
+	static_assert(sizeof(CharT) == 2);
+
+	using String_View = std::basic_string_view<CharT>;
+
+	static constexpr size_t max_width = U16_MAX_LENGTH;
+	struct Encoded_CP {
+		CharT seq[max_width];
+		size_t size = 0;
+		Encoded_CP(char32_t cp) { U16_APPEND_UNSAFE(seq, size, cp); }
+	};
+	UTF16_Traits() = delete;
+	auto static decode(String_View s, size_t& i) -> int32_t
+	{
+		auto len = s.size();
+		int32_t c;
+		U16_NEXT(s, i, len, c);
+		return c;
+	}
+	auto static is_decoded_cp_error(int32_t cp) -> bool
+	{
+		return U_IS_SURROGATE(cp);
+	}
+	auto static decode_valid(String_View s, size_t& i) -> int32_t
+	{
+		int32_t c;
+		U16_NEXT_UNSAFE(s, i, c);
+		return c;
+	}
+	auto static encode_valid(char32_t cp) -> Encoded_CP { return cp; }
+};
+
+template <class CharT>
+struct UTF32_Traits {
+	static_assert(sizeof(CharT) == 4);
+
+	using String_View = std::basic_string_view<CharT>;
+
+	static constexpr size_t max_width = 1;
+	struct Encoded_CP {
+		CharT seq[1];
+		static constexpr size_t size = 1;
+		Encoded_CP(char32_t cp) { seq[0] = cp; }
+	};
+	UTF32_Traits() = delete;
+	auto static decode(String_View s, size_t& i) -> int32_t
+	{
+		return s[i++];
+	}
+	auto static is_decoded_cp_error(int32_t cp) -> bool
+	{
+		return !(0 <= cp && cp <= 0x10ffff);
+	}
+	auto static decode_valid(String_View s, size_t& i) -> int32_t
+	{
+		return s[i++];
+	}
+	auto static encode_valid(char32_t cp) -> Encoded_CP { return cp; }
+};
+
+template <class CharT>
+struct UTF_Traits;
+
+template <>
+struct UTF_Traits<char> : UTF8_Traits<char> {
+};
+template <>
+struct UTF_Traits<char16_t> : UTF16_Traits<char16_t> {
+};
+#if U_SIZEOF_WCHAR_T == 4
+template <>
+struct UTF_Traits<wchar_t> : UTF32_Traits<wchar_t> {
+};
+#elif U_SIZEOF_WCHAR_T == 2
+template <>
+struct UTF_Traits<wchar_t> : UTF16_Traits<wchar_t> {
+};
+#endif
+
 enum class Utf_Error_Handling { ALWAYS_VALID, REPLACE, SKIP };
 
-template <Utf_Error_Handling eh, class InChar, class OutContainer>
-auto static utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out)
-    -> bool
+template <Utf_Error_Handling eh, class InChar, class OutChar>
+auto static utf_to_utf(std::basic_string_view<InChar> in,
+                       std::basic_string<OutChar>& out) -> bool
 {
-	using OutChar = typename OutContainer::value_type;
-	using namespace boost::locale::utf;
 	using UEH = Utf_Error_Handling;
-	auto constexpr max_out_width = utf_traits<OutChar>::max_width;
 
-	if (in.size() <= out.capacity() / max_out_width)
-		out.resize(in.size() * max_out_width);
-	else if (in.size() <= out.capacity())
-		out.resize(out.capacity());
-	else
-		out.resize(in.size());
-
-	auto it = begin(in);
-	auto last = end(in);
-	auto out_it = begin(out);
-	auto out_last = end(out);
+	out.clear();
+	if (in.size() > out.capacity())
+		out.reserve(in.size());
 	auto valid = true;
-	while (it != last) {
-		auto cp = code_point();
+	for (size_t i = 0; i != in.size();) {
+		auto cp = int32_t();
 		if (eh == UEH::ALWAYS_VALID) {
-			cp = utf_traits<InChar>::decode_valid(it);
+			cp = UTF_Traits<InChar>::decode_valid(in, i);
 		}
 		else {
-			cp = utf_traits<InChar>::decode(it, last);
-			if (unlikely(cp == incomplete || cp == illegal)) {
+			cp = UTF_Traits<InChar>::decode(in, i);
+			if (unlikely(
+			        UTF_Traits<InChar>::is_decoded_cp_error(cp))) {
 				valid = false;
 				if (eh == UEH::SKIP)
 					continue;
@@ -125,37 +234,27 @@ auto static utf_to_utf(const std::basic_string<InChar>& in, OutContainer& out)
 					cp = 0xFFFD;
 			}
 		}
-		auto remaining_space = out_last - out_it;
-		auto width_cp = utf_traits<OutChar>::width(cp);
-		if (unlikely(remaining_space < width_cp)) {
-			// resize
-			auto i = out_it - begin(out);
-			auto min_resize = width_cp - remaining_space;
-			out.resize(out.size() + min_resize + (last - it));
-			out_it = begin(out) + i;
-			out_last = end(out);
-		}
-		out_it = utf_traits<OutChar>::encode(cp, out_it);
+		auto encoded_cp = UTF_Traits<OutChar>::encode_valid(cp);
+		out.append(encoded_cp.seq, encoded_cp.size);
 	}
-	out.erase(out_it, end(out));
 	return valid;
 }
 
-template <class InChar, class OutContainer>
-auto static valid_utf_to_utf(const std::basic_string<InChar>& in,
-                             OutContainer& out) -> void
+template <class InChar, class OutChar>
+auto static valid_utf_to_utf(std::basic_string_view<InChar> in,
+                             std::basic_string<OutChar>& out) -> void
 {
 	utf_to_utf<Utf_Error_Handling::ALWAYS_VALID>(in, out);
 }
 
-template <class InChar, class OutContainer>
-auto static utf_to_utf_my(const std::basic_string<InChar>& in,
-                          OutContainer& out) -> bool
+template <class InChar, class OutChar>
+auto static utf_to_utf_replace_err(std::basic_string_view<InChar> in,
+                                   std::basic_string<OutChar>& out) -> bool
 {
 	return utf_to_utf<Utf_Error_Handling::REPLACE>(in, out);
 }
 
-auto wide_to_utf8(const std::wstring& in, std::string& out) -> void
+auto wide_to_utf8(std::wstring_view in, std::string& out) -> void
 {
 #if U_SIZEOF_WCHAR_T == 4
 	valid_utf_to_utf(in, out);
@@ -167,37 +266,37 @@ auto wide_to_utf8(const std::wstring& in, std::string& out) -> void
 	// On Linux where wchar_t is UTF-32, a single code unit (single wchar_t
 	// value) is also a code point and there (on Linux) we can assume all
 	// wchar_t strings are always valid.
-	utf_to_utf_my(in, out);
+	utf_to_utf_replace_err(in, out);
 #endif
 }
-auto wide_to_utf8(const std::wstring& in) -> std::string
+auto wide_to_utf8(std::wstring_view in) -> std::string
 {
 	auto out = string();
 	wide_to_utf8(in, out);
 	return out;
 }
 
-auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool
+auto utf8_to_wide(std::string_view in, std::wstring& out) -> bool
 {
-	return utf_to_utf_my(in, out);
+	return utf_to_utf_replace_err(in, out);
 }
-auto utf8_to_wide(const std::string& in) -> std::wstring
+auto utf8_to_wide(std::string_view in) -> std::wstring
 {
 	auto out = wstring();
-	utf_to_utf_my(in, out);
+	utf_to_utf_replace_err(in, out);
 	return out;
 }
 
-auto utf8_to_16(const std::string& in) -> std::u16string
+auto utf8_to_16(std::string_view in) -> std::u16string
 {
 	auto out = u16string();
-	utf_to_utf_my(in, out);
+	utf_to_utf_replace_err(in, out);
 	return out;
 }
 
-bool utf8_to_16(const std::string& in, std::u16string& out)
+bool utf8_to_16(std::string_view in, std::u16string& out)
 {
-	return utf_to_utf_my(in, out);
+	return utf_to_utf_replace_err(in, out);
 }
 
 auto static is_ascii(char c) -> bool
@@ -353,11 +452,6 @@ auto to_upper_ascii(std::string& s) -> void
 	char_type.toupper(begin_ptr(s), end_ptr(s));
 }
 
-auto is_locale_known_utf8(const locale& loc) -> bool
-{
-	return has_facet<boost::locale::utf8_codecvt<wchar_t>>(loc);
-}
-
 auto static wide_to_icu(wstring_view in) -> icu::UnicodeString
 {
 #if U_SIZEOF_WCHAR_T == 2
@@ -464,7 +558,7 @@ auto classify_casing(wstring_view s) -> Casing
 {
 	// TODO implement Default Case Detection from unicode standard
 	// https://www.unicode.org/versions/Unicode11.0.0/ch03.pdf
-	// See Chapter 13.3. This might be feature for Boost or ICU.
+	// See Chapter 13.3. This might be feature for ICU.
 
 	using namespace std;
 	size_t upper = 0;

@@ -55,14 +55,14 @@ auto split_on_any_of(const std::string& s, const char* sep,
                      std::vector<std::string>& out)
     -> std::vector<std::string>&;
 
-auto wide_to_utf8(const std::wstring& in, std::string& out) -> void;
-auto wide_to_utf8(const std::wstring& in) -> std::string;
+auto wide_to_utf8(std::wstring_view in, std::string& out) -> void;
+auto wide_to_utf8(std::wstring_view in) -> std::string;
 
-auto utf8_to_wide(const std::string& in, std::wstring& out) -> bool;
-auto utf8_to_wide(const std::string& in) -> std::wstring;
+auto utf8_to_wide(std::string_view in, std::wstring& out) -> bool;
+auto utf8_to_wide(std::string_view in) -> std::wstring;
 
-auto utf8_to_16(const std::string& in) -> std::u16string;
-auto utf8_to_16(const std::string& in, std::u16string& out) -> bool;
+auto utf8_to_16(std::string_view in) -> std::u16string;
+auto utf8_to_16(std::string_view in, std::u16string& out) -> bool;
 
 auto is_all_ascii(const std::string& s) -> bool;
 
@@ -80,8 +80,6 @@ auto to_narrow(const std::wstring& in, const std::locale& outloc)
     -> std::string;
 
 auto to_upper_ascii(std::string& s) -> void;
-
-auto is_locale_known_utf8(const std::locale& loc) -> bool;
 
 [[nodiscard]] auto to_upper(std::wstring_view in, const icu::Locale& loc)
     -> std::wstring;
