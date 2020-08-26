@@ -403,11 +403,8 @@ class Aff_Line_Stream : public std::istringstream {
 			return in;
 		enc = str_buf;
 		cvt = Encoding_Converter(enc.value_or_default());
-		if (!cvt.valid()) {
+		if (!cvt.valid())
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("Invalif setting for encoding");
-		}
 		return in;
 	}
 
@@ -418,11 +415,8 @@ class Aff_Line_Stream : public std::istringstream {
 		if (in.fail()) // str_buf is unmodified on fail
 			return in;
 		auto ok = cvt.to_wide(str_buf, wstr);
-		if (!ok) {
+		if (!ok)
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("encoding conversion error");
-		}
 		return in;
 	}
 
@@ -441,11 +435,8 @@ class Aff_Line_Stream : public std::istringstream {
 			flag_type = Ft::NUMBER;
 		else if (str_buf == "UTF-8")
 			flag_type = Ft::UTF8;
-		else {
+		else
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("unknown FLAG type");
-		}
 		return in;
 	}
 
@@ -456,11 +447,8 @@ class Aff_Line_Stream : public std::istringstream {
 		if (in.fail())
 			return in;
 		loc = icu::Locale(str_buf.c_str());
-		if (loc.isBogus()) {
+		if (loc.isBogus())
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("unknown Language in LANG");
-		}
 		return in;
 	}
 
@@ -472,11 +460,8 @@ class Aff_Line_Stream : public std::istringstream {
 			return in;
 		err = decode_flags(str_buf, aff_data->flag_type,
 		                   aff_data->encoding, flags);
-		if (static_cast<int>(err) > 0) {
+		if (static_cast<int>(err) > 0)
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("Flag parsing error");
-		}
 		return in;
 	}
 
@@ -520,16 +505,10 @@ class Aff_Line_Stream : public std::istringstream {
 			flags = flag_buffer;
 		}
 		auto ok = cvt.to_wide(str_buf, word);
-		if (!ok) {
+		if (!ok)
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("Encoding error");
-		}
-		if (static_cast<int>(err) > 0) {
+		if (static_cast<int>(err) > 0)
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("Flag parsing error");
-		}
 		return in;
 	}
 
@@ -552,9 +531,6 @@ class Aff_Line_Stream : public std::istringstream {
 		catch (const Condition_Exception& ex) {
 			err = Parsing_Error_Code::AFX_CONDITION_INVALID_FORMAT;
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("Condition error, " +
-				              string(ex.what()));
 		}
 		return in;
 	}
@@ -578,16 +554,10 @@ class Aff_Line_Stream : public std::istringstream {
 				flag = flag_buffer[0];
 		}
 		auto ok = cvt.to_wide(str_buf, word);
-		if (!ok) {
+		if (!ok)
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("Encoding error");
-		}
-		if (static_cast<int>(err) > 0) {
+		if (static_cast<int>(err) > 0)
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("Flag parsing error");
-		}
 		return in;
 	}
 
@@ -605,11 +575,8 @@ class Aff_Line_Stream : public std::istringstream {
 			return in;
 		err = decode_compound_rule(str_buf, aff_data->flag_type,
 		                           aff_data->encoding, out);
-		if (static_cast<int>(err) > 0) {
+		if (static_cast<int>(err) > 0)
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw failure("Compound rule parsing error");
-		}
 		return in;
 	}
 
@@ -742,8 +709,6 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
 			return;
 		if (cross_char != 'Y' && cross_char != 'N') {
 			in.setstate(in.failbit);
-			if (in.exceptions() & in.failbit)
-				throw istream::failure("Cross char invalid");
 			return;
 		}
 		bool cross = cross_char == 'Y';
