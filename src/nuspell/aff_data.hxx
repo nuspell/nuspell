@@ -16,11 +16,6 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file
- * @brief Affixing data structures, private header.
- */
-
 #ifndef NUSPELL_AFF_DATA_HXX
 #define NUSPELL_AFF_DATA_HXX
 
@@ -84,12 +79,7 @@ class Encoding {
 	operator Enc_Type() const { return is_utf8() ? UTF8 : SINGLEBYTE; }
 };
 
-enum class Flag_Type {
-	SINGLE_CHAR /**< single-character flag, e.g. for "a" */,
-	DOUBLE_CHAR /**< double-character flag, e.g for "aa" */,
-	NUMBER /**< numerical flag, e.g. for 61 */,
-	UTF8 /**< UTF-8 flag, e.g. for "á" */
-};
+enum class Flag_Type { SINGLE_CHAR, DOUBLE_CHAR, NUMBER, UTF8 };
 
 struct Extractor_First_of_Word_Pair {
 	auto& operator()(const std::pair<std::wstring, Flag_Set>& p) const
@@ -99,6 +89,7 @@ struct Extractor_First_of_Word_Pair {
 };
 
 /**
+ * @internal
  * @brief Map between words and word_flags.
  *
  * Flags are stored as part of the container. Maybe for the future flags should

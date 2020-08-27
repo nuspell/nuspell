@@ -58,6 +58,7 @@ static auto& split_on_any_of_low(std::string_view s, const SepT& sep,
 }
 
 /**
+ * @internal
  * @brief Splits string on single char seperator.
  *
  * Consecutive separators are treated as separate and will emit empty strings.
@@ -74,6 +75,7 @@ auto split(std::string_view s, char sep, std::vector<std::string>& out)
 }
 
 /**
+ * @internal
  * @brief Splits string on set of single char seperators.
  *
  * Consecutive separators are treated as separate and will emit empty strings.
@@ -549,11 +551,12 @@ auto to_title_char_at(std::wstring& s, size_t i, const icu::Locale& loc) -> void
 }
 
 /**
+ * @internal
  * @brief Determines casing (capitalization) type for a word.
  *
  * Casing is sometimes referred to as capitalization.
  *
- * @param s word for which casing is determined.
+ * @param s word.
  * @return The casing type.
  */
 auto classify_casing(wstring_view s) -> Casing
@@ -588,14 +591,12 @@ auto classify_casing(wstring_view s) -> Casing
 }
 
 /**
+ * @internal
  * @brief Check if word[i] or word[i-1] are uppercase
  *
  * Check if the two chars are alphabetic and at least one of them is in
  * uppercase.
  *
- * @param word
- * @param i
- * @param loc
  * @return true if at least one is uppercase, false otherwise.
  */
 auto has_uppercase_at_compound_word_boundary(wstring_view word, size_t i)
@@ -680,11 +681,11 @@ auto erase_chars(wstring& s, wstring_view erase_chars) -> void
 }
 
 /**
+ * @internal
  * @brief Tests if word is a number.
  *
- * Allow numbers with dots ".", dashes "-" and commas ",", but forbids double
- * separators such as "..", "--" and ".,".  This implementation increases
- * performance over the regex implementation in the standard library.
+ * Allow numbers with dot ".", dash "-" or comma "," inbetween the digits, but
+ * forbids double separators such as "..", "--" and ".,".
  */
 auto is_number(wstring_view s) -> bool
 {

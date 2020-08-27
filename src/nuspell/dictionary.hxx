@@ -18,7 +18,7 @@
 
 /**
  * @file
- * @brief Dictionary spelling, PUBLIC HEADER.
+ * @brief Dictionary spelling.
  */
 
 #ifndef NUSPELL_DICTIONARY_HXX
@@ -132,35 +132,16 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	template <Affixing_Mode m>
 	auto is_valid_inside_compound(const Flag_Set& flags) const;
 
-	/**
-	 * @brief strip_prefix_only
-	 * @param s derived word with affixes
-	 * @return if found, root word + prefix
-	 */
 	template <Affixing_Mode m = FULL_WORD>
 	auto strip_prefix_only(std::wstring& s,
 	                       Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> Affixing_Result<Prefix<wchar_t>>;
 
-	/**
-	 * @brief strip_suffix_only
-	 * @param s derived word with affixes
-	 * @return if found, root word + suffix
-	 */
 	template <Affixing_Mode m = FULL_WORD>
 	auto strip_suffix_only(std::wstring& s,
 	                       Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> Affixing_Result<Suffix<wchar_t>>;
 
-	/**
-	 * @brief strip_prefix_then_suffix
-	 *
-	 * This accepts a derived word that was formed first by adding
-	 * suffix then prefix to the root. The stripping is in reverse.
-	 *
-	 * @param s derived word with affixes
-	 * @return if found, root word + suffix + prefix
-	 */
 	template <Affixing_Mode m = FULL_WORD>
 	auto
 	strip_prefix_then_suffix(std::wstring& s,
@@ -172,15 +153,6 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	                          Hidden_Homonym skip_hidden_homonym) const
 	    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>;
 
-	/**
-	 * @brief strip_suffix_then_prefix
-	 *
-	 * This accepts a derived word that was formed first by adding
-	 * prefix then suffix to the root. The stripping is in reverse.
-	 *
-	 * @param s derived word with prefix and suffix
-	 * @return if found, root word + prefix + suffix
-	 */
 	template <Affixing_Mode m = FULL_WORD>
 	auto
 	strip_suffix_then_prefix(std::wstring& s,

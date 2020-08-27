@@ -16,11 +16,6 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file
- * @brief Data structures, private header.
- */
-
 #ifndef NUSPELL_STRUCTURES_HXX
 #define NUSPELL_STRUCTURES_HXX
 
@@ -77,9 +72,11 @@ template <class Range>
 Subrange(Range& r) -> Subrange<typename Range::iterator>;
 
 /**
- * @brief A Set class backed by a string. Very useful for small sets.
+ * @internal
+ * @brief Class that represents set of characters.
  *
- * Has the same interface as std::set.
+ * Use this instead of std::set<char> or std::set<char16_t>.
+ * Internally it is implemented with ordered string.
  */
 template <class CharT>
 class String_Set {
@@ -679,20 +676,13 @@ struct Condition_Exception : public std::runtime_error {
 };
 
 /**
- * @brief Limited regular expression matching used in affix entries.
- *
- * This implementation increases performance over the regex implementation in
- * the standard library.
+ * @internal
+ * @brief Minimal regex used as the condition in affix entries.
  */
 template <class CharT>
 class Condition {
 	using Str = std::basic_string<CharT>;
-	enum Span_Type {
-		NORMAL /**< normal character */,
-		DOT /**< wildcard character */,
-		ANY_OF /**< set of possible characters */,
-		NONE_OF /**< set of excluding characters */
-	};
+	enum Span_Type { NORMAL, DOT, ANY_OF, NONE_OF };
 	struct Span {
 		size_t pos = {};
 		size_t len = {};
@@ -814,14 +804,6 @@ auto Condition<CharT>::construct() -> void
 	}
 }
 
-/**
- * Checks if provided string matched the condition.
- *
- * @param s string to check if it matches the condition.
- * @param pos start position for string, default is 0.
- * @param len length of string counting from the start position.
- * @return The valueof true when string matched condition.
- */
 template <class CharT>
 auto Condition<CharT>::match(const Str& s, size_t pos, size_t len) const -> bool
 {
@@ -1413,6 +1395,7 @@ class String_Pair {
       public:
 	String_Pair() = default;
 	/**
+	 * @internal
 	 * @brief Construct string pair
 	 *
 	 * Constructs a string pair from a single string containing a pair of
@@ -1672,6 +1655,7 @@ class Simple_Short_String {
 using Short_WString = Simple_Short_String<wchar_t>;
 
 /**
+ * @internal
  * @brief Vector of strings that recycles erased strings
  */
 template <class CharT>

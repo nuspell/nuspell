@@ -23,44 +23,6 @@
 #include <sstream>
 #include <unordered_map>
 
-/*
- * Aff_Data class and the method parse() should be structured in the following
- * way. The data members of the class should be data structures that are
- * useful for reading and searching operations, but are not necessarely
- * good for dynamic updates. They should be designed toward their later use
- * while spellchecking.
- *
- * On the other hand, the method parse() should fill the data in intermediate
- * data structures that are good for dynamic updates.
- *
- * E.g. In the class: it can store the affixes in a sorted vector by the key
- * on which will be searched, the adding affix. (aka flat_map)
- *
- * In method parse(): it will fill the affixes in simple unsorted vector.
- *
- * For simple stiff like simple int, flag, or for data structures that are
- * equally good for updating and reading, just parse directly into the class
- * data members.
- *
- * class Aff_data {
- *	Affix_Table affix_table;     // wraps a vector and keeps invariant
- *	                                that the vector is always sorted
- *	Substring_Replace_Table rep_table;
- * };
- *
- * parse(istream in) {
- *	vector<aff_entry> affix_table_intermediate;
- *	vector<rep_entry> rep_table_intermediate;
- *	while (getline) {
- *	...
- *		affix_table_intermediate.push_back(entry)
- *	...
- *	}
- *	At the end
- *	affix_table = move(affix_table_intermediate);
- * }
- */
-
 using namespace std;
 
 /**
@@ -69,8 +31,9 @@ using namespace std;
 namespace nuspell {
 
 /**
- * @brief inline namespace for API and ABI versioning
+ * @brief Library main namespace with version number attached
  *
+ * @internal
  * Everything that is public API gets here, and even symbols that should be
  * private at API but are called at ABI level end up here. For example, our
  * public class Dictionary has implicit destructor which gets inlined in client
@@ -747,12 +710,6 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
 
 } // namespace
 
-/**
- * Parses an input stream offering affix information.
- *
- * @param in input stream to parse from.
- * @return true on success.
- */
 auto Aff_Data::parse_aff(istream& in) -> bool
 {
 	auto prefixes = vector<Prefix<wchar_t>>();
@@ -989,9 +946,12 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 }
 
 /**
+ * @internal
  * @brief Scans @p line for morphological field [a-z][a-z]:
- * @param line
  *
+ * Scans the line for space, two lowercase alphabetic chars and colon.
+ *
+ * @param line
  * @returns the end of the word before the morph field, or npos
  */
 auto dic_find_end_of_word_heuristics(const string& line)
@@ -1016,12 +976,6 @@ auto dic_find_end_of_word_heuristics(const string& line)
 	return line.npos;
 }
 
-/**
- * Parses an input stream offering dictionary information.
- *
- * @param in input stream to read from.
- * @return true on success.
- */
 auto Aff_Data::parse_dic(istream& in) -> bool
 {
 	size_t line_number = 1;

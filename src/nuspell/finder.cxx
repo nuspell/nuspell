@@ -387,12 +387,6 @@ auto Finder::add_libreoffice_dir_paths() -> void
 	}
 }
 
-/**
- * @brief Searches directory for dictionaries.
- *
- * @param dir directory path.
- * @param out vector where to append the found dictionary names.
- */
 auto static search_path_for_dicts(const string& dir,
                                   vector<pair<string, string>>& out) -> void
 {

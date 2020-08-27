@@ -16,11 +16,6 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file
- * @brief Utilities for strings, private header.
- */
-
 #ifndef NUSPELL_UTILS_HXX
 #define NUSPELL_UTILS_HXX
 
@@ -108,14 +103,18 @@ auto to_title_char_at(std::wstring& s, size_t i, const icu::Locale& loc)
     -> void;
 
 /**
- * @brief Casing type enum, ignoring neutral case characters.
+ * @internal
+ * @brief Enum that identifies the casing type of a word.
+ *
+ * Neutral characters like numbers are ignored, so "abc" and "abc123abc" are
+ * both classified as small.
  */
 enum class Casing : char {
-	SMALL /**< all lower case or neutral case, e.g. "lowercase" or "123" */,
-	INIT_CAPITAL /**< start upper case, rest lower case, e.g. "Initcap" */,
-	ALL_CAPITAL /**< all upper case, e.g. "UPPERCASE" or "ALL4ONE" */,
-	CAMEL /**< camel case, start lower case, e.g. "camelCase" */,
-	PASCAL /**< pascal case, start upper case, e.g. "PascalCase" */
+	SMALL,
+	INIT_CAPITAL,
+	ALL_CAPITAL,
+	CAMEL /**< @internal camelCase i.e. mixed case with first small */,
+	PASCAL /**< @internal  PascalCase i.e. mixed case with first capital */
 };
 
 NUSPELL_EXPORT auto classify_casing(std::wstring_view s) -> Casing;

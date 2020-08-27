@@ -52,12 +52,6 @@ class At_Scope_Exit {
 
 #define AT_SCOPE_EXIT(...) ASE_INTERNAL2(__COUNTER__, __VA_ARGS__)
 
-/**
- * @brief Check spelling for a word.
- *
- * @param s string to check spelling for.
- * @return The spelling result.
- */
 auto Dict_Base::spell_priv(std::wstring& s) const -> bool
 {
 	// do input conversion (iconv)
@@ -94,12 +88,6 @@ auto Dict_Base::spell_priv(std::wstring& s) const -> bool
 	return ret;
 }
 
-/**
- * @brief Checks recursively the spelling according to break patterns.
- *
- * @param s string to check spelling for.
- * @return The spelling result.
- */
 auto Dict_Base::spell_break(std::wstring& s, size_t depth) const -> bool
 {
 	// check spelling accoring to case
@@ -155,12 +143,6 @@ auto Dict_Base::spell_break(std::wstring& s, size_t depth) const -> bool
 	return false;
 }
 
-/**
- * @brief Checks spelling according to casing of the provided word.
- *
- * @param s string to check spelling for.
- * @return The spelling result.
- */
 auto Dict_Base::spell_casing(std::wstring& s) const -> const Flag_Set*
 {
 	auto casing_type = classify_casing(s);
@@ -182,12 +164,6 @@ auto Dict_Base::spell_casing(std::wstring& s) const -> const Flag_Set*
 	return res;
 }
 
-/**
- * @brief Checks spelling for a word which is in all upper case.
- *
- * @param s string to check spelling for.
- * @return The flags of the corresponding dictionary word.
- */
 auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
 {
 	auto& loc = icu_locale;
@@ -243,12 +219,6 @@ auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
 	return nullptr;
 }
 
-/**
- * @brief Checks spelling for a word which is in title casing.
- *
- * @param s string to check spelling for.
- * @return The flags of the corresponding dictionary word.
- */
 auto Dict_Base::spell_casing_title(std::wstring& s) const -> const Flag_Set*
 {
 	auto& loc = icu_locale;
@@ -272,6 +242,7 @@ auto Dict_Base::spell_casing_title(std::wstring& s) const -> const Flag_Set*
 }
 
 /**
+ * @internal
  * @brief Checks german word with double SS
  *
  * Checks recursively spelling starting on a word in title or lower case which
@@ -310,16 +281,6 @@ auto Dict_Base::spell_sharps(std::wstring& base, size_t pos, size_t n,
 	return nullptr;
 }
 
-/**
- * @brief Low-level spell-cheking.
- *
- * Checks spelling for various unaffixed versions of the provided word.
- * Unaffixing is done by combinations of zero or more unsuffixing and
- * unprefixing operations.
- *
- * @param s string to check spelling for.
- * @return The flags of the corresponding dictionary word.
- */
 auto Dict_Base::check_word(std::wstring& s, Forceucase allow_bad_forceucase,
                            Hidden_Homonym skip_hidden_homonym) const
     -> const Flag_Set*
@@ -489,6 +450,12 @@ auto Dict_Base::is_valid_inside_compound(const Flag_Set& flags) const
 	return true;
 }
 
+/**
+ * @internal
+ * @brief strip_prefix_only
+ * @param s derived word with affixes
+ * @return if found, root word + prefix
+ */
 template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_only(std::wstring& word,
                                   Hidden_Homonym skip_hidden_homonym) const
@@ -526,6 +493,12 @@ auto Dict_Base::strip_prefix_only(std::wstring& word,
 	return {};
 }
 
+/**
+ * @internal
+ * @brief strip_suffix_only
+ * @param s derived word with affixes
+ * @return if found, root word + suffix
+ */
 template <Affixing_Mode m>
 auto Dict_Base::strip_suffix_only(std::wstring& word,
                                   Hidden_Homonym skip_hidden_homonym) const
@@ -565,6 +538,16 @@ auto Dict_Base::strip_suffix_only(std::wstring& word,
 	return {};
 }
 
+/**
+ * @internal
+ * @brief strip_prefix_then_suffix
+ *
+ * This accepts a derived word that was formed first by adding
+ * suffix then prefix to the root. The stripping is in reverse.
+ *
+ * @param s derived word with affixes
+ * @return if found, root word + suffix + prefix
+ */
 template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_then_suffix(
     std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
@@ -632,6 +615,16 @@ auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<wchar_t>& pe,
 	return {};
 }
 
+/**
+ * @internal
+ * @brief strip_suffix_then_prefix
+ *
+ * This accepts a derived word that was formed first by adding
+ * prefix then suffix to the root. The stripping is in reverse.
+ *
+ * @param s derived word with prefix and suffix
+ * @return if found, root word + prefix + suffix
+ */
 template <Affixing_Mode m>
 auto Dict_Base::strip_suffix_then_prefix(
     std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
