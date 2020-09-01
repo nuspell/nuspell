@@ -8,7 +8,7 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 find_package(ICU REQUIRED COMPONENTS uc data)
-find_package(Boost 1.62.0 REQUIRED COMPONENTS locale)
+find_package(Boost 1.48.0 REQUIRED COMPONENTS locale)
 
 get_directory_property(subproject PARENT_DIRECTORY)
 

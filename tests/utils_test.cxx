@@ -18,7 +18,7 @@
 
 #include <nuspell/utils.hxx>
 
-#include <boost/locale/utf8_codecvt.hpp>
+#include <boost/locale.hpp>
 #include <catch2/catch.hpp>
 
 using namespace std;
@@ -46,49 +46,82 @@ TEST_CASE("is_all_bmp", "[locale_utils]")
 	CHECK_FALSE(is_all_bmp(u"abcý \U00010001 þÿӤ"));
 }
 
-using namespace boost::locale;
+class latin1_codecvt : public codecvt<wchar_t, char, mbstate_t> {
+	using Base = codecvt<wchar_t, char, mbstate_t>;
 
-template <typename CharType>
-class latin1_codecvt
-    : public generic_codecvt<CharType, latin1_codecvt<CharType>> {
       public:
-	/* Standard codecvt constructor */
-	latin1_codecvt(size_t refs = 0)
-	    : generic_codecvt<CharType, latin1_codecvt<CharType>>(refs)
-	{
-	}
-	/* State is unused but required by generic_codecvt */
-	struct state_type {
-	};
-	state_type initial_state(
-	    generic_codecvt_base::initial_convertion_state /*unused*/) const
-	{
-		return state_type();
-	}
+	using Base::Base;
 
-	int max_encoding_length() const { return 1; }
-	utf::code_point to_unicode(state_type&, char const*& begin,
-	                           char const* end) const
+      protected:
+	result do_out(state_type& /*state*/, const wchar_t* from,
+	              const wchar_t* from_end, const wchar_t*& from_next,
+	              char* to, char* to_end, char*& to_next) const override
 	{
-		if (begin == end)
-			return utf::incomplete;
-		return static_cast<unsigned char>(*begin++);
+		for (; from != from_end && to != to_end; ++from, ++to) {
+			auto c = *from;
+			if (0 <= c && c < 256) {
+				*to = c;
+			}
+			else {
+				from_next = from;
+				to_next = to;
+				return Base::error;
+			}
+		}
+		from_next = from;
+		to_next = to;
+		if (from == from_end)
+			return Base::ok;
+		else
+			return Base::partial;
 	}
-	utf::code_point from_unicode(state_type&, utf::code_point u,
-	                             char* begin, char const* end) const
+	result do_unshift(state_type& /*state*/, char* to, char* /*to_end*/,
+	                  char*& to_next) const override
 	{
-		if (u >= 256)
-			return utf::illegal;
-		if (begin == end)
-			return utf::incomplete;
-		*begin = u;
-		return 1;
+		to_next = to;
+		return Base::noconv;
 	}
+	result do_in(state_type& /*state*/, const char* from,
+	             const char* from_end, const extern_type*& from_next,
+	             wchar_t* to, intern_type* to_end,
+	             intern_type*& to_next) const override
+	{
+		for (; from != from_end && to != to_end; ++from, ++to) {
+			*to = static_cast<unsigned char>(*from);
+		}
+		from_next = from;
+		to_next = to;
+		if (from == from_end)
+			return Base::ok;
+		else
+			return Base::partial;
+	}
+	int do_encoding() const noexcept override { return 1; }
+	bool do_always_noconv() const noexcept override { return false; }
+	int do_length(state_type& /*state*/, const char* from,
+	              const char* from_end, size_t max) const override
+	{
+		size_t len = from_end - from;
+		return min(len, max);
+	}
+	int do_max_length() const noexcept override { return 1; }
 };
+
+/*
+These codecvts are buggy, especially on MSVC.
+#if U_SIZEOF_WCHAR_T == 2
+using u8_to_wide_codecvt = codecvt_utf8_utf16<wchar_t>;
+#elif U_SIZEOF_WCHAR_T == 4
+using u8_to_wide_codecvt = codecvt_utf8<wchar_t>;
+#endif
+*/
 
 TEST_CASE("to_wide", "[locale_utils]")
 {
-	auto loc = locale(locale::classic(), new utf8_codecvt<wchar_t>());
+	auto gen = boost::locale::generator();
+	gen.characters(boost::locale::wchar_t_facet);
+	gen.categories(boost::locale::codepage_facet);
+	auto loc = gen("en_US.UTF-8");
 	auto in = string("\U0010FFFF ß");
 	CHECK(L"\U0010FFFF ß" == to_wide(in, loc));
 
@@ -98,14 +131,17 @@ TEST_CASE("to_wide", "[locale_utils]")
 	CHECK(true == to_wide(in, loc, out));
 	CHECK(exp == out);
 
-	loc = locale(locale::classic(), new latin1_codecvt<wchar_t>());
+	loc = locale(locale::classic(), new latin1_codecvt());
 	in = "abcd\xDF";
 	CHECK(L"abcdß" == to_wide(in, loc));
 }
 
 TEST_CASE("to_narrow", "[locale_utils]")
 {
-	auto loc = locale(locale::classic(), new utf8_codecvt<wchar_t>());
+	auto gen = boost::locale::generator();
+	gen.characters(boost::locale::wchar_t_facet);
+	gen.categories(boost::locale::codepage_facet);
+	auto loc = gen("en_US.UTF-8");
 	auto in = wstring(L"\U0010FFFF ß");
 	CHECK("\U0010FFFF ß" == to_narrow(in, loc));
 
@@ -114,7 +150,7 @@ TEST_CASE("to_narrow", "[locale_utils]")
 	CHECK(true == to_narrow(in, out, loc));
 	CHECK("\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59" == out);
 
-	loc = locale(locale::classic(), new latin1_codecvt<wchar_t>());
+	loc = locale(locale::classic(), new latin1_codecvt());
 	in = L"abcdß";
 	CHECK("abcd\xDF" == to_narrow(in, loc));
 

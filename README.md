@@ -29,7 +29,8 @@ Build-only dependencies:
   - Cmake version 3.8 or newer
   - Git
   - Ronn
-  - Boost headers version 1.62 or newer
+  - Boost headers version >= 1.48 (needed only for the CLI tool,
+    not the library)
 
 Run-time (and build-time) dependencies:
 
