@@ -2984,8 +2984,8 @@ auto Dict_Base::expand_root_word_for_ngram(
 		if (!cross_affix[i])
 			continue;
 
-		auto& root_sfx = expanded_list[i];
 		for (auto& prefix : prefixes) {
+			auto& root_sfx = expanded_list[i];
 			if (!cross_valid_inner_outer(flags, prefix))
 				continue;
 			if (outer_affix_NOT_valid<FULL_WORD>(prefix))
