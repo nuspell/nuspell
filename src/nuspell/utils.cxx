@@ -250,17 +250,21 @@ auto to_wide(const std::string& in, const std::locale& loc, std::wstring& out)
 	for (;;) {
 		auto err = cvt.in(state, in_ptr, in_last, in_ptr, out_ptr,
 		                  out_last, out_ptr);
-		if (err == cvt.ok || err == cvt.noconv) {
+		if (err == cvt.ok || err == cvt.noconv)
 			break;
-		}
-		else if (err == cvt.partial && out_ptr == out_last) {
+#if U_SIZEOF_WCHAR_T == 4
+		auto no_space = out_ptr == out_last;
+#elif U_SIZEOF_WCHAR_T == 2
+		auto no_space = out_last - out_ptr < 2;
+#endif
+		if (err == cvt.partial && no_space) {
 			// no space in output buf
 			auto idx = out_ptr - begin_ptr(out);
 			out.resize(out.size() * 2);
 			out_ptr = &out[idx];
 			out_last = end_ptr(out);
 		}
-		else if (err == cvt.partial && out_ptr != out_last) {
+		else if (err == cvt.partial && !no_space) {
 			// incomplete sequence at the end
 			*out_ptr++ = L'\uFFFD';
 			valid = false;
@@ -299,23 +303,22 @@ auto to_narrow(const std::wstring& in, std::string& out, const std::locale& loc)
 	auto in_last = end_ptr(in);
 	auto out_ptr = begin_ptr(out);
 	auto out_last = end_ptr(out);
+	auto max_len_for_CP = cvt.max_length();
 	auto valid = true;
-	for (size_t i = 2;;) {
+	for (;;) {
 		auto err = cvt.out(state, in_ptr, in_last, in_ptr, out_ptr,
 		                   out_last, out_ptr);
-		if (err == cvt.ok || err == cvt.noconv) {
+		if (err == cvt.ok || err == cvt.noconv)
 			break;
-		}
-		else if (err == cvt.partial && i != 0) {
-			// probably no space in output buf
+		auto no_space = out_last - out_ptr < max_len_for_CP;
+		if (err == cvt.partial && no_space) {
+			// no space in output buf
 			auto idx = out_ptr - begin_ptr(out);
 			out.resize(out.size() * 2);
 			out_ptr = &out[idx];
 			out_last = end_ptr(out);
-			--i;
 		}
-		else if (err == cvt.partial && i == 0) {
-			// size is big enough after 2 resizes,
+		else if (err == cvt.partial && !no_space) {
 			// incomplete sequence at the end
 			*out_ptr++ = '?';
 			valid = false;
@@ -327,7 +330,6 @@ auto to_narrow(const std::wstring& in, std::string& out, const std::locale& loc)
 				out.resize(out.size() * 2);
 				out_ptr = &out[idx];
 				out_last = end_ptr(out);
-				--i;
 			}
 			in_ptr++;
 			*out_ptr++ = '?';
