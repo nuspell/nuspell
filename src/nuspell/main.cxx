@@ -60,7 +60,7 @@ enum Mode {
 
 struct Args_t {
 	Mode mode = DEFAULT_MODE;
-	bool unicode_segmentation = false;
+	bool whitespace_segmentation = false;
 	string program_name = "nuspell";
 	string dictionary;
 	string encoding;
@@ -88,7 +88,7 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 	int c;
 	// The program can run in various modes depending on the
 	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:aDGLSlhv";
+	const char* shortopts = ":d:i:aDGLslhv";
 	const struct option longopts[] = {
 	    {"version", 0, nullptr, 'v'},
 	    {"help", 0, nullptr, 'h'},
@@ -152,8 +152,8 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 				mode = ERROR_MODE;
 
 			break;
-		case 'S':
-			unicode_segmentation = true;
+		case 's':
+			whitespace_segmentation = true;
 
 			break;
 		case 'h':
@@ -265,8 +265,8 @@ auto print_help(const string& program_name) -> void
 	auto& o = cout;
 	o << "Usage:\n"
 	     "\n";
-	o << p << " [-S] [-d dict_NAME] [-i enc] [file_name]...\n";
-	o << p << " -l|-G [-L] [-S] [-d dict_NAME] [-i enc] [file_name]...\n";
+	o << p << " [-s] [-d dict_NAME] [-i enc] [file_name]...\n";
+	o << p << " -l|-G [-L] [-s] [-d dict_NAME] [-i enc] [file_name]...\n";
 	o << p << " -D|-h|--help|-v|--version\n";
 	o << "\n"
 	     "Check spelling of each FILE. Without FILE, check standard "
@@ -280,7 +280,10 @@ auto print_help(const string& program_name) -> void
 	     "  -l            print only misspelled words or lines\n"
 	     "  -G            print only correct words or lines\n"
 	     "  -L            lines mode\n"
-	     "  -S            use Unicode text segmentation to extract words\n"
+	     "  -s            use simple whitespace text segmentation to\n"
+	     "                extract words instead of the default Unicode\n"
+	     "                text segmentation. It is not recommended to use\n"
+	     "                this.\n"
 	     "  -h, --help    print this help and exit\n"
 	     "  -v, --version print version number and exit\n"
 	     "\n";
@@ -585,9 +588,9 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	dic.imbue(loc);
-	auto loop_function = whitespace_segmentation_loop;
-	if (args.unicode_segmentation)
-		loop_function = unicode_segentation_loop;
+	auto loop_function = unicode_segentation_loop;
+	if (args.whitespace_segmentation)
+		loop_function = whitespace_segmentation_loop;
 	if (args.files.empty()) {
 		loop_function(cin, cout, dic, args.mode);
 	}

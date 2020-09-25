@@ -4,8 +4,8 @@ nuspell(1) -- spell checker
 ## SYNOPSIS
 
 
-`nuspell` [-S] [-d _dict_NAME_] [-i _ENCODING_] [_FILE_]...  
-`nuspell` -l|-G [-L] [-S] [-d _dict_NAME_] [-i _ENCODING_] [_FILE_]...  
+`nuspell` [-s] [-d _dict_NAME_] [-i _ENCODING_] [_FILE_]...  
+`nuspell` -l|-G [-L] [-s] [-d _dict_NAME_] [-i _ENCODING_] [_FILE_]...  
 `nuspell` -D|-h|--help|-v|--version
 
 
@@ -28,8 +28,9 @@ Without _FILE_, checks standard input.
     print only correct words or lines
   - `-L`:
     lines mode
-  - `-S`:
-    use Unicode text segmentation to extract words
+  - `-s`:
+    use simple whitespace text segmentation to extract words instead of the
+    default Unicode text segmentation. It is not recommended to use this.
   - `-h, --help`:
     display this help and exit
   - `-v, --version`:
