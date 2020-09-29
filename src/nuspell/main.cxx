@@ -60,6 +60,7 @@ enum Mode {
 
 struct Args_t {
 	Mode mode = DEFAULT_MODE;
+	bool quiet = false;
 	bool whitespace_segmentation = false;
 	string program_name = "nuspell";
 	string dictionary;
@@ -82,13 +83,11 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 {
 	if (argc != 0 && argv[0] && argv[0][0] != '\0')
 		program_name = argv[0];
-// See POSIX Utility argument syntax
-// http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
 #if defined(_POSIX_VERSION) || defined(__MINGW32__)
 	int c;
 	// The program can run in various modes depending on the
-	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:aDGLslhv";
+	// command line options. The mode is FSM state, this while loop is FSM.
+	const char* shortopts = ":d:i:aDGLslqhv";
 	const struct option longopts[] = {
 	    {"version", 0, nullptr, 'v'},
 	    {"help", 0, nullptr, 'h'},
@@ -110,18 +109,15 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 				        "other dictionary "
 				     << optarg << '\n';
 			other_dicts.emplace_back(optarg);
-
 			break;
 		case 'i':
 			encoding = optarg;
-
 			break;
 		case 'D':
 			if (mode == DEFAULT_MODE)
 				mode = LIST_DICTIONARIES_MODE;
 			else
 				mode = ERROR_MODE;
-
 			break;
 		case 'G':
 			if (mode == DEFAULT_MODE)
@@ -130,7 +126,6 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 				mode = CORRECT_LINES_MODE;
 			else
 				mode = ERROR_MODE;
-
 			break;
 		case 'l':
 			if (mode == DEFAULT_MODE)
@@ -139,7 +134,6 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 				mode = MISSPELLED_LINES_MODE;
 			else
 				mode = ERROR_MODE;
-
 			break;
 		case 'L':
 			if (mode == DEFAULT_MODE)
@@ -150,41 +144,38 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 				mode = CORRECT_LINES_MODE;
 			else
 				mode = ERROR_MODE;
-
 			break;
 		case 's':
 			whitespace_segmentation = true;
-
+			break;
+		case 'q':
+			quiet = true;
 			break;
 		case 'h':
 			if (mode == DEFAULT_MODE)
 				mode = HELP_MODE;
 			else
 				mode = ERROR_MODE;
-
 			break;
 		case 'v':
 			if (mode == DEFAULT_MODE)
 				mode = VERSION_MODE;
 			else
 				mode = ERROR_MODE;
-
 			break;
 		case ':':
-			cerr << "Option -" << static_cast<char>(optopt)
+			cerr << "ERROR: Option -" << static_cast<char>(optopt)
 			     << " requires an operand\n";
 			mode = ERROR_MODE;
-
 			break;
 		case '?':
-			cerr << "Unrecognized option: '-"
+			cerr << "ERROR: Unrecognized option: '-"
 			     << static_cast<char>(optopt) << "'\n";
 			mode = ERROR_MODE;
-
 			break;
 		}
 	}
-	files.insert(files.end(), argv + optind, argv + argc);
+	files.insert(end(files), argv + optind, argv + argc);
 	if (mode == LINES_MODE) {
 		// in v1 this defaults to MISSPELLED_LINES_MODE
 		// we will make it error here
@@ -265,8 +256,8 @@ auto print_help(const string& program_name) -> void
 	auto& o = cout;
 	o << "Usage:\n"
 	     "\n";
-	o << p << " [-s] [-d dict_NAME] [-i enc] [file_name]...\n";
-	o << p << " -l|-G [-L] [-s] [-d dict_NAME] [-i enc] [file_name]...\n";
+	o << p << " [-s] [-d dict_NAME] [-i enc] [-q] [FILE]...\n";
+	o << p << " -l|-G [-L] [-s] [-d dict_NAME] [-i enc] [-q] [FILE]...\n";
 	o << p << " -D|-h|--help|-v|--version\n";
 	o << "\n"
 	     "Check spelling of each FILE. Without FILE, check standard "
@@ -284,6 +275,7 @@ auto print_help(const string& program_name) -> void
 	     "                extract words instead of the default Unicode\n"
 	     "                text segmentation. It is not recommended to use\n"
 	     "                this.\n"
+	     "  -q            quiet, supress informative log messages\n"
 	     "  -h, --help    print this help and exit\n"
 	     "  -v, --version print version number and exit\n"
 	     "\n";
@@ -302,7 +294,7 @@ auto print_version() -> void
 {
 	cout << PACKAGE_STRING
 	    "\n"
-	    "Copyright (C) 2017-2018 Dimitrij Mijoski and Sander van Geloven\n"
+	    "Copyright (C) 2017-2020 Dimitrij Mijoski and Sander van Geloven\n"
 	    "License LGPLv3+: GNU LGPL version 3 or later "
 	    "<http://gnu.org/licenses/lgpl.html>.\n"
 	    "This is free software: you are free to change and "
@@ -532,7 +524,7 @@ int main(int argc, char* argv[])
 	catch (const boost::locale::conv::invalid_charset_error& e) {
 		cerr << e.what() << '\n';
 #ifdef _POSIX_VERSION
-		cerr << "Nuspell error: see `locale -m` for supported "
+		cerr << "ERROR: See `locale -m` for supported "
 		        "encodings.\n";
 #endif
 		return 1;
@@ -550,7 +542,8 @@ int main(int argc, char* argv[])
 	default:
 		break;
 	}
-	clog << "INFO: I/O  locale " << loc << '\n';
+	if (!args.quiet)
+		clog << "INFO: I/O locale " << loc << '\n';
 
 	auto f = Finder::search_all_dirs_for_dicts();
 
@@ -568,16 +561,17 @@ int main(int argc, char* argv[])
 			args.dictionary += c;
 		}
 	}
-	if (args.dictionary.empty()) {
+	if (args.dictionary.empty())
 		cerr << "No dictionary provided and can not infer from OS "
 		        "locale\n";
-	}
 	auto filename = f.get_dictionary_path(args.dictionary);
 	if (filename.empty()) {
 		cerr << "Dictionary " << args.dictionary << " not found\n";
 		return 1;
 	}
-	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
+	if (!args.quiet)
+		clog << "INFO: Pointed dictionary " << filename
+		     << ".{dic,aff}\n";
 	auto dic = My_Dictionary();
 	try {
 		dic = Dictionary::load_from_path(filename);
