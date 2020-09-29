@@ -13,6 +13,10 @@ endif()
 
 add_executable(legacy_test legacy_test.cxx)
 target_link_libraries(legacy_test nuspell)
+add_test(NAME main_whitespace_segmentation
+    COMMAND ../src/nuspell/nuspell -s -d ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/base_utf ${CMAKE_CURRENT_SOURCE_DIR}/base_utf_segmentations.txt)
+add_test(NAME main_unicode_segmentation
+    COMMAND ../src/nuspell/nuspell -d ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/base_utf ${CMAKE_CURRENT_SOURCE_DIR}/base_utf_segmentations.txt)
 
 add_executable(verify verify.cxx)
 target_link_libraries(verify nuspell hunspell Boost::locale)
