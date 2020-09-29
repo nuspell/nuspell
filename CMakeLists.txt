@@ -59,7 +59,6 @@ if (BUILD_TESTING)
     endif()
 endif()
 
-
 #set(pkgconf_public_libs "")
 set(pkgconf_public_requires icu-uc)
 configure_file(nuspell.pc.in nuspell.pc @ONLY)

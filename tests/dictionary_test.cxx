@@ -19,6 +19,7 @@
 #include <nuspell/dictionary.hxx>
 
 #include <catch2/catch.hpp>
+#include <sstream>
 
 using namespace std;
 using namespace nuspell;
@@ -28,11 +29,43 @@ struct Dict_Test : public nuspell::Dict_Base {
 	auto spell_priv(std::wstring&& s) { return Dict_Base::spell_priv(s); }
 };
 
-TEST_CASE("Dictionary::load_from_path", "[dictionary]")
+TEST_CASE("Dictionary::load_from_path empty", "[dictionary]")
 {
 	CHECK_THROWS_AS(Dictionary::load_from_path(""),
 	                Dictionary_Loading_Error);
 }
+
+TEST_CASE("Dictionary::load_from_aff_dic empty", "[dictionary]")
+{
+	auto aff = stringstream("");
+	auto dic = stringstream("");
+
+	CHECK_THROWS_AS(Dictionary::load_from_aff_dic(aff, dic),
+	                Dictionary_Loading_Error);
+}
+
+TEST_CASE("Dictionary::load_from_aff_dic simple", "[dictionary]")
+{
+	auto aff = stringstream("");
+	auto dic = stringstream("");
+
+	aff << "SET UTF-8" << '\n';
+	auto words = {"table", "chair", "book"};
+	dic << words.size() << '\n';
+	for (auto& x : words)
+		dic << x << '\n';
+
+	auto d = Dictionary::load_from_aff_dic(aff, dic);
+
+	auto good = {"table", "book"};
+	for (auto& g : good)
+		CHECK(d.spell(g) == true);
+
+	auto wrong = {"talbe", "chiar"};
+	for (auto& w : wrong)
+		CHECK(d.spell(w) == false);
+}
+
 TEST_CASE("Dictionary::spell_priv simple", "[dictionary]")
 {
 	auto d = Dict_Test();
@@ -325,6 +358,7 @@ TEST_CASE("Dictionary suggestions extra_char_suggest", "[dictionary]")
 
 TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 {
+	using chrono::high_resolution_clock;
 	auto d = Dict_Test();
 
 	auto good = L"naïve";
@@ -337,7 +371,10 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 
 	auto out_sug = List_WStrings();
 	auto expected_sug = List_WStrings{good};
-	d.map_suggest(w, out_sug);
+	auto attempt = (size_t)0;
+	auto timeout = false;
+	d.map_suggest(w, out_sug, attempt, timeout,
+	              high_resolution_clock::now());
 	CHECK(out_sug == expected_sug);
 
 	d.words.emplace(L"æon", u"");
@@ -348,7 +385,9 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
-	d.map_suggest(w, out_sug);
+	timeout = false;
+	d.map_suggest(w, out_sug, attempt, timeout,
+	              high_resolution_clock::now());
 	CHECK(out_sug == expected_sug);
 
 	d.words.emplace(L"zijn", u"");
@@ -359,7 +398,9 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
-	d.map_suggest(w, out_sug);
+	timeout = false;
+	d.map_suggest(w, out_sug, attempt, timeout,
+	              high_resolution_clock::now());
 	CHECK(out_sug == expected_sug);
 
 	d.words.emplace(L"hear", u"");
@@ -370,7 +411,9 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
-	d.map_suggest(w, out_sug);
+	timeout = false;
+	d.map_suggest(w, out_sug, attempt, timeout,
+	              high_resolution_clock::now());
 	CHECK(out_sug == expected_sug);
 }
 

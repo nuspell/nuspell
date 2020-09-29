@@ -26,10 +26,18 @@
 
 #include "aff_data.hxx"
 
+#include <chrono>
 #include <locale>
 
 namespace nuspell {
 inline namespace v3 {
+
+const auto MAX_SHARPS = size_t(5);
+const auto MAX_WORDLEN = size_t(180);
+const auto MAX_SUGGEST = size_t(15);
+const auto MAX_ATTEMPT = size_t(100);
+const auto MAX_ROOTSIZE = size_t(100);
+const auto MAX_ATTTIME = std::chrono::nanoseconds(5000000);
 
 enum Affixing_Mode {
 	FULL_WORD,
@@ -345,47 +353,50 @@ struct Dict_Base : public Aff_Data {
 	    -> bool;
 
 	auto uppercase_suggest(std::wstring& word, List_WStrings& out) const
-	    -> void;
+	    -> bool;
 
-	auto rep_suggest(std::wstring& word, List_WStrings& out) const -> void;
+	auto rep_suggest(std::wstring& word, List_WStrings& out) const -> bool;
 
 	auto try_rep_suggestion(std::wstring& word, List_WStrings& out) const
 	    -> void;
 
 	auto is_rep_similar(std::wstring& word) const -> bool;
 
-	auto map_suggest(std::wstring& word, List_WStrings& out,
-	                 size_t i = 0) const -> void;
+	auto map_suggest(
+	    std::wstring& word, List_WStrings& out, size_t& attempt,
+	    bool& timeout,
+	    std::chrono::time_point<std::chrono::high_resolution_clock> start,
+	    size_t i = 0) const -> bool;
 
 	auto adjacent_swap_suggest(std::wstring& word, List_WStrings& out) const
-	    -> void;
+	    -> bool;
 
 	auto distant_swap_suggest(std::wstring& word, List_WStrings& out) const
-	    -> void;
+	    -> bool;
 
 	auto keyboard_suggest(std::wstring& word, List_WStrings& out) const
-	    -> void;
+	    -> bool;
 
 	auto extra_char_suggest(std::wstring& word, List_WStrings& out) const
-	    -> void;
+	    -> bool;
 
 	auto forgotten_char_suggest(std::wstring& word,
-	                            List_WStrings& out) const -> void;
+	                            List_WStrings& out) const -> bool;
 
 	auto move_char_suggest(std::wstring& word, List_WStrings& out) const
-	    -> void;
+	    -> bool;
 
 	auto bad_char_suggest(std::wstring& word, List_WStrings& out) const
-	    -> void;
+	    -> bool;
 
 	auto doubled_two_chars_suggest(std::wstring& word,
-	                               List_WStrings& out) const -> void;
+	                               List_WStrings& out) const -> bool;
 
 	auto two_words_suggest(std::wstring& word, List_WStrings& out) const
-	    -> void;
+	    -> bool;
 
 	auto phonetic_suggest(std::wstring& word, List_WStrings& out) const
-	    -> void;
+	    -> bool;
 
 	auto ngram_suggest(std::wstring& word, List_WStrings& out) const
 	    -> void;
