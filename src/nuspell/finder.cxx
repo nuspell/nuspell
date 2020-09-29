@@ -293,7 +293,6 @@ class Globber {
 				continue;
 			for (auto& q1e : q1) {
 				auto p = q1e + DIRSEP + *i;
-				// cout << "P " << p << endl;
 				fl.first(p.c_str());
 				for (; fl.good(); fl.next()) {
 
@@ -302,7 +301,6 @@ class Globber {
 						continue;
 					auto n = q1e + DIRSEP + fl.name();
 					q2.push_back(n);
-					// cout << "Q2 " << n << endl;
 				}
 			}
 			q1.clear();
