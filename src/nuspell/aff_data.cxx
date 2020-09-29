@@ -140,8 +140,8 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
 		if (s.size() % 2 == 1)
 			return Err::UNPAIRED_LONG_FLAG;
 
-		auto i = s.begin();
-		auto e = s.end();
+		auto i = begin(s);
+		auto e = end(s);
 		for (; i != e; i += 2) {
 			auto c1 = *i;
 			auto c2 = *(i + 1);
@@ -248,7 +248,7 @@ auto report_parsing_error(Parsing_Error_Code err, size_t line_num)
 		     << line_num << '\n';
 		break;
 	case Err::INVALID_NUMERIC_FLAG:
-		cerr << "Nuspell error: invalid numerical flag in line"
+		cerr << "Nuspell error: invalid numerical flag in line "
 		     << line_num << '\n';
 		break;
 	// case Err::FLAGS_ARE_UTF8_BUT_FILE_NOT:
@@ -263,7 +263,7 @@ auto report_parsing_error(Parsing_Error_Code err, size_t line_num)
 		     << '\n';
 		break;
 	case Err::INVALID_NUMERIC_ALIAS:
-		cerr << "Nuspell error: Flag alias is invalid in line"
+		cerr << "Nuspell error: Flag alias is invalid in line "
 		     << line_num << '\n';
 		break;
 	case Err::AFX_CONDITION_INVALID_FORMAT:
@@ -660,7 +660,7 @@ auto parse_vector_of_T(Aff_Line_Stream& in, const string& command,
                        Func modifier_wrapper = Func()) -> void
 {
 	auto dat = counts.find(command);
-	if (dat == counts.end()) {
+	if (dat == end(counts)) {
 		// first line
 		auto& cnt = counts[command]; // cnt == 0
 		size_t a;
@@ -670,7 +670,8 @@ auto parse_vector_of_T(Aff_Line_Stream& in, const string& command,
 		else
 			cerr << "Nuspell error: a vector command (series of "
 			        "of similar commands) has no count. Ignoring "
-			        "all of them.\n";
+			        "all of them."
+			     << endl;
 	}
 	else if (dat->second != 0) {
 		dat->second--;
@@ -679,10 +680,11 @@ auto parse_vector_of_T(Aff_Line_Stream& in, const string& command,
 		if (in.fail())
 			cerr << "Nuspell error: single entry of a vector "
 			        "command (series of "
-			        "of similar commands) is invalid.\n";
+			        "of similar commands) is invalid."
+			     << endl;
 	}
 	else {
-		cerr << "Nuspell warning: extra entries of " << command << "\n";
+		cerr << "Nuspell warning: extra entries of " << command << endl;
 		// cerr << "Nuspell warning in line " << line_num << endl;
 	}
 }
@@ -698,9 +700,9 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
 	command.append(reinterpret_cast<char*>(&f), sizeof(f));
 	auto dat = cmd_affix.find(command);
 	// note: the current affix parser does not allow the same flag
-	// to be used once with cross product and again witohut
+	// to be used once with cross product and again without
 	// one flag is tied to one cross product value
-	if (dat == cmd_affix.end()) {
+	if (dat == end(cmd_affix)) {
 		char cross_char; // 'Y' or 'N'
 		size_t cnt;
 		auto& cross_and_cnt = cmd_affix[command]; // == false, 0
@@ -741,7 +743,7 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
 	}
 	else {
 		cerr << "Nuspell warning: extra entries of "
-		     << command.substr(0, 3) << "\n";
+		     << command.substr(0, 3) << endl;
 	}
 }
 
