@@ -53,30 +53,37 @@ enum Mode {
 
 struct Args_t {
 	Mode mode = DEFAULT_MODE;
+	bool quiet = false;
+	bool print_sug = false;
+	bool print_false = false;
+	bool sugs = false;
 	string program_name = "verify";
 	string dictionary;
 	string encoding;
 	vector<string> other_dicts;
 	vector<string> files;
-	bool print_false = false;
-	bool sugs = false;
+	string correction;
 
 	Args_t() = default;
 	Args_t(int argc, char* argv[]) { parse_args(argc, argv); }
 	auto parse_args(int argc, char* argv[]) -> void;
 };
 
+/**
+ * @brief Parses command line arguments.
+ *
+ * @param argc command-line argument count.
+ * @param argv command-line argument vector.
+ */
 auto Args_t::parse_args(int argc, char* argv[]) -> void
 {
 	if (argc != 0 && argv[0] && argv[0][0] != '\0')
 		program_name = argv[0];
-// See POSIX Utility argument syntax
-// http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
 #if defined(_POSIX_VERSION) || defined(__MINGW32__)
 	int c;
 	// The program can run in various modes depending on the
-	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:fshv";
+	// command line options. The mode is FSM state, this while loop is FSM.
+	const char* shortopts = ":d:i:c:fspqhv";
 	const struct option longopts[] = {
 	    {"version", 0, nullptr, 'v'},
 	    {"help", 0, nullptr, 'h'},
@@ -93,44 +100,51 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 				        "other dictionary "
 				     << optarg << '\n';
 			other_dicts.emplace_back(optarg);
-
 			break;
 		case 'i':
 			encoding = optarg;
-
+			break;
+		case 'c':
+			if (correction.empty())
+				correction = optarg;
+			else
+				cerr << "WARNING: Ignoring additional "
+				        "suggestions TSV file "
+				     << optarg << '\n';
 			break;
 		case 'f':
 			print_false = true;
-
 			break;
 		case 's':
 			sugs = true;
+			break;
+		case 'p':
+			print_sug = true;
+			break;
+		case 'q':
+			quiet = true;
 			break;
 		case 'h':
 			if (mode == DEFAULT_MODE)
 				mode = HELP_MODE;
 			else
 				mode = ERROR_MODE;
-
 			break;
 		case 'v':
 			if (mode == DEFAULT_MODE)
 				mode = VERSION_MODE;
 			else
 				mode = ERROR_MODE;
-
 			break;
 		case ':':
-			cerr << "Option -" << static_cast<char>(optopt)
+			cerr << "ERROR: Option -" << static_cast<char>(optopt)
 			     << " requires an operand\n";
 			mode = ERROR_MODE;
-
 			break;
 		case '?':
-			cerr << "Unrecognized option: '-"
+			cerr << "ERROR: Unrecognized option: '-"
 			     << static_cast<char>(optopt) << "'\n";
 			mode = ERROR_MODE;
-
 			break;
 		}
 	}
@@ -149,45 +163,105 @@ auto print_help(const string& program_name) -> void
 	auto& o = cout;
 	o << "Usage:\n"
 	     "\n";
-	o << p << " [-d dict_NAME] [-i enc] [-f] [-s] [file_name]...\n";
+	o << p
+	  << " [-d di_CT] [-i enc] [-c TSV] [-f] [-p] [-s] [-q] [FILE]...\n";
 	o << p << " -h|--help|-v|--version\n";
 	o << "\n"
 	     "Verification testing spell check of each FILE.\n"
-	     "Without FILE, check standard input.\n"
-	     "For simple test, use /usr/share/dict/american-english for FILE.\n"
 	     "\n"
 	     "  -d di_CT      use di_CT dictionary. Only one dictionary is\n"
 	     "                currently supported\n"
 	     "  -i enc        input encoding, default is active locale\n"
+	     "  -c TSV        TSV file with corrections to verify suggestions\n"
 	     "  -f            print false negative and false positive words\n"
 	     "  -s            also test suggestions (usable only in debugger)\n"
+	     "  -p            print suggestions\n"
+	     "  -q            quiet, supress informative log messages\n"
 	     "  -h, --help    print this help and exit\n"
 	     "  -v, --version print version number and exit\n"
 	     "\n";
-	o << "Example: " << p << " -d en_US file.txt\n";
+	o << "Example: " << p << " -d en_US /usr/share/dict/american-english\n";
 	o << "\n"
-	     "All word for which results differ with Hunspell are printed to"
-	     "standard output.\n"
+	     "List available dictionaries: nuspell -D\n"
+	     "\n"
 	     "Then some statistics for correctness and "
 	     "performance are printed to standard output, being:\n"
-	     "  Total Words\n"
+	     "  Word File\n"
+	     "  Total Words Spelling\n"
+	     "  Positives Nuspell\n"
+	     "  Positives Hunspell\n"
+	     "  Negatives Nuspell\n"
+	     "  Negatives Hunspell\n"
 	     "  True Positives\n"
 	     "  True Negatives\n"
 	     "  False Positives\n"
 	     "  False Negatives\n"
+	     "  True Positive Rate\n"
+	     "  True Negative Rate\n"
+	     "  False Positive Rate\n"
+	     "  False Negative Rate\n"
+	     "  Total Duration Nuspell\n"
+	     "  Total Duration Hunspell\n"
+	     "  Minimum Duration Nuspell\n"
+	     "  Minimum Duration Hunspell\n"
+	     "  Average Duration Nuspell\n"
+	     "  Average Duration Hunspell\n"
+	     "  Maximum Duration Nuspell\n"
+	     "  Maximum Duration Hunspell\n"
+	     "  Maximum Speedup\n"
 	     "  Accuracy\n"
 	     "  Precision\n"
-	     "  Duration Nuspell (type varies, but usually in nanoseconds)\n"
-	     "  Duration Hunspell (type varies, but usually in nanoseconds)\n"
-	     "  Speedup Rate\n"
-	     "All durations are highly machine and platform dependent.\n"
-	     "Even on the same machine it varies a lot in the second decimal!\n"
-	     "If speedup is 1.60, Nuspell is 1.60 times faster as Hunspell.\n"
-	     "Use only executable from production build with optimizations.\n"
+	     "  Speedup\n"
 	     "\n"
-	     "Please note, messages containing:\n"
-	     "  This UTF-8 encoding can't convert to UTF-16:"
-	     "are caused by Hunspell and can be ignored.\n";
+	     "All durations are in nanoseconds. Even on the same machine, "
+	     "timing can vary\n"
+	     "considerably in the second significant decimal. Use only a "
+	     "production build\n"
+	     "executable with optimizations. A speedup of 1.62 means Nuspell "
+	     "is 1.6 times\n"
+	     "faster than Hunspell.\n"
+	     "\n"
+	     "Verification will be done on suggestions when a corrections file "
+	     "is provided.\n"
+	     "Each line in that file contains a unique incorrect word, a tab "
+	     "character and\n"
+	     "the most desired correct suggestions. Note that the second word "
+	     "needs to be\n"
+	     "incorrect for Nuspell and Hunspell. The correction should be "
+	     "correct for\n"
+	     "Nuspell and Hunspell.\n"
+	     "\n"
+	     "The same statistics as above will be report followed by "
+	     "statistics on the\n"
+	     "  Total Words Suggestion\n"
+	     "  Correction In Suggestions Nuspell\n"
+	     "  Correction In Suggestions Hunspell\n"
+	     "  Correction In Suggestions Both\n"
+	     "  Correction As First Suggestion Nuspell\n"
+	     "  Correction As First Suggestion Hunspell\n"
+	     "  Correction As First Suggestion Both\n"
+	     "  Nuspell More Suggestions\n"
+	     "  Hunspell More Suggestions\n"
+	     "  Same Number Of Suggestions\n"
+	     "  Nuspell No Suggestions\n"
+	     "  Hunspell No Suggestions\n"
+	     "  Both No Suggestions\n"
+	     "  Maximum Suggestions Nuspell\n"
+	     "  Maximum Suggestions Hunspell\n"
+	     "  Rate Corr. In Suggestions Nuspell\n"
+	     "  Rate Corr. In Suggestions Hunspell\n"
+	     "  Rate Corr. As First Suggestion Nuspell\n"
+	     "  Rate Corr. As First Suggestion Hunspell\n"
+	     "  Total Duration Suggestions Nuspell\n"
+	     "  Total Duration Suggestions Hunspell\n"
+	     "  Minimum Duration Suggestions Nuspell\n"
+	     "  Minimum Duration Suggestions Hunspell\n"
+	     "  Average Duration Suggestions Nuspell\n"
+	     "  Average Duration Suggestions Hunspell\n"
+	     "  Maximum Duration Suggestions Nuspell\n"
+	     "  Maximum Duration Suggestions Hunspell\n"
+	     "  Maximum Suggestions Speedup\n"
+	     "  Suggestions Speedup\n";
 }
 
 /**
@@ -208,34 +282,115 @@ auto print_version() -> void
 	    "see https://github.com/nuspell/nuspell/blob/master/AUTHORS\n";
 }
 
-auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
-                 locale& hloc, bool print_false = false, bool test_sugs = false)
+/**
+ * @brief Reports spelling check results.
+ */
+auto spell_report(ostream& out, int total, int true_pos, int true_neg,
+                  int false_pos, int false_neg, long duration_nu_tot,
+                  long duration_hun_tot, long duration_nu_min,
+                  long duration_hun_min, long duration_nu_max,
+                  long duration_hun_max, float speedup_max)
 {
-	auto word = string();
-	auto wide_word = wstring();
-	auto narrow_word = string();
-	// total number of words
+	// counts
+	auto pos_nu = true_pos + false_pos;
+	auto pos_hun = true_pos + false_neg;
+	auto neg_nu = true_neg + false_neg;
+	auto neg_hun = true_neg + false_pos;
+
+	// rates
+	auto true_pos_rate = true_pos * 1.0 / total;
+	auto true_neg_rate = true_neg * 1.0 / total;
+	auto false_pos_rate = false_pos * 1.0 / total;
+	auto false_neg_rate = false_neg * 1.0 / total;
+
+	auto accuracy = (true_pos + true_neg) * 1.0 / total;
+	auto precision = 0.0;
+	if (true_pos + false_pos != 0)
+		precision = true_pos * 1.0 / (true_pos + false_pos);
+	auto speedup = duration_hun_tot * 1.0 / duration_nu_tot;
+
+	// report
+	out << "Total Words Spelling        " << total << '\n';
+	out << "Positives Nuspell           " << pos_nu << '\n';
+	out << "Positives Hunspell          " << pos_hun << '\n';
+	out << "Negatives Nuspell           " << neg_nu << '\n';
+	out << "Negatives Hunspell          " << neg_hun << '\n';
+	out << "True Positives              " << true_pos << '\n';
+	out << "True Negatives              " << true_neg << '\n';
+	out << "False Positives             " << false_pos << '\n';
+	out << "False Negatives             " << false_neg << '\n';
+	out << "True Positive Rate          " << true_pos_rate << '\n';
+	out << "True Negative Rate          " << true_neg_rate << '\n';
+	out << "False Positive Rate         " << false_pos_rate << '\n';
+	out << "False Negative Rate         " << false_neg_rate << '\n';
+	out << "Total Duration Nuspell      " << duration_nu_tot << '\n';
+	out << "Total Duration Hunspell     " << duration_hun_tot << '\n';
+	out << "Minimum Duration Nuspell    " << duration_nu_min << '\n';
+	out << "Minimum Duration Hunspell   " << duration_hun_min << '\n';
+	out << "Average Duration Nuspell    " << duration_nu_tot / total
+	    << '\n';
+	out << "Average Duration Hunspell   " << duration_hun_tot / total
+	    << '\n';
+	out << "Maximum Duration Nuspell    " << duration_nu_max << '\n';
+	out << "Maximum Duration Hunspell   " << duration_hun_max << '\n';
+	out << "Maximum Speedup             " << speedup_max << '\n';
+	out << "Accuracy                    " << accuracy << '\n';
+	out << "Precision                   " << precision << '\n';
+	out << "Speedup                     " << speedup << '\n';
+}
+
+/**
+ * @brief Loops through text file with on each line a unique word. The spelling
+ * of the words is verified and a report is printed.
+ */
+auto spell_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
+                locale& hloc, bool print_false = false, bool test_sugs = false)
+{
+	using chrono::high_resolution_clock;
+	using chrono::nanoseconds;
+
+	// verify spelling
 	auto total = 0;
-	// total number of words with identical spelling correctness
 	auto true_pos = 0;
 	auto true_neg = 0;
 	auto false_pos = 0;
 	auto false_neg = 0;
-	// store cpu time for Hunspell and Nuspell
-	auto duration_hun = chrono::high_resolution_clock::duration();
-	auto duration_nu = duration_hun;
+	auto duration_nu_tot = nanoseconds();
+	auto duration_hun_tot = nanoseconds();
+	auto duration_nu_min = nanoseconds(nanoseconds::max());
+	auto duration_hun_min = nanoseconds(nanoseconds::max());
+	auto duration_nu_max = nanoseconds();
+	auto duration_hun_max = nanoseconds();
+	auto speedup_max = 0.0;
+
+	// need to take the entire line here, not `in >> word`
 	auto in_loc = in.getloc();
-	// need to take entine line here, not `in >> word`
+	auto word = string();
 	while (getline(in, word)) {
-		auto tick_a = chrono::high_resolution_clock::now();
+		auto tick_a = high_resolution_clock::now();
 		auto res_nu = dic.spell(word);
-		auto tick_b = chrono::high_resolution_clock::now();
-		to_wide(word, in_loc, wide_word);
-		to_narrow(wide_word, narrow_word, hloc);
-		auto res_hun = hun.spell(narrow_word);
-		auto tick_c = chrono::high_resolution_clock::now();
-		duration_nu += tick_b - tick_a;
-		duration_hun += tick_c - tick_b;
+		auto tick_b = high_resolution_clock::now();
+		auto res_hun =
+		    hun.spell(to_narrow(to_wide(word, in_loc), hloc));
+		auto tick_c = high_resolution_clock::now();
+		auto duration_nu = tick_b - tick_a;
+		auto duration_hun = tick_c - tick_b;
+
+		duration_nu_tot += duration_nu;
+		duration_hun_tot += duration_hun;
+		if (duration_nu < duration_nu_min)
+			duration_nu_min = duration_nu;
+		if (duration_hun < duration_hun_min)
+			duration_hun_min = duration_hun;
+		if (duration_nu > duration_nu_max)
+			duration_nu_max = duration_nu;
+		if (duration_hun > duration_hun_max)
+			duration_hun_max = duration_hun;
+
+		auto speedup = duration_hun * 1.0 / duration_nu;
+		if (speedup > speedup_max)
+			speedup_max = speedup;
+
 		if (res_hun) {
 			if (res_nu) {
 				++true_pos;
@@ -259,39 +414,383 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 			}
 		}
 		++total;
+
+		// usable only in debugger
 		if (test_sugs && !res_nu && !res_hun) {
-			auto nus_sugs = vector<string>();
-			auto hun_sugs = vector<string>();
-			dic.suggest(word, nus_sugs);
-			hun.suggest(narrow_word);
+			auto sugs_nu = vector<string>();
+			dic.suggest(word, sugs_nu);
+			auto sugs_hun =
+			    hun.suggest(to_narrow(to_wide(word, in_loc), hloc));
 		}
 	}
 
-	// prevent devision by zero
+	// prevent division by zero
 	if (total == 0) {
-		out << total << endl;
+		cerr << "WARNING: File did not have any content\n";
 		return;
 	}
-	if (duration_nu.count() == 0) {
-		cerr << "Invalid duration of 0 nanoseconds for Nuspell\n";
-		out << total << endl;
+	if (duration_nu_tot.count() == 0) {
+		cerr
+		    << "ERROR: Invalid duration of 0 nanoseconds for Nuspell\n";
 		return;
 	}
-	// rates
-	auto accuracy = (true_pos + true_neg) * 1.0 / total;
-	auto precision = true_pos * 1.0 / (true_pos + false_pos);
-	auto speedup = duration_hun.count() * 1.0 / duration_nu.count();
+	if (duration_hun_tot.count() == 0) {
+		cerr << "ERROR: Invalid duration of 0 nanoseconds for "
+		        "Hunspell\n";
+		return;
+	}
 
-	out << "Total Words         " << total << '\n';
-	out << "True Positives      " << true_pos << '\n';
-	out << "True Negatives      " << true_neg << '\n';
-	out << "False Positives     " << false_pos << '\n';
-	out << "False Negatives     " << false_neg << '\n';
-	out << "Accuracy            " << accuracy << '\n';
-	out << "Precision           " << precision << '\n';
-	out << "Duration Nuspell    " << duration_nu.count() << '\n';
-	out << "Duration Hunspell   " << duration_hun.count() << '\n';
-	out << "Speedup Rate        " << speedup << '\n';
+	spell_report(out, total, true_pos, true_neg, false_pos, false_neg,
+	             long(duration_nu_tot.count()), long(duration_hun_tot.count()),
+	             long(duration_nu_min.count()), long(duration_hun_min.count()),
+	             long(duration_nu_max.count()), long(duration_hun_max.count()),
+	             float(speedup_max));
+}
+
+/**
+ * @brief Loops through tab-separated file with on each line a unique
+ * incorrectly spelled word and a desired correction. The spelling and
+ * suggestions of the words are verified and a report is printed.
+ */
+auto suggest_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
+                  locale& hloc, bool print_false = false,
+                  bool print_sug = false)
+{
+	using chrono::high_resolution_clock;
+	using chrono::nanoseconds;
+
+	// verify spelling
+	auto total = 0;
+	auto true_pos = 0;
+	auto true_neg = 0;
+	auto false_pos = 0;
+	auto false_neg = 0;
+	auto duration_nu_tot = nanoseconds();
+	auto duration_hun_tot = nanoseconds();
+	auto duration_nu_min = nanoseconds(nanoseconds::max());
+	auto duration_hun_min = nanoseconds(nanoseconds::max());
+	auto duration_nu_max = nanoseconds();
+	auto duration_hun_max = nanoseconds();
+	auto speedup_max = 0.0;
+
+	// verify suggestions
+	auto sug_total = 0;
+	// correction is somewhere in suggestions
+	auto sug_in_nu = 0;
+	auto sug_in_hun = 0;
+	auto sug_in_both = 0;
+	// correction is first suggestion
+	auto sug_first_nu = 0;
+	auto sug_first_hun = 0;
+	auto sug_first_both = 0;
+	auto sug_same_first = 0;
+	// compared number of suggestions
+	auto sug_nu_more = 0;
+	auto sug_hun_more = 0;
+	auto sug_same_amount = 0;
+	// no suggestions
+	auto sug_nu_none = 0;
+	auto sug_hun_none = 0;
+	auto sug_both_none = 0;
+	// maximum suggestions
+	auto sug_nu_max = (size_t)0;
+	auto sug_hun_max = (size_t)0;
+	// number suggestion at or over maximum
+	auto sug_nu_at_max = 0;
+	auto sug_hun_at_max = 0;
+	auto sug_both_at_max = 0;
+
+	auto sug_duration_nu_tot = nanoseconds();
+	auto sug_duration_hun_tot = nanoseconds();
+	auto sug_duration_nu_min = nanoseconds(nanoseconds::max());
+	auto sug_duration_hun_min = nanoseconds(nanoseconds::max());
+	auto sug_duration_nu_max = nanoseconds();
+	auto sug_duration_hun_max = nanoseconds();
+	auto sug_speedup_max = 0.0;
+
+	auto sug_line = string();
+	auto sug_excluded = vector<string>();
+
+	// need to take the entire line here, not `in >> word`
+	auto in_loc = in.getloc();
+	auto word = string();
+	auto correction = string();
+	while (getline(in, sug_line)) {
+		auto word_correction = vector<string>();
+		split_on_any_of(sug_line, "\t", word_correction);
+		word = word_correction[0];
+		correction = word_correction[1];
+		auto tick_a = high_resolution_clock::now();
+		auto res_nu = dic.spell(word);
+		auto tick_b = high_resolution_clock::now();
+		auto res_hun =
+		    hun.spell(to_narrow(to_wide(word, in_loc), hloc));
+		auto tick_c = high_resolution_clock::now();
+		auto duration_nu = tick_b - tick_a;
+		auto duration_hun = tick_c - tick_b;
+
+		duration_nu_tot += duration_nu;
+		duration_hun_tot += duration_hun;
+		if (duration_nu < duration_nu_min)
+			duration_nu_min = duration_nu;
+		if (duration_hun < duration_hun_min)
+			duration_hun_min = duration_hun;
+		if (duration_nu > duration_nu_max)
+			duration_nu_max = duration_nu;
+		if (duration_hun > duration_hun_max)
+			duration_hun_max = duration_hun;
+
+		auto speedup = duration_hun * 1.0 / duration_nu;
+		if (speedup > speedup_max)
+			speedup_max = speedup;
+
+		if (res_hun) {
+			if (res_nu) {
+				++true_pos;
+			}
+			else {
+				++false_neg;
+				if (print_false)
+					out << "FalseNegativeWord   " << word
+					    << '\n';
+			}
+		}
+		else {
+			if (res_nu) {
+				++false_pos;
+				if (print_false)
+					out << "FalsePositiveWord   " << word
+					    << '\n';
+			}
+			else {
+				++true_neg;
+			}
+		}
+		++total;
+
+		if (res_nu || res_hun) {
+			sug_excluded.push_back(word);
+			continue;
+		}
+		// print word and expected suggestion
+		if (print_sug)
+			out << word << '\t' << correction << '\t';
+
+		auto sugs_nu = vector<string>();
+		tick_a = high_resolution_clock::now();
+		dic.suggest(word, sugs_nu);
+		tick_b = high_resolution_clock::now();
+		auto sugs_hun =
+		    hun.suggest(to_narrow(to_wide(word, in_loc), hloc));
+		tick_c = high_resolution_clock::now();
+		auto sug_duration_nu = tick_b - tick_a;
+		auto sug_duration_hun = tick_c - tick_b;
+
+		sug_duration_nu_tot += sug_duration_nu;
+		sug_duration_hun_tot += sug_duration_hun;
+		if (sug_duration_nu < sug_duration_nu_min)
+			sug_duration_nu_min = sug_duration_nu;
+		if (sug_duration_hun < sug_duration_hun_min)
+			sug_duration_hun_min = sug_duration_hun;
+		if (sug_duration_nu > sug_duration_nu_max)
+			sug_duration_nu_max = sug_duration_nu;
+		if (sug_duration_hun > sug_duration_hun_max)
+			sug_duration_hun_max = sug_duration_hun;
+
+		auto sug_speedup = sug_duration_hun * 1.0 / sug_duration_nu;
+		if (sug_speedup > sug_speedup_max)
+			sug_speedup_max = sug_speedup;
+
+		// print number of suggestions
+		if (print_sug)
+			out << sug_duration_nu.count() << '\t'
+			    << sug_duration_hun.count() << '\n';
+
+		// correction is somewhere in suggestions
+		auto in_nu = false;
+		for (auto& sug : sugs_nu) {
+			if (sug == correction) {
+				++sug_in_nu;
+				in_nu = true;
+				break;
+			}
+		}
+		for (auto& sug : sugs_hun) {
+			if (sug == correction) {
+				++sug_in_hun;
+				if (in_nu)
+					++sug_in_both;
+				break;
+			}
+		}
+
+		// correction is first suggestion
+		auto first_nu = false;
+		if (!sugs_nu.empty() && sugs_nu[0] == correction) {
+			++sug_first_nu;
+			first_nu = true;
+		}
+		if (!sugs_hun.empty() && sugs_hun[0] == correction) {
+			++sug_first_hun;
+			if (first_nu)
+				++sug_first_both;
+		}
+
+		// same first suggestion, regardless of desired correction
+		if (!sugs_nu.empty() && !sugs_hun.empty() &&
+		    sugs_nu[0] == sugs_hun[0])
+			++sug_same_first;
+
+		// compared number of suggestions
+		if (sugs_nu.size() == sugs_hun.size())
+			++sug_same_amount;
+		if (sugs_nu.size() > sugs_hun.size())
+			++sug_nu_more;
+		if (sugs_hun.size() > sugs_nu.size())
+			++sug_hun_more;
+
+		// no suggestions
+		if (sugs_nu.empty()) {
+			++sug_nu_none;
+			if (sugs_hun.empty())
+				++sug_both_none;
+		}
+		if (sugs_hun.empty())
+			++sug_hun_none;
+
+		// maximum suggestions
+		if (sugs_nu.size() > sug_nu_max)
+			sug_nu_max = sugs_nu.size();
+		if (sugs_hun.size() > sug_hun_max)
+			sug_hun_max = sugs_hun.size();
+
+		// number suggestion at or over maximum
+		if (sugs_nu.size() >= 15) {
+			++sug_nu_at_max;
+			if (sugs_hun.size() >= 15)
+				++sug_both_at_max;
+		}
+		if (sugs_hun.size() >= 15)
+			++sug_hun_at_max;
+
+		++sug_total;
+	}
+
+	// prevent division by zero
+	if (total == 0) {
+		cerr << "WARNING: No input was provided\n";
+		return;
+	}
+	if (duration_nu_tot.count() == 0) {
+		cerr
+		    << "ERROR: Invalid duration of 0 nanoseconds for Nuspell\n";
+		return;
+	}
+	if (duration_hun_tot.count() == 0) {
+		cerr << "ERROR: Invalid duration of 0 nanoseconds for "
+		        "Hunspell\n";
+		return;
+	}
+
+	spell_report(out, total, true_pos, true_neg, false_pos, false_neg,
+	             long(duration_nu_tot.count()), long(duration_hun_tot.count()),
+	             long(duration_nu_min.count()), long(duration_hun_min.count()),
+	             long(duration_nu_max.count()), long(duration_hun_max.count()),
+	             float(speedup_max));
+
+	// prevent division by zero
+	if (sug_total == 0) {
+		cerr << "WARNING: No input for suggestions was provided\n";
+		return;
+	}
+	if (sug_duration_nu_tot.count() == 0) {
+		cerr << "ERROR: Invalid duration of 0 nanoseconds for Nuspell "
+		        "suggestions\n";
+		return;
+	}
+	if (sug_duration_hun_tot.count() == 0) {
+		cerr << "ERROR: Invalid duration of 0 nanoseconds for Hunspell "
+		        "suggestions\n";
+		return;
+	}
+
+	// rates
+	auto sug_in_nu_rate = sug_in_nu * 1.0 / sug_total;
+	auto sug_in_hun_rate = sug_in_hun * 1.0 / sug_total;
+	auto sug_first_nu_rate = sug_first_nu * 1.0 / sug_total;
+	auto sug_first_hun_rate = sug_first_hun * 1.0 / sug_total;
+
+	auto sug_speedup =
+	    sug_duration_hun_tot.count() * 1.0 / sug_duration_nu_tot.count();
+
+	// suggestion report
+	out << "Total Words Suggestion                  " << sug_total << '\n';
+	out << "Correction In Suggestions Nuspell       " << sug_in_nu << '\n';
+	out << "Correction In Suggestions Hunspell      " << sug_in_hun << '\n';
+	out << "Correction In Suggestions Both          " << sug_in_both
+	    << '\n';
+
+	out << "Correction As First Suggestion Nuspell  " << sug_first_nu
+	    << '\n';
+	out << "Correction As First Suggestion Hunspell " << sug_first_hun
+	    << '\n';
+	out << "Correction As First Suggestion Both     " << sug_first_both
+	    << '\n';
+
+	out << "Nuspell More Suggestions                " << sug_nu_more
+	    << '\n';
+	out << "Hunspell More Suggestions               " << sug_hun_more
+	    << '\n';
+	out << "Same Number Of Suggestions              " << sug_in_hun << '\n';
+
+	out << "Nuspell No Suggestions                  " << sug_nu_none
+	    << '\n';
+	out << "Hunspell No Suggestions                 " << sug_hun_none
+	    << '\n';
+	out << "Both No Suggestions                     " << sug_both_none
+	    << '\n';
+
+	out << "Maximum Suggestions Nuspell             " << sug_nu_max << '\n';
+	out << "Maximum Suggestions Hunspell            " << sug_hun_max
+	    << '\n';
+
+	out << "Rate Corr. In Suggestions Nuspell       " << sug_in_nu_rate
+	    << '\n';
+	out << "Rate Corr. In Suggestions Hunspell      " << sug_in_hun_rate
+	    << '\n';
+
+	out << "Rate Corr. As First Suggestion Nuspell  " << sug_first_nu_rate
+	    << '\n';
+	out << "Rate Corr. As First Suggestion Hunspell " << sug_first_hun_rate
+	    << '\n';
+
+	out << "Total Duration Suggestions Nuspell      "
+	    << sug_duration_nu_tot.count() << '\n';
+	out << "Total Duration Suggestions Hunspell     "
+	    << sug_duration_hun_tot.count() << '\n';
+	out << "Minimum Duration Suggestions Nuspell    "
+	    << sug_duration_nu_min.count() << '\n';
+	out << "Minimum Duration Suggestions Hunspell   "
+	    << sug_duration_hun_min.count() << '\n';
+	out << "Average Duration Suggestions Nuspell    "
+	    << sug_duration_nu_tot.count() / sug_total << '\n';
+	out << "Average Duration Suggestions Hunspell   "
+	    << sug_duration_hun_tot.count() / sug_total << '\n';
+	out << "Maximum Duration Suggestions Nuspell    "
+	    << sug_duration_nu_max.count() << '\n';
+	out << "Maximum Duration Suggestions Hunspell   "
+	    << sug_duration_hun_max.count() << '\n';
+	out << "Maximum Suggestions Speedup             " << sug_speedup_max
+	    << '\n';
+	out << "Suggestions Speedup                     " << sug_speedup
+	    << '\n';
+
+	if (!sug_excluded.empty()) {
+		out << "The following words are correct and should not be "
+		       "used:\n";
+		for (auto& excl : sug_excluded)
+			out << excl << '\n';
+	}
 }
 
 namespace std {
@@ -332,12 +831,11 @@ int main(int argc, char* argv[])
 	catch (const boost::locale::conv::invalid_charset_error& e) {
 		cerr << e.what() << '\n';
 #ifdef _POSIX_VERSION
-		cerr << "Nuspell error: see `locale -m` for supported "
+		cerr << "ERROR: See `locale -m` for supported "
 		        "encodings.\n";
 #endif
 		return 1;
 	}
-	cin.imbue(loc);
 	cout.imbue(loc);
 
 	switch (args.mode) {
@@ -350,7 +848,8 @@ int main(int argc, char* argv[])
 	default:
 		break;
 	}
-	clog << "INFO: I/O  locale " << loc << '\n';
+	if (!args.quiet)
+		clog << "INFO: I/O locale " << loc << '\n';
 
 	auto f = Finder::search_all_dirs_for_dicts();
 
@@ -364,16 +863,17 @@ int main(int argc, char* argv[])
 			args.dictionary += c;
 		}
 	}
-	if (args.dictionary.empty()) {
+	if (args.dictionary.empty())
 		cerr << "No dictionary provided and can not infer from OS "
 		        "locale\n";
-	}
 	auto filename = f.get_dictionary_path(args.dictionary);
 	if (filename.empty()) {
 		cerr << "Dictionary " << args.dictionary << " not found\n";
 		return 1;
 	}
-	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
+	if (!args.quiet)
+		clog << "INFO: Pointed dictionary " << filename
+		     << ".{dic,aff}\n";
 	auto dic = Dictionary();
 	try {
 		dic = Dictionary::load_from_path(filename);
@@ -390,21 +890,28 @@ int main(int argc, char* argv[])
 	auto hun_loc = gen(
 	    "en_US." + Encoding(hun.get_dict_encoding()).value_or_default());
 
-	if (args.files.empty()) {
-		normal_loop(cin, cout, dic, hun, hun_loc, args.print_false,
-		            args.sugs);
-	}
-	else {
-		for (auto& file_name : args.files) {
-			ifstream in(file_name);
-			if (!in.is_open()) {
-				cerr << "Can't open " << file_name << '\n';
-				return 1;
-			}
-			in.imbue(cin.getloc());
-			normal_loop(in, cout, dic, hun, hun_loc,
-			            args.print_false);
+	for (auto& file_name : args.files) {
+		ifstream in(file_name);
+		if (!in.is_open()) {
+			cerr << "Can't open " << file_name << '\n';
+			return 1;
 		}
+		in.imbue(loc);
+		cout << "Word File                   " << file_name << '\n';
+		spell_loop(in, cout, dic, hun, hun_loc, args.print_false,
+		           args.sugs);
+	}
+	if (!args.correction.empty()) {
+		ifstream in(args.correction);
+		if (!in.is_open()) {
+			cerr << "Can't open " << args.correction << '\n';
+			return 1;
+		}
+		in.imbue(loc);
+		cout << "Correction File             " << args.correction
+		     << '\n';
+		suggest_loop(in, cout, dic, hun, hun_loc, args.print_false,
+		             args.print_sug);
 	}
 	return 0;
 }

@@ -17,6 +17,10 @@ add_test(NAME main_whitespace_segmentation
     COMMAND ../src/nuspell/nuspell -s -d ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/base_utf ${CMAKE_CURRENT_SOURCE_DIR}/base_utf_segmentations.txt)
 add_test(NAME main_unicode_segmentation
     COMMAND ../src/nuspell/nuspell -d ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/base_utf ${CMAKE_CURRENT_SOURCE_DIR}/base_utf_segmentations.txt)
+add_test(NAME verify_base_utf_wrong
+    COMMAND verify -d ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/base_utf ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/base_utf.good ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/base_utf.wrong)
+add_test(NAME verify_base_utf_good_and_corrections
+    COMMAND verify -f -d ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/base_utf ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline/base_utf.good -c ${CMAKE_CURRENT_SOURCE_DIR}/base_utf_corrections.tsv)
 
 add_executable(verify verify.cxx)
 target_link_libraries(verify nuspell hunspell Boost::locale)
