@@ -283,9 +283,8 @@ auto list_dictionaries(const Finder& f) -> void
 }
 
 auto process_word(
-    Mode mode, const Dictionary& dic, const string& line, streampos pos_line,
-    string::const_iterator b, string::const_iterator c, bool tellg_supported,
-    string& word,
+    Mode mode, const Dictionary& dic, const string& line,
+    string::const_iterator b, string::const_iterator c, string& word,
     vector<pair<string::const_iterator, string::const_iterator>>& wrong_words,
     vector<string>& suggestions, ostream& out)
 {
@@ -298,9 +297,7 @@ auto process_word(
 			break;
 		}
 		dic.suggest(word, suggestions);
-		auto pos_word = pos_line;
-		if (tellg_supported)
-			pos_word += b - begin(line);
+		auto pos_word = b - begin(line);
 		if (suggestions.empty()) {
 			out << "# " << word << ' ' << pos_word << '\n';
 			break;
@@ -338,6 +335,9 @@ auto process_line(
     ostream& out)
 {
 	switch (mode) {
+	case DEFAULT_MODE:
+		out << '\n';
+		break;
 	case MISSPELLED_LINES_MODE:
 		if (!wrong_words.empty())
 			out << line << '\n';
@@ -360,12 +360,6 @@ auto whitespace_segmentation_loop(istream& in, ostream& out,
 	using Str_Iter = string::const_iterator;
 	auto wrong_words = vector<pair<Str_Iter, Str_Iter>>();
 	auto loc = in.getloc();
-	auto pos_line = in.tellg();
-	auto tellg_supported = true;
-	if (pos_line < 0) {
-		pos_line = 0;
-		tellg_supported = false;
-	}
 	auto line_num = size_t(0);
 	auto& facet = use_facet<ctype<char>>(loc);
 	auto isspace = [&](char c) { return facet.is(facet.space, c); };
@@ -378,16 +372,12 @@ auto whitespace_segmentation_loop(istream& in, ostream& out,
 				break;
 			auto c = find_if(b, end(line), isspace);
 
-			process_word(mode, dic, line, pos_line, b, c,
-			             tellg_supported, word, wrong_words,
+			process_word(mode, dic, line, b, c, word, wrong_words,
 			             suggestions, out);
 
 			a = c;
 		}
 		process_line(mode, line, wrong_words, out);
-
-		if (tellg_supported)
-			pos_line = in.tellg();
 	}
 }
 
@@ -401,12 +391,6 @@ auto unicode_segentation_loop(istream& in, ostream& out, const Dictionary& dic,
 	using Str_Iter = string::const_iterator;
 	auto wrong_words = vector<pair<Str_Iter, Str_Iter>>();
 	auto loc = in.getloc();
-	auto pos_line = in.tellg();
-	auto tellg_supported = true;
-	if (pos_line < 0) {
-		pos_line = 0;
-		tellg_supported = false;
-	}
 	auto line_num = size_t(0);
 	auto index = b::ssegment_index();
 	index.rule(b::word_any);
@@ -420,16 +404,12 @@ auto unicode_segentation_loop(istream& in, ostream& out, const Dictionary& dic,
 			auto b = begin(segment);
 			auto c = end(segment);
 
-			process_word(mode, dic, line, pos_line, b, c,
-			             tellg_supported, word, wrong_words,
+			process_word(mode, dic, line, b, c, word, wrong_words,
 			             suggestions, out);
 
 			a = c;
 		}
 		process_line(mode, line, wrong_words, out);
-
-		if (tellg_supported)
-			pos_line = in.tellg();
 	}
 }
 
