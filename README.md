@@ -26,11 +26,11 @@ Main features of Nuspell spelling checker:
 Build-only dependencies:
 
   - C++ 17 compiler, GCC >= v7, Clang >= v5, MSVC >= 2017
-  - Cmake version 3.8 or newer
-  - Git
-  - Ronn
-  - Boost headers version >= 1.48 (needed only for the CLI tool,
-    not the library)
+  - Cmake >= v3.8
+  - Boost >= v1.48 (needed only for the CLI tool, not the library)
+  - Catch2 >= v2.3.0 (It is only needed when building the tests. If it is not
+    available as a system package, the the Git submodule will be used.)
+  - Ronn (optional, needed for building the manpage)
 
 Run-time (and build-time) dependencies:
 
@@ -70,8 +70,7 @@ If you are making a Linux distribution package (dep, rpm) you need
 some additional configurations on the CMake invocation. For example:
 
 ```bash
-cmake .. -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release \
-         -DCMAKE_INSTALL_PREFIX=/usr
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
 ```
 
 ## Building on OSX and macOS
