@@ -109,7 +109,7 @@ auto Dict_Base::spell_break(std::wstring& s, size_t depth) const -> bool
 	for (auto& pat : break_table.start_word_breaks()) {
 		if (begins_with(s, pat)) {
 			auto substr = s.substr(pat.size());
-			auto res = spell_break(substr);
+			auto res = spell_break(substr, depth + 1);
 			if (res)
 				return res;
 		}
@@ -119,7 +119,7 @@ auto Dict_Base::spell_break(std::wstring& s, size_t depth) const -> bool
 	for (auto& pat : break_table.end_word_breaks()) {
 		if (ends_with(s, pat)) {
 			auto substr = s.substr(0, s.size() - pat.size());
-			auto res = spell_break(substr);
+			auto res = spell_break(substr, depth + 1);
 			if (res)
 				return res;
 		}
