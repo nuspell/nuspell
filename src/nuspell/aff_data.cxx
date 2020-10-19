@@ -992,6 +992,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		word.clear();
 		flags_str.clear();
 		flags.clear();
+		if (!line.empty() && line.back() == '\r')
+			line.pop_back();
 
 		size_t slash_pos = 0;
 		size_t tab_pos = 0;
