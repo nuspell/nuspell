@@ -280,9 +280,7 @@ To run the tests, run the following command after building:
 
 # See also
 
-Full documentation in the [wiki](https://github.com/nuspell/nuspell/wiki),
-which also holds the [Code of
-Conduct](https://github.com/nuspell/nuspell/wiki/Code-of-Conduct).
+Full documentation in the [wiki](https://github.com/nuspell/nuspell/wiki).
 
 API Documentation for developers can be generated from the source files
 by running:

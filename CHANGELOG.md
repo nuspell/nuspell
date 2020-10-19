@@ -6,6 +6,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2020-10-19
+### Fixed
+- Fix lifetime issue (segmentation fault) in ngram-based suggestions. Fixes #84.
+- Fix internal usage of `std::codecvt` in edge case in function `to_wide()` and
+  `to_narrow()`
+- Fix not propagating recursion depth in spell_break(), which caused hangup.
+  Fixes #85.
+- Fix overwriting of PDB files when compiling with Visual Studio. This prevented
+  debugging nuspell.dll. Fixes #86.
+- Fix output of CLI tool to be more compatible to ispell and hunspell.
+
+### Changed
+- Boost is no longer a dependency of the library at all. It is still a
+  dependency of the CLI tool. Closes #79. Fixes #71.
+- Use `std::string_view` in the public API instead of `const std::string&`. Also
+  use it internally at various places.
+- Build as shared library by default. Building as static is still possible via
+  the CMake's variable `BUILD_SHARED_LIBS`.
+- The public API is annotated with dll-export/visibility attributes, and also
+  some private functions are annotated needed for testing. This reduces the file
+  size. Closes #65.
+- Use Unicode text segmentation by default in the CLI tool. Simple segmentation
+  on white-space is still available via CLI option.
+
+### Removed
+- Delete deprecated functions in the class Finder.
+- Drop under-designed and undocumented feature in the CLI tool about personal
+  dictionaries.
+
 ## [3.1.2] - 2020-07-01
 ### Fixed
 - Internal refactorings that reduce function templates in `utils` and `finder`.
@@ -123,7 +152,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v3.1.2...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/nuspell/nuspell/compare/v3.1.2...v4.0.0
 [3.1.2]: https://github.com/nuspell/nuspell/compare/v3.1.1...v3.1.2
 [3.1.1]: https://github.com/nuspell/nuspell/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/nuspell/nuspell/compare/v3.0.0...v3.1.0
