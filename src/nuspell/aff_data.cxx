@@ -331,36 +331,44 @@ auto wrap_compound_rule(std::u16string& r) -> Compound_Rule_Ref_Wrapper
 	return {r};
 }
 
-class Aff_Line_Stream : public std::istringstream {
+class Aff_Line_IO_Manip;
+
+template <class T>
+struct Ref_Wrapper_1 {
+	Aff_Line_IO_Manip& manip;
+	T& data;
+};
+
+struct Ref_Wrapper_1_Cpd_Rule {
+	Aff_Line_IO_Manip& manip;
+	Compound_Rule_Ref_Wrapper data;
+};
+
+template <class T, class U>
+struct Ref_Wrapper_2 {
+	Aff_Line_IO_Manip& manip;
+	T& data1;
+	U& data2;
+};
+
+class Aff_Line_IO_Manip {
 	std::string str_buf;
 	std::u16string flag_buffer;
 
 	const Aff_Data* aff_data = nullptr;
 	Encoding_Converter cvt;
 
-	auto virtual dummy_func() -> void;
-
       public:
 	Parsing_Error_Code err = {};
 
-	auto set_aff_data(Aff_Data& a)
+	Aff_Line_IO_Manip() = default;
+	Aff_Line_IO_Manip(Aff_Data& a)
+	    : aff_data(&a), cvt(a.encoding.value_or_default())
 	{
-		aff_data = &a;
-		cvt = Encoding_Converter(a.encoding.value_or_default());
 	}
 
-	Aff_Line_Stream() = default;
-	Aff_Line_Stream(Aff_Line_Stream&& other)
-	    : istringstream{std::move(other)}, aff_data{other.aff_data},
-	      cvt{std::move(other.cvt)}, err{other.err}
+	auto& parse(istream& in, Encoding& enc)
 	{
-		other.aff_data = nullptr;
-		other.err = {};
-	}
-
-	auto& parse(Encoding& enc)
-	{
-		auto& in = *this;
 		in >> str_buf;
 		if (in.fail())
 			return in;
@@ -371,9 +379,8 @@ class Aff_Line_Stream : public std::istringstream {
 		return in;
 	}
 
-	auto& parse(std::wstring& wstr)
+	auto& parse(istream& in, std::wstring& wstr)
 	{
-		auto& in = *this;
 		in >> str_buf;
 		if (in.fail()) // str_buf is unmodified on fail
 			return in;
@@ -383,10 +390,9 @@ class Aff_Line_Stream : public std::istringstream {
 		return in;
 	}
 
-	auto& parse(Flag_Type& flag_type)
+	auto& parse(istream& in, Flag_Type& flag_type)
 	{
 		using Ft = Flag_Type;
-		auto& in = *this;
 		flag_type = {};
 		in >> str_buf;
 		if (in.fail())
@@ -403,9 +409,8 @@ class Aff_Line_Stream : public std::istringstream {
 		return in;
 	}
 
-	auto& parse(icu::Locale& loc)
+	auto& parse(istream& in, icu::Locale& loc)
 	{
-		auto& in = *this;
 		in >> str_buf;
 		if (in.fail())
 			return in;
@@ -415,9 +420,9 @@ class Aff_Line_Stream : public std::istringstream {
 		return in;
 	}
 
-	auto& parse(std::u16string& flags)
+      private:
+	auto& parse_flags(istream& in, std::u16string& flags)
 	{
-		auto& in = *this;
 		in >> str_buf;
 		if (in.fail())
 			return in;
@@ -428,29 +433,28 @@ class Aff_Line_Stream : public std::istringstream {
 		return in;
 	}
 
-	auto& parse(char16_t& flag)
+      public:
+	auto& parse(istream& in, char16_t& flag)
 	{
-		auto& in = *this;
 		flag = 0;
-		parse(flag_buffer);
+		parse_flags(in, flag_buffer);
 		if (in)
 			flag = flag_buffer[0];
 		return in;
 	}
 
-	auto& parse(Flag_Set& flags)
+	auto& parse(istream& in, Flag_Set& flags)
 	{
-		auto& in = *this;
-		parse(flag_buffer);
+		parse_flags(in, flag_buffer);
 		if (in)
 			flags = flag_buffer;
 		return in;
 	}
 
-	auto& parse_word_slash_flags(wstring& word, Flag_Set& flags)
+	auto& parse_word_slash_flags(istream& in, wstring& word,
+	                             Flag_Set& flags)
 	{
 		using Err = Parsing_Error_Code;
-		auto& in = *this;
 		in >> str_buf;
 		if (in.fail())
 			return in;
@@ -475,33 +479,9 @@ class Aff_Line_Stream : public std::istringstream {
 		return in;
 	}
 
-	auto& parse(pair<wstring&, Flag_Set&> word_and_flags)
+	auto parse_word_slash_single_flag(istream& in, wstring& word,
+	                                  char16_t& flag) -> istream&
 	{
-		return parse_word_slash_flags(word_and_flags.first,
-		                              word_and_flags.second);
-	}
-
-	auto& parse(Condition<wchar_t>& cond)
-	{
-		auto& in = *this;
-		auto wstr = wstring();
-		in.parse(wstr);
-		if (in.fail())
-			return in;
-		try {
-			cond = std::move(wstr);
-		}
-		catch (const Condition_Exception& ex) {
-			err = Parsing_Error_Code::AFX_CONDITION_INVALID_FORMAT;
-			in.setstate(in.failbit);
-		}
-		return in;
-	}
-
-	auto parse_word_slash_single_flag(wstring& word, char16_t& flag)
-	    -> istream&
-	{
-		auto& in = *this;
 		in >> str_buf;
 		if (in.fail())
 			return in;
@@ -524,15 +504,8 @@ class Aff_Line_Stream : public std::istringstream {
 		return in;
 	}
 
-	auto& parse(pair<wstring&, char16_t&> word_and_flag)
+	auto& parse_compound_rule(istream& in, u16string& out)
 	{
-		return parse_word_slash_single_flag(word_and_flag.first,
-		                                    word_and_flag.second);
-	}
-
-	auto& parse_compound_rule(u16string& out)
-	{
-		auto& in = *this;
 		in >> str_buf;
 		if (in.fail())
 			return in;
@@ -543,62 +516,75 @@ class Aff_Line_Stream : public std::istringstream {
 		return in;
 	}
 
-	auto& parse(Compound_Rule_Ref_Wrapper rule)
+	template <class T>
+	auto operator()(T& x) -> Ref_Wrapper_1<T>
 	{
-		return parse_compound_rule(rule.rule);
+		return {*this, x};
 	}
 
-#if 0
-	auto& parse_morhological_fields(vector<string>& out)
+	auto operator()(Compound_Rule_Ref_Wrapper x) -> Ref_Wrapper_1_Cpd_Rule
 	{
-		auto& in = *this;
-		if (in.fail())
-			return in;
-		out.clear();
-		auto old_mask = in.exceptions();
-		in.exceptions(in.goodbit); // disable exceptions
-		while (in >> str_buf) {
-			out.push_back(str_buf);
-		}
-		if (in.fail() && !in.bad())
-			reset_failbit_istream(in);
-		in.exceptions(old_mask);
-		return in;
+		return {*this, x};
 	}
 
-	auto& parse(vector<string>& out)
+	template <class T, class U>
+	auto operator()(T& x, U& y) -> Ref_Wrapper_2<T, U>
 	{
-		return parse_morhological_fields(out);
+		return {*this, x, y};
 	}
-#endif
 };
-auto Aff_Line_Stream::dummy_func() -> void {}
 
-template <class T, class U>
-auto pair_tie(T& a, U& b) -> pair<T&, U&>
+template <class T, class = decltype(declval<Aff_Line_IO_Manip&>().parse(
+                       declval<istream&>(), declval<T&>()))>
+auto& operator>>(istream& in, Ref_Wrapper_1<T> x)
 {
-	return {a, b};
+	return x.manip.parse(in, x.data);
 }
 
-template <class T, class = decltype(std::declval<Aff_Line_Stream>().parse(
-                       std::declval<T>()))>
-auto& operator>>(Aff_Line_Stream& in, T&& x)
+auto& operator>>(istream& in, Ref_Wrapper_1<pair<wstring, wstring>> x)
 {
-	return in.parse(std::forward<T>(x));
+	return in >> x.manip(x.data.first) >> x.manip(x.data.second);
 }
 
-auto& operator>>(Aff_Line_Stream& in, pair<wstring, wstring>& out)
+auto& operator>>(istream& in, Ref_Wrapper_1<Condition<wchar_t>> x)
 {
-	return in >> out.first >> out.second;
+	auto wstr = wstring();
+	in >> x.manip(wstr);
+	if (in.fail())
+		return in;
+	try {
+		x.data = std::move(wstr);
+	}
+	catch (const Condition_Exception& ex) {
+		x.manip.err = Parsing_Error_Code::AFX_CONDITION_INVALID_FORMAT;
+		in.setstate(in.failbit);
+	}
+	return in;
 }
 
-auto& operator>>(Aff_Line_Stream& in, Compound_Pattern<wchar_t>& p)
+auto& operator>>(istream& in, Ref_Wrapper_1_Cpd_Rule x)
 {
+	return x.manip.parse_compound_rule(in, x.data.rule);
+}
+
+auto& operator>>(istream& in, Ref_Wrapper_2<wstring, Flag_Set> x)
+{
+	return x.manip.parse_word_slash_flags(in, x.data1, x.data2);
+}
+
+auto& operator>>(istream& in, Ref_Wrapper_2<wstring, char16_t> x)
+{
+	return x.manip.parse_word_slash_single_flag(in, x.data1, x.data2);
+}
+
+auto& operator>>(istream& in, Ref_Wrapper_1<Compound_Pattern<wchar_t>> x)
+{
+	auto [manip, p] = x;
 	auto first_word_end = wstring();
 	auto second_word_begin = wstring();
 	p.match_first_only_unaffixed_or_zero_affixed = false;
-	in >> pair_tie(first_word_end, p.first_word_flag);
-	in >> pair_tie(second_word_begin, p.second_word_flag);
+	in >> manip(first_word_end, p.first_word_flag);
+	in >> manip(second_word_begin, p.second_word_flag);
 	if (in.fail())
 		return in;
 	if (first_word_end == L"0") {
@@ -607,8 +593,8 @@ auto& operator>>(Aff_Line_Stream& in, Compound_Pattern<wchar_t>& p)
 	}
 	p.begin_end_chars = {first_word_end, second_word_begin};
 	auto old_mask = in.exceptions();
-	in.exceptions(in.goodbit); // disable exceptions
-	in >> p.replacement;       // optional
+	in.exceptions(in.goodbit);  // disable exceptions
+	in >> manip(p.replacement); // optional
 	if (in.fail() && in.eof() && !in.bad()) {
 		reset_failbit_istream(in);
 		p.replacement.clear();
@@ -618,7 +604,7 @@ auto& operator>>(Aff_Line_Stream& in, Compound_Pattern<wchar_t>& p)
 }
 
 template <class T, class Func = identity>
-auto parse_vector_of_T(Aff_Line_Stream& in, const string& command,
+auto parse_vector_of_T(istream& in, Aff_Line_IO_Manip& p, const string& command,
                        unordered_map<string, size_t>& counts, vector<T>& vec,
                        Func modifier_wrapper = Func()) -> void
 {
@@ -638,7 +624,7 @@ auto parse_vector_of_T(Aff_Line_Stream& in, const string& command,
 	else if (dat->second != 0) {
 		dat->second--;
 		vec.emplace_back();
-		in >> modifier_wrapper(vec.back());
+		in >> p(modifier_wrapper(vec.back()));
 		if (in.fail())
 			cerr << "Nuspell error: single entry of a vector "
 			        "command (series of "
@@ -651,11 +637,12 @@ auto parse_vector_of_T(Aff_Line_Stream& in, const string& command,
 }
 
 template <class AffixT>
-auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
+auto parse_affix(istream& in, Aff_Line_IO_Manip& p, string& command,
+                 vector<AffixT>& vec,
                  unordered_map<string, pair<bool, size_t>>& cmd_affix) -> void
 {
 	char16_t f;
-	in >> f;
+	in >> p(f);
 	if (in.fail())
 		return;
 	command.append(reinterpret_cast<char*>(&f), sizeof(f));
@@ -683,17 +670,17 @@ auto parse_affix(Aff_Line_Stream& in, string& command, vector<AffixT>& vec,
 		auto& elem = vec.back();
 		elem.flag = f;
 		elem.cross_product = dat->second.first;
-		in >> elem.stripping;
+		in >> p(elem.stripping);
 		if (elem.stripping == L"0")
 			elem.stripping.clear();
-		in >> pair_tie(elem.appending, elem.cont_flags);
+		in >> p(elem.appending, elem.cont_flags);
 		if (elem.appending == L"0")
 			elem.appending.clear();
 		if (in.fail())
 			return;
 		auto old_mask = in.exceptions();
 		in.exceptions(in.goodbit);
-		in >> elem.condition; // optional
+		in >> p(elem.condition); // optional
 		if (in.fail() && in.eof() && !in.bad()) {
 			elem.condition = L".";
 			reset_failbit_istream(in);
@@ -794,7 +781,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	auto line = string();
 	auto command = string();
 	auto line_num = size_t(0);
-	auto ss = Aff_Line_Stream();
+	auto ss = istringstream();
+	auto p = Aff_Line_IO_Manip(*this);
 	Setlocale_To_C_In_Scope setlocale_to_C;
 	auto error_happened = false;
 	// while parsing, the streams must have plain ascii locale without
@@ -803,13 +791,12 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	// "C" locale can be used assuming it is US-ASCII
 	in.imbue(locale::classic());
 	ss.imbue(locale::classic());
-	ss.set_aff_data(*this);
 	strip_utf8_bom(in);
 	while (getline(in, line)) {
 		line_num++;
 		ss.str(line);
 		ss.clear();
-		ss.err = {};
+		p.err = {};
 		ss >> ws;
 		if (ss.eof() || ss.peek() == '#') {
 			continue; // skip comment or empty lines
@@ -817,15 +804,15 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		ss >> command;
 		to_upper_ascii(command);
 		if (command == "SFX") {
-			parse_affix(ss, command, suffixes, cmd_affix);
+			parse_affix(ss, p, command, suffixes, cmd_affix);
 		}
 		else if (command == "PFX") {
-			parse_affix(ss, command, prefixes, cmd_affix);
+			parse_affix(ss, p, command, prefixes, cmd_affix);
 		}
 		else if (command_wstrings.count(command)) {
 			auto& str = *command_wstrings[command];
 			if (str.empty())
-				ss >> str;
+				ss >> p(str);
 			else
 				cerr << "Nuspell warning: "
 				        "setting "
@@ -845,19 +832,20 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 				max_diff_factor = 5;
 		}
 		else if (command_flag.count(command)) {
-			ss >> *command_flag[command];
+			ss >> p(*command_flag[command]);
 		}
 		else if (command == "MAP") {
-			parse_vector_of_T(ss, command, cmd_with_vec_cnt,
+			parse_vector_of_T(ss, p, command, cmd_with_vec_cnt,
 			                  map_related_chars);
 		}
 		else if (command_vec_pair.count(command)) {
 			auto& vec = *command_vec_pair[command];
-			parse_vector_of_T(ss, command, cmd_with_vec_cnt, vec);
+			parse_vector_of_T(ss, p, command, cmd_with_vec_cnt,
+			                  vec);
 		}
 		else if (command == "SET") {
 			if (encoding.empty()) {
-				ss >> encoding;
+				ss >> p(encoding);
 			}
 			else {
 				cerr << "Nuspell warning: "
@@ -868,13 +856,13 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			}
 		}
 		else if (command == "FLAG") {
-			ss >> flag_type;
+			ss >> p(flag_type);
 		}
 		else if (command == "LANG") {
-			ss >> icu_locale;
+			ss >> p(icu_locale);
 		}
 		else if (command == "AF") {
-			parse_vector_of_T(ss, command, cmd_with_vec_cnt,
+			parse_vector_of_T(ss, p, command, cmd_with_vec_cnt,
 			                  flag_aliases);
 		}
 		else if (command == "AM") {
@@ -882,21 +870,21 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			//                  morphological_aliases);
 		}
 		else if (command == "BREAK") {
-			parse_vector_of_T(ss, command, cmd_with_vec_cnt,
+			parse_vector_of_T(ss, p, command, cmd_with_vec_cnt,
 			                  break_patterns);
 			break_exists = true;
 		}
 		else if (command == "CHECKCOMPOUNDPATTERN") {
-			parse_vector_of_T(ss, command, cmd_with_vec_cnt,
+			parse_vector_of_T(ss, p, command, cmd_with_vec_cnt,
 			                  compound_patterns);
 		}
 		else if (command == "COMPOUNDRULE") {
-			parse_vector_of_T(ss, command, cmd_with_vec_cnt, rules,
-			                  wrap_compound_rule);
+			parse_vector_of_T(ss, p, command, cmd_with_vec_cnt,
+			                  rules, wrap_compound_rule);
 		}
 		else if (command == "COMPOUNDSYLLABLE") {
 			ss >> compound_syllable_max;
-			ss >> compound_syllable_vowels;
+			ss >> p(compound_syllable_vowels);
 		}
 		else if (command == "WORDCHARS") {
 			ss >> wordchars;
@@ -906,13 +894,13 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 			cerr
 			    << "Nuspell error: could not parse affix file line "
 			    << line_num << ": " << line << endl;
-			report_parsing_error(ss.err, line_num);
+			report_parsing_error(p.err, line_num);
 		}
-		else if (ss.err != Parsing_Error_Code::NO_ERROR) {
+		else if (p.err != Parsing_Error_Code::NO_ERROR) {
 			cerr
 			    << "Nuspell warning: while parsing affix file line "
 			    << line_num << ": " << line << endl;
-			report_parsing_error(ss.err, line_num);
+			report_parsing_error(p.err, line_num);
 		}
 	}
 	// default BREAK definition
