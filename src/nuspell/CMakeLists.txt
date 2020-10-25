@@ -22,7 +22,8 @@ target_compile_features(nuspell PUBLIC cxx_std_17)
 
 target_include_directories(nuspell
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
+    INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+              $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_link_libraries(nuspell PUBLIC ICU::uc ICU::data)
 
