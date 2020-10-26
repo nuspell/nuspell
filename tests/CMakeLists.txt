@@ -18,9 +18,9 @@ add_executable(verify verify.cxx)
 target_link_libraries(verify nuspell hunspell Boost::locale)
 
 if (BUILD_SHARED_LIBS AND WIN32)
-    add_custom_command(TARGET unit_test PRE_LINK
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:nuspell> $<TARGET_FILE_DIR:unit_test>)
+    add_custom_command(TARGET verify PRE_LINK
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:nuspell>
+    $<TARGET_FILE:hunspell> $<TARGET_FILE_DIR:unit_test>)
 endif()
 
 include(Catch)
