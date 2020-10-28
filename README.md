@@ -26,16 +26,15 @@ Main features of Nuspell spelling checker:
 Build-only dependencies:
 
   - C++ 17 compiler, GCC >= v7, Clang >= v5, MSVC >= 2017
-  - Cmake >= v3.8
-  - Boost >= v1.48 (needed only for the CLI tool, not the library)
+  - CMake >= v3.8
   - Catch2 >= v2.3.0 (It is only needed when building the tests. If it is not
     available as a system package, the the Git submodule will be used.)
-  - Ronn (optional, needed for building the manpage)
+  - Pandoc (optional, needed for building the manpage)
 
 Run-time (and build-time) dependencies:
 
-  - icu4c
-  - boost-locale (needed only for the CLI tool, not the library)
+  - ICU4C
+  - Boost Locale >= v1.48 (needed only for the CLI tool, not the library)
 
 Recommended tools for developers: qtcreator, ninja, clang-format, gdb,
 vim, doxygen.
