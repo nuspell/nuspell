@@ -580,7 +580,7 @@ class Hash_Multiset {
 		n.rehash(count);
 		for (auto& b : data) {
 			for (auto& x : b) {
-				n.insert(x);
+				n.insert(std::move(x));
 			}
 		}
 		data.swap(n.data);
@@ -593,7 +593,7 @@ class Hash_Multiset {
 		rehash(std::ceil(count / max_load_fact));
 	}
 
-	auto insert(const_reference value)
+	auto insert(value_type&& value)
 	{
 		using namespace std;
 		auto hash = hasher();
@@ -607,7 +607,7 @@ class Hash_Multiset {
 		auto& bucket = data[h_mod];
 		if (bucket.size() == 0 || bucket.size() == 1 ||
 		    key == key_extract(bucket.back())) {
-			bucket.push_back(value);
+			bucket.push_back(move(value));
 			++sz;
 			return end(bucket) - 1;
 		}
@@ -616,12 +616,12 @@ class Hash_Multiset {
 			    return key == key_extract(x);
 		    });
 		if (last != rend(bucket)) {
-			auto ret = bucket.insert(last.base(), value);
+			auto ret = bucket.insert(last.base(), move(value));
 			++sz;
 			return ret;
 		}
 
-		bucket.push_back(value);
+		bucket.push_back(move(value));
 		++sz;
 		return end(bucket) - 1;
 	}
