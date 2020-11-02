@@ -1,4 +1,4 @@
-/* Copyright 2018-2020 Dimitrij Mijoski, Sander van Geloven
+/* Copyright 2018-2020 Dimitrij Mijoski
  *
  * This file is part of Nuspell.
  *
@@ -1385,6 +1385,10 @@ class Suffix_Table {
 	auto iterate_suffixes_of(Key_Type&& word) const = delete;
 };
 
+/**
+ * @internal
+ * @brief A pair of strings concatenated into one string.
+ */
 template <class CharT>
 class String_Pair {
 	using Str = std::basic_string<CharT>;
@@ -1394,23 +1398,12 @@ class String_Pair {
 
       public:
 	String_Pair() = default;
-	/**
-	 * @internal
-	 * @brief Construct string pair
-	 *
-	 * Constructs a string pair from a single string containing a pair of
-	 * strings and an index where the split resides.
-	 *
-	 * @param str the string that can be split into a pair.
-	 * @param i the index where the string is split.
-	 * @throws std::out_of_range
-	 */
 	template <class Str1>
-	String_Pair(Str1&& str, size_t i) : i(i), s(std::forward<Str1>(str))
+	explicit String_Pair(Str1&& str, size_t i)
+	    : i(i), s(std::forward<Str1>(str))
 	{
-		if (i > s.size()) {
+		if (i > s.size())
 			throw std::out_of_range("word split is too long");
-		}
 	}
 
 	template <class Str1, class Str2,

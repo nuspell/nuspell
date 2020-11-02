@@ -31,7 +31,7 @@
 #define NUSPELL_MSVC_PRAGMA_WARNING(x)
 #endif
 NUSPELL_MSVC_PRAGMA_WARNING(push)
-NUSPELL_MSVC_PRAGMA_WARNING(disable: 4251)
+NUSPELL_MSVC_PRAGMA_WARNING(disable : 4251)
 
 namespace nuspell {
 inline namespace v4 {

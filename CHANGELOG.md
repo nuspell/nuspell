@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1] - 2020-11-02
+### Fixed
+- Fix handling CRLF line endings in .dic. Fixes #89.
+- Fix CMake scripts for unusual install prefixes.
+- Improve hash-table insertion, avoid temporaries. This improves loading times.
+
+### Changed
+- Switch man-page generator from Ronn to Pandoc. This changes the dependencies
+  for building. See the README.
+
 ## [4.0.0] - 2020-10-19
 ### Fixed
 - Fix lifetime issue (segmentation fault) in ngram-based suggestions. Fixes #84.
@@ -152,7 +162,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v4.0.0...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v4.0.1...HEAD
+[4.0.1]: https://github.com/nuspell/nuspell/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/nuspell/nuspell/compare/v3.1.2...v4.0.0
 [3.1.2]: https://github.com/nuspell/nuspell/compare/v3.1.1...v3.1.2
 [3.1.1]: https://github.com/nuspell/nuspell/compare/v3.1.0...v3.1.1
