@@ -1054,9 +1054,9 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			// entries.
 			if (inserted->second.contains(forbiddenword_flag))
 				break;
-			auto title_word = to_title(wide_word, icu_locale);
+			to_title(wide_word, icu_locale, wide_word);
 			flags += HIDDEN_HOMONYM_FLAG;
-			words.emplace(title_word, flags);
+			words.emplace(wide_word, flags);
 			break;
 		}
 		default:
