@@ -19,23 +19,22 @@
 #include "dictionary.hxx"
 #include "finder.hxx"
 
+#include <boost/locale.hpp>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-
-#include <boost/locale.hpp>
-
-// manually define if not supplied by the build system
-#ifndef PROJECT_VERSION
-#define PROJECT_VERSION "unknown.version"
-#endif
-#define PACKAGE_STRING "nuspell " PROJECT_VERSION
 
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
     (defined(__APPLE__) && defined(__MACH__))
 #include <getopt.h>
 #include <unistd.h>
 #endif
+
+// manually define if not supplied by the build system
+#ifndef PROJECT_VERSION
+#define PROJECT_VERSION "unknown.version"
+#endif
+#define PACKAGE_STRING "nuspell " PROJECT_VERSION
 
 using namespace std;
 using namespace nuspell;
@@ -247,8 +246,7 @@ auto print_version() -> void
 	    "redistribute it.\n"
 	    "There is NO WARRANTY, to the extent permitted by law.\n"
 	    "\n"
-	    "Written by Dimitrij Mijoski, Sander van Geloven and others,\n"
-	    "see https://github.com/nuspell/nuspell/blob/master/AUTHORS\n";
+	    "Written by Dimitrij Mijoski and Sander van Geloven.\n";
 }
 
 /**

@@ -16,6 +16,8 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/locale.hpp>
+#include <hunspell/hunspell.hxx>
 #include <nuspell/dictionary.hxx>
 #include <nuspell/finder.hxx>
 #include <nuspell/utils.hxx>
@@ -25,21 +27,17 @@
 #include <iomanip>
 #include <iostream>
 
-#include <boost/locale.hpp>
-
-// manually define if not supplied by the build system
-#ifndef PROJECT_VERSION
-#define PROJECT_VERSION "unknown.version"
-#endif
-#define PACKAGE_STRING "nuspell " PROJECT_VERSION
-
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
     (defined(__APPLE__) && defined(__MACH__))
 #include <getopt.h>
 #include <unistd.h>
 #endif
 
-#include <hunspell/hunspell.hxx>
+// manually define if not supplied by the build system
+#ifndef PROJECT_VERSION
+#define PROJECT_VERSION "unknown.version"
+#endif
+#define PACKAGE_STRING "nuspell " PROJECT_VERSION
 
 using namespace std;
 using namespace nuspell;
@@ -152,9 +150,8 @@ auto print_help(const string& program_name) -> void
 	o << p << " [-d dict_NAME] [-i enc] [-f] [-s] [file_name]...\n";
 	o << p << " -h|--help|-v|--version\n";
 	o << "\n"
-	     "Verification testing spell check of each FILE.\n"
+	     "Verification testing of Nuspell for each FILE.\n"
 	     "Without FILE, check standard input.\n"
-	     "For simple test, use /usr/share/dict/american-english for FILE.\n"
 	     "\n"
 	     "  -d di_CT      use di_CT dictionary. Only one dictionary is\n"
 	     "                currently supported\n"
@@ -164,26 +161,12 @@ auto print_help(const string& program_name) -> void
 	     "  -h, --help    print this help and exit\n"
 	     "  -v, --version print version number and exit\n"
 	     "\n";
-	o << "Example: " << p << " -d en_US file.txt\n";
+	o << "Example: " << p << " -d en_US /usr/share/dict/american-english\n";
 	o << "\n"
-	     "All word for which results differ with Hunspell are printed to"
-	     "standard output.\n"
-	     "Then some statistics for correctness and "
-	     "performance are printed to standard output, being:\n"
-	     "  Total Words\n"
-	     "  True Positives\n"
-	     "  True Negatives\n"
-	     "  False Positives\n"
-	     "  False Negatives\n"
-	     "  Accuracy\n"
-	     "  Precision\n"
-	     "  Duration Nuspell (type varies, but usually in nanoseconds)\n"
-	     "  Duration Hunspell (type varies, but usually in nanoseconds)\n"
-	     "  Speedup Rate\n"
-	     "All durations are highly machine and platform dependent.\n"
-	     "Even on the same machine it varies a lot in the second decimal!\n"
-	     "If speedup is 1.60, Nuspell is 1.60 times faster as Hunspell.\n"
-	     "Use only executable from production build with optimizations.\n"
+	     "The input should contain one word per line. Each word is\n"
+	     "checked in Nuspell and Hunspell and the results are compared.\n"
+	     "After all words are processed, some statistics are printed like\n"
+	     "correctness and speed of Nuspell compared to Hunspell.\n"
 	     "\n"
 	     "Please note, messages containing:\n"
 	     "  This UTF-8 encoding can't convert to UTF-16:"
@@ -204,8 +187,7 @@ auto print_version() -> void
 	    "redistribute it.\n"
 	    "There is NO WARRANTY, to the extent permitted by law.\n"
 	    "\n"
-	    "Written by Dimitrij Mijoski, Sander van Geloven and others,\n"
-	    "see https://github.com/nuspell/nuspell/blob/master/AUTHORS\n";
+	    "Written by Dimitrij Mijoski and Sander van Geloven.\n";
 }
 
 auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
@@ -266,23 +248,13 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 			hun.suggest(narrow_word);
 		}
 	}
-
+	out << "Total Words         " << total << '\n';
 	// prevent devision by zero
-	if (total == 0) {
-		out << total << endl;
+	if (total == 0)
 		return;
-	}
-	if (duration_nu.count() == 0) {
-		cerr << "Invalid duration of 0 nanoseconds for Nuspell\n";
-		out << total << endl;
-		return;
-	}
-	// rates
 	auto accuracy = (true_pos + true_neg) * 1.0 / total;
 	auto precision = true_pos * 1.0 / (true_pos + false_pos);
 	auto speedup = duration_hun.count() * 1.0 / duration_nu.count();
-
-	out << "Total Words         " << total << '\n';
 	out << "True Positives      " << true_pos << '\n';
 	out << "True Negatives      " << true_neg << '\n';
 	out << "False Positives     " << false_pos << '\n';
