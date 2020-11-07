@@ -32,6 +32,10 @@
 #include <getopt.h>
 #include <unistd.h>
 #endif
+#ifdef _POSIX_VERSION
+#include <sys/resource.h>
+#include <sys/time.h>
+#endif
 
 // manually define if not supplied by the build system
 #ifndef PROJECT_VERSION
@@ -188,6 +192,17 @@ auto print_version() -> void
 	    "There is NO WARRANTY, to the extent permitted by law.\n"
 	    "\n"
 	    "Written by Dimitrij Mijoski and Sander van Geloven.\n";
+}
+
+auto get_peak_ram_usage() -> long
+{
+#ifdef _POSIX_VERSION
+	rusage r;
+	getrusage(RUSAGE_SELF, &r);
+	return r.ru_maxrss;
+#else
+	return 0;
+#endif
 }
 
 auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
@@ -347,6 +362,7 @@ int main(int argc, char* argv[])
 	}
 	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
 	auto dic = Dictionary();
+	auto peak_ram_a = get_peak_ram_usage();
 	try {
 		dic = Dictionary::load_from_path(filename);
 	}
@@ -356,13 +372,17 @@ int main(int argc, char* argv[])
 	}
 	if (!use_facet<boost::locale::info>(loc).utf8())
 		dic.imbue(loc);
+	auto nuspell_ram = get_peak_ram_usage() - peak_ram_a;
 
 	auto aff_name = filename + ".aff";
 	auto dic_name = filename + ".dic";
+	peak_ram_a = get_peak_ram_usage();
 	Hunspell hun(aff_name.c_str(), dic_name.c_str());
+	auto hunspell_ram = get_peak_ram_usage() - peak_ram_a;
 	auto hun_loc = gen(
 	    "en_US." + Encoding(hun.get_dict_encoding()).value_or_default());
-
+	cout << "Nuspell peak RAM usage:  " << nuspell_ram << "kB\n"
+	     << "Hunspell peak RAM usage: " << hunspell_ram << "kB\n";
 	if (args.files.empty()) {
 		normal_loop(cin, cout, dic, hun, hun_loc, args.print_false,
 		            args.sugs);
