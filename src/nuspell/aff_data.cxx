@@ -48,6 +48,19 @@ auto Encoding::normalize_name() -> void
 		name.erase(0, 10);
 }
 
+auto Word_List::equal_range(const wstring& key) const
+    -> pair<local_const_iterator, local_const_iterator>
+{
+	auto u8str = wide_to_utf8(key);
+	return equal_range(u8str);
+}
+
+auto Word_List::emplace(const wchar_t* key, const char16_t* value)
+    -> Hash_Multimap::local_iterator
+{
+	return emplace(wide_to_utf8(key), value);
+}
+
 namespace {
 
 void reset_failbit_istream(std::istream& in)
@@ -969,6 +982,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	string flags_str;
 	u16string flags;
 	wstring wide_word;
+	string u8word;
 	auto enc_conv = Encoding_Converter(encoding.value_or_default());
 
 	// locale must be without thousands separator.
@@ -1035,7 +1049,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			continue;
 		erase_chars(wide_word, ignored_chars);
 		auto casing = classify_casing(wide_word);
-		auto inserted = words.emplace(wide_word, flags);
+		wide_to_utf8(wide_word, u8word);
+		auto inserted = words.emplace(u8word, flags);
 		switch (casing) {
 		case Casing::ALL_CAPITAL:
 			if (flags.empty())
@@ -1052,7 +1067,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 				break;
 			to_title(wide_word, icu_locale, wide_word);
 			flags += HIDDEN_HOMONYM_FLAG;
-			words.emplace(wide_word, flags);
+			wide_to_utf8(wide_word, u8word);
+			words.emplace(u8word, flags);
 			break;
 		}
 		default:

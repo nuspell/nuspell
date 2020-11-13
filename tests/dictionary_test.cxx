@@ -39,7 +39,7 @@ TEST_CASE("Dictionary::spell_priv simple", "[dictionary]")
 
 	auto words = {L"table", L"chair", L"book", L"fóóáár", L"áárfóóĳ"};
 	for (auto& x : words)
-		d.words.insert({x, {}});
+		d.words.emplace(x, u"");
 
 	auto good = {L"",      L".",    L"..",     L"table",
 	             L"chair", L"book", L"fóóáár", L"áárfóóĳ"};
@@ -633,7 +633,7 @@ TEST_CASE("Dictionary suggestions suggest_priv", "[dictionary]")
 	// extra char, bad char, bad char, forgotten char
 	auto words = {L"tral", L"trial", L"trail", L"traalt"};
 	for (auto& x : words)
-		d.words.insert({x, {}});
+		d.words.emplace(x, u"");
 
 	auto w = wstring(L"traal");
 	auto out_sug = List_WStrings();

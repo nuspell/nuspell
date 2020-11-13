@@ -91,7 +91,19 @@ enum class Flag_Type { SINGLE_CHAR, DOUBLE_CHAR, NUMBER, UTF8 };
  * Does not store morphological data as is low priority feature and is out of
  * scope.
  */
-using Word_List = Hash_Multimap<std::wstring, Flag_Set>;
+class Word_List : public Hash_Multimap<std::string, Flag_Set> {
+	using Base = Hash_Multimap<std::string, Flag_Set>;
+
+      public:
+	using Base::Base;
+	using Base::equal_range;
+	auto equal_range(const std::wstring& key) const
+	    -> std::pair<local_const_iterator, local_const_iterator>;
+
+	using Hash_Multimap<std::string, Flag_Set>::emplace;
+	NUSPELL_EXPORT auto emplace(const wchar_t* key, const char16_t* value)
+	    -> local_iterator;
+};
 
 struct NUSPELL_EXPORT Aff_Data {
 	static constexpr auto HIDDEN_HOMONYM_FLAG = char16_t(-1);

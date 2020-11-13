@@ -1614,7 +1614,8 @@ try_recursive:
 		part.assign(word, start_pos);
 		if (is_rep_similar(part))
 			goto try_simplified_triple;
-		auto& p2word = part2_entry->first;
+		auto& p2word_u8 = part2_entry->first;
+		auto p2word = utf8_to_wide(p2word_u8);
 		if (word.compare(i, p2word.size(), p2word) == 0) {
 			// part.assign(word, start_pos,
 			//            i - start_pos + p2word.size());
@@ -1678,7 +1679,8 @@ try_simplified_triple_recursive:
 		part.erase(i - start_pos, 1); // for the added char
 		if (is_rep_similar(part))
 			return {};
-		auto& p2word = part2_entry->first;
+		auto& p2word_u8 = part2_entry->first;
+		auto p2word = utf8_to_wide(p2word_u8);
 		if (word.compare(i, p2word.size(), p2word) == 0) {
 			part.assign(word, start_pos,
 			            i - start_pos + p2word.size());
@@ -1776,7 +1778,8 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			             p.replacement);
 			if (is_rep_similar(part))
 				goto try_simplified_triple;
-			auto& p2word = part2_entry->first;
+			auto& p2word_u8 = part2_entry->first;
+			auto p2word = utf8_to_wide(p2word_u8);
 			if (word.compare(i, p2word.size(), p2word) == 0) {
 				part.assign(word, start_pos,
 				            i - start_pos + p2word.size());
@@ -1840,7 +1843,8 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			             p.replacement);
 			if (is_rep_similar(part))
 				continue;
-			auto& p2word = part2_entry->first;
+			auto& p2word_u8 = part2_entry->first;
+			auto p2word = utf8_to_wide(p2word_u8);
 			if (word.compare(i, p2word.size(), p2word) == 0) {
 				part.assign(word, start_pos,
 				            i - start_pos + p2word.size());
@@ -2803,14 +2807,16 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_WStrings& out) const
 	auto backup = Short_WString(word);
 	auto wrong_word = wstring_view(backup);
 	auto roots = vector<Word_Entry_And_Score>();
+	auto dict_word = wstring();
 	for (size_t bucket = 0; bucket != words.bucket_count(); ++bucket) {
 		for (auto& word_entry : words.bucket_data(bucket)) {
-			auto& [dict_word, flags] = word_entry;
+			auto& [dict_word_u8, flags] = word_entry;
 			if (flags.contains(forbiddenword_flag) ||
 			    flags.contains(HIDDEN_HOMONYM_FLAG) ||
 			    flags.contains(nosuggest_flag) ||
 			    flags.contains(compound_onlyin_flag))
 				continue;
+			utf8_to_wide(dict_word_u8, dict_word);
 			auto score =
 			    left_common_substring_length(wrong_word, dict_word);
 			auto& lower_dict_word = word;
@@ -2944,7 +2950,8 @@ auto Dict_Base::expand_root_word_for_ngram(
 {
 	expanded_list.clear();
 	cross_affix.clear();
-	auto& [root, flags] = root_entry;
+	auto& [root_u8, flags] = root_entry;
+	auto root = utf8_to_wide(root_u8);
 	if (!flags.contains(need_affix_flag)) {
 		expanded_list.push_back(root);
 		cross_affix.push_back(false);
