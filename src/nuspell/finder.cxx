@@ -70,18 +70,38 @@ const auto SEPARATORS = '/';
  */
 auto Finder::add_default_dir_paths() -> void
 {
-	paths.push_back(".");
 	auto dicpath = getenv("DICPATH");
-	if (dicpath) {
-		split(string(dicpath), PATHSEP, paths);
-	}
+	if (dicpath && *dicpath)
+		split(dicpath, PATHSEP, paths);
+
 #ifdef _POSIX_VERSION
 	auto home = getenv("HOME");
-	if (home) {
+	auto xdg_data_home = getenv("XDG_DATA_HOME");
+	if (xdg_data_home && *xdg_data_home)
+		paths.push_back(xdg_data_home + string("/hunspell"));
+	else if (home)
 		paths.push_back(home + string("/.local/share/hunspell"));
+
+	auto xdg_data_dirs = getenv("XDG_DATA_DIRS");
+	if (xdg_data_dirs && *xdg_data_dirs) {
+		auto data_dirs = string_view(xdg_data_dirs);
+
+		auto i = paths.size();
+		split(data_dirs, PATHSEP, paths);
+		for (; i != paths.size(); ++i)
+			paths[i] += "/hunspell";
+
+		i = paths.size();
+		split(data_dirs, PATHSEP, paths);
+		for (; i != paths.size(); ++i)
+			paths[i] += "/myspell";
 	}
-	paths.push_back("/usr/local/share/hunspell");
-	paths.push_back("/usr/share/hunspell");
+	else {
+		paths.emplace_back("/usr/local/share/hunspell");
+		paths.emplace_back("/usr/share/hunspell");
+		paths.emplace_back("/usr/local/share/myspell");
+		paths.emplace_back("/usr/share/myspell");
+	}
 #if defined(__APPLE__) && defined(__MACH__)
 	auto osx = string("/Library/Spelling");
 	if (home) {
@@ -445,6 +465,10 @@ auto Finder::search_all_dirs_for_dicts() -> Finder
 	auto ret = Finder();
 	ret.add_default_dir_paths();
 	ret.add_libreoffice_dir_paths();
+
+	// Add CWD last. They should not override the system dictionaries.
+	ret.paths.push_back(".");
+
 	ret.search_for_dictionaries();
 	return ret;
 }
