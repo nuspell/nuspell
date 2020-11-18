@@ -54,21 +54,21 @@
 using namespace std;
 
 namespace nuspell {
-
+inline namespace v4 {
 #ifdef _WIN32
 const auto PATHSEP = ';';
 const auto DIRSEP = '\\';
-const auto SEPARATORS = "\\/";
 #else
 const auto PATHSEP = ':';
 const auto DIRSEP = '/';
-const auto SEPARATORS = '/';
 #endif
 
 /**
- * @brief Adds the default directory paths to the list of search directories.
+ * @brief Append the paths of the default directories to be searched for
+ * dictionaries.
+ * @param paths vector of directory paths to append to
  */
-auto Finder::add_default_dir_paths() -> void
+auto append_default_dir_paths(std::vector<string>& paths) -> void
 {
 	auto dicpath = getenv("DICPATH");
 	if (dicpath && *dicpath)
@@ -169,70 +169,6 @@ class FileListerWindows {
 		}
 		return ret;
 	}
-};
-#endif
-
-#if defined(_POSIX_VERSION) || defined(__MINGW32__)
-class Directory {
-	DIR* dp = nullptr;
-	struct dirent* ent_p = nullptr;
-
-      public:
-	Directory() = default;
-	Directory(const Directory& d) = delete;
-	void operator=(const Directory& d) = delete;
-	auto open(const string& dirname) -> bool
-	{
-		close();
-		dp = opendir(dirname.c_str());
-		return dp;
-	}
-	auto next() -> bool { return (ent_p = readdir(dp)); }
-	auto entry_name() const -> const char* { return ent_p->d_name; }
-	auto close() -> void
-	{
-		if (dp) {
-			(void)closedir(dp);
-			dp = nullptr;
-		}
-	}
-	~Directory() { close(); }
-};
-#elif defined(_WIN32)
-class Directory {
-	FileListerWindows fl;
-	bool first = true;
-
-      public:
-	Directory() {}
-	Directory(const Directory& d) = delete;
-	void operator=(const Directory& d) = delete;
-	auto open(const string& dirname) -> bool
-	{
-		fl.first(dirname + "\\*");
-		first = true;
-		return fl.good();
-	}
-	auto next() -> bool
-	{
-		if (first)
-			first = false;
-		else
-			fl.next();
-		return fl.good();
-	}
-	auto entry_name() const -> const char* { return fl.name(); }
-	auto close() -> void { fl.close(); }
-};
-#else
-struct Directory {
-	Directory() {}
-	Directory(const Directory& d) = delete;
-	void operator=(const Directory& d) = delete;
-	auto open(const string& dirname) -> bool { return false; }
-	auto next() -> bool { return false; }
-	auto entry_name() const -> const char* { return nullptr; }
-	auto close() -> void {}
 };
 #endif
 
@@ -352,9 +288,16 @@ struct Globber {
 #endif
 
 /**
- * @brief Adds the LibreOffice directory paths which may containt dictionaries.
+ * @brief Append the paths of the LibreOffice's directories to be searched for
+ * dictionaries.
+ *
+ * @warning This function shall not be called from LibreOffice or modules that
+ * may end up being used by LibreOffice. It is mainly intended to be used by
+ * the CLI tool.
+ *
+ * @param paths vector of directory paths to append to
  */
-auto Finder::add_libreoffice_dir_paths() -> void
+auto append_libreoffice_dir_paths(std::vector<std::string>& paths) -> void
 {
 	auto lo_user_glob = string();
 #ifdef _POSIX_VERSION
@@ -407,11 +350,102 @@ auto Finder::add_libreoffice_dir_paths() -> void
 	}
 }
 
-auto static search_path_for_dicts(const string& dir,
-                                  vector<pair<string, string>>& out) -> void
+#if defined(_POSIX_VERSION) || defined(__MINGW32__)
+class Directory {
+	DIR* dp = nullptr;
+	struct dirent* ent_p = nullptr;
+
+      public:
+	Directory() = default;
+	Directory(const Directory& d) = delete;
+	void operator=(const Directory& d) = delete;
+	auto open(const string& dirname) -> bool
+	{
+		close();
+		dp = opendir(dirname.c_str());
+		return dp;
+	}
+	auto next() -> bool { return (ent_p = readdir(dp)); }
+	auto entry_name() const -> const char* { return ent_p->d_name; }
+	auto close() -> void
+	{
+		if (dp) {
+			(void)closedir(dp);
+			dp = nullptr;
+		}
+	}
+	~Directory() { close(); }
+};
+#elif defined(_WIN32)
+class Directory {
+	FileListerWindows fl;
+	bool first = true;
+
+      public:
+	Directory() {}
+	Directory(const Directory& d) = delete;
+	void operator=(const Directory& d) = delete;
+	auto open(const string& dirname) -> bool
+	{
+		fl.first(dirname + "\\*");
+		first = true;
+		return fl.good();
+	}
+	auto next() -> bool
+	{
+		if (first)
+			first = false;
+		else
+			fl.next();
+		return fl.good();
+	}
+	auto entry_name() const -> const char* { return fl.name(); }
+	auto close() -> void { fl.close(); }
+};
+#else
+struct Directory {
+	Directory() {}
+	Directory(const Directory& d) = delete;
+	void operator=(const Directory& d) = delete;
+	auto open(const string& dirname) -> bool { return false; }
+	auto next() -> bool { return false; }
+	auto entry_name() const -> const char* { return nullptr; }
+	auto close() -> void {}
+};
+#endif
+
+/**
+ * @brief Search a directory for dictionaries.
+ *
+ * This function searches the directory for files that represent a dictionary
+ * and for each one found it appends the pair of dictionary name and filepath to
+ * dictionary, both without the filename extension (.aff or .dic).
+ *
+ * For example for the files /dict/dir/en_US.dic and /dict/dir/en_US.aff the
+ * following pair will be appended ("en_US", "/dict/dir/en_US").
+ *
+ * @todo At some point this API should be made to be more strongly typed.
+ * Instead of using that pair of strings to represent the dictionary files, a
+ * new class should be created with three public functions, getters, that would
+ * return the name, the path to the .aff file (with filename extension to avoid
+ * confusions) and the path to the .dic file. The C++ 17 std::filesystem::path
+ * should probably be used. It is unspecified to the public what this class
+ * holds privately, but it should probably hold only one path to the aff file.
+ * For the directory paths, it is simple, just use the type
+ * std::filesystem::path. When this API is created, the same function names
+ * should be used, added as overloads. The old API should be marked as
+ * deprecated. This should be done when we start requiring GCC 9 which supports
+ * C++ 17 filesystem out of the box. GCC 8 has this too, but it is somewhat
+ * experimental and requires manually linking to additional static library.
+ *
+ * @param dir_path path to directory
+ * @param dict_list vector to append the found dictionaries to
+ */
+auto search_dir_for_dicts(const string& dir_path,
+                          vector<pair<string, string>>& dict_list) -> void
 {
 	Directory d;
-	if (d.open(dir) == false)
+	if (d.open(dir_path) == false)
 		return;
 
 	unordered_set<string> dics;
@@ -427,8 +461,8 @@ auto static search_path_for_dicts(const string& dir,
 			file_name.replace(sz - 4, 4, ".aff");
 			if (dics.count(file_name)) {
 				file_name.erase(sz - 4);
-				auto full_path = dir + DIRSEP + file_name;
-				out.emplace_back(file_name, full_path);
+				auto full_path = dir_path + DIRSEP + file_name;
+				dict_list.emplace_back(file_name, full_path);
 			}
 		}
 		else if (file_name.compare(sz - 4, 4, ".aff") == 0) {
@@ -436,30 +470,133 @@ auto static search_path_for_dicts(const string& dir,
 			file_name.replace(sz - 4, 4, ".dic");
 			if (dics.count(file_name)) {
 				file_name.erase(sz - 4);
-				auto full_path = dir + DIRSEP + file_name;
-				out.emplace_back(file_name, full_path);
+				auto full_path = dir_path + DIRSEP + file_name;
+				dict_list.emplace_back(file_name, full_path);
 			}
 		}
 	}
 }
 
 /**
- * @brief Searches the added directories for dictionaries.
+ * @brief Search the directories for dictionaries.
+ *
+ * @see search_dir_for_dicts()
+ *
+ * @param dir_paths list of paths to directories
+ * @param dict_list vector to append the found dictionaries to
  */
-auto Finder::search_for_dictionaries() -> void
+auto search_dirs_for_dicts(const std::vector<string>& dir_paths,
+                           std::vector<std::pair<string, string>>& dict_list)
+    -> void
 {
-	dictionaries.clear();
-	for (auto& path : paths) {
-		search_path_for_dicts(path, dictionaries);
+	for (auto& p : dir_paths)
+		search_dir_for_dicts(p, dict_list);
+}
+
+/**
+ * @brief Search the default directories for dictionaries.
+ *
+ * @see append_default_dir_paths()
+ * @see search_dirs_for_dicts()
+ *
+ * @param dict_list vector to append the found dictionaries to
+ */
+auto search_default_dirs_for_dicts(
+    std::vector<std::pair<std::string, std::string>>& dict_list) -> void
+{
+	auto dir_paths = vector<string>();
+	append_default_dir_paths(dir_paths);
+	search_dirs_for_dicts(dir_paths, dict_list);
+}
+
+/**
+ * @brief Find dictionary path given the name.
+ *
+ * Find the first dictionary whose name matches @p dict_name.
+ *
+ * @param dict_list vector of pairs with name and paths
+ * @param dict_name dictionary name
+ * @return iterator of @p dict_list that points to the found dictionary or end
+ * if not found.
+ */
+auto find_dictionary(
+    const std::vector<std::pair<std::string, std::string>>& dict_list,
+    const std::string& dict_name)
+    -> std::vector<std::pair<std::string, std::string>>::const_iterator
+{
+	return find_if(begin(dict_list), end(dict_list),
+	               [&](auto& e) { return e.first == dict_name; });
+}
+
+auto static get_dictionary_path(
+    const std::string& dict,
+    const std::vector<std::pair<std::string, std::string>>& dict_multimap)
+    -> std::string
+{
+#ifdef _WIN32
+	const auto SEPARATORS = "\\/";
+#else
+	const auto SEPARATORS = '/';
+#endif
+	// first check if it is a path
+	if (dict.find_first_of(SEPARATORS) != dict.npos) {
+		// a path
+		return dict;
 	}
-	stable_sort(dictionaries.begin(), dictionaries.end(),
+	else {
+		// search list
+		auto x = find_dictionary(dict_multimap, dict);
+		if (x != end(dict_multimap))
+			return x->second;
+	}
+	return {};
+}
+
+Dict_Finder_For_CLI_Tool::Dict_Finder_For_CLI_Tool()
+{
+	append_default_dir_paths(dir_paths);
+	append_libreoffice_dir_paths(dir_paths);
+	dir_paths.emplace_back(".");
+	search_dirs_for_dicts(dir_paths, dict_multimap);
+	stable_sort(begin(dict_multimap), end(dict_multimap),
 	            [](auto& a, auto& b) { return a.first < b.first; });
 }
 
 /**
- * @brief Creates Finder object with all possible dictionaries found.
- * @return Finder object
+ * @internal
+ * @brief Gets the dictionary path.
+ *
+ * If path is given (contains slash) it returns the input argument,
+ * otherwise searches the found dictionaries by their name and returns their
+ * path.
+ *
+ * @param dict name or path of dictionary without the trailing .aff/.dic.
+ * @return the path to dictionary or empty if does not exists.
  */
+auto Dict_Finder_For_CLI_Tool::get_dictionary_path(
+    const std::string& dict) const -> std::string
+{
+	return nuspell::get_dictionary_path(dict, dict_multimap);
+}
+
+auto Finder::add_default_dir_paths() -> void
+{
+	append_default_dir_paths(paths);
+}
+
+auto Finder::add_libreoffice_dir_paths() -> void
+{
+	append_libreoffice_dir_paths(paths);
+}
+
+auto Finder::search_for_dictionaries() -> void
+{
+	dictionaries.clear();
+	search_dirs_for_dicts(paths, dictionaries);
+	stable_sort(dictionaries.begin(), dictionaries.end(),
+	            [](auto& a, auto& b) { return a.first < b.first; });
+}
+
 auto Finder::search_all_dirs_for_dicts() -> Finder
 {
 	auto ret = Finder();
@@ -475,8 +612,7 @@ auto Finder::search_all_dirs_for_dicts() -> Finder
 
 auto Finder::find(const std::string& dict) const -> const_iterator
 {
-	return find_if(begin(), end(),
-	               [&](auto& e) { return e.first == dict; });
+	return find_dictionary(dictionaries, dict);
 }
 
 auto Finder::equal_range(const string& dict) const
@@ -488,29 +624,9 @@ auto Finder::equal_range(const string& dict) const
 	return {a, b};
 }
 
-/**
- * @brief Gets the dictionary path.
- *
- * If path is given (contains slash) it returns the input argument,
- * otherwise searches the found dictionaries by their name and returns their
- * path.
- *
- * @param dict name or path of dictionary without the trailing .aff/.dic.
- * @return the path to dictionary or empty if does not exists.
- */
 auto Finder::get_dictionary_path(const std::string& dict) const -> string
 {
-	// first check if it is a path
-	if (dict.find_first_of(SEPARATORS) != dict.npos) {
-		// a path
-		return dict;
-	}
-	else {
-		// search list
-		auto x = find(dict);
-		if (x != end())
-			return x->second;
-	}
-	return "";
+	return nuspell::get_dictionary_path(dict, dictionaries);
 }
+} // namespace v4
 } // namespace nuspell

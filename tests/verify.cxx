@@ -339,7 +339,7 @@ int main(int argc, char* argv[])
 	}
 	clog << "INFO: I/O  locale " << loc << '\n';
 
-	auto f = Finder::search_all_dirs_for_dicts();
+	auto f = Dict_Finder_For_CLI_Tool();
 
 	if (args.dictionary.empty()) {
 		// infer dictionary from locale

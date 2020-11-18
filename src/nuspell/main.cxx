@@ -254,7 +254,7 @@ auto print_version() -> void
  *
  * @param f a finder for search paths and located dictionary.
  */
-auto list_dictionaries(const Finder& f) -> void
+auto list_dictionaries(const Dict_Finder_For_CLI_Tool& f) -> void
 {
 	if (f.get_dir_paths().empty()) {
 		cout << "No search paths available" << '\n';
@@ -468,7 +468,7 @@ int main(int argc, char* argv[])
 	}
 	clog << "INFO: I/O  locale " << loc << '\n';
 
-	auto f = Finder::search_all_dirs_for_dicts();
+	auto f = Dict_Finder_For_CLI_Tool();
 
 	if (args.mode == LIST_DICTIONARIES_MODE) {
 		list_dictionaries(f);

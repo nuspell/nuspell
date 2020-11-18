@@ -200,10 +200,15 @@ using namespace std;
 
 int main()
 {
-	auto dict_finder = nuspell::Finder::search_all_dirs_for_dicts();
-	auto path = dict_finder.get_dictionary_path("en_US");
+	auto dict_list = vector<pair<string, string>>();
+	nuspell::search_default_dirs_for_dicts(dict_list);
+	auto dict_name_and_path = nuspell::find_dictionary(dict_list, "en_US");
+	if (dict_name_and_path == end(dict_list))
+		return 1; // Return error because we can not find the requested
+		          // dictionary in the list.
+	auto& dict_path = dict_name_and_path->second;
 
-	auto dict = nuspell::Dictionary::load_from_path(path);
+	auto dict = nuspell::Dictionary::load_from_path(dict_path);
 
 	auto word = string();
 	auto sugs = vector<string>();
