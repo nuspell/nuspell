@@ -97,10 +97,10 @@ auto append_default_dir_paths(std::vector<string>& paths) -> void
 			paths[i] += "/myspell";
 	}
 	else {
-		paths.emplace_back("/usr/local/share/hunspell");
-		paths.emplace_back("/usr/share/hunspell");
-		paths.emplace_back("/usr/local/share/myspell");
-		paths.emplace_back("/usr/share/myspell");
+		paths.push_back("/usr/local/share/hunspell");
+		paths.push_back("/usr/share/hunspell");
+		paths.push_back("/usr/local/share/myspell");
+		paths.push_back("/usr/share/myspell");
 	}
 #if defined(__APPLE__) && defined(__MACH__)
 	auto osx = string("/Library/Spelling");
@@ -165,7 +165,7 @@ class FileListerWindows {
 	{
 		vector<string> ret;
 		for (; good(); next()) {
-			ret.emplace_back(name());
+			ret.push_back(name());
 		}
 		return ret;
 	}
@@ -459,20 +459,19 @@ auto search_dir_for_dicts(const string& dir_path,
 		if (file_name.compare(sz - 4, 4, ".dic") == 0) {
 			dics.insert(file_name);
 			file_name.replace(sz - 4, 4, ".aff");
-			if (dics.count(file_name)) {
-				file_name.erase(sz - 4);
-				auto full_path = dir_path + DIRSEP + file_name;
-				dict_list.emplace_back(file_name, full_path);
-			}
 		}
 		else if (file_name.compare(sz - 4, 4, ".aff") == 0) {
 			dics.insert(file_name);
 			file_name.replace(sz - 4, 4, ".dic");
-			if (dics.count(file_name)) {
-				file_name.erase(sz - 4);
-				auto full_path = dir_path + DIRSEP + file_name;
-				dict_list.emplace_back(file_name, full_path);
-			}
+		}
+		else {
+			continue;
+		}
+		if (dics.count(file_name)) {
+			file_name.erase(sz - 4);
+			auto full_path = dir_path + DIRSEP + file_name;
+			dict_list.emplace_back(move(file_name),
+			                       move(full_path));
 		}
 	}
 }
@@ -556,7 +555,7 @@ Dict_Finder_For_CLI_Tool::Dict_Finder_For_CLI_Tool()
 {
 	append_default_dir_paths(dir_paths);
 	append_libreoffice_dir_paths(dir_paths);
-	dir_paths.emplace_back(".");
+	dir_paths.push_back(".");
 	search_dirs_for_dicts(dir_paths, dict_multimap);
 	stable_sort(begin(dict_multimap), end(dict_multimap),
 	            [](auto& a, auto& b) { return a.first < b.first; });

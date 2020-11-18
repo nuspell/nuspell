@@ -48,8 +48,8 @@ static auto& split_on_any_of_low(std::string_view s, const SepT& sep,
 	size_t i2;
 	do {
 		i2 = s.find_first_of(sep, i1);
-		out.push_back(std::string(s.substr(i1, i2 - i1)));
-		i1 = i2 + 1; // we can only add +1 if sep is single char.
+		out.emplace_back(s.substr(i1, i2 - i1));
+		i1 = i2 + 1; // we can only add +1 if separator is single char.
 
 		// i2 gets s.npos after the last separator.
 		// Length of i2-i1 will always go past the end. That is defined.
