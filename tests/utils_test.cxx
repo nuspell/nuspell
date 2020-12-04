@@ -18,7 +18,6 @@
 
 #include <nuspell/utils.hxx>
 
-#include <boost/locale.hpp>
 #include <catch2/catch.hpp>
 
 using namespace std;
@@ -118,44 +117,19 @@ using u8_to_wide_codecvt = codecvt_utf8<wchar_t>;
 
 TEST_CASE("to_wide", "[locale_utils]")
 {
-	auto gen = boost::locale::generator();
-	gen.characters(boost::locale::wchar_t_facet);
-	gen.categories(boost::locale::codepage_facet);
-	auto loc = gen("en_US.UTF-8");
-	auto in = string("\U0010FFFF ß");
-	CHECK(L"\U0010FFFF ß" == to_wide(in, loc));
-
-	in = "\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
-	auto out = wstring();
-	auto exp = L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
-	CHECK(true == to_wide(in, loc, out));
-	CHECK(exp == out);
-
-	loc = locale(locale::classic(), new latin1_codecvt());
-	in = "abcd\xDF";
+	auto loc = locale(locale::classic(), new latin1_codecvt());
+	auto in = "abcd\xDF";
 	CHECK(L"abcdß" == to_wide(in, loc));
 }
 
 TEST_CASE("to_narrow", "[locale_utils]")
 {
-	auto gen = boost::locale::generator();
-	gen.characters(boost::locale::wchar_t_facet);
-	gen.categories(boost::locale::codepage_facet);
-	auto loc = gen("en_US.UTF-8");
-	auto in = wstring(L"\U0010FFFF ß");
-	CHECK("\U0010FFFF ß" == to_narrow(in, loc));
-
-	in = L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
-	auto out = string();
-	CHECK(true == to_narrow(in, out, loc));
-	CHECK("\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59" == out);
-
-	loc = locale(locale::classic(), new latin1_codecvt());
-	in = L"abcdß";
+	auto loc = locale(locale::classic(), new latin1_codecvt());
+	auto in = L"abcdß";
 	CHECK("abcd\xDF" == to_narrow(in, loc));
 
 	in = L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59";
-	out = string();
+	auto out = string();
 	CHECK(false == to_narrow(in, out, loc));
 	CHECK(all_of(begin(out), end(out), [](auto c) { return c == '?'; }));
 }

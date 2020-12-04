@@ -16,16 +16,15 @@
  * along with Nuspell.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/locale.hpp>
 #include <hunspell/hunspell.hxx>
 #include <nuspell/dictionary.hxx>
 #include <nuspell/finder.hxx>
-#include <nuspell/utils.hxx>
 
 #include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <unicode/ucnv.h>
 
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
     (defined(__APPLE__) && defined(__MACH__))
@@ -33,6 +32,7 @@
 #include <unistd.h>
 #endif
 #ifdef _POSIX_VERSION
+#include <langinfo.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 #endif
@@ -205,31 +205,84 @@ auto get_peak_ram_usage() -> long
 #endif
 }
 
-auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
-                 locale& hloc, bool print_false = false, bool test_sugs = false)
+auto to_utf8(string_view source, string& dest, UConverter* ucnv,
+             UErrorCode& uerr)
 {
+	dest.resize(dest.capacity());
+	auto len = ucnv_toAlgorithmic(UCNV_UTF8, ucnv, dest.data(), dest.size(),
+	                              source.data(), source.size(), &uerr);
+	dest.resize(len);
+	if (uerr == U_BUFFER_OVERFLOW_ERROR) {
+		uerr = U_ZERO_ERROR;
+		ucnv_toAlgorithmic(UCNV_UTF8, ucnv, dest.data(), dest.size(),
+		                   source.data(), source.size(), &uerr);
+	}
+}
+
+auto from_utf8(string_view source, string& dest, UConverter* ucnv,
+               UErrorCode& uerr)
+{
+	dest.resize(dest.capacity());
+	auto len =
+	    ucnv_fromAlgorithmic(ucnv, UCNV_UTF8, dest.data(), dest.size(),
+	                         source.data(), source.size(), &uerr);
+	dest.resize(len);
+	if (uerr == U_BUFFER_OVERFLOW_ERROR) {
+		uerr = U_ZERO_ERROR;
+		ucnv_fromAlgorithmic(ucnv, UCNV_UTF8, dest.data(), dest.size(),
+		                     source.data(), source.size(), &uerr);
+	}
+}
+
+auto normal_loop(const Args_t& args, const Dictionary& dic, Hunspell& hun,
+                 istream& in, ostream& out)
+{
+	auto print_false = args.print_false;
+	auto test_sugs = args.sugs;
 	auto word = string();
-	auto wide_word = wstring();
-	auto narrow_word = string();
-	// total number of words
+	auto u8_buffer = string();
+	auto hun_word = string();
 	auto total = 0;
-	// total number of words with identical spelling correctness
 	auto true_pos = 0;
 	auto true_neg = 0;
 	auto false_pos = 0;
 	auto false_neg = 0;
-	// store cpu time for Hunspell and Nuspell
 	auto duration_hun = chrono::high_resolution_clock::duration();
 	auto duration_nu = duration_hun;
 	auto in_loc = in.getloc();
+
+	auto uerr = U_ZERO_ERROR;
+	auto io_cnv = icu::LocalUConverterPointer(
+	    ucnv_open(args.encoding.c_str(), &uerr));
+	if (U_FAILURE(uerr))
+		throw runtime_error("Invalid io encoding");
+	auto hun_enc =
+	    nuspell::Encoding(hun.get_dict_encoding()).value_or_default();
+	auto hun_cnv =
+	    icu::LocalUConverterPointer(ucnv_open(hun_enc.c_str(), &uerr));
+	if (U_FAILURE(uerr))
+		throw runtime_error("Invalid hun encoding");
+	auto io_is_utf8 = ucnv_getType(io_cnv.getAlias()) == UCNV_UTF8;
+	auto hun_is_utf8 = ucnv_getType(hun_cnv.getAlias()) == UCNV_UTF8;
+
 	// need to take entine line here, not `in >> word`
 	while (getline(in, word)) {
+		auto u8_word = string_view();
 		auto tick_a = chrono::high_resolution_clock::now();
-		auto res_nu = dic.spell(word);
+		if (io_is_utf8) {
+			u8_word = word;
+		}
+		else {
+			to_utf8(word, u8_buffer, io_cnv.getAlias(), uerr);
+			u8_word = u8_buffer;
+		}
+		auto res_nu = dic.spell(u8_word);
 		auto tick_b = chrono::high_resolution_clock::now();
-		to_wide(word, in_loc, wide_word);
-		to_narrow(wide_word, narrow_word, hloc);
-		auto res_hun = hun.spell(narrow_word);
+		if (hun_is_utf8)
+			hun_word = u8_word;
+		else
+			from_utf8(u8_word, hun_word, hun_cnv.getAlias(), uerr);
+		auto res_hun = hun.spell(hun_word);
 		auto tick_c = chrono::high_resolution_clock::now();
 		duration_nu += tick_b - tick_a;
 		duration_hun += tick_c - tick_b;
@@ -260,7 +313,7 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 			auto nus_sugs = vector<string>();
 			auto hun_sugs = vector<string>();
 			dic.suggest(word, nus_sugs);
-			hun.suggest(narrow_word);
+			hun.suggest(hun_word);
 		}
 	}
 	out << "Total Words         " << total << '\n';
@@ -281,51 +334,12 @@ auto normal_loop(istream& in, ostream& out, Dictionary& dic, Hunspell& hun,
 	out << "Speedup Rate        " << speedup << '\n';
 }
 
-namespace std {
-ostream& operator<<(ostream& out, const locale& loc)
-{
-	if (has_facet<boost::locale::info>(loc)) {
-		auto& f = use_facet<boost::locale::info>(loc);
-		out << "name=" << f.name() << ", lang=" << f.language()
-		    << ", country=" << f.country() << ", enc=" << f.encoding();
-	}
-	else {
-		out << loc.name();
-	}
-	return out;
-}
-} // namespace std
-
 int main(int argc, char* argv[])
 {
 	// May speed up I/O. After this, don't use C printf, scanf etc.
 	ios_base::sync_with_stdio(false);
 
 	auto args = Args_t(argc, argv);
-	if (args.mode == ERROR_MODE) {
-		cerr << "Invalid (combination of) arguments, try '"
-		     << args.program_name << " --help' for more information\n";
-		return 1;
-	}
-	boost::locale::generator gen;
-	auto loc = std::locale();
-	try {
-		if (args.encoding.empty())
-			loc = gen("");
-
-		else
-			loc = gen("en_US." + args.encoding);
-	}
-	catch (const boost::locale::conv::invalid_charset_error& e) {
-		cerr << e.what() << '\n';
-#ifdef _POSIX_VERSION
-		cerr << "Nuspell error: see `locale -m` for supported "
-		        "encodings.\n";
-#endif
-		return 1;
-	}
-	cin.imbue(loc);
-	cout.imbue(loc);
 
 	switch (args.mode) {
 	case HELP_MODE:
@@ -334,22 +348,34 @@ int main(int argc, char* argv[])
 	case VERSION_MODE:
 		print_version();
 		return 0;
+	case ERROR_MODE:
+		cerr << "Invalid (combination of) arguments, try '"
+		     << args.program_name << " --help' for more information\n";
+		return 1;
 	default:
 		break;
 	}
-	clog << "INFO: I/O  locale " << loc << '\n';
-
 	auto f = Dict_Finder_For_CLI_Tool();
 
+	auto loc_str = setlocale(LC_CTYPE, "");
+	if (!loc_str) {
+		clog << "WARNING: Invalid locale string, fall back to \"C\".\n";
+		loc_str = setlocale(LC_CTYPE, nullptr); // will return "C"
+	}
+	auto loc_str_sv = string_view(loc_str);
+	if (args.encoding.empty()) {
+#if _POSIX_VERSION
+		auto enc_str = nl_langinfo(CODESET);
+		args.encoding = enc_str;
+#elif _WIN32
+#endif
+	}
+	clog << "INFO: Locale LC_CTYPE=" << loc_str_sv
+	     << ", Used encoding=" << args.encoding << '\n';
 	if (args.dictionary.empty()) {
 		// infer dictionary from locale
-		auto& info = use_facet<boost::locale::info>(loc);
-		args.dictionary = info.language();
-		auto c = info.country();
-		if (!c.empty()) {
-			args.dictionary += '_';
-			args.dictionary += c;
-		}
+		auto idx = min(loc_str_sv.find('.'), loc_str_sv.find('@'));
+		args.dictionary = loc_str_sv.substr(0, idx);
 	}
 	if (args.dictionary.empty()) {
 		cerr << "No dictionary provided and can not infer from OS "
@@ -361,8 +387,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
-	auto dic = Dictionary();
 	auto peak_ram_a = get_peak_ram_usage();
+	auto dic = Dictionary();
 	try {
 		dic = Dictionary::load_from_path(filename);
 	}
@@ -370,22 +396,16 @@ int main(int argc, char* argv[])
 		cerr << e.what() << '\n';
 		return 1;
 	}
-	if (!use_facet<boost::locale::info>(loc).utf8())
-		dic.imbue(loc);
 	auto nuspell_ram = get_peak_ram_usage() - peak_ram_a;
-
 	auto aff_name = filename + ".aff";
 	auto dic_name = filename + ".dic";
 	peak_ram_a = get_peak_ram_usage();
 	Hunspell hun(aff_name.c_str(), dic_name.c_str());
 	auto hunspell_ram = get_peak_ram_usage() - peak_ram_a;
-	auto hun_loc = gen(
-	    "en_US." + Encoding(hun.get_dict_encoding()).value_or_default());
 	cout << "Nuspell peak RAM usage:  " << nuspell_ram << "kB\n"
 	     << "Hunspell peak RAM usage: " << hunspell_ram << "kB\n";
 	if (args.files.empty()) {
-		normal_loop(cin, cout, dic, hun, hun_loc, args.print_false,
-		            args.sugs);
+		normal_loop(args, dic, hun, cin, cout);
 	}
 	else {
 		for (auto& file_name : args.files) {
@@ -395,8 +415,7 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 			in.imbue(cin.getloc());
-			normal_loop(in, cout, dic, hun, hun_loc,
-			            args.print_false);
+			normal_loop(args, dic, hun, in, cout);
 		}
 	}
 	return 0;
