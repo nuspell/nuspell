@@ -19,15 +19,20 @@
 #include "dictionary.hxx"
 #include "finder.hxx"
 
-#include <boost/locale.hpp>
+#include <cassert>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <unicode/brkiter.h>
+#include <unicode/ucnv.h>
 
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
     (defined(__APPLE__) && defined(__MACH__))
 #include <getopt.h>
 #include <unistd.h>
+#endif
+#ifdef _POSIX_VERSION
+#include <langinfo.h>
 #endif
 
 // manually define if not supplied by the build system
@@ -280,13 +285,57 @@ auto list_dictionaries(const Dict_Finder_For_CLI_Tool& f) -> void
 	}
 }
 
-auto process_word(
-    Mode mode, const Dictionary& dic, const string& line,
-    string::const_iterator b, string::const_iterator c, string& word,
-    vector<pair<string::const_iterator, string::const_iterator>>& wrong_words,
-    vector<string>& suggestions, ostream& out)
+auto to_utf8(string_view source, string& dest, UConverter* ucnv,
+             UErrorCode& uerr)
 {
-	word.assign(b, c);
+	dest.resize(dest.capacity());
+	auto len = ucnv_toAlgorithmic(UCNV_UTF8, ucnv, dest.data(), dest.size(),
+	                              source.data(), source.size(), &uerr);
+	dest.resize(len);
+	if (uerr == U_BUFFER_OVERFLOW_ERROR) {
+		uerr = U_ZERO_ERROR;
+		ucnv_toAlgorithmic(UCNV_UTF8, ucnv, dest.data(), dest.size(),
+		                   source.data(), source.size(), &uerr);
+	}
+}
+
+auto from_utf8(string_view source, string& dest, UConverter* ucnv,
+               UErrorCode& uerr)
+{
+	dest.resize(dest.capacity());
+	auto len =
+	    ucnv_fromAlgorithmic(ucnv, UCNV_UTF8, dest.data(), dest.size(),
+	                         source.data(), source.size(), &uerr);
+	dest.resize(len);
+	if (uerr == U_BUFFER_OVERFLOW_ERROR) {
+		uerr = U_ZERO_ERROR;
+		ucnv_fromAlgorithmic(ucnv, UCNV_UTF8, dest.data(), dest.size(),
+		                     source.data(), source.size(), &uerr);
+	}
+}
+
+auto to_unicode_string(string_view source, icu::UnicodeString& dest,
+                       UConverter* ucnv, UErrorCode& uerr)
+{
+	auto buf = dest.getBuffer(-1);
+	auto len = ucnv_toUChars(ucnv, buf, dest.getCapacity(), source.data(),
+	                         source.size(), &uerr);
+	if (uerr == U_BUFFER_OVERFLOW_ERROR) {
+		uerr = U_ZERO_ERROR;
+		dest.releaseBuffer(0);
+		buf = dest.getBuffer(len);
+		if (!buf)
+			throw bad_alloc();
+		len = ucnv_toUChars(ucnv, buf, dest.getCapacity(),
+		                    source.data(), source.size(), &uerr);
+	}
+	dest.releaseBuffer(len);
+}
+
+auto process_word(Mode mode, const Dictionary& dic, string_view word,
+                  size_t pos_word, vector<string_view>& wrong_words,
+                  vector<string>& suggestions, ostream& out)
+{
 	auto correct = dic.spell(word);
 	switch (mode) {
 	case DEFAULT_MODE: {
@@ -295,7 +344,6 @@ auto process_word(
 			break;
 		}
 		dic.suggest(word, suggestions);
-		auto pos_word = b - begin(line);
 		if (suggestions.empty()) {
 			out << "# " << word << ' ' << pos_word << '\n';
 			break;
@@ -319,18 +367,66 @@ auto process_word(
 	case MISSPELLED_LINES_MODE:
 	case CORRECT_LINES_MODE:
 		if (!correct)
-			wrong_words.emplace_back(b, c);
+			wrong_words.push_back(word);
 		break;
 	default:
 		break;
 	}
 }
 
-auto process_line(
-    Mode mode, const string& line,
-    const vector<pair<string::const_iterator, string::const_iterator>>&
-        wrong_words,
-    ostream& out)
+auto process_word_other_encoding(Mode mode, const Dictionary& dic,
+                                 string_view word, string_view u8word,
+                                 size_t pos_word,
+                                 vector<string_view>& wrong_words,
+                                 vector<string>& suggestions, ostream& out,
+                                 UConverter* ucnv, UErrorCode& uerr)
+{
+	auto correct = dic.spell(u8word);
+	switch (mode) {
+	case DEFAULT_MODE: {
+		if (correct) {
+			out << "*\n";
+			break;
+		}
+		dic.suggest(u8word, suggestions);
+		if (suggestions.empty()) {
+			out << "# " << word << ' ' << pos_word << '\n';
+			break;
+		}
+		out << "& " << word << ' ' << suggestions.size() << ' '
+		    << pos_word << ": ";
+		auto sug_in_encoding = string();
+		from_utf8(suggestions[0], sug_in_encoding, ucnv, uerr);
+		out << sug_in_encoding;
+		for_each(begin(suggestions) + 1, end(suggestions),
+		         [&](const string& u8sug) {
+			         out << ", ";
+			         from_utf8(u8sug, sug_in_encoding, ucnv, uerr);
+			         out << sug_in_encoding;
+		         });
+		out << '\n';
+		break;
+	}
+	case MISSPELLED_WORDS_MODE:
+		if (!correct)
+			out << word << '\n';
+		break;
+	case CORRECT_WORDS_MODE:
+		if (correct)
+			out << word << '\n';
+		break;
+	case MISSPELLED_LINES_MODE:
+	case CORRECT_LINES_MODE:
+		if (!correct)
+			wrong_words.push_back(word);
+		break;
+	default:
+		break;
+	}
+}
+
+auto finish_line(Mode mode, const string& line,
+                 const vector<string_view>& wrong_words, ostream& out)
 {
 	switch (mode) {
 	case DEFAULT_MODE:
@@ -350,81 +446,140 @@ auto process_line(
 }
 
 auto whitespace_segmentation_loop(istream& in, ostream& out,
-                                  const Dictionary& dic, Mode mode)
+                                  const Dictionary& dic, Mode mode,
+                                  UConverter* ucnv, UErrorCode& uerr)
 {
 	auto line = string();
-	auto word = string();
 	auto suggestions = vector<string>();
-	using Str_Iter = string::const_iterator;
-	auto wrong_words = vector<pair<Str_Iter, Str_Iter>>();
+	auto wrong_words = vector<string_view>();
 	auto loc = in.getloc();
-	auto line_num = size_t(0);
 	auto& facet = use_facet<ctype<char>>(loc);
 	auto isspace = [&](char c) { return facet.is(facet.space, c); };
+	auto u8word = string();
+	auto is_utf8 = ucnv_getType(ucnv) == UCNV_UTF8;
+
 	while (getline(in, line)) {
-		++line_num;
 		wrong_words.clear();
 		for (auto a = begin(line); a != end(line);) {
-			auto b = find_if_not(a, end(line), isspace);
-			if (b == end(line))
+			a = find_if_not(a, end(line), isspace);
+			if (a == end(line))
 				break;
-			auto c = find_if(b, end(line), isspace);
-
-			process_word(mode, dic, line, b, c, word, wrong_words,
-			             suggestions, out);
-
-			a = c;
+			auto b = find_if(a, end(line), isspace);
+			auto word = string_view(&*a, distance(a, b));
+			auto pos_word = distance(begin(line), a);
+			if (is_utf8) {
+				process_word(mode, dic, word, pos_word,
+				             wrong_words, suggestions, out);
+			}
+			else {
+				to_utf8(word, u8word, ucnv, uerr);
+				process_word_other_encoding(
+				    mode, dic, word, u8word, pos_word,
+				    wrong_words, suggestions, out, ucnv, uerr);
+			}
+			a = b;
 		}
-		process_line(mode, line, wrong_words, out);
+		finish_line(mode, line, wrong_words, out);
 	}
+}
+
+auto is_word_break(int32_t typ)
+{
+	return (UBRK_WORD_NUMBER <= typ && typ < UBRK_WORD_NUMBER_LIMIT) ||
+	       (UBRK_WORD_LETTER <= typ && typ < UBRK_WORD_LETTER_LIMIT) ||
+	       (UBRK_WORD_KANA <= typ && typ < UBRK_WORD_KANA_LIMIT) ||
+	       (UBRK_WORD_IDEO <= typ && typ < UBRK_WORD_IDEO_LIMIT);
+}
+
+auto segment_line_utf8(Mode mode, const Dictionary& dic, const string& line,
+                       UText* utext, icu::BreakIterator* ubrkiter,
+                       UErrorCode& uerr, vector<string>& suggestions,
+                       vector<string_view>& wrong_words, ostream& out)
+{
+	utext_openUTF8(utext, line.data(), line.size(), &uerr);
+	ubrkiter->setText(utext, uerr);
+	for (auto i = ubrkiter->first(), prev = 0; i != ubrkiter->DONE;
+	     prev = i, i = ubrkiter->next()) {
+		auto typ = ubrkiter->getRuleStatus();
+		if (is_word_break(typ)) {
+			auto word = string_view(line).substr(prev, i - prev);
+			process_word(mode, dic, word, prev, wrong_words,
+			             suggestions, out);
+		}
+	}
+	finish_line(mode, line, wrong_words, out);
+	assert(U_SUCCESS(uerr));
+}
+
+auto segment_line_generic(Mode mode, const Dictionary& dic, const string& line,
+                          icu::UnicodeString& uline, UConverter* ucnv,
+                          icu::BreakIterator* ubrkiter, UErrorCode& uerr,
+                          string& u8word, vector<string>& suggestions,
+                          vector<string_view>& wrong_words, ostream& out)
+{
+	to_unicode_string(line, uline, ucnv, uerr);
+	ubrkiter->setText(uline);
+	size_t orig_prev = 0, orig_i = 0;
+	auto src = line.c_str();
+	auto src_end = src + line.size();
+
+	ucnv_resetToUnicode(ucnv);
+	for (auto i = ubrkiter->first(), prev = 0; i != ubrkiter->DONE;
+	     prev = i, i = ubrkiter->next(), orig_prev = orig_i) {
+
+		for (auto j = prev; j != i; ++j) {
+			auto cp = ucnv_getNextUChar(ucnv, &src, src_end, &uerr);
+
+			// U_IS_SURROGATE(uline[j]) or
+			// U_IS_LEAD(uline[j]) can work too
+			j += !U_IS_BMP(cp);
+		}
+		orig_i = distance(line.c_str(), src);
+
+		auto typ = ubrkiter->getRuleStatus();
+		if (is_word_break(typ)) {
+			auto uword = uline.tempSubStringBetween(prev, i);
+			u8word.clear();
+			uword.toUTF8String(u8word);
+			auto word = string_view(line).substr(
+			    orig_prev, orig_i - orig_prev);
+			process_word_other_encoding(
+			    mode, dic, word, u8word, orig_prev, wrong_words,
+			    suggestions, out, ucnv, uerr);
+		}
+	}
+	finish_line(mode, line, wrong_words, out);
+	assert(U_SUCCESS(uerr));
 }
 
 auto unicode_segentation_loop(istream& in, ostream& out, const Dictionary& dic,
-                              Mode mode)
+                              Mode mode, UConverter* ucnv, UErrorCode& uerr)
 {
-	namespace b = boost::locale::boundary;
 	auto line = string();
-	auto word = string();
 	auto suggestions = vector<string>();
-	using Str_Iter = string::const_iterator;
-	auto wrong_words = vector<pair<Str_Iter, Str_Iter>>();
-	auto loc = in.getloc();
-	auto line_num = size_t(0);
-	auto index = b::ssegment_index();
-	index.rule(b::word_any);
-	auto line_stream = istringstream();
+	auto wrong_words = vector<string_view>();
+
+	// TODO: try to use Locale constructed from dictionary name.
+	auto ubrkiter = unique_ptr<icu::BreakIterator>(
+	    icu::BreakIterator::createWordInstance(icu::Locale(), uerr));
+	auto utext = icu::LocalUTextPointer(
+	    utext_openUTF8(nullptr, line.data(), line.size(), &uerr));
+	auto uline = icu::UnicodeString();
+	auto u8word = string();
+	auto is_utf8 = ucnv_getType(ucnv) == UCNV_UTF8;
+
 	while (getline(in, line)) {
-		++line_num;
-		index.map(b::word, begin(line), end(line), loc);
 		wrong_words.clear();
-		auto a = cbegin(line);
-		for (auto& segment : index) {
-			auto b = begin(segment);
-			auto c = end(segment);
-
-			process_word(mode, dic, line, b, c, word, wrong_words,
-			             suggestions, out);
-
-			a = c;
-		}
-		process_line(mode, line, wrong_words, out);
+		if (is_utf8)
+			segment_line_utf8(mode, dic, line, utext.getAlias(),
+			                  ubrkiter.get(), uerr, suggestions,
+			                  wrong_words, out);
+		else
+			segment_line_generic(mode, dic, line, uline, ucnv,
+			                     ubrkiter.get(), uerr, u8word,
+			                     suggestions, wrong_words, out);
 	}
 }
-
-namespace std {
-ostream& operator<<(ostream& out, const locale& loc)
-{
-	if (has_facet<boost::locale::info>(loc)) {
-		auto& f = use_facet<boost::locale::info>(loc);
-		out << "name=" << f.name() << ", lang=" << f.language()
-		    << ", country=" << f.country() << ", enc=" << f.encoding();
-	}
-	else {
-		out << loc.name();
-	}
-	return out;
-}
-} // namespace std
 
 int main(int argc, char* argv[])
 {
@@ -432,30 +587,6 @@ int main(int argc, char* argv[])
 	ios_base::sync_with_stdio(false);
 
 	auto args = Args_t(argc, argv);
-	if (args.mode == ERROR_MODE) {
-		cerr << "Invalid (combination of) arguments, try '"
-		     << args.program_name << " --help' for more information\n";
-		return 1;
-	}
-	boost::locale::generator gen;
-	auto loc = std::locale();
-	try {
-		if (args.encoding.empty())
-			loc = gen("");
-		else
-			loc = gen("en_US." + args.encoding);
-	}
-	catch (const boost::locale::conv::invalid_charset_error& e) {
-		cerr << e.what() << '\n';
-#ifdef _POSIX_VERSION
-		cerr << "Nuspell error: see `locale -m` for supported "
-		        "encodings.\n";
-#endif
-		return 1;
-	}
-	cin.imbue(loc);
-	cout.imbue(loc);
-
 	switch (args.mode) {
 	case HELP_MODE:
 		print_help(args.program_name);
@@ -463,26 +594,49 @@ int main(int argc, char* argv[])
 	case VERSION_MODE:
 		print_version();
 		return 0;
+	case ERROR_MODE:
+		cerr << "Invalid (combination of) arguments, try '"
+		     << args.program_name << " --help' for more information\n";
+		return 1;
 	default:
 		break;
 	}
-	clog << "INFO: I/O  locale " << loc << '\n';
-
 	auto f = Dict_Finder_For_CLI_Tool();
-
 	if (args.mode == LIST_DICTIONARIES_MODE) {
 		list_dictionaries(f);
 		return 0;
 	}
+	auto loc_str = setlocale(LC_CTYPE, "");
+	if (!loc_str) {
+		clog << "WARNING: Invalid locale string, fall back to \"C\".\n";
+		loc_str = setlocale(LC_CTYPE, nullptr); // will return "C"
+	}
+	auto loc_str_sv = string_view(loc_str);
+	if (args.encoding.empty()) {
+#if _POSIX_VERSION
+		auto enc_str = nl_langinfo(CODESET);
+		args.encoding = enc_str;
+#elif _WIN32
+		// On Windows first check if stdin is coming from
+		// console with _isatty(). If isatty == true, then encoding is
+		// GetConsoleCP(). else stdin is redirected, like from file or
+		// from some custom console like the MSYS2. Then we can do
+		// various things like use GetACP() or parse the return of
+		// setlocale(LC_CTYPE, "") (same result), parse LC_ALL,
+		// LC_CTYPE, and LANG or just assume UTF-8.
+
+		// bellow is parsing of setlocale()
+		// auto idx = loc_str_sv.find('.');
+		// if (idx != loc_str_sv.npos)
+		//	args.encoding.append("cp").append(loc_str_sv, idx);
+#endif
+	}
+	clog << "INFO: Locale LC_CTYPE=" << loc_str_sv
+	     << ", Used encoding=" << args.encoding << '\n';
 	if (args.dictionary.empty()) {
 		// infer dictionary from locale
-		auto& info = use_facet<boost::locale::info>(loc);
-		args.dictionary = info.language();
-		auto c = info.country();
-		if (!c.empty()) {
-			args.dictionary += '_';
-			args.dictionary += c;
-		}
+		auto idx = min(loc_str_sv.find('.'), loc_str_sv.find('@'));
+		args.dictionary = loc_str_sv.substr(0, idx);
 	}
 	if (args.dictionary.empty()) {
 		cerr << "No dictionary provided and can not infer from OS "
@@ -502,13 +656,26 @@ int main(int argc, char* argv[])
 		cerr << e.what() << '\n';
 		return 1;
 	}
-	if (!use_facet<boost::locale::info>(loc).utf8())
-		dic.imbue(loc);
+	// ICU reports all types of errors, logic errors and runtime errors
+	// using this enum. We should not check for logic errors, they should
+	// not happend. Optionally, only assert that they are not there can be
+	// used. We should check for runtime errors.
+	// The encoding conversion is a common case where runtime error can
+	// happen, but by default ICU uses Unicode replacement character on
+	// errors and reprots success. This can be changed, but there is no need
+	// for that.
+	auto uerr = U_ZERO_ERROR;
+	auto ucnv = icu::LocalUConverterPointer(
+	    ucnv_open(args.encoding.c_str(), &uerr));
+	if (U_FAILURE(uerr)) {
+		cerr << "ERROR: Invalid encoding " << args.encoding << ".\n";
+		return 1;
+	}
 	auto loop_function = unicode_segentation_loop;
 	if (args.whitespace_segmentation)
 		loop_function = whitespace_segmentation_loop;
 	if (args.files.empty()) {
-		loop_function(cin, cout, dic, args.mode);
+		loop_function(cin, cout, dic, args.mode, ucnv.getAlias(), uerr);
 	}
 	else {
 		for (auto& file_name : args.files) {
@@ -517,8 +684,8 @@ int main(int argc, char* argv[])
 				cerr << "Can't open " << file_name << '\n';
 				return 1;
 			}
-			in.imbue(loc);
-			loop_function(in, cout, dic, args.mode);
+			loop_function(in, cout, dic, args.mode, ucnv.getAlias(),
+			              uerr);
 		}
 	}
 	return 0;
