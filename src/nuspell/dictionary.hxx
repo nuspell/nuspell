@@ -407,8 +407,8 @@ class NUSPELL_EXPORT Dictionary : private Dict_Base {
 	    -> Dictionary;
 	auto static load_from_path(
 	    const std::string& file_path_without_extension) -> Dictionary;
-	auto imbue(const std::locale& loc) -> void;
-	auto imbue_utf8() -> void;
+	[[deprecated]] auto imbue(const std::locale& loc) -> void;
+	[[deprecated]] auto imbue_utf8() -> void;
 	auto spell(std::string_view word) const -> bool;
 	auto suggest(std::string_view word, std::vector<std::string>& out) const
 	    -> void;

@@ -3107,6 +3107,11 @@ auto Dictionary::load_from_path(const std::string& file_path_without_extension)
  * convert the strings from the external locale to UTF-32 on non-Windows
  * platforms, and to UTF-16 on Windows.
  *
+ * @deprecated You should always feed dictionary with words encoded in UTF-8,
+ * and you should not use this function to set other encodings. The recommened
+ * way to get words out of text is via the algorithm known as Unicode text
+ * segmentation which only works on text encoded in Unicode anyway.
+ *
  * @param loc locale object with valid codecvt<wchar_t, char, mbstate_t>
  */
 auto Dictionary::imbue(const locale& loc) -> void
@@ -3119,6 +3124,8 @@ auto Dictionary::imbue(const locale& loc) -> void
  * @brief Sets external (public API) encoding to UTF-8
  *
  * Call this only if you used imbue() and want to revert it to UTF-8.
+ *
+ * @deprecated see imbue()
  */
 auto Dictionary::imbue_utf8() -> void { external_locale_known_utf8 = true; }
 
