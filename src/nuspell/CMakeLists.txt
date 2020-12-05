@@ -33,7 +33,7 @@ set_target_properties(nuspell-bin PROPERTIES
     RUNTIME_OUTPUT_NAME nuspell)
 target_compile_definitions(nuspell-bin PRIVATE
     PROJECT_VERSION=\"${PROJECT_VERSION}\")
-target_link_libraries(nuspell-bin nuspell Boost::locale)
+target_link_libraries(nuspell-bin nuspell)
 if (BUILD_SHARED_LIBS AND WIN32)
     # This should be PRE_LINK (or PRE_BUILD), so Vcpkg's POST_BUILD
     # step (see VCPKG_APPLOCAL_DEPS) that copies dll can pick up nuspell.dll

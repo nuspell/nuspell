@@ -34,7 +34,6 @@ Build-only dependencies:
 Run-time (and build-time) dependencies:
 
   - ICU4C
-  - Boost Locale >= v1.48 (needed only for the CLI tool, not the library)
 
 Recommended tools for developers: qtcreator, ninja, clang-format, gdb,
 vim, doxygen.
@@ -47,7 +46,7 @@ preinstalled.
 For Ubuntu and Debian:
 
 ```bash
-sudo apt install git cmake libboost-locale-dev libicu-dev
+sudo apt install git cmake libicu-dev
 ```
 
 Then run the following commands inside the Nuspell directory:
@@ -81,7 +80,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
 <!-- end list -->
 
 ```bash
-brew install cmake icu4c boost
+brew install cmake icu4c
 export ICU_ROOT=$(brew --prefix icu4c)
 ```
 
@@ -102,7 +101,7 @@ manuals.
     Visual Studio Build Tools.
 2.  Install Git for Windows and Cmake.
 3.  Install vcpkg in some folder, e.g. in `c:\vcpkg`.
-4.  With vcpkg install: icu, boost-locale\[icu\].
+4.  With vcpkg install: icu.
 5.  Run the commands bellow.
 
 <!-- end list -->
@@ -119,7 +118,7 @@ cmake --build .
 Download MSYS2, update everything and install the following packages:
 
 ```bash
-pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-boost \
+pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-icu \
           mingw-w64-x86_64-cmake
 ```
 
@@ -144,7 +143,7 @@ Cygwin1.dll.
 Install the following required packages
 
 ```bash
-pkg cmake icu boost-libs catch
+pkg cmake icu catch
 ```
 
 Then run the standard cmake and make as on Linux. See above.

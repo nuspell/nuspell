@@ -4,7 +4,7 @@ add_executable(unit_test
     structures_test.cxx
     utils_test.cxx
     catch_main.cxx)
-target_link_libraries(unit_test nuspell Catch2::Catch2 Boost::locale)
+target_link_libraries(unit_test nuspell Catch2::Catch2)
 if (MSVC)
     target_compile_options(unit_test PRIVATE "/utf-8")
     # Consider doing this for all the other targets by setting this flag
@@ -15,7 +15,7 @@ add_executable(legacy_test legacy_test.cxx)
 target_link_libraries(legacy_test nuspell)
 
 add_executable(verify verify.cxx)
-target_link_libraries(verify nuspell hunspell Boost::locale)
+target_link_libraries(verify nuspell hunspell)
 
 if (BUILD_SHARED_LIBS AND WIN32)
     add_custom_command(TARGET verify PRE_LINK

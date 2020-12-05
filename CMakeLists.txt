@@ -2,13 +2,12 @@ cmake_minimum_required(VERSION 3.8)
 project(nuspell VERSION 4.1.0)
 set(PROJECT_HOMEPAGE_URL "https://nuspell.github.io/")
 
-option(BUILD_SHARED_LIBS "Buils as shared library" ON)
+option(BUILD_SHARED_LIBS "Build as shared library" ON)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 find_package(ICU REQUIRED COMPONENTS uc data)
-find_package(Boost 1.48.0 REQUIRED COMPONENTS locale)
 
 get_directory_property(subproject PARENT_DIRECTORY)
 
