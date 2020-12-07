@@ -1,9 +1,9 @@
 language: cpp
-dist: bionic
 
-os:
-- linux
-- osx
+os: [ linux, osx ]
+
+dist: bionic
+osx_image: xcode11.3
 
 env:
   global:
@@ -13,29 +13,24 @@ env:
   - CXXFLAGS=-fsanitize=address
   - CXXFLAGS=-fsanitize=undefined
   - CXXFLAGS="-Wall -Wextra -Werror"
-  - CONFIGURE_ARGS="-DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=Release"
+  - CONFIGURE_ARGS="-DCMAKE_BUILD_TYPE=Release"
 
 matrix:
   include:
-# set B2_ARGS to non-empty to use custom build Boost. B2_ARGS=" " is sufficient
   - os: linux
-    env: CXXFLAGS="-D_GLIBCXX_DEBUG -O1" B2_ARGS=define=_GLIBCXX_DEBUG
+    env: CXXFLAGS="-D_GLIBCXX_DEBUG -O1"
   - os: windows
     env: CTEST_ARGS="-C Debug"
   - os: windows
-    env: CONFIGURE_ARGS="-DBUILD_SHARED_LIBS=1" BUILD_ARGS="--config Release" CTEST_ARGS="-C Release"
+    env: BUILD_ARGS="--config Release" CTEST_ARGS="-C Release"
+
+addons:
+  apt:
+    packages: [ libicu-dev ]
+  homebrew:
+    packages: [ icu4c ]
 
 before_install:
-- |
-  if [ "$B2_ARGS" ]; then
-    cd ~ &&
-    wget https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.tar.bz2 -O - | tar -xj &&
-    cd -
-  fi
-- |
-  if [ -z "$B2_ARGS" ] && [ "$TRAVIS_OS_NAME" = linux ]; then
-    sudo apt-get install -y libboost-locale-dev
-  fi
 - |
   if [ "$TRAVIS_OS_NAME" = windows ]; then
     # This should be added to PATH as on local Windows Git Bash install,
@@ -45,16 +40,6 @@ before_install:
   fi
 
 install:
-# if we update to boost 1.67 we can add define=BOOST_LOCALE_HIDE_AUTO_PTR to b2
-- |
-  if [ "$B2_ARGS" ]; then
-    cd ~/boost_1_64_0 &&
-    ./bootstrap.sh --with-libraries=locale --with-toolset="$CC" &&
-    ./b2 -d0 -j 4 cxxflags=-std=c++14 $B2_ARGS &&
-    cd - &&
-    export BOOST_ROOT=~/boost_1_64_0              &&
-    export LD_LIBRARY_PATH=$BOOST_ROOT/stage/lib
-  fi
 - |
   if [ "$TRAVIS_OS_NAME" = linux ]; then
     export CMAKE_BUILD_PARALLEL_LEVEL=4
@@ -62,7 +47,7 @@ install:
 - |
   if [ "$TRAVIS_OS_NAME" = osx ]; then
     export ICU_ROOT=$(brew --prefix icu4c)
-    BUILD_ARGS+=" -- -j 4"                 #parallel build
+    export CMAKE_BUILD_PARALLEL_LEVEL=4
   fi
 - |
   if [ "$TRAVIS_OS_NAME" = windows ]; then
@@ -77,13 +62,3 @@ script:
 - ctest $CTEST_ARGS
 
 after_failure: cat Testing/Temporary/LastTest.log
-
-addons:
-#  apt:
-#    packages:
-#    - libicu-dev
-#    - libboost-locale-dev
-  homebrew:
-    packages:
-    - icu4c
-    - boost
