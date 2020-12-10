@@ -34,6 +34,12 @@
 #ifdef _POSIX_VERSION
 #include <langinfo.h>
 #endif
+#ifdef _WIN32
+#include <io.h>
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 // manually define if not supplied by the build system
 #ifndef PROJECT_VERSION
@@ -606,29 +612,44 @@ int main(int argc, char* argv[])
 		list_dictionaries(f);
 		return 0;
 	}
-	auto loc_str = setlocale(LC_CTYPE, "");
+	char* loc_str = nullptr;
+#ifdef _WIN32
+	loc_str = setlocale(LC_CTYPE, nullptr); // will return "C"
+
+	/* On Windows, the console is a buggy thing. If the default C locale is
+	active, then the encoding of the strings gotten from C or C++ stdio
+	(fgets, scanf, cin) is GetConsoleCP(). Stdout accessed via standard
+	functions (printf, cout) expects encoding of GetConsoleOutputCP() which
+	is the same as GetConsoleCP() unless manually changed. By default both
+	are the active OEM encoding, unless changed with the command chcp, or by
+	calling the Set functions.
+
+	If we call setlocale(LC_CTYPE, ""), or let's say setlocale(LC_CTYPE,
+	".1251"), then stdin will still return in the encoding GetConsoleCP(),
+	but stdout functions like printf now will expect a different encoding,
+	the one set via setlocale. Because of this mess don't change locale with
+	setlocale on Windows.
+
+	When stdin or stout are redirected from/to file or another terminal like
+	the one in MSYS2, they are read/written as-is. Then we will assume UTF-8
+	encoding. */
+#else
+	loc_str = setlocale(LC_CTYPE, "");
 	if (!loc_str) {
 		clog << "WARNING: Invalid locale string, fall back to \"C\".\n";
 		loc_str = setlocale(LC_CTYPE, nullptr); // will return "C"
 	}
+#endif
 	auto loc_str_sv = string_view(loc_str);
 	if (args.encoding.empty()) {
 #if _POSIX_VERSION
 		auto enc_str = nl_langinfo(CODESET);
 		args.encoding = enc_str;
 #elif _WIN32
-		// On Windows first check if stdin is coming from
-		// console with _isatty(). If isatty == true, then encoding is
-		// GetConsoleCP(). else stdin is redirected, like from file or
-		// from some custom console like the MSYS2. Then we can do
-		// various things like use GetACP() or parse the return of
-		// setlocale(LC_CTYPE, "") (same result), parse LC_ALL,
-		// LC_CTYPE, and LANG or just assume UTF-8.
-
-		// bellow is parsing of setlocale()
-		// auto idx = loc_str_sv.find('.');
-		// if (idx != loc_str_sv.npos)
-		//	args.encoding.append("cp").append(loc_str_sv, idx);
+		if (_isatty(_fileno(stdin)) || _isatty(_fileno(stdout)))
+			args.encoding = "cp" + to_string(GetConsoleCP());
+		else
+			args.encoding = "UTF-8";
 #endif
 	}
 	clog << "INFO: Locale LC_CTYPE=" << loc_str_sv
@@ -665,8 +686,13 @@ int main(int argc, char* argv[])
 	// errors and reprots success. This can be changed, but there is no need
 	// for that.
 	auto uerr = U_ZERO_ERROR;
-	auto ucnv = icu::LocalUConverterPointer(
-	    ucnv_open(args.encoding.c_str(), &uerr));
+	auto enc_cstr = args.encoding.c_str();
+	if (args.encoding.empty()) {
+		enc_cstr = nullptr;
+		clog << "WARNING: using default ICU encoding converter for IO"
+		     << endl;
+	}
+	auto ucnv = icu::LocalUConverterPointer(ucnv_open(enc_cstr, &uerr));
 	if (U_FAILURE(uerr)) {
 		cerr << "ERROR: Invalid encoding " << args.encoding << ".\n";
 		return 1;
