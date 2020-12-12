@@ -6,16 +6,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2020-12-12
+### Deprecated
+- Deprecate functions that allowed non-Unicode encoding. In particular,
+  `Dictionary::imbue()` and `Dictionary::imbue_utf8()`.
+
+### Removed
+- Completely remove dependency on Boost. The CLI tools were refactored to use
+  ICU directly.
+
 ## [4.1.0] - 2020-11-19
-## Added
+### Added
 - Add new API for finding dictionaries on the file-system. It is a set of free
   functions located in the file finder.hxx.
 
-## Fixed
+### Fixed
 - Improve searching for dictionaries on the file-system. Fix finding them on
   Fedora. Fixes #94.
 
-## Deprecated
+### Deprecated
 - Deprecate the old API for finding dictionaries, i.e. the class `Finder`
   in the file finder.hxx.
 
@@ -175,7 +184,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v4.0.1...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v4.2.0...HEAD
+[4.2.0]: https://github.com/nuspell/nuspell/compare/v4.1.0...v4.2.0
+[4.1.0]: https://github.com/nuspell/nuspell/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/nuspell/nuspell/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/nuspell/nuspell/compare/v3.1.2...v4.0.0
 [3.1.2]: https://github.com/nuspell/nuspell/compare/v3.1.1...v3.1.2
