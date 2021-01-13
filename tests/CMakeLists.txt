@@ -23,8 +23,7 @@ if (BUILD_SHARED_LIBS AND WIN32)
     $<TARGET_FILE:hunspell> $<TARGET_FILE_DIR:unit_test>)
 endif()
 
-include(Catch)
-catch_discover_tests(unit_test)
+add_test(NAME unit_test COMMAND unit_test)
 
 file(GLOB v1tests
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/v1cmdline

@@ -23,6 +23,8 @@ matrix:
     env: CTEST_ARGS="-C Debug"
   - os: windows
     env: BUILD_ARGS="--config Release" CTEST_ARGS="-C Release"
+  - os: freebsd
+    addons: { pkg: { packages: [ icu ] } }
 
 addons:
   apt:
@@ -39,15 +41,16 @@ before_install:
     curl -L https://github.com/nuspell/misc-nuspell/releases/download/v1/vcpkg-export.tar.xz | tar -xJ
   fi
 
-install:
+# install:
+
+before_script:
 - |
-  if [ "$TRAVIS_OS_NAME" = linux ]; then
+  if [ "$TRAVIS_OS_NAME" != windows ]; then
     export CMAKE_BUILD_PARALLEL_LEVEL=4
   fi
 - |
   if [ "$TRAVIS_OS_NAME" = osx ]; then
     export ICU_ROOT=$(brew --prefix icu4c)
-    export CMAKE_BUILD_PARALLEL_LEVEL=4
   fi
 - |
   if [ "$TRAVIS_OS_NAME" = windows ]; then
