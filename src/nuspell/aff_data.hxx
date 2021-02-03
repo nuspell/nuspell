@@ -81,13 +81,6 @@ class Encoding {
 
 enum class Flag_Type { SINGLE_CHAR, DOUBLE_CHAR, NUMBER, UTF8 };
 
-struct Extractor_First_of_Word_Pair {
-	auto& operator()(const std::pair<std::wstring, Flag_Set>& p) const
-	{
-		return p.first;
-	}
-};
-
 /**
  * @internal
  * @brief Map between words and word_flags.
@@ -98,8 +91,7 @@ struct Extractor_First_of_Word_Pair {
  * Does not store morphological data as is low priority feature and is out of
  * scope.
  */
-using Word_List = Hash_Multiset<std::pair<std::wstring, Flag_Set>, std::wstring,
-                                Extractor_First_of_Word_Pair>;
+using Word_List = Hash_Multimap<std::wstring, Flag_Set>;
 
 struct NUSPELL_EXPORT Aff_Data {
 	static constexpr auto HIDDEN_HOMONYM_FLAG = char16_t(-1);

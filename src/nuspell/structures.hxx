@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <forward_list>
 #include <functional>
 #include <iterator>
 #include <stack>
@@ -536,10 +537,9 @@ struct identity {
 	}
 };
 
-template <class Value, class Key = Value, class KeyExtract = identity>
-class Hash_Multiset {
-      private:
-	using bucket_type = std::vector<Value>;
+template <class Key, class T>
+class Hash_Multimap {
+	using bucket_type = std::forward_list<std::pair<Key, T>>;
 	static constexpr float max_load_fact = 7.0 / 8.0;
 	std::vector<bucket_type> data;
 	size_t sz = 0;
@@ -547,7 +547,8 @@ class Hash_Multiset {
 
       public:
 	using key_type = Key;
-	using value_type = Value;
+	using mapped_type = T;
+	using value_type = std::pair<Key, T>;
 	using size_type = std::size_t;
 	using difference_type = std::ptrdiff_t;
 	using hasher = std::hash<Key>;
@@ -558,7 +559,7 @@ class Hash_Multiset {
 	using local_iterator = typename bucket_type::iterator;
 	using local_const_iterator = typename bucket_type::const_iterator;
 
-	Hash_Multiset() = default;
+	Hash_Multimap() = default;
 
 	auto size() const { return sz; }
 	auto empty() const { return size() == 0; }
@@ -576,7 +577,7 @@ class Hash_Multiset {
 		}
 		if (count < size() / max_load_fact)
 			count = size() / max_load_fact;
-		auto n = Hash_Multiset();
+		auto n = Hash_Multimap();
 		n.rehash(count);
 		for (auto& b : data) {
 			for (auto& x : b) {
@@ -597,33 +598,27 @@ class Hash_Multiset {
 	{
 		using namespace std;
 		auto hash = hasher();
-		auto key_extract = KeyExtract();
 		if (sz == max_load_factor_capacity) {
 			reserve(sz + 1);
 		}
-		auto&& key = key_extract(value);
+		auto&& key = value.first;
 		auto h = hash(key);
 		auto h_mod = h & (data.size() - 1);
 		auto& bucket = data[h_mod];
-		if (bucket.size() == 0 || bucket.size() == 1 ||
-		    key == key_extract(bucket.back())) {
-			bucket.push_back(move(value));
-			++sz;
-			return end(bucket) - 1;
+		auto prev = bucket.before_begin();
+		auto curr = begin(bucket);
+		// find first entry with same key
+		for (; curr != end(bucket); prev = curr++) {
+			if (curr->first == key)
+				break;
 		}
-		auto last =
-		    std::find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
-			    return key == key_extract(x);
-		    });
-		if (last != rend(bucket)) {
-			auto ret = bucket.insert(last.base(), move(value));
-			++sz;
-			return ret;
+		// find last entry with same key
+		for (; curr != end(bucket); prev = curr++) {
+			if (curr->first != key)
+				break;
 		}
-
-		bucket.push_back(move(value));
-		++sz;
-		return end(bucket) - 1;
+		// insert after last
+		return bucket.insert_after(prev, move(value));
 	}
 	template <class... Args>
 	auto emplace(Args&&... a)
@@ -636,35 +631,17 @@ class Hash_Multiset {
 	{
 		using namespace std;
 		auto hash = hasher();
-		auto key_extract = KeyExtract();
 		if (data.empty())
 			return {};
 		auto h = hash(key);
 		auto h_mod = h & (data.size() - 1);
 		auto& bucket = data[h_mod];
-		if (bucket.empty())
-			return {begin(bucket), begin(bucket)}; // ret empty
-		// return {} here  ^^^^^^^ is OK bug GCC debug iterators have
-		// this bug https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70303
-		if (bucket.size() == 1) {
-			if (key == key_extract(bucket.front()))
-				return {begin(bucket), end(bucket)};
-			return {begin(bucket), begin(bucket)}; // ret empty
-		}
-		auto first =
-		    std::find_if(begin(bucket), end(bucket), [&](auto& x) {
-			    return key == key_extract(x);
-		    });
+		auto eq_key = [&](auto& x) { return key == x.first; };
+		auto first = std::find_if(begin(bucket), end(bucket), eq_key);
 		if (first == end(bucket))
-			return {begin(bucket), begin(bucket)}; // ret empty
-		auto next = first + 1;
-		if (next == end(bucket) || key != key_extract(*next))
-			return {first, next};
-		auto last =
-		    std::find_if(rbegin(bucket), rend(bucket), [&](auto& x) {
-			    return key == key_extract(x);
-		    });
-		return {first, last.base()};
+			return {first, first}; // ret empty
+		auto last = std::find_if_not(next(first), end(bucket), eq_key);
+		return {first, last};
 	}
 
 	auto bucket_count() const -> size_type { return data.size(); }
