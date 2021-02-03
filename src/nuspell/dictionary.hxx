@@ -32,7 +32,7 @@ NUSPELL_MSVC_PRAGMA_WARNING(push)
 NUSPELL_MSVC_PRAGMA_WARNING(disable : 4251 4275)
 
 namespace nuspell {
-inline namespace v4 {
+inline namespace v5 {
 
 enum Affixing_Mode {
 	FULL_WORD,
@@ -390,16 +390,7 @@ class NUSPELL_EXPORT Dictionary_Loading_Error : public std::runtime_error {
  * @brief The only important public class
  */
 class NUSPELL_EXPORT Dictionary : private Dict_Base {
-	std::locale external_locale;
-	bool external_locale_known_utf8;
-
 	Dictionary(std::istream& aff, std::istream& dic);
-	auto external_to_internal_encoding(std::string_view in,
-	                                   std::wstring& wide_out) const
-	    -> bool;
-
-	auto internal_to_external_encoding(std::wstring_view wide_in,
-	                                   std::string& out) const -> bool;
 
       public:
 	Dictionary();
@@ -407,13 +398,11 @@ class NUSPELL_EXPORT Dictionary : private Dict_Base {
 	    -> Dictionary;
 	auto static load_from_path(
 	    const std::string& file_path_without_extension) -> Dictionary;
-	[[deprecated]] auto imbue(const std::locale& loc) -> void;
-	[[deprecated]] auto imbue_utf8() -> void;
 	auto spell(std::string_view word) const -> bool;
 	auto suggest(std::string_view word, std::vector<std::string>& out) const
 	    -> void;
 };
-} // namespace v4
+} // namespace v5
 } // namespace nuspell
 NUSPELL_MSVC_PRAGMA_WARNING(pop)
 #endif // NUSPELL_DICTIONARY_HXX

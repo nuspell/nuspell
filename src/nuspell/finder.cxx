@@ -54,7 +54,7 @@
 using namespace std;
 
 namespace nuspell {
-inline namespace v4 {
+inline namespace v5 {
 #ifdef _WIN32
 const auto PATHSEP = ';';
 const auto DIRSEP = '\\';
@@ -527,30 +527,6 @@ auto find_dictionary(
 	               [&](auto& e) { return e.first == dict_name; });
 }
 
-auto static get_dictionary_path(
-    const std::string& dict,
-    const std::vector<std::pair<std::string, std::string>>& dict_multimap)
-    -> std::string
-{
-#ifdef _WIN32
-	const auto SEPARATORS = "\\/";
-#else
-	const auto SEPARATORS = '/';
-#endif
-	// first check if it is a path
-	if (dict.find_first_of(SEPARATORS) != dict.npos) {
-		// a path
-		return dict;
-	}
-	else {
-		// search list
-		auto x = find_dictionary(dict_multimap, dict);
-		if (x != end(dict_multimap))
-			return x->second;
-	}
-	return {};
-}
-
 Dict_Finder_For_CLI_Tool::Dict_Finder_For_CLI_Tool()
 {
 	append_default_dir_paths(dir_paths);
@@ -575,57 +551,23 @@ Dict_Finder_For_CLI_Tool::Dict_Finder_For_CLI_Tool()
 auto Dict_Finder_For_CLI_Tool::get_dictionary_path(
     const std::string& dict) const -> std::string
 {
-	return nuspell::get_dictionary_path(dict, dict_multimap);
+#ifdef _WIN32
+	const auto SEPARATORS = "\\/";
+#else
+	const auto SEPARATORS = '/';
+#endif
+	// first check if it is a path
+	if (dict.find_first_of(SEPARATORS) != dict.npos) {
+		// a path
+		return dict;
+	}
+	else {
+		// search list
+		auto x = find_dictionary(dict_multimap, dict);
+		if (x != end(dict_multimap))
+			return x->second;
+	}
+	return {};
 }
-
-auto Finder::add_default_dir_paths() -> void
-{
-	append_default_dir_paths(paths);
-}
-
-auto Finder::add_libreoffice_dir_paths() -> void
-{
-	append_libreoffice_dir_paths(paths);
-}
-
-auto Finder::search_for_dictionaries() -> void
-{
-	dictionaries.clear();
-	search_dirs_for_dicts(paths, dictionaries);
-	stable_sort(dictionaries.begin(), dictionaries.end(),
-	            [](auto& a, auto& b) { return a.first < b.first; });
-}
-
-auto Finder::search_all_dirs_for_dicts() -> Finder
-{
-	auto ret = Finder();
-	ret.add_default_dir_paths();
-	ret.add_libreoffice_dir_paths();
-
-	// Add CWD last. They should not override the system dictionaries.
-	ret.paths.push_back(".");
-
-	ret.search_for_dictionaries();
-	return ret;
-}
-
-auto Finder::find(const std::string& dict) const -> const_iterator
-{
-	return find_dictionary(dictionaries, dict);
-}
-
-auto Finder::equal_range(const string& dict) const
-    -> std::pair<const_iterator, const_iterator>
-{
-	auto eq = [&](auto& e) { return e.first == dict; };
-	auto a = find_if(begin(), end(), eq);
-	auto b = find_if_not(a, end(), eq);
-	return {a, b};
-}
-
-auto Finder::get_dictionary_path(const std::string& dict) const -> string
-{
-	return nuspell::get_dictionary_path(dict, dictionaries);
-}
-} // namespace v4
+} // namespace v5
 } // namespace nuspell

@@ -33,15 +33,11 @@ namespace nuspell {
 /**
  * @brief Library main namespace with version number attached
  *
- * @internal
- * Everything that is public API gets here, and even symbols that should be
- * private at API but are called at ABI level end up here. For example, our
- * public class Dictionary has implicit destructor which gets inlined in client
- * code. Thus, the client code directly calls the destructors of all the private
- * data members of our class Dictionary.
+ * This inline namespace is used for ABI versioning. It is the same as the major
+ * verison. Look up on the Internet to see what is it for (ABI versioning
+ * mostly). Client code should never mention this inline namespace.
  */
-inline namespace v4 {
-}
+inline namespace v5 {
 
 auto Encoding::normalize_name() -> void
 {
@@ -1065,4 +1061,5 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	}
 	return in.eof(); // success if we reached eof
 }
+} // namespace v5
 } // namespace nuspell

@@ -34,7 +34,7 @@ NUSPELL_MSVC_PRAGMA_WARNING(push)
 NUSPELL_MSVC_PRAGMA_WARNING(disable : 4251)
 
 namespace nuspell {
-inline namespace v4 {
+inline namespace v5 {
 
 class Encoding {
 	std::string name;
@@ -176,7 +176,7 @@ struct NUSPELL_EXPORT Aff_Data {
 		return false;
 	}
 };
-} // namespace v4
+} // namespace v5
 } // namespace nuspell
 NUSPELL_MSVC_PRAGMA_WARNING(pop)
 #endif // NUSPELL_AFF_DATA_HXX

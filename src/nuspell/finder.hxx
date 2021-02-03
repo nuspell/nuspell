@@ -39,7 +39,7 @@ NUSPELL_MSVC_PRAGMA_WARNING(push)
 NUSPELL_MSVC_PRAGMA_WARNING(disable : 4251)
 
 namespace nuspell {
-inline namespace v4 {
+inline namespace v5 {
 
 NUSPELL_EXPORT auto append_default_dir_paths(std::vector<std::string>& paths)
     -> void;
@@ -78,32 +78,7 @@ class NUSPELL_EXPORT Dict_Finder_For_CLI_Tool {
 	auto& get_dictionaries() const { return dict_multimap; }
 	auto get_dictionary_path(const std::string& dict) const -> std::string;
 };
-
-class NUSPELL_DEPRECATED_EXPORT Finder {
-	using Dict_List = std::vector<std::pair<std::string, std::string>>;
-
-	std::vector<std::string> paths;
-	Dict_List dictionaries;
-
-      public:
-	using const_iterator = Dict_List::const_iterator;
-
-	auto add_default_dir_paths() -> void;
-	auto add_libreoffice_dir_paths() -> void;
-	auto search_for_dictionaries() -> void;
-
-	auto static search_all_dirs_for_dicts() -> Finder;
-
-	auto& get_dir_paths() const { return paths; }
-	auto& get_dictionaries() const { return dictionaries; }
-	auto begin() const { return dictionaries.begin(); }
-	auto end() const { return dictionaries.end(); }
-	auto find(const std::string& dict) const -> const_iterator;
-	auto equal_range(const std::string& dict) const
-	    -> std::pair<const_iterator, const_iterator>;
-	auto get_dictionary_path(const std::string& dict) const -> std::string;
-};
-} // namespace v4
+} // namespace v5
 } // namespace nuspell
 NUSPELL_MSVC_PRAGMA_WARNING(pop)
 #endif // NUSPELL_FINDER_HXX

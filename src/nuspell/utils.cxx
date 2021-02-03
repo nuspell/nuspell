@@ -38,7 +38,7 @@
 using namespace std;
 
 namespace nuspell {
-inline namespace v4 {
+inline namespace v5 {
 
 template <class SepT>
 static auto& split_on_any_of_low(std::string_view s, const SepT& sep,
@@ -339,117 +339,6 @@ auto is_all_bmp(std::u16string_view s) -> bool
 	return none_of(begin(s), end(s), is_surrogate_pair);
 }
 
-auto to_wide(std::string_view in, const std::locale& loc, std::wstring& out)
-    -> bool
-{
-	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
-	out.resize(in.size(), L'\0');
-	auto state = mbstate_t();
-	auto in_ptr = begin_ptr(in);
-	auto in_last = end_ptr(in);
-	auto out_ptr = begin_ptr(out);
-	auto out_last = end_ptr(out);
-	auto valid = true;
-	for (;;) {
-		auto err = cvt.in(state, in_ptr, in_last, in_ptr, out_ptr,
-		                  out_last, out_ptr);
-		if (err == cvt.ok || err == cvt.noconv)
-			break;
-#if U_SIZEOF_WCHAR_T == 4
-		auto no_space = out_ptr == out_last;
-#elif U_SIZEOF_WCHAR_T == 2
-		auto no_space = out_last - out_ptr < 2;
-#endif
-		if (err == cvt.partial && no_space) {
-			// no space in output buf
-			auto idx = out_ptr - begin_ptr(out);
-			out.resize(out.size() * 2);
-			out_ptr = &out[idx];
-			out_last = end_ptr(out);
-		}
-		else if (err == cvt.partial && !no_space) {
-			// incomplete sequence at the end
-			*out_ptr++ = L'\uFFFD';
-			valid = false;
-			break;
-		}
-		else if (err == cvt.error) {
-			if (out_ptr == out_last) {
-				auto idx = out_ptr - begin_ptr(out);
-				out.resize(out.size() * 2);
-				out_ptr = &out[idx];
-				out_last = end_ptr(out);
-			}
-			in_ptr++;
-			*out_ptr++ = L'\uFFFD';
-			valid = false;
-		}
-	}
-	out.erase(out_ptr - begin_ptr(out));
-	return valid;
-}
-
-auto to_wide(std::string_view in, const std::locale& loc) -> std::wstring
-{
-	auto ret = wstring();
-	to_wide(in, loc, ret);
-	return ret;
-}
-
-auto to_narrow(std::wstring_view in, std::string& out, const std::locale& loc)
-    -> bool
-{
-	auto& cvt = use_facet<codecvt<wchar_t, char, mbstate_t>>(loc);
-	out.resize(in.size(), '\0');
-	auto state = mbstate_t();
-	auto in_ptr = begin_ptr(in);
-	auto in_last = end_ptr(in);
-	auto out_ptr = begin_ptr(out);
-	auto out_last = end_ptr(out);
-	auto max_len_for_CP = cvt.max_length();
-	auto valid = true;
-	for (;;) {
-		auto err = cvt.out(state, in_ptr, in_last, in_ptr, out_ptr,
-		                   out_last, out_ptr);
-		if (err == cvt.ok || err == cvt.noconv)
-			break;
-		auto no_space = out_last - out_ptr < max_len_for_CP;
-		if (err == cvt.partial && no_space) {
-			// no space in output buf
-			auto idx = out_ptr - begin_ptr(out);
-			out.resize(out.size() * 2);
-			out_ptr = &out[idx];
-			out_last = end_ptr(out);
-		}
-		else if (err == cvt.partial && !no_space) {
-			// incomplete sequence at the end
-			*out_ptr++ = '?';
-			valid = false;
-			break;
-		}
-		else if (err == cvt.error) {
-			if (out_ptr == out_last) {
-				auto idx = out_ptr - begin_ptr(out);
-				out.resize(out.size() * 2);
-				out_ptr = &out[idx];
-				out_last = end_ptr(out);
-			}
-			in_ptr++;
-			*out_ptr++ = '?';
-			valid = false;
-		}
-	}
-	out.erase(out_ptr - begin_ptr(out));
-	return valid;
-}
-
-auto to_narrow(std::wstring_view in, const std::locale& loc) -> std::string
-{
-	auto ret = string();
-	to_narrow(in, ret, loc);
-	return ret;
-}
-
 auto to_upper_ascii(std::string& s) -> void
 {
 	auto& char_type = use_facet<ctype<char>>(locale::classic());
@@ -718,5 +607,5 @@ auto count_appereances_of(wstring_view haystack, wstring_view needles) -> size_t
 		return needles.find(c) != needles.npos;
 	});
 }
-} // namespace v4
+} // namespace v5
 } // namespace nuspell

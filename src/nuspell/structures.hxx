@@ -32,7 +32,7 @@
 #include <vector>
 
 namespace nuspell {
-inline namespace v4 {
+inline namespace v5 {
 #define NUSPELL_LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
 
 template <class CharT>
@@ -2319,6 +2319,6 @@ auto Phonetic_Table<CharT>::replace(Str& word) const -> bool
 	}
 	return ret;
 }
-} // namespace v4
+} // namespace v5
 } // namespace nuspell
 #endif // NUSPELL_STRUCTURES_HXX

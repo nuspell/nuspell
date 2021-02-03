@@ -29,6 +29,7 @@
 using namespace std;
 
 namespace nuspell {
+inline namespace v5 {
 
 template <class L>
 class At_Scope_Exit {
@@ -3022,32 +3023,12 @@ auto Dict_Base::expand_root_word_for_ngram(
 }
 
 Dictionary::Dictionary(std::istream& aff, std::istream& dic)
-    : external_locale_known_utf8(true)
 {
 	if (!parse_aff_dic(aff, dic))
 		throw Dictionary_Loading_Error("error parsing");
 }
 
-auto Dictionary::external_to_internal_encoding(std::string_view in,
-                                               wstring& wide_out) const -> bool
-{
-	if (external_locale_known_utf8)
-		return utf8_to_wide(in, wide_out);
-	else
-		return to_wide(in, external_locale, wide_out);
-}
-
-auto Dictionary::internal_to_external_encoding(std::wstring_view wide_in,
-                                               string& out) const -> bool
-{
-	if (external_locale_known_utf8)
-		wide_to_utf8(wide_in, out);
-	else
-		return to_narrow(wide_in, out, external_locale);
-	return true;
-}
-
-Dictionary::Dictionary() : external_locale_known_utf8(true) {}
+Dictionary::Dictionary() = default;
 
 /**
  * @brief Create a dictionary from opened files as iostreams
@@ -3093,43 +3074,6 @@ auto Dictionary::load_from_path(const std::string& file_path_without_extension)
 }
 
 /**
- * @brief Sets external (public API) encoding
- *
- * By external encoding we mean the encoding of the strings that you are going
- * to pass to other functions like spell() and suggest(). This function should
- * be used rarely, as the default external encoding is UTF-8.
- *
- * This encoding should not be misunderstood with the internal encoding or with
- * the encoding of the dictionary files (.dic and .aff). It can be different
- * than any of them.
- *
- * The locale must contain std::codecvt<wchar_t, char, mbstate_t> facet that can
- * convert the strings from the external locale to UTF-32 on non-Windows
- * platforms, and to UTF-16 on Windows.
- *
- * @deprecated You should always feed dictionary with words encoded in UTF-8,
- * and you should not use this function to set other encodings. The recommened
- * way to get words out of text is via the algorithm known as Unicode text
- * segmentation which only works on text encoded in Unicode anyway.
- *
- * @param loc locale object with valid codecvt<wchar_t, char, mbstate_t>
- */
-auto Dictionary::imbue(const locale& loc) -> void
-{
-	external_locale = loc;
-	external_locale_known_utf8 = false;
-}
-
-/**
- * @brief Sets external (public API) encoding to UTF-8
- *
- * Call this only if you used imbue() and want to revert it to UTF-8.
- *
- * @deprecated see imbue()
- */
-auto Dictionary::imbue_utf8() -> void { external_locale_known_utf8 = true; }
-
-/**
  * @brief Checks if a given word is correct
  * @param word any word
  * @return true if correct, false otherwise
@@ -3137,7 +3081,7 @@ auto Dictionary::imbue_utf8() -> void { external_locale_known_utf8 = true; }
 auto Dictionary::spell(std::string_view word) const -> bool
 {
 	auto static thread_local wide_word = wstring();
-	auto ok_enc = external_to_internal_encoding(word, wide_word);
+	auto ok_enc = utf8_to_wide(word, wide_word);
 	if (unlikely(wide_word.size() > 180)) {
 		wide_word.resize(180);
 		wide_word.shrink_to_fit();
@@ -3159,7 +3103,7 @@ auto Dictionary::suggest(std::string_view word,
 	auto static thread_local wide_word = wstring();
 	auto static thread_local wide_list = List_WStrings();
 
-	auto ok_enc = external_to_internal_encoding(word, wide_word);
+	auto ok_enc = utf8_to_wide(word, wide_word);
 	if (unlikely(wide_word.size() > 180)) {
 		wide_word.resize(180);
 		wide_word.shrink_to_fit();
@@ -3174,8 +3118,9 @@ auto Dictionary::suggest(std::string_view word,
 	narrow_list.clear();
 	for (auto& w : wide_list) {
 		auto& o = narrow_list.emplace_back();
-		internal_to_external_encoding(w, o);
+		wide_to_utf8(w, o);
 	}
 	out = narrow_list.extract_sequence();
 }
+} // namespace v5
 } // namespace nuspell

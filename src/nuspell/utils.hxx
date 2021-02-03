@@ -45,7 +45,7 @@
 struct UConverter; // unicode/ucnv.h
 
 namespace nuspell {
-inline namespace v4 {
+inline namespace v5 {
 
 auto split(std::string_view s, char sep, std::vector<std::string>& out)
     -> std::vector<std::string>&;
@@ -69,15 +69,6 @@ NUSPELL_EXPORT auto latin1_to_ucs2(std::string_view s) -> std::u16string;
 auto latin1_to_ucs2(std::string_view s, std::u16string& out) -> void;
 
 NUSPELL_EXPORT auto is_all_bmp(std::u16string_view s) -> bool;
-
-NUSPELL_EXPORT auto to_wide(std::string_view in, const std::locale& inloc,
-                            std::wstring& out) -> bool;
-NUSPELL_EXPORT auto to_wide(std::string_view in, const std::locale& inloc)
-    -> std::wstring;
-NUSPELL_EXPORT auto to_narrow(std::wstring_view in, std::string& out,
-                              const std::locale& outloc) -> bool;
-NUSPELL_EXPORT auto to_narrow(std::wstring_view in, const std::locale& outloc)
-    -> std::string;
 
 auto to_upper_ascii(std::string& s) -> void;
 
@@ -229,6 +220,6 @@ auto end_ptr(T& x)
 {
 	return x.data() + x.size();
 }
-} // namespace v4
+} // namespace v5
 } // namespace nuspell
 #endif // NUSPELL_UTILS_HXX
