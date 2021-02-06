@@ -19,6 +19,8 @@
 #ifndef NUSPELL_STRUCTURES_HXX
 #define NUSPELL_STRUCTURES_HXX
 
+#include "unicode.hxx"
+
 #include <algorithm>
 #include <cmath>
 #include <forward_list>
@@ -659,6 +661,7 @@ struct Condition_Exception : public std::runtime_error {
 template <class CharT>
 class Condition {
 	using Str = std::basic_string<CharT>;
+	using Str_View = std::basic_string_view<CharT>;
 	enum Span_Type { NORMAL, DOT, ANY_OF, NONE_OF };
 	struct Span {
 		size_t pos = {};
@@ -673,7 +676,7 @@ class Condition {
 
 	Str cond;
 	std::vector<Span> spans; // pos, len, type
-	size_t length = 0;
+	size_t num_cp = 0;
 
 	auto construct() -> void;
 
@@ -694,32 +697,36 @@ class Condition {
 	auto& operator=(const Str& condition)
 	{
 		cond = condition;
-		length = 0;
+		num_cp = 0;
 		construct();
 		return *this;
 	}
 	auto& operator=(Str&& condition)
 	{
 		cond = std::move(condition);
-		length = 0;
+		num_cp = 0;
 		construct();
 		return *this;
 	}
 	auto& operator=(const CharT* condition)
 	{
 		cond = condition;
-		length = 0;
+		num_cp = 0;
 		construct();
 		return *this;
 	}
-	auto match(const Str& s, size_t pos = 0, size_t len = Str::npos) const
-	    -> bool;
-	auto match_prefix(const Str& s) const { return match(s, 0, length); }
-	auto match_suffix(const Str& s) const
+	auto& str() const { return cond; }
+	auto match_prefix(Str_View s) const -> bool;
+	auto match_suffix(Str_View s) const
 	{
-		if (length > s.size())
+		auto cp_cnt = 0;
+		auto i = size(s);
+		for (; cp_cnt != num_cp && i != 0; ++cp_cnt) {
+			UTF_Traits<CharT>::move_back_valid_cp(s, i);
+		}
+		if (cp_cnt != num_cp)
 			return false;
-		return match(s, s.size() - length, length);
+		return match_prefix(s.substr(i));
 	}
 };
 template <class CharT>
@@ -729,18 +736,20 @@ auto Condition<CharT>::construct() -> void
 	for (; i != cond.size();) {
 		size_t j = cond.find_first_of(NUSPELL_LITERAL(CharT, "[]."), i);
 		if (i != j) {
-			if (j == cond.npos) {
-				spans.emplace_back(i, cond.size() - i, NORMAL);
-				length += cond.size() - i;
-				break;
-			}
+			if (j == cond.npos)
+				j = size(cond);
 			spans.emplace_back(i, j - i, NORMAL);
-			length += j - i;
+			do {
+				UTF_Traits<CharT>::decode_valid(cond, i);
+				++num_cp;
+			} while (i != j);
 			i = j;
+			if (i == size(cond))
+				break;
 		}
 		if (cond[i] == '.') {
 			spans.emplace_back(i, 1, DOT);
-			++length;
+			++num_cp;
 			++i;
 			continue;
 		}
@@ -775,49 +784,55 @@ auto Condition<CharT>::construct() -> void
 				throw Condition_Exception(what);
 			}
 			spans.emplace_back(i, j - i, type);
-			++length;
+			++num_cp;
 			i = j + 1;
 		}
 	}
 }
 
 template <class CharT>
-auto Condition<CharT>::match(const Str& s, size_t pos, size_t len) const -> bool
+auto Condition<CharT>::match_prefix(Str_View s) const -> bool
 {
-	if (pos > s.size()) {
-		throw std::out_of_range(
-		    "position on the string is out of bounds");
-	}
-	if (s.size() - pos < len)
-		len = s.size() - pos;
-	if (len != length)
-		return false;
-
-	size_t i = pos;
+	size_t i = 0;
 	for (auto& x : spans) {
 		using tr = typename Str::traits_type;
 		switch (x.type) {
 		case NORMAL:
-			if (tr::compare(&s[i], &cond[x.pos], x.len) == 0)
+			if (i + x.len <= size(s) &&
+			    tr::compare(&s[i], &cond[x.pos], x.len) == 0)
 				i += x.len;
 			else
 				return false;
 			break;
 		case DOT:
-			++i;
+			if (i == size(s))
+				return false;
+			UTF_Traits<CharT>::decode_valid(s, i); // advances i
 			break;
-		case ANY_OF:
-			if (tr::find(&cond[x.pos], x.len, s[i]))
-				++i;
-			else
+		case ANY_OF: {
+			if (i == size(s))
+				return false;
+			auto i1 = i;
+			auto cp = UTF_Traits<CharT>::decode_valid(s, i);
+			auto i2 = i;
+			auto encoded_cp = s.substr(i1, i2 - i1);
+			if (Str_View(&cond[x.pos], x.len).find(encoded_cp) ==
+			    Str_View::npos)
 				return false;
 			break;
-		case NONE_OF:
-			if (tr::find(&cond[x.pos], x.len, s[i]))
+		}
+		case NONE_OF: {
+			if (i == size(s))
 				return false;
-			else
-				++i;
+			auto i1 = i;
+			auto cp = UTF_Traits<CharT>::decode_valid(s, i);
+			auto i2 = i;
+			auto encoded_cp = s.substr(i1, i2 - i1);
+			if (Str_View(&cond[x.pos], x.len).find(encoded_cp) !=
+			    Str_View::npos)
+				return false;
 			break;
+		}
 		}
 	}
 	return true;
@@ -1254,14 +1269,10 @@ using Suffix_Multiset = Prefix_Multiset<
     T, Key_Extr,
     String_Reverser<typename Prefix_Multiset<T, Key_Extr>::Char_Type>>;
 
-template <class T, class Key_Extr = identity>
-class Affix_Table {
-};
-
 class Prefix_Table {
 	using Prefix_Multiset_Type =
-	    Prefix_Multiset<Prefix<wchar_t>,
-	                    Extractor_Of_Appending_From_Affix<Prefix<wchar_t>>>;
+	    Prefix_Multiset<Prefix<char>,
+	                    Extractor_Of_Appending_From_Affix<Prefix<char>>>;
 	using Key_Type = typename Prefix_Multiset_Type::Key_Type;
 	using Vector_Type = typename Prefix_Multiset_Type::Vector_Type;
 	Prefix_Multiset_Type table;
@@ -1312,8 +1323,8 @@ class Prefix_Table {
 
 class Suffix_Table {
 	using Suffix_Multiset_Type =
-	    Suffix_Multiset<Suffix<wchar_t>,
-	                    Extractor_Of_Appending_From_Affix<Suffix<wchar_t>>>;
+	    Suffix_Multiset<Suffix<char>,
+	                    Extractor_Of_Appending_From_Affix<Suffix<char>>>;
 	using Key_Type = typename Suffix_Multiset_Type::Key_Type;
 	using Vector_Type = typename Suffix_Multiset_Type::Vector_Type;
 	Suffix_Multiset_Type table;

@@ -56,12 +56,12 @@ TEST_CASE("Dictionary::spell_priv suffixes", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	d.words.emplace(L"berry", u"T");
-	d.words.emplace(L"May", u"T");
-	d.words.emplace(L"vary", u"");
+	d.words.emplace("berry", u"T");
+	d.words.emplace("May", u"T");
+	d.words.emplace("vary", u"");
 
-	d.suffixes = {{u'T', true, L"y", L"ies", Flag_Set(),
-	               Condition<wchar_t>(L".[^aeiou]y")}};
+	d.suffixes = {{u'T', true, "y", "ies", Flag_Set(),
+	               Condition<char>(".[^aeiou]y")}};
 
 	auto good = {L"berry", L"Berry", L"berries", L"BERRIES",
 	             L"May",   L"MAY",   L"vary"};
@@ -77,11 +77,10 @@ TEST_CASE("Dictionary::spell_priv complex_prefixes", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	d.words.emplace(L"drink", u"X");
+	d.words.emplace("drink", u"X");
 	d.suffixes = {
-	    {u'Y', true, L"", L"s", Flag_Set(), Condition<wchar_t>(L".")},
-	    {u'X', true, L"", L"able", Flag_Set(u"Y"),
-	     Condition<wchar_t>(L".")}};
+	    {u'Y', true, "", "s", Flag_Set(), Condition<char>(".")},
+	    {u'X', true, "", "able", Flag_Set(u"Y"), Condition<char>(".")}};
 
 	auto good = {L"drink", L"drinkable", L"drinkables"};
 	for (auto& g : good)
@@ -98,17 +97,17 @@ TEST_CASE("Dictionary::spell_priv extra_stripping", "[dictionary]")
 
 	d.complex_prefixes = true;
 
-	d.words.emplace(L"aa", u"ABC");
-	d.words.emplace(L"bb", u"XYZ");
+	d.words.emplace("aa", u"ABC");
+	d.words.emplace("bb", u"XYZ");
 
 	d.prefixes = {
-	    {u'A', true, L"", L"W", Flag_Set(u"B"), Condition<wchar_t>(L"aa")},
-	    {u'B', true, L"", L"Q", Flag_Set(u"C"), Condition<wchar_t>(L"Wa")},
-	    {u'X', true, L"b", L"1", Flag_Set(u"Y"), Condition<wchar_t>(L"b")},
-	    {u'Z', true, L"", L"3", Flag_Set(), Condition<wchar_t>(L"1")}};
+	    {u'A', true, "", "W", Flag_Set(u"B"), Condition<char>("aa")},
+	    {u'B', true, "", "Q", Flag_Set(u"C"), Condition<char>("Wa")},
+	    {u'X', true, "b", "1", Flag_Set(u"Y"), Condition<char>("b")},
+	    {u'Z', true, "", "3", Flag_Set(), Condition<char>("1")}};
 	d.suffixes = {
-	    {u'C', true, L"", L"E", Flag_Set(), Condition<wchar_t>(L"a")},
-	    {u'Y', true, L"", L"2", Flag_Set(u"Z"), Condition<wchar_t>(L"b")}};
+	    {u'C', true, "", "E", Flag_Set(), Condition<char>("a")},
+	    {u'Y', true, "", "2", Flag_Set(u"Z"), Condition<char>("b")}};
 	// complex strip suffix prefix prefix
 	CHECK(d.spell_priv(L"QWaaE") == true);
 	// complex strip prefix suffix prefix

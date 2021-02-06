@@ -202,7 +202,22 @@ auto inline begins_with(std::wstring_view haystack, std::wstring_view needle)
 {
 	return haystack.compare(0, needle.size(), needle) == 0;
 }
+
 auto inline ends_with(std::wstring_view haystack, std::wstring_view needle)
+    -> bool
+{
+	return haystack.size() >= needle.size() &&
+	       haystack.compare(haystack.size() - needle.size(), needle.size(),
+	                        needle) == 0;
+}
+
+auto inline begins_with(std::string_view haystack, std::string_view needle)
+    -> bool
+{
+	return haystack.compare(0, needle.size(), needle) == 0;
+}
+
+auto inline ends_with(std::string_view haystack, std::string_view needle)
     -> bool
 {
 	return haystack.size() >= needle.size() &&

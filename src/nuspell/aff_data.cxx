@@ -929,14 +929,26 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	output_substr_replacer = std::move(output_conversion);
 	this->replacements = std::move(replacements);
 	phonetic_table = std::move(phonetic_replacements);
+	auto prefixes_u8 = vector<Prefix<char>>();
+	auto suffixes_u8 = vector<Suffix<char>>();
+	prefixes_u8.reserve(size(prefixes));
+	suffixes_u8.reserve(size(suffixes));
 	for (auto& x : prefixes) {
 		erase_chars(x.appending, ignored_chars);
+		prefixes_u8.push_back(
+		    {x.flag, x.cross_product, wide_to_utf8(x.stripping),
+		     wide_to_utf8(x.appending), move(x.cont_flags),
+		     Condition<char>(wide_to_utf8(x.condition.str()))});
 	}
 	for (auto& x : suffixes) {
 		erase_chars(x.appending, ignored_chars);
+		suffixes_u8.push_back(
+		    {x.flag, x.cross_product, wide_to_utf8(x.stripping),
+		     wide_to_utf8(x.appending), move(x.cont_flags),
+		     Condition<char>(wide_to_utf8(x.condition.str()))});
 	}
-	this->prefixes = std::move(prefixes);
-	this->suffixes = std::move(suffixes);
+	this->prefixes = std::move(prefixes_u8);
+	this->suffixes = std::move(suffixes_u8);
 
 	cerr.flush();
 	return in.eof() && !error_happened; // true for success

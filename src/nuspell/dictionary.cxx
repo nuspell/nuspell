@@ -287,7 +287,8 @@ auto Dict_Base::check_word(std::wstring& s, Forceucase allow_bad_forceucase,
     -> const Flag_Set*
 {
 
-	auto ret1 = check_simple_word(s, skip_hidden_homonym);
+	auto s_u8 = wide_to_utf8(s);
+	auto ret1 = check_simple_word(s_u8, skip_hidden_homonym);
 	if (ret1)
 		return ret1;
 	auto ret2 = check_compound(s, allow_bad_forceucase);
@@ -297,11 +298,10 @@ auto Dict_Base::check_word(std::wstring& s, Forceucase allow_bad_forceucase,
 	return nullptr;
 }
 
-auto Dict_Base::check_simple_word(std::wstring& s,
+auto Dict_Base::check_simple_word(std::string& s,
                                   Hidden_Homonym skip_hidden_homonym) const
     -> const Flag_Set*
 {
-
 	for (auto& we : Subrange(words.equal_range(s))) {
 		auto& word_flags = we.second;
 		if (word_flags.contains(need_affix_flag))
@@ -386,7 +386,7 @@ class To_Root_Unroot_RAII {
 };
 
 template <Affixing_Mode m>
-auto Dict_Base::affix_NOT_valid(const Prefix<wchar_t>& e) const
+auto Dict_Base::affix_NOT_valid(const Prefix<char>& e) const
 {
 	if (m == FULL_WORD && e.cont_flags.contains(compound_onlyin_flag))
 		return true;
@@ -398,7 +398,7 @@ auto Dict_Base::affix_NOT_valid(const Prefix<wchar_t>& e) const
 	return false;
 }
 template <Affixing_Mode m>
-auto Dict_Base::affix_NOT_valid(const Suffix<wchar_t>& e) const
+auto Dict_Base::affix_NOT_valid(const Suffix<char>& e) const
 {
 	if (m == FULL_WORD && e.cont_flags.contains(compound_onlyin_flag))
 		return true;
@@ -458,9 +458,9 @@ auto Dict_Base::is_valid_inside_compound(const Flag_Set& flags) const
  * @return if found, root word + prefix
  */
 template <Affixing_Mode m>
-auto Dict_Base::strip_prefix_only(std::wstring& word,
+auto Dict_Base::strip_prefix_only(std::string& word,
                                   Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Prefix<wchar_t>>
+    -> Affixing_Result<Prefix<char>>
 {
 	auto& dic = words;
 
@@ -470,7 +470,7 @@ auto Dict_Base::strip_prefix_only(std::wstring& word,
 			continue;
 		if (is_circumfix(e))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, e);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, e);
 		if (!e.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -501,9 +501,9 @@ auto Dict_Base::strip_prefix_only(std::wstring& word,
  * @return if found, root word + suffix
  */
 template <Affixing_Mode m>
-auto Dict_Base::strip_suffix_only(std::wstring& word,
+auto Dict_Base::strip_suffix_only(std::string& word,
                                   Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Suffix<wchar_t>>
+    -> Affixing_Result<Suffix<char>>
 {
 	auto& dic = words;
 	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
@@ -515,7 +515,7 @@ auto Dict_Base::strip_suffix_only(std::wstring& word,
 			continue;
 		if (is_circumfix(e))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, e);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, e);
 		if (!e.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -551,8 +551,8 @@ auto Dict_Base::strip_suffix_only(std::wstring& word,
  */
 template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_then_suffix(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
+    -> Affixing_Result<Suffix<char>, Prefix<char>>
 {
 	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& pe = *it;
@@ -560,7 +560,7 @@ auto Dict_Base::strip_prefix_then_suffix(
 			continue;
 		if (outer_affix_NOT_valid<m>(pe))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe);
 		if (!pe.check_condition(word))
 			continue;
 		auto ret =
@@ -572,10 +572,9 @@ auto Dict_Base::strip_prefix_then_suffix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<wchar_t>& pe,
-                                     std::wstring& word,
+auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<char>& pe, std::string& word,
                                      Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>
+    -> Affixing_Result<Suffix<char>, Prefix<char>>
 {
 	auto& dic = words;
 
@@ -587,7 +586,7 @@ auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<wchar_t>& pe,
 			continue;
 		if (is_circumfix(pe) != is_circumfix(se))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se);
 		if (!se.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -628,8 +627,8 @@ auto Dict_Base::strip_pfx_then_sfx_2(const Prefix<wchar_t>& pe,
  */
 template <Affixing_Mode m>
 auto Dict_Base::strip_suffix_then_prefix(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Prefix<wchar_t>, Suffix<wchar_t>>
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
+    -> Affixing_Result<Prefix<char>, Suffix<char>>
 {
 	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
 		auto& se = *it;
@@ -637,7 +636,7 @@ auto Dict_Base::strip_suffix_then_prefix(
 			continue;
 		if (outer_affix_NOT_valid<m>(se))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se);
 		if (!se.check_condition(word))
 			continue;
 		auto ret =
@@ -649,10 +648,9 @@ auto Dict_Base::strip_suffix_then_prefix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_sfx_then_pfx_2(const Suffix<wchar_t>& se,
-                                     std::wstring& word,
+auto Dict_Base::strip_sfx_then_pfx_2(const Suffix<char>& se, std::string& word,
                                      Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Prefix<wchar_t>, Suffix<wchar_t>>
+    -> Affixing_Result<Prefix<char>, Suffix<char>>
 {
 	auto& dic = words;
 
@@ -664,7 +662,7 @@ auto Dict_Base::strip_sfx_then_pfx_2(const Suffix<wchar_t>& se,
 			continue;
 		if (is_circumfix(pe) != is_circumfix(se))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe);
 		if (!pe.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -694,8 +692,8 @@ auto Dict_Base::strip_sfx_then_pfx_2(const Suffix<wchar_t>& se,
 
 template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_then_suffix_commutative(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
+    -> Affixing_Result<Suffix<char>, Prefix<char>>
 {
 	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
 		auto& pe = *it;
@@ -703,7 +701,7 @@ auto Dict_Base::strip_prefix_then_suffix_commutative(
 			continue;
 		if (affix_NOT_valid<m>(pe))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe);
 		if (!pe.check_condition(word))
 			continue;
 		auto ret =
@@ -716,9 +714,9 @@ auto Dict_Base::strip_prefix_then_suffix_commutative(
 
 template <Affixing_Mode m>
 auto Dict_Base::strip_pfx_then_sfx_comm_2(
-    const Prefix<wchar_t>& pe, std::wstring& word,
+    const Prefix<char>& pe, std::string& word,
     Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>
+    -> Affixing_Result<Suffix<char>, Prefix<char>>
 {
 	auto& dic = words;
 	auto has_needaffix_pe = pe.cont_flags.contains(need_affix_flag);
@@ -735,7 +733,7 @@ auto Dict_Base::strip_pfx_then_sfx_comm_2(
 			continue;
 		if (is_circumfix_pe != is_circumfix(se))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se);
 		if (!se.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -777,8 +775,8 @@ auto Dict_Base::strip_pfx_then_sfx_comm_2(
 
 template <Affixing_Mode m>
 auto Dict_Base::strip_suffix_then_suffix(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Suffix<wchar_t>, Suffix<wchar_t>>
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
+    -> Affixing_Result<Suffix<char>, Suffix<char>>
 {
 	// The following check is purely for performance, it does not change
 	// correctness.
@@ -796,7 +794,7 @@ auto Dict_Base::strip_suffix_then_suffix(
 			continue;
 		if (is_circumfix(se1))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
 		auto ret = strip_sfx_then_sfx_2<FULL_WORD>(se1, word,
@@ -808,10 +806,9 @@ auto Dict_Base::strip_suffix_then_suffix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_sfx_then_sfx_2(const Suffix<wchar_t>& se1,
-                                     std::wstring& word,
+auto Dict_Base::strip_sfx_then_sfx_2(const Suffix<char>& se1, std::string& word,
                                      Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Suffix<wchar_t>, Suffix<wchar_t>>
+    -> Affixing_Result<Suffix<char>, Suffix<char>>
 {
 
 	auto& dic = words;
@@ -824,7 +821,7 @@ auto Dict_Base::strip_sfx_then_sfx_2(const Suffix<wchar_t>& se1,
 			continue;
 		if (is_circumfix(se2))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se2);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se2);
 		if (!se2.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -847,8 +844,8 @@ auto Dict_Base::strip_sfx_then_sfx_2(const Suffix<wchar_t>& se1,
 
 template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_then_prefix(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Prefix<wchar_t>, Prefix<wchar_t>>
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
+    -> Affixing_Result<Prefix<char>, Prefix<char>>
 {
 	// The following check is purely for performance, it does not change
 	// correctness.
@@ -865,7 +862,7 @@ auto Dict_Base::strip_prefix_then_prefix(
 			continue;
 		if (is_circumfix(pe1))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
 		auto ret = strip_pfx_then_pfx_2<FULL_WORD>(pe1, word,
@@ -877,10 +874,9 @@ auto Dict_Base::strip_prefix_then_prefix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_pfx_then_pfx_2(const Prefix<wchar_t>& pe1,
-                                     std::wstring& word,
+auto Dict_Base::strip_pfx_then_pfx_2(const Prefix<char>& pe1, std::string& word,
                                      Hidden_Homonym skip_hidden_homonym) const
-    -> Affixing_Result<Prefix<wchar_t>, Prefix<wchar_t>>
+    -> Affixing_Result<Prefix<char>, Prefix<char>>
 {
 	auto& dic = words;
 
@@ -892,7 +888,7 @@ auto Dict_Base::strip_pfx_then_pfx_2(const Prefix<wchar_t>& pe1,
 			continue;
 		if (is_circumfix(pe2))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe2);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe2);
 		if (!pe2.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -915,7 +911,7 @@ auto Dict_Base::strip_pfx_then_pfx_2(const Prefix<wchar_t>& pe1,
 
 template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_then_2_suffixes(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	// The following check is purely for performance, it does not change
@@ -929,7 +925,7 @@ auto Dict_Base::strip_prefix_then_2_suffixes(
 			continue;
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
 		for (auto i2 = suffixes.iterate_suffixes_of(word); i2; ++i2) {
@@ -946,7 +942,7 @@ auto Dict_Base::strip_prefix_then_2_suffixes(
 				continue;
 			if (is_circumfix(pe1) != is_circumfix(se1))
 				continue;
-			To_Root_Unroot_RAII<Suffix<wchar_t>> yyy(word, se1);
+			To_Root_Unroot_RAII<Suffix<char>> yyy(word, se1);
 			if (!se1.check_condition(word))
 				continue;
 			auto ret = strip_pfx_2_sfx_3<FULL_WORD>(
@@ -959,9 +955,8 @@ auto Dict_Base::strip_prefix_then_2_suffixes(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_pfx_2_sfx_3(const Prefix<wchar_t>& pe1,
-                                  const Suffix<wchar_t>& se1,
-                                  std::wstring& word,
+auto Dict_Base::strip_pfx_2_sfx_3(const Prefix<char>& pe1,
+                                  const Suffix<char>& se1, std::string& word,
                                   Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -975,7 +970,7 @@ auto Dict_Base::strip_pfx_2_sfx_3(const Prefix<wchar_t>& pe1,
 			continue;
 		if (is_circumfix(se2))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se2);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se2);
 		if (!se2.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -1002,7 +997,7 @@ auto Dict_Base::strip_pfx_2_sfx_3(const Prefix<wchar_t>& pe1,
 
 template <Affixing_Mode m>
 auto Dict_Base::strip_suffix_prefix_suffix(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	// The following check is purely for performance, it does not change
@@ -1024,7 +1019,7 @@ auto Dict_Base::strip_suffix_prefix_suffix(
 			continue;
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
 		for (auto i2 = prefixes.iterate_prefixes_of(word); i2; ++i2) {
@@ -1033,7 +1028,7 @@ auto Dict_Base::strip_suffix_prefix_suffix(
 				continue;
 			if (affix_NOT_valid<m>(pe1))
 				continue;
-			To_Root_Unroot_RAII<Prefix<wchar_t>> yyy(word, pe1);
+			To_Root_Unroot_RAII<Prefix<char>> yyy(word, pe1);
 			if (!pe1.check_condition(word))
 				continue;
 			auto ret = strip_s_p_s_3<FULL_WORD>(
@@ -1046,8 +1041,8 @@ auto Dict_Base::strip_suffix_prefix_suffix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_s_p_s_3(const Suffix<wchar_t>& se1,
-                              const Prefix<wchar_t>& pe1, std::wstring& word,
+auto Dict_Base::strip_s_p_s_3(const Suffix<char>& se1, const Prefix<char>& pe1,
+                              std::string& word,
                               Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -1068,7 +1063,7 @@ auto Dict_Base::strip_s_p_s_3(const Suffix<wchar_t>& se1,
 		               !is_circumfix(se1);
 		if (!circ1ok && !circ2ok)
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se2);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se2);
 		if (!se2.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -1095,7 +1090,7 @@ auto Dict_Base::strip_s_p_s_3(const Suffix<wchar_t>& se1,
 
 template <Affixing_Mode m>
 auto Dict_Base::strip_2_suffixes_then_prefix(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	// The following check is purely for performance, it does not change
@@ -1117,7 +1112,7 @@ auto Dict_Base::strip_2_suffixes_then_prefix(
 			continue;
 		if (is_circumfix(se1))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
 		for (auto i2 = suffixes.iterate_suffixes_of(word); i2; ++i2) {
@@ -1126,7 +1121,7 @@ auto Dict_Base::strip_2_suffixes_then_prefix(
 				continue;
 			if (affix_NOT_valid<m>(se2))
 				continue;
-			To_Root_Unroot_RAII<Suffix<wchar_t>> yyy(word, se2);
+			To_Root_Unroot_RAII<Suffix<char>> yyy(word, se2);
 			if (!se2.check_condition(word))
 				continue;
 			auto ret = strip_2_sfx_pfx_3<FULL_WORD>(
@@ -1139,9 +1134,8 @@ auto Dict_Base::strip_2_suffixes_then_prefix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_2_sfx_pfx_3(const Suffix<wchar_t>& se1,
-                                  const Suffix<wchar_t>& se2,
-                                  std::wstring& word,
+auto Dict_Base::strip_2_sfx_pfx_3(const Suffix<char>& se1,
+                                  const Suffix<char>& se2, std::string& word,
                                   Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -1158,7 +1152,7 @@ auto Dict_Base::strip_2_sfx_pfx_3(const Suffix<wchar_t>& se1,
 			continue;
 		if (is_circumfix(se2) != is_circumfix(pe1))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -1185,7 +1179,7 @@ auto Dict_Base::strip_2_sfx_pfx_3(const Suffix<wchar_t>& se1,
 
 template <Affixing_Mode m>
 auto Dict_Base::strip_suffix_then_2_prefixes(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	// The following check is purely for performance, it does not change
@@ -1199,7 +1193,7 @@ auto Dict_Base::strip_suffix_then_2_prefixes(
 			continue;
 		if (outer_affix_NOT_valid<m>(se1))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
 		for (auto i2 = prefixes.iterate_prefixes_of(word); i2; ++i2) {
@@ -1216,7 +1210,7 @@ auto Dict_Base::strip_suffix_then_2_prefixes(
 				continue;
 			if (is_circumfix(se1) != is_circumfix(pe1))
 				continue;
-			To_Root_Unroot_RAII<Prefix<wchar_t>> yyy(word, pe1);
+			To_Root_Unroot_RAII<Prefix<char>> yyy(word, pe1);
 			if (!pe1.check_condition(word))
 				continue;
 			auto ret = strip_sfx_2_pfx_3<FULL_WORD>(
@@ -1229,9 +1223,8 @@ auto Dict_Base::strip_suffix_then_2_prefixes(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_sfx_2_pfx_3(const Suffix<wchar_t>& se1,
-                                  const Prefix<wchar_t>& pe1,
-                                  std::wstring& word,
+auto Dict_Base::strip_sfx_2_pfx_3(const Suffix<char>& se1,
+                                  const Prefix<char>& pe1, std::string& word,
                                   Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -1245,7 +1238,7 @@ auto Dict_Base::strip_sfx_2_pfx_3(const Suffix<wchar_t>& se1,
 			continue;
 		if (is_circumfix(pe2))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe2);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe2);
 		if (!pe2.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -1271,7 +1264,7 @@ auto Dict_Base::strip_sfx_2_pfx_3(const Suffix<wchar_t>& se1,
 
 template <Affixing_Mode m>
 auto Dict_Base::strip_prefix_suffix_prefix(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	// The following check is purely for performance, it does not change
@@ -1293,7 +1286,7 @@ auto Dict_Base::strip_prefix_suffix_prefix(
 			continue;
 		if (outer_affix_NOT_valid<m>(pe1))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
 		for (auto i2 = suffixes.iterate_suffixes_of(word); i2; ++i2) {
@@ -1302,7 +1295,7 @@ auto Dict_Base::strip_prefix_suffix_prefix(
 				continue;
 			if (affix_NOT_valid<m>(se1))
 				continue;
-			To_Root_Unroot_RAII<Suffix<wchar_t>> yyy(word, se1);
+			To_Root_Unroot_RAII<Suffix<char>> yyy(word, se1);
 			if (!se1.check_condition(word))
 				continue;
 			auto ret = strip_p_s_p_3<FULL_WORD>(
@@ -1315,8 +1308,8 @@ auto Dict_Base::strip_prefix_suffix_prefix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_p_s_p_3(const Prefix<wchar_t>& pe1,
-                              const Suffix<wchar_t>& se1, std::wstring& word,
+auto Dict_Base::strip_p_s_p_3(const Prefix<char>& pe1, const Suffix<char>& se1,
+                              std::string& word,
                               Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -1337,7 +1330,7 @@ auto Dict_Base::strip_p_s_p_3(const Prefix<wchar_t>& pe1,
 		               !is_circumfix(pe1);
 		if (!circ1ok && !circ2ok)
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe2);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe2);
 		if (!pe2.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -1363,7 +1356,7 @@ auto Dict_Base::strip_p_s_p_3(const Prefix<wchar_t>& pe1,
 
 template <Affixing_Mode m>
 auto Dict_Base::strip_2_prefixes_then_suffix(
-    std::wstring& word, Hidden_Homonym skip_hidden_homonym) const
+    std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	// The following check is purely for performance, it does not change
@@ -1385,7 +1378,7 @@ auto Dict_Base::strip_2_prefixes_then_suffix(
 			continue;
 		if (is_circumfix(pe1))
 			continue;
-		To_Root_Unroot_RAII<Prefix<wchar_t>> xxx(word, pe1);
+		To_Root_Unroot_RAII<Prefix<char>> xxx(word, pe1);
 		if (!pe1.check_condition(word))
 			continue;
 		for (auto i2 = prefixes.iterate_prefixes_of(word); i2; ++i2) {
@@ -1394,7 +1387,7 @@ auto Dict_Base::strip_2_prefixes_then_suffix(
 				continue;
 			if (affix_NOT_valid<m>(pe2))
 				continue;
-			To_Root_Unroot_RAII<Prefix<wchar_t>> yyy(word, pe2);
+			To_Root_Unroot_RAII<Prefix<char>> yyy(word, pe2);
 			if (!pe2.check_condition(word))
 				continue;
 			auto ret = strip_2_pfx_sfx_3<FULL_WORD>(
@@ -1407,9 +1400,8 @@ auto Dict_Base::strip_2_prefixes_then_suffix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_2_pfx_sfx_3(const Prefix<wchar_t>& pe1,
-                                  const Prefix<wchar_t>& pe2,
-                                  std::wstring& word,
+auto Dict_Base::strip_2_pfx_sfx_3(const Prefix<char>& pe1,
+                                  const Prefix<char>& pe2, std::string& word,
                                   Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -1426,7 +1418,7 @@ auto Dict_Base::strip_2_pfx_sfx_3(const Prefix<wchar_t>& pe1,
 			continue;
 		if (is_circumfix(pe2) != is_circumfix(se1))
 			continue;
-		To_Root_Unroot_RAII<Suffix<wchar_t>> xxx(word, se1);
+		To_Root_Unroot_RAII<Suffix<char>> xxx(word, se1);
 		if (!se1.check_condition(word))
 			continue;
 		for (auto& word_entry : Subrange(dic.equal_range(word))) {
@@ -1890,20 +1882,21 @@ auto Dict_Base::check_word_in_compound(std::wstring& word) const
 		auto num_syllable_mod = calc_syllable_modifier<m>(we);
 		return {&we, 0, num_syllable_mod};
 	}
-	auto x2 = strip_suffix_only<m>(word, SKIP_HIDDEN_HOMONYM);
+	auto word_u8 = wide_to_utf8(word);
+	auto x2 = strip_suffix_only<m>(word_u8, SKIP_HIDDEN_HOMONYM);
 	if (x2) {
 		auto num_syllable_mod = calc_syllable_modifier<m>(*x2, *x2.a);
 		return {x2, 0, num_syllable_mod, is_modiying_affix(*x2.a)};
 	}
 
-	auto x1 = strip_prefix_only<m>(word, SKIP_HIDDEN_HOMONYM);
+	auto x1 = strip_prefix_only<m>(word_u8, SKIP_HIDDEN_HOMONYM);
 	if (x1) {
 		auto num_words_mod = calc_num_words_modifier(*x1.a);
 		return {x1, num_words_mod, 0, is_modiying_affix(*x1.a)};
 	}
 
-	auto x3 =
-	    strip_prefix_then_suffix_commutative<m>(word, SKIP_HIDDEN_HOMONYM);
+	auto x3 = strip_prefix_then_suffix_commutative<m>(word_u8,
+	                                                  SKIP_HIDDEN_HOMONYM);
 	if (x3) {
 		auto num_words_mod = calc_num_words_modifier(*x3.b);
 		auto num_syllable_mod = calc_syllable_modifier<m>(*x3, *x3.a);
@@ -1913,12 +1906,13 @@ auto Dict_Base::check_word_in_compound(std::wstring& word) const
 	return {};
 }
 
-auto Dict_Base::calc_num_words_modifier(const Prefix<wchar_t>& pfx) const
+auto Dict_Base::calc_num_words_modifier(const Prefix<char>& pfx) const
     -> unsigned char
 {
 	if (compound_syllable_vowels.empty())
 		return 0;
-	auto c = count_syllables(pfx.appending);
+	auto pfx_appending_wide = utf8_to_wide(pfx.appending);
+	auto c = count_syllables(pfx_appending_wide);
 	return c > 1;
 }
 
@@ -1934,14 +1928,14 @@ auto Dict_Base::calc_syllable_modifier(Word_List::const_reference we) const
 
 template <Affixing_Mode m>
 auto Dict_Base::calc_syllable_modifier(Word_List::const_reference we,
-                                       const Suffix<wchar_t>& sfx) const
+                                       const Suffix<char>& sfx) const
     -> signed char
 {
 	if (m != AT_COMPOUND_END)
 		return 0;
 	if (compound_syllable_vowels.empty())
 		return 0;
-	auto& appnd = sfx.appending;
+	auto appnd = utf8_to_wide(sfx.appending);
 	signed char num_syllable_mod = 0 - count_syllables(appnd);
 	auto sfx_extra = !appnd.empty() && appnd.back() == 'i';
 	if (sfx_extra && appnd.size() > 1) {
@@ -2353,7 +2347,9 @@ auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
 		auto& to = r.second;
 		if (word == from) {
 			word = to;
-			auto ret = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
+			auto word_u8 = wide_to_utf8(word);
+			auto ret =
+			    check_simple_word(word_u8, SKIP_HIDDEN_HOMONYM);
 			word = from;
 			if (ret)
 				return true;
@@ -2364,7 +2360,9 @@ auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
 		auto& to = r.second;
 		if (begins_with(word, from)) {
 			word.replace(0, from.size(), to);
-			auto ret = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
+			auto word_u8 = wide_to_utf8(word);
+			auto ret =
+			    check_simple_word(word_u8, SKIP_HIDDEN_HOMONYM);
 			word.replace(0, to.size(), from);
 			if (ret)
 				return true;
@@ -2376,7 +2374,9 @@ auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
 		if (ends_with(word, from)) {
 			auto pos = word.size() - from.size();
 			word.replace(pos, word.npos, to);
-			auto ret = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
+			auto word_u8 = wide_to_utf8(word);
+			auto ret =
+			    check_simple_word(word_u8, SKIP_HIDDEN_HOMONYM);
 			word.replace(pos, word.npos, from);
 			if (ret)
 				return true;
@@ -2388,7 +2388,9 @@ auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
 		for (auto i = word.find(from); i != word.npos;
 		     i = word.find(from, i + 1)) {
 			word.replace(i, from.size(), to);
-			auto ret = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
+			auto word_u8 = wide_to_utf8(word);
+			auto ret =
+			    check_simple_word(word_u8, SKIP_HIDDEN_HOMONYM);
 			word.replace(i, to.size(), from);
 			if (ret)
 				return true;
@@ -2609,13 +2611,15 @@ auto Dict_Base::two_words_suggest(std::wstring& word, List_WStrings& out) const
 	for (size_t i = 0; i != backup.size() - 1; ++i) {
 		word += backup[i];
 		// TODO: maybe switch to check_word()
-		auto w1 = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
+		auto word_u8 = wide_to_utf8(word);
+		auto w1 = check_simple_word(word_u8, SKIP_HIDDEN_HOMONYM);
 		if (!w1)
 			continue;
 		auto sz1 = i + 1;
 		auto sz2 = backup.size() - sz1;
 		word.assign(backup, i + 1, sz2);
-		auto w2 = check_simple_word(word, SKIP_HIDDEN_HOMONYM);
+		wide_to_utf8(word, word_u8);
+		auto w2 = check_simple_word(word_u8, SKIP_HIDDEN_HOMONYM);
 		word.assign(backup, 0, sz1);
 		if (!w2)
 			continue;
@@ -2952,6 +2956,7 @@ auto Dict_Base::expand_root_word_for_ngram(
 	cross_affix.clear();
 	auto& [root_u8, flags] = root_entry;
 	auto root = utf8_to_wide(root_u8);
+	auto wrong_u8 = wide_to_utf8(wrong);
 	if (!flags.contains(need_affix_flag)) {
 		expanded_list.push_back(root);
 		cross_affix.push_back(false);
@@ -2968,17 +2973,18 @@ auto Dict_Base::expand_root_word_for_ngram(
 		// TODO Suffixes marked with needaffix or circumfix should not
 		// be just skipped as we can later add prefix. This is not
 		// handled in hunspell, too.
-		if (!ends_with(root, suffix.stripping))
+		if (!ends_with(root_u8, suffix.stripping))
 			continue;
-		if (!suffix.check_condition(root))
+		if (!suffix.check_condition(root_u8))
 			continue;
 
 		if (!suffix.appending.empty() &&
-		    !ends_with(wrong, suffix.appending))
+		    !ends_with(wrong_u8, suffix.appending))
 			continue;
 
-		auto& expanded = expanded_list.emplace_back(root);
+		auto expanded = root_u8;
 		suffix.to_derived(expanded);
+		expanded_list.push_back(utf8_to_wide(expanded));
 		cross_affix.push_back(suffix.cross_product);
 	}
 
@@ -2988,23 +2994,25 @@ auto Dict_Base::expand_root_word_for_ngram(
 
 		for (auto& prefix : prefixes) {
 			auto& root_sfx = expanded_list[i];
+			auto root_sfx_u8 = wide_to_utf8(root_sfx);
 			if (!cross_valid_inner_outer(flags, prefix))
 				continue;
 			if (outer_affix_NOT_valid<FULL_WORD>(prefix))
 				continue;
 			if (is_circumfix(prefix))
 				continue;
-			if (!begins_with(root_sfx, prefix.stripping))
+			if (!begins_with(root_sfx_u8, prefix.stripping))
 				continue;
-			if (!prefix.check_condition(root_sfx))
+			if (!prefix.check_condition(root_sfx_u8))
 				continue;
 
 			if (!prefix.appending.empty() &&
-			    !begins_with(wrong, prefix.appending))
+			    !begins_with(wrong_u8, prefix.appending))
 				continue;
 
-			auto& expanded = expanded_list.emplace_back(root_sfx);
+			auto expanded = root_sfx_u8;
 			prefix.to_derived(expanded);
+			expanded_list.push_back(utf8_to_wide(expanded));
 		}
 	}
 
@@ -3015,17 +3023,18 @@ auto Dict_Base::expand_root_word_for_ngram(
 			continue;
 		if (is_circumfix(prefix))
 			continue;
-		if (!begins_with(root, prefix.stripping))
+		if (!begins_with(root_u8, prefix.stripping))
 			continue;
-		if (!prefix.check_condition(root))
+		if (!prefix.check_condition(root_u8))
 			continue;
 
 		if (!prefix.appending.empty() &&
-		    !begins_with(wrong, prefix.appending))
+		    !begins_with(wrong_u8, prefix.appending))
 			continue;
 
-		auto& expanded = expanded_list.emplace_back(root);
+		auto expanded = root_u8;
 		prefix.to_derived(expanded);
+		expanded_list.push_back(utf8_to_wide(expanded));
 	}
 }
 

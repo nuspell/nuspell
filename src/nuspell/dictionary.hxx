@@ -117,14 +117,14 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	auto check_word(std::wstring& s, Forceucase allow_bad_forceucase = {},
 	                Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> const Flag_Set*;
-	auto check_simple_word(std::wstring& word,
+	auto check_simple_word(std::string& word,
 	                       Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> const Flag_Set*;
 
 	template <Affixing_Mode m>
-	auto affix_NOT_valid(const Prefix<wchar_t>& a) const;
+	auto affix_NOT_valid(const Prefix<char>& a) const;
 	template <Affixing_Mode m>
-	auto affix_NOT_valid(const Suffix<wchar_t>& a) const;
+	auto affix_NOT_valid(const Suffix<char>& a) const;
 	template <Affixing_Mode m, class AffixT>
 	auto outer_affix_NOT_valid(const AffixT& a) const;
 	template <class AffixT>
@@ -133,133 +133,133 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	auto is_valid_inside_compound(const Flag_Set& flags) const;
 
 	template <Affixing_Mode m = FULL_WORD>
-	auto strip_prefix_only(std::wstring& s,
+	auto strip_prefix_only(std::string& s,
 	                       Hidden_Homonym skip_hidden_homonym = {}) const
-	    -> Affixing_Result<Prefix<wchar_t>>;
+	    -> Affixing_Result<Prefix<char>>;
 
 	template <Affixing_Mode m = FULL_WORD>
-	auto strip_suffix_only(std::wstring& s,
+	auto strip_suffix_only(std::string& s,
 	                       Hidden_Homonym skip_hidden_homonym = {}) const
-	    -> Affixing_Result<Suffix<wchar_t>>;
+	    -> Affixing_Result<Suffix<char>>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto
-	strip_prefix_then_suffix(std::wstring& s,
+	strip_prefix_then_suffix(std::string& s,
 	                         Hidden_Homonym skip_hidden_homonym = {}) const
-	    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>;
+	    -> Affixing_Result<Suffix<char>, Prefix<char>>;
 
 	template <Affixing_Mode m>
-	auto strip_pfx_then_sfx_2(const Prefix<wchar_t>& pe, std::wstring& s,
+	auto strip_pfx_then_sfx_2(const Prefix<char>& pe, std::string& s,
 	                          Hidden_Homonym skip_hidden_homonym) const
-	    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>;
+	    -> Affixing_Result<Suffix<char>, Prefix<char>>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto
-	strip_suffix_then_prefix(std::wstring& s,
+	strip_suffix_then_prefix(std::string& s,
 	                         Hidden_Homonym skip_hidden_homonym = {}) const
-	    -> Affixing_Result<Prefix<wchar_t>, Suffix<wchar_t>>;
+	    -> Affixing_Result<Prefix<char>, Suffix<char>>;
 
 	template <Affixing_Mode m>
-	auto strip_sfx_then_pfx_2(const Suffix<wchar_t>& se, std::wstring& s,
+	auto strip_sfx_then_pfx_2(const Suffix<char>& se, std::string& s,
 	                          Hidden_Homonym skip_hidden_homonym) const
-	    -> Affixing_Result<Prefix<wchar_t>, Suffix<wchar_t>>;
+	    -> Affixing_Result<Prefix<char>, Suffix<char>>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto strip_prefix_then_suffix_commutative(
-	    std::wstring& word, Hidden_Homonym skip_hidden_homonym = {}) const
-	    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>;
+	    std::string& word, Hidden_Homonym skip_hidden_homonym = {}) const
+	    -> Affixing_Result<Suffix<char>, Prefix<char>>;
 
 	template <Affixing_Mode m = FULL_WORD>
-	auto strip_pfx_then_sfx_comm_2(const Prefix<wchar_t>& pe,
-	                               std::wstring& word,
+	auto strip_pfx_then_sfx_comm_2(const Prefix<char>& pe,
+	                               std::string& word,
 	                               Hidden_Homonym skip_hidden_homonym) const
-	    -> Affixing_Result<Suffix<wchar_t>, Prefix<wchar_t>>;
+	    -> Affixing_Result<Suffix<char>, Prefix<char>>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto
-	strip_suffix_then_suffix(std::wstring& s,
+	strip_suffix_then_suffix(std::string& s,
 	                         Hidden_Homonym skip_hidden_homonym = {}) const
-	    -> Affixing_Result<Suffix<wchar_t>, Suffix<wchar_t>>;
+	    -> Affixing_Result<Suffix<char>, Suffix<char>>;
 
 	template <Affixing_Mode m>
-	auto strip_sfx_then_sfx_2(const Suffix<wchar_t>& se1, std::wstring& s,
+	auto strip_sfx_then_sfx_2(const Suffix<char>& se1, std::string& s,
 	                          Hidden_Homonym skip_hidden_homonym) const
-	    -> Affixing_Result<Suffix<wchar_t>, Suffix<wchar_t>>;
+	    -> Affixing_Result<Suffix<char>, Suffix<char>>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto
-	strip_prefix_then_prefix(std::wstring& s,
+	strip_prefix_then_prefix(std::string& s,
 	                         Hidden_Homonym skip_hidden_homonym = {}) const
-	    -> Affixing_Result<Prefix<wchar_t>, Prefix<wchar_t>>;
+	    -> Affixing_Result<Prefix<char>, Prefix<char>>;
 
 	template <Affixing_Mode m>
-	auto strip_pfx_then_pfx_2(const Prefix<wchar_t>& pe1, std::wstring& s,
+	auto strip_pfx_then_pfx_2(const Prefix<char>& pe1, std::string& s,
 	                          Hidden_Homonym skip_hidden_homonym) const
-	    -> Affixing_Result<Prefix<wchar_t>, Prefix<wchar_t>>;
+	    -> Affixing_Result<Prefix<char>, Prefix<char>>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto strip_prefix_then_2_suffixes(
-	    std::wstring& s, Hidden_Homonym skip_hidden_homonym = {}) const
+	    std::string& s, Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m>
-	auto strip_pfx_2_sfx_3(const Prefix<wchar_t>& pe1,
-	                       const Suffix<wchar_t>& se1, std::wstring& s,
+	auto strip_pfx_2_sfx_3(const Prefix<char>& pe1, const Suffix<char>& se1,
+	                       std::string& s,
 	                       Hidden_Homonym skip_hidden_homonym) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto strip_suffix_prefix_suffix(
-	    std::wstring& s, Hidden_Homonym skip_hidden_homonym = {}) const
+	    std::string& s, Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m>
-	auto strip_s_p_s_3(const Suffix<wchar_t>& se1,
-	                   const Prefix<wchar_t>& pe1, std::wstring& word,
+	auto strip_s_p_s_3(const Suffix<char>& se1, const Prefix<char>& pe1,
+	                   std::string& word,
 	                   Hidden_Homonym skip_hidden_homonym) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto strip_2_suffixes_then_prefix(
-	    std::wstring& s, Hidden_Homonym skip_hidden_homonym = {}) const
+	    std::string& s, Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m>
-	auto strip_2_sfx_pfx_3(const Suffix<wchar_t>& se1,
-	                       const Suffix<wchar_t>& se2, std::wstring& word,
+	auto strip_2_sfx_pfx_3(const Suffix<char>& se1, const Suffix<char>& se2,
+	                       std::string& word,
 	                       Hidden_Homonym skip_hidden_homonym) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto strip_suffix_then_2_prefixes(
-	    std::wstring& s, Hidden_Homonym skip_hidden_homonym = {}) const
+	    std::string& s, Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m>
-	auto strip_sfx_2_pfx_3(const Suffix<wchar_t>& se1,
-	                       const Prefix<wchar_t>& pe1, std::wstring& s,
+	auto strip_sfx_2_pfx_3(const Suffix<char>& se1, const Prefix<char>& pe1,
+	                       std::string& s,
 	                       Hidden_Homonym skip_hidden_homonym) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto strip_prefix_suffix_prefix(
-	    std::wstring& word, Hidden_Homonym skip_hidden_homonym = {}) const
+	    std::string& word, Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m>
-	auto strip_p_s_p_3(const Prefix<wchar_t>& pe1,
-	                   const Suffix<wchar_t>& se1, std::wstring& word,
+	auto strip_p_s_p_3(const Prefix<char>& pe1, const Suffix<char>& se1,
+	                   std::string& word,
 	                   Hidden_Homonym skip_hidden_homonym) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m = FULL_WORD>
 	auto strip_2_prefixes_then_suffix(
-	    std::wstring& word, Hidden_Homonym skip_hidden_homonym = {}) const
+	    std::string& word, Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> Affixing_Result<>;
 
 	template <Affixing_Mode m>
-	auto strip_2_pfx_sfx_3(const Prefix<wchar_t>& pe1,
-	                       const Prefix<wchar_t>& pe2, std::wstring& word,
+	auto strip_2_pfx_sfx_3(const Prefix<char>& pe1, const Prefix<char>& pe2,
+	                       std::string& word,
 	                       Hidden_Homonym skip_hidden_homonym) const
 	    -> Affixing_Result<>;
 
@@ -290,7 +290,7 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	auto check_word_in_compound(std::wstring& s) const
 	    -> Compounding_Result;
 
-	auto calc_num_words_modifier(const Prefix<wchar_t>& pfx) const
+	auto calc_num_words_modifier(const Prefix<char>& pfx) const
 	    -> unsigned char;
 
 	template <Affixing_Mode m>
@@ -299,7 +299,7 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 
 	template <Affixing_Mode m>
 	auto calc_syllable_modifier(Word_List::const_reference we,
-	                            const Suffix<wchar_t>& sfx) const
+	                            const Suffix<char>& sfx) const
 	    -> signed char;
 
 	auto count_syllables(const std::wstring& word) const -> size_t;
