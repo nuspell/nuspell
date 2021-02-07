@@ -183,6 +183,15 @@ bool utf8_to_16(std::string_view in, std::u16string& out)
 	return utf_to_utf_replace_err(in, out);
 }
 
+bool validate_utf8(string_view s)
+{
+	auto err = U_ZERO_ERROR;
+	u_strFromUTF8(nullptr, 0, nullptr, data(s), size(s), &err);
+	if (err == U_INVALID_CHAR_FOUND)
+		return false;
+	return err == U_BUFFER_OVERFLOW_ERROR || U_SUCCESS(err);
+}
+
 auto static is_ascii(char c) -> bool
 {
 	return static_cast<unsigned char>(c) <= 127;
@@ -287,11 +296,25 @@ auto to_title(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 	us.toTitle(nullptr, loc);
 	icu_to_wide(us, out);
 }
+auto to_title(string_view in, const icu::Locale& loc, string& out) -> void
+{
+	auto us = icu::UnicodeString::fromUTF8(in);
+	us.toTitle(nullptr, loc);
+	out.clear();
+	us.toUTF8String(out);
+}
 auto to_lower(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 {
 	auto us = wide_to_icu(in);
 	us.toLower(loc);
 	icu_to_wide(us, out);
+}
+auto to_lower(string_view in, const icu::Locale& loc, string& out) -> void
+{
+	auto us = icu::UnicodeString::fromUTF8(in);
+	us.toLower(loc);
+	out.clear();
+	us.toUTF8String(out);
 }
 
 auto to_lower_char_at(std::wstring& s, size_t i, const icu::Locale& loc) -> void
@@ -347,6 +370,36 @@ auto classify_casing(wstring_view s) -> Casing
 		return Casing::SMALL; // most common case
 
 	auto first_capital = u_isupper(s[0]);
+	if (first_capital && upper == 1)
+		return Casing::INIT_CAPITAL; // second most common
+
+	if (lower == 0)
+		return Casing::ALL_CAPITAL;
+
+	if (first_capital)
+		return Casing::PASCAL;
+	else
+		return Casing::CAMEL;
+}
+
+auto classify_casing(string_view s) -> Casing
+{
+	size_t upper = 0;
+	size_t lower = 0;
+	for (size_t i = 0; i != size(s);) {
+		char32_t c;
+		valid_u8_advance_cp(s, i, c);
+		if (u_isupper(c))
+			upper++;
+		else if (u_islower(c))
+			lower++;
+		// else neutral
+	}
+	if (upper == 0)               // all lowercase, maybe with some neutral
+		return Casing::SMALL; // most common case
+
+	auto first_cp = valid_u8_next_cp(s, 0);
+	auto first_capital = u_isupper(first_cp.cp);
 	if (first_capital && upper == 1)
 		return Casing::INIT_CAPITAL; // second most common
 
@@ -437,15 +490,18 @@ auto replace_char(wstring& s, wchar_t from, wchar_t to) -> void
 	}
 }
 
-auto erase_chars(wstring& s, wstring_view erase_chars) -> void
+auto erase_chars(string& s, string_view erase_chars) -> void
 {
 	if (erase_chars.empty())
 		return;
-	auto is_erasable = [&](auto c) {
-		return erase_chars.find(c) != erase_chars.npos;
-	};
-	auto it = remove_if(begin(s), end(s), is_erasable);
-	s.erase(it, end(s));
+	for (size_t i = 0, next_i = 0; i != size(s); i = next_i) {
+		valid_u8_advance_cp_index(s, next_i);
+		auto enc_cp = string_view(&s[i], next_i - i);
+		if (erase_chars.find(enc_cp) != erase_chars.npos) {
+			s.erase(i, next_i - i);
+			next_i = i;
+		}
+	}
 	return;
 }
 
@@ -456,7 +512,7 @@ auto erase_chars(wstring& s, wstring_view erase_chars) -> void
  * Allow numbers with dot ".", dash "-" or comma "," inbetween the digits, but
  * forbids double separators such as "..", "--" and ".,".
  */
-auto is_number(wstring_view s) -> bool
+auto is_number(string_view s) -> bool
 {
 	if (s.empty())
 		return false;
@@ -487,5 +543,6 @@ auto count_appereances_of(wstring_view haystack, wstring_view needles) -> size_t
 		return needles.find(c) != needles.npos;
 	});
 }
+
 } // namespace v5
 } // namespace nuspell

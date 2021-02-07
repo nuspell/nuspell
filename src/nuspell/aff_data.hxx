@@ -133,9 +133,9 @@ struct NUSPELL_EXPORT Aff_Data {
 	Compound_Rule_Table compound_rules;
 
 	// spell checking options
-	Break_Table<wchar_t> break_table;
-	Substr_Replacer<wchar_t> input_substr_replacer;
-	std::wstring ignored_chars;
+	Break_Table<char> break_table;
+	Substr_Replacer<char> input_substr_replacer;
+	std::string ignored_chars;
 	icu::Locale icu_locale;
 	Substr_Replacer<wchar_t> output_substr_replacer;
 

@@ -63,6 +63,8 @@ auto utf8_to_wide(std::string_view in) -> std::wstring;
 auto utf8_to_16(std::string_view in) -> std::u16string;
 auto utf8_to_16(std::string_view in, std::u16string& out) -> bool;
 
+auto validate_utf8(std::string_view s) -> bool;
+
 NUSPELL_EXPORT auto is_all_ascii(std::string_view s) -> bool;
 
 NUSPELL_EXPORT auto latin1_to_ucs2(std::string_view s) -> std::u16string;
@@ -86,7 +88,11 @@ auto to_upper(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
     -> void;
 auto to_title(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
     -> void;
+auto to_title(std::string_view in, const icu::Locale& loc, std::string& out)
+    -> void;
 auto to_lower(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
+    -> void;
+auto to_lower(std::string_view in, const icu::Locale& loc, std::string& out)
     -> void;
 auto to_lower_char_at(std::wstring& s, size_t i, const icu::Locale& loc)
     -> void;
@@ -109,6 +115,7 @@ enum class Casing : char {
 };
 
 NUSPELL_EXPORT auto classify_casing(std::wstring_view s) -> Casing;
+auto classify_casing(std::string_view s) -> Casing;
 
 auto has_uppercase_at_compound_word_boundary(std::wstring_view word, size_t i)
     -> bool;
@@ -192,8 +199,8 @@ class Setlocale_To_C_In_Scope {
 #endif
 
 auto replace_char(std::wstring& s, wchar_t from, wchar_t to) -> void;
-auto erase_chars(std::wstring& s, std::wstring_view erase_chars) -> void;
-NUSPELL_EXPORT auto is_number(std::wstring_view s) -> bool;
+auto erase_chars(std::string& s, std::string_view erase_chars) -> void;
+NUSPELL_EXPORT auto is_number(std::string_view s) -> bool;
 auto count_appereances_of(std::wstring_view haystack, std::wstring_view needles)
     -> size_t;
 

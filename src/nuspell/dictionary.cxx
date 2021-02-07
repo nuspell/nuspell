@@ -53,7 +53,7 @@ class At_Scope_Exit {
 
 #define AT_SCOPE_EXIT(...) ASE_INTERNAL2(__COUNTER__, __VA_ARGS__)
 
-auto Dict_Base::spell_priv(std::wstring& s) const -> bool
+auto Dict_Base::spell_priv(string& s) const -> bool
 {
 	// do input conversion (iconv)
 	input_substr_replacer.replace(s);
@@ -68,8 +68,10 @@ auto Dict_Base::spell_priv(std::wstring& s) const -> bool
 		auto i = s.find_last_not_of('.');
 		// if i == npos, i + 1 == 0, so no need for extra if.
 		s.erase(i + 1);
-		if (s.empty())
+		if (s.empty()) {
+			// TODO add back removed periods
 			return true;
+		}
 	}
 
 	// accept number
@@ -89,7 +91,7 @@ auto Dict_Base::spell_priv(std::wstring& s) const -> bool
 	return ret;
 }
 
-auto Dict_Base::spell_break(std::wstring& s, size_t depth) const -> bool
+auto Dict_Base::spell_break(std::string& s, size_t depth) const -> bool
 {
 	// check spelling accoring to case
 	auto res = spell_casing(s);
@@ -144,7 +146,7 @@ auto Dict_Base::spell_break(std::wstring& s, size_t depth) const -> bool
 	return false;
 }
 
-auto Dict_Base::spell_casing(std::wstring& s) const -> const Flag_Set*
+auto Dict_Base::spell_casing(std::string& s) const -> const Flag_Set*
 {
 	auto casing_type = classify_casing(s);
 	const Flag_Set* res = nullptr;
@@ -165,7 +167,7 @@ auto Dict_Base::spell_casing(std::wstring& s) const -> const Flag_Set*
 	return res;
 }
 
-auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
+auto Dict_Base::spell_casing_upper(std::string& s) const -> const Flag_Set*
 {
 	auto& loc = icu_locale;
 
@@ -193,11 +195,11 @@ auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
 			return res;
 	}
 
-	auto backup = Short_WString(s);
+	auto backup = Short_String(s);
 	AT_SCOPE_EXIT(s = backup);
 
 	// handle sharp s for German
-	if (checksharps && s.find(L"SS") != s.npos) {
+	if (checksharps && s.find("SS") != s.npos) {
 		to_lower(backup, loc, s);
 		res = spell_sharps(s);
 		if (res)
@@ -220,7 +222,7 @@ auto Dict_Base::spell_casing_upper(std::wstring& s) const -> const Flag_Set*
 	return nullptr;
 }
 
-auto Dict_Base::spell_casing_title(std::wstring& s) const -> const Flag_Set*
+auto Dict_Base::spell_casing_title(std::string& s) const -> const Flag_Set*
 {
 	auto& loc = icu_locale;
 
@@ -229,13 +231,13 @@ auto Dict_Base::spell_casing_title(std::wstring& s) const -> const Flag_Set*
 	if (res)
 		return res;
 
-	auto backup = Short_WString(s);
+	auto backup = Short_String(s);
 	to_lower(backup, loc, s);
 	res = check_word(s, ALLOW_BAD_FORCEUCASE);
 
 	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
 	if (res && res->contains(keepcase_flag) &&
-	    !(checksharps && (s.find(L'\xDF') != s.npos))) {
+	    !(checksharps && (s.find("ß") != s.npos))) {
 		res = nullptr;
 	}
 	s = backup;
@@ -259,17 +261,15 @@ auto Dict_Base::spell_casing_title(std::wstring& s) const -> const Flag_Set*
  * @param rep counter for the number of replacements done.
  * @return The flags of the corresponding dictionary word.
  */
-auto Dict_Base::spell_sharps(std::wstring& base, size_t pos, size_t n,
+auto Dict_Base::spell_sharps(std::string& base, size_t pos, size_t n,
                              size_t rep) const -> const Flag_Set*
 {
 	const size_t MAX_SHARPS = 5;
-	pos = base.find(L"ss", pos);
-	if (pos != std::string::npos && n < MAX_SHARPS) {
-		base[pos] = L'\xDF'; // ß
-		base.erase(pos + 1, 1);
+	pos = base.find("ss", pos);
+	if (pos != base.npos && n < MAX_SHARPS) {
+		base.replace(pos, 2, "ß");
 		auto res = spell_sharps(base, pos + 1, n + 1, rep + 1);
-		base[pos] = 's';
-		base.insert(pos + 1, 1, 's');
+		base.replace(pos, 2, "ss");
 		if (res)
 			return res;
 		res = spell_sharps(base, pos + 2, n + 1, rep);
@@ -282,16 +282,16 @@ auto Dict_Base::spell_sharps(std::wstring& base, size_t pos, size_t n,
 	return nullptr;
 }
 
-auto Dict_Base::check_word(std::wstring& s, Forceucase allow_bad_forceucase,
+auto Dict_Base::check_word(std::string& s, Forceucase allow_bad_forceucase,
                            Hidden_Homonym skip_hidden_homonym) const
     -> const Flag_Set*
 {
 
-	auto s_u8 = wide_to_utf8(s);
-	auto ret1 = check_simple_word(s_u8, skip_hidden_homonym);
+	auto ret1 = check_simple_word(s, skip_hidden_homonym);
 	if (ret1)
 		return ret1;
-	auto ret2 = check_compound(s, allow_bad_forceucase);
+	auto s_wide = utf8_to_wide(s);
+	auto ret2 = check_compound(s_wide, allow_bad_forceucase);
 	if (ret2)
 		return &ret2->second;
 
@@ -2052,7 +2052,11 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 {
 	if (word.empty())
 		return;
-	input_substr_replacer.replace(word);
+	{
+		auto word_u8 = wide_to_utf8(word);
+		input_substr_replacer.replace(word_u8);
+		utf8_to_wide(word_u8, word);
+	}
 	auto abbreviation = word.back() == '.';
 	if (abbreviation) {
 		// trim trailing periods
@@ -2096,17 +2100,20 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		}
 		if (casing == Casing::PASCAL) {
 			to_lower_char_at(word, 0, icu_locale);
-			if (spell_priv(word))
+			auto word_u8 = wide_to_utf8(word);
+			if (spell_priv(word_u8))
 				insert_sug_first(word, out);
 			hq_sugs |= suggest_low(word, out);
 		}
 		to_lower(backup, icu_locale, word);
-		if (spell_priv(word))
+		auto word_u8 = wide_to_utf8(word);
+		if (spell_priv(word_u8))
 			insert_sug_first(word, out);
 		hq_sugs |= suggest_low(word, out);
 		if (casing == Casing::PASCAL) {
 			to_title(backup, icu_locale, word);
-			if (spell_priv(word))
+			wide_to_utf8(word, word_u8);
+			if (spell_priv(word_u8))
 				insert_sug_first(word, out);
 			hq_sugs |= suggest_low(word, out);
 		}
@@ -2127,9 +2134,10 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		}
 		break;
 	}
-	case Casing::ALL_CAPITAL:
+	case Casing::ALL_CAPITAL: {
 		to_lower(backup, icu_locale, word);
-		if (keepcase_flag != 0 && spell_priv(word))
+		auto word_u8 = wide_to_utf8(word);
+		if (keepcase_flag != 0 && spell_priv(word_u8))
 			insert_sug_first(word, out);
 		hq_sugs |= suggest_low(word, out);
 		to_title(backup, icu_locale, word);
@@ -2137,6 +2145,7 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		for (auto& sug : out)
 			to_upper(sug, icu_locale, sug);
 		break;
+	}
 	}
 
 	if (!hq_sugs && max_ngram_suggestions != 0) {
@@ -2164,12 +2173,14 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		for (;;) {
 			auto j = orig_word.find('-', i);
 			word.assign(orig_word, i, j - i);
-			if (!spell_priv(word)) {
+			auto word_u8 = wide_to_utf8(word);
+			if (!spell_priv(word_u8)) {
 				suggest_priv(word, sugs_tmp);
 				for (auto& t : sugs_tmp) {
 					word = backup;
 					word.replace(i, j - i, t);
-					auto flg = check_word(word);
+					auto word_u8 = wide_to_utf8(word);
+					auto flg = check_word(word_u8);
 					if (!flg ||
 					    !flg->contains(forbiddenword_flag))
 						out.push_back(word);
@@ -2195,13 +2206,16 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		auto is_ok = [&](wstring& s) {
 			if (s.find(' ') != s.npos)
 				return true;
-			if (spell_priv(s))
+			auto s_u8 = wide_to_utf8(s);
+			if (spell_priv(s_u8))
 				return true;
 			to_lower(s, icu_locale, s);
-			if (spell_priv(s))
+			wide_to_utf8(s, s_u8);
+			if (spell_priv(s_u8))
 				return true;
 			to_title(s, icu_locale, s);
-			return spell_priv(s);
+			wide_to_utf8(s, s_u8);
+			return spell_priv(s_u8);
 		};
 		auto it = begin(out);
 		auto last = end(out);
@@ -2254,7 +2268,9 @@ auto Dict_Base::suggest_low(std::wstring& word, List_WStrings& out) const
 auto Dict_Base::add_sug_if_correct(std::wstring& word, List_WStrings& out) const
     -> bool
 {
-	auto res = check_word(word, FORBID_BAD_FORCEUCASE, SKIP_HIDDEN_HOMONYM);
+	auto word_u8 = wide_to_utf8(word);
+	auto res =
+	    check_word(word_u8, FORBID_BAD_FORCEUCASE, SKIP_HIDDEN_HOMONYM);
 	if (!res)
 		return false;
 	if (res->contains(forbiddenword_flag))
@@ -2332,7 +2348,8 @@ auto Dict_Base::try_rep_suggestion(std::wstring& word, List_WStrings& out) const
 	auto part = wstring();
 	for (; j != word.npos; i = j + 1, j = word.find(' ', i)) {
 		part.assign(word, i, j - i);
-		if (!check_word(part, FORBID_BAD_FORCEUCASE,
+		auto part_u8 = wide_to_utf8(part);
+		if (!check_word(part_u8, FORBID_BAD_FORCEUCASE,
 		                SKIP_HIDDEN_HOMONYM))
 			return;
 	}
@@ -3096,16 +3113,14 @@ auto Dictionary::load_from_path(const std::string& file_path_without_extension)
  */
 auto Dictionary::spell(std::string_view word) const -> bool
 {
-	auto static thread_local wide_word = wstring();
-	auto ok_enc = utf8_to_wide(word, wide_word);
-	if (unlikely(wide_word.size() > 180)) {
-		wide_word.resize(180);
-		wide_word.shrink_to_fit();
+	auto static thread_local word_buf = string();
+	auto ok_enc = validate_utf8(word);
+	if (unlikely(word.size() > 360))
 		return false;
-	}
 	if (unlikely(!ok_enc))
 		return false;
-	return spell_priv(wide_word);
+	word_buf = word;
+	return spell_priv(word_buf);
 }
 
 /**

@@ -714,6 +714,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	auto break_exists = false;
 	auto input_conversion = vector<pair<wstring, wstring>>();
 	auto output_conversion = vector<pair<wstring, wstring>>();
+	auto ignored_chars_wide = wstring();
 	// auto morphological_aliases = vector<vector<string>>();
 	auto rules = vector<u16string>();
 	auto replacements = vector<pair<wstring, wstring>>();
@@ -726,7 +727,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	flag_type = Flag_Type::SINGLE_CHAR;
 
 	unordered_map<string, wstring*> command_wstrings = {
-	    {"IGNORE", &ignored_chars},
+	    {"IGNORE", &ignored_chars_wide},
 
 	    {"KEY", &keyboard_closeness},
 	    {"TRY", &this->try_chars}};
@@ -920,12 +921,27 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		auto& s = r.second;
 		replace_char(s, L'_', L' ');
 	}
+	auto input_conversion_u8 = vector<pair<string, string>>();
+	auto break_patterns_u8 = vector<string>();
+
+	input_conversion_u8.reserve(size(input_conversion));
+	transform(begin(input_conversion), end(input_conversion),
+	          back_inserter(input_conversion_u8), [](auto& pair_ws) {
+		          return pair{wide_to_utf8(pair_ws.first),
+				      wide_to_utf8(pair_ws.second)};
+	          });
+
+	break_patterns_u8.reserve(size(break_patterns));
+	transform(begin(break_patterns), end(break_patterns),
+	          back_inserter(break_patterns_u8),
+	          [](auto& ws) { return wide_to_utf8(ws); });
 
 	// now fill data structures from temporary data
+	wide_to_utf8(ignored_chars_wide, ignored_chars);
 	compound_rules = std::move(rules);
 	similarities.assign(begin(map_related_chars), end(map_related_chars));
-	break_table = std::move(break_patterns);
-	input_substr_replacer = std::move(input_conversion);
+	break_table = std::move(break_patterns_u8);
+	input_substr_replacer = std::move(input_conversion_u8);
 	output_substr_replacer = std::move(output_conversion);
 	this->replacements = std::move(replacements);
 	phonetic_table = std::move(phonetic_replacements);
@@ -934,18 +950,18 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	prefixes_u8.reserve(size(prefixes));
 	suffixes_u8.reserve(size(suffixes));
 	for (auto& x : prefixes) {
-		erase_chars(x.appending, ignored_chars);
 		prefixes_u8.push_back(
 		    {x.flag, x.cross_product, wide_to_utf8(x.stripping),
 		     wide_to_utf8(x.appending), move(x.cont_flags),
 		     Condition<char>(wide_to_utf8(x.condition.str()))});
+		erase_chars(prefixes_u8.back().appending, ignored_chars);
 	}
 	for (auto& x : suffixes) {
-		erase_chars(x.appending, ignored_chars);
 		suffixes_u8.push_back(
 		    {x.flag, x.cross_product, wide_to_utf8(x.stripping),
 		     wide_to_utf8(x.appending), move(x.cont_flags),
 		     Condition<char>(wide_to_utf8(x.condition.str()))});
+		erase_chars(suffixes_u8.back().appending, ignored_chars);
 	}
 	this->prefixes = std::move(prefixes_u8);
 	this->suffixes = std::move(suffixes_u8);
@@ -1059,9 +1075,10 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		auto ok = enc_conv.to_wide(word, wide_word);
 		if (!ok)
 			continue;
-		erase_chars(wide_word, ignored_chars);
-		auto casing = classify_casing(wide_word);
 		wide_to_utf8(wide_word, u8word);
+		erase_chars(u8word, ignored_chars);
+		utf8_to_wide(u8word, wide_word);
+		auto casing = classify_casing(wide_word);
 		auto inserted = words.emplace(u8word, flags);
 		switch (casing) {
 		case Casing::ALL_CAPITAL:
@@ -1077,9 +1094,8 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			// entries.
 			if (inserted->second.contains(forbiddenword_flag))
 				break;
-			to_title(wide_word, icu_locale, wide_word);
+			to_title(u8word, icu_locale, u8word);
 			flags += HIDDEN_HOMONYM_FLAG;
-			wide_to_utf8(wide_word, u8word);
 			words.emplace(u8word, flags);
 			break;
 		}

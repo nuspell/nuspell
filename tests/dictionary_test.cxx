@@ -25,7 +25,7 @@ using namespace nuspell;
 
 struct Dict_Test : public nuspell::Dict_Base {
 	using Dict_Base::spell_priv;
-	auto spell_priv(std::wstring&& s) { return Dict_Base::spell_priv(s); }
+	auto spell_priv(std::string&& s) { return Dict_Base::spell_priv(s); }
 };
 
 TEST_CASE("Dictionary::load_from_path", "[dictionary]")
@@ -37,17 +37,17 @@ TEST_CASE("Dictionary::spell_priv simple", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	auto words = {L"table", L"chair", L"book", L"fóóáár", L"áárfóóĳ"};
+	auto words = {"table", "chair", "book", "fóóáár", "áárfóóĳ"};
 	for (auto& x : words)
 		d.words.emplace(x, u"");
 
-	auto good = {L"",      L".",    L"..",     L"table",
-	             L"chair", L"book", L"fóóáár", L"áárfóóĳ"};
+	auto good = {"",      ".",    "..",     "table",
+	             "chair", "book", "fóóáár", "áárfóóĳ"};
 	for (auto& g : good)
 		CHECK(d.spell_priv(g) == true);
 
-	auto wrong = {L"tabel", L"chiar",    L"boko", L"xyyz",  L"fooxy",
-	              L"xyfoo", L"fooxybar", L"ééőő", L"fóóéé", L"őőáár"};
+	auto wrong = {"tabel", "chiar",    "boko", "xyyz",  "fooxy",
+	              "xyfoo", "fooxybar", "ééőő", "fóóéé", "őőáár"};
 	for (auto& w : wrong)
 		CHECK(d.spell_priv(w) == false);
 }
@@ -63,12 +63,12 @@ TEST_CASE("Dictionary::spell_priv suffixes", "[dictionary]")
 	d.suffixes = {{u'T', true, "y", "ies", Flag_Set(),
 	               Condition<char>(".[^aeiou]y")}};
 
-	auto good = {L"berry", L"Berry", L"berries", L"BERRIES",
-	             L"May",   L"MAY",   L"vary"};
+	auto good = {"berry", "Berry", "berries", "BERRIES",
+	             "May",   "MAY",   "vary"};
 	for (auto& g : good)
 		CHECK(d.spell_priv(g) == true);
 
-	auto wrong = {L"beRRies", L"Maies", L"MAIES", L"maies", L"varies"};
+	auto wrong = {"beRRies", "Maies", "MAIES", "maies", "varies"};
 	for (auto& w : wrong)
 		CHECK(d.spell_priv(w) == false);
 }
@@ -82,11 +82,11 @@ TEST_CASE("Dictionary::spell_priv complex_prefixes", "[dictionary]")
 	    {u'Y', true, "", "s", Flag_Set(), Condition<char>(".")},
 	    {u'X', true, "", "able", Flag_Set(u"Y"), Condition<char>(".")}};
 
-	auto good = {L"drink", L"drinkable", L"drinkables"};
+	auto good = {"drink", "drinkable", "drinkables"};
 	for (auto& g : good)
 		CHECK(d.spell_priv(g) == true);
 
-	auto wrong = {L"drinks"};
+	auto wrong = {"drinks"};
 	for (auto& w : wrong)
 		CHECK(d.spell_priv(w) == false);
 }
@@ -109,9 +109,9 @@ TEST_CASE("Dictionary::spell_priv extra_stripping", "[dictionary]")
 	    {u'C', true, "", "E", Flag_Set(), Condition<char>("a")},
 	    {u'Y', true, "", "2", Flag_Set(u"Z"), Condition<char>("b")}};
 	// complex strip suffix prefix prefix
-	CHECK(d.spell_priv(L"QWaaE") == true);
+	CHECK(d.spell_priv("QWaaE") == true);
 	// complex strip prefix suffix prefix
-	CHECK(d.spell_priv(L"31b2") == true);
+	CHECK(d.spell_priv("31b2") == true);
 }
 
 TEST_CASE("Dictionary::spell_priv break_pattern", "[dictionary]")
@@ -121,19 +121,19 @@ TEST_CASE("Dictionary::spell_priv break_pattern", "[dictionary]")
 	d.forbid_warn = true;
 	d.warn_flag = 'W';
 
-	d.words.emplace(L"user", u"");
-	d.words.emplace(L"interface", u"");
-	d.words.emplace(L"interface-interface", u"W");
+	d.words.emplace("user", u"");
+	d.words.emplace("interface", u"");
+	d.words.emplace("interface-interface", u"W");
 
-	d.break_table = {L"-", L"++++++$"};
+	d.break_table = {"-", "++++++$"};
 
-	auto good = {L"user", L"interface", L"user-interface",
-	             L"interface-user", L"user-user"};
+	auto good = {"user", "interface", "user-interface", "interface-user",
+	             "user-user"};
 	for (auto& g : good)
 		CHECK(d.spell_priv(g) == true);
 
-	auto wrong = {L"user--interface", L"user interface",
-	              L"user - interface", L"interface-interface"};
+	auto wrong = {"user--interface", "user interface", "user - interface",
+	              "interface-interface"};
 	for (auto& w : wrong)
 		CHECK(d.spell_priv(w) == false);
 }
@@ -142,10 +142,10 @@ TEST_CASE("Dictionary::spell_priv spell_casing_upper", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	d.words.emplace(L"Sant'Elia", u"");
-	d.words.emplace(L"d'Osormort", u"");
+	d.words.emplace("Sant'Elia", u"");
+	d.words.emplace("d'Osormort", u"");
 
-	auto good = {L"SANT'ELIA", L"D'OSORMORT"};
+	auto good = {"SANT'ELIA", "D'OSORMORT"};
 	for (auto& g : good)
 		CHECK(d.spell_priv(g) == true);
 }
@@ -158,16 +158,16 @@ TEST_CASE("Dictionary::spell_priv compounding begin_last", "[dictionary]")
 	d.compound_last_flag = 'L';
 
 	d.compound_min_length = 4;
-	d.words.emplace(L"car", u"B");
-	d.words.emplace(L"cook", u"B");
-	d.words.emplace(L"photo", u"B");
-	d.words.emplace(L"book", u"L");
+	d.words.emplace("car", u"B");
+	d.words.emplace("cook", u"B");
+	d.words.emplace("photo", u"B");
+	d.words.emplace("book", u"L");
 
-	auto good = {L"cookbook", L"photobook"};
+	auto good = {"cookbook", "photobook"};
 	for (auto& g : good)
 		CHECK(d.spell_priv(g) == true);
-	auto wrong = {L"carbook", L"bookcook", L"bookphoto", L"cookphoto",
-	              L"photocook"};
+	auto wrong = {"carbook", "bookcook", "bookphoto", "cookphoto",
+	              "photocook"};
 	for (auto& w : wrong)
 		CHECK(d.spell_priv(w) == false);
 }
@@ -178,17 +178,17 @@ TEST_CASE("Dictionary::spell_priv compounding compound_middle", "[dictionary]")
 	d.compound_flag = 'C';
 	d.compound_middle_flag = 'M';
 	d.compound_check_duplicate = true;
-	d.words.emplace(L"goederen", u"C");
-	d.words.emplace(L"trein", u"M");
-	d.words.emplace(L"wagon", u"C");
+	d.words.emplace("goederen", u"C");
+	d.words.emplace("trein", u"M");
+	d.words.emplace("wagon", u"C");
 
-	auto good = {L"goederentreinwagon", L"wagontreingoederen",
-	             L"goederenwagon", L"wagongoederen"};
+	auto good = {"goederentreinwagon", "wagontreingoederen",
+	             "goederenwagon", "wagongoederen"};
 	for (auto& g : good)
 		CHECK(d.spell_priv(g) == true);
-	auto wrong = {L"goederentrein", L"treingoederen", L"treinwagon",
-	              L"wagontrein",    L"treintrein",    L"goederengoederen",
-	              L"wagonwagon"};
+	auto wrong = {"goederentrein", "treingoederen", "treinwagon",
+	              "wagontrein",    "treintrein",    "goederengoederen",
+	              "wagonwagon"};
 	for (auto& w : wrong)
 		CHECK(d.spell_priv(w) == false);
 }
@@ -200,18 +200,19 @@ TEST_CASE("Dictionary::spell_priv compounding triple", "[dictionary]")
 	d.compound_last_flag = 'L';
 	d.compound_check_triple = true;
 	d.compound_simplified_triple = true;
-	d.words.emplace(L"schiff", u"B");
-	d.words.emplace(L"fahrt", u"L");
+	d.words.emplace("schiff", u"B");
+	d.words.emplace("fahrt", u"L");
 
-	auto good = {L"Schiffahrt", L"schiffahrt"};
+	auto good = {"Schiffahrt", "schiffahrt"};
 	for (auto& g : good)
 		CHECK(d.spell_priv(g) == true);
-	auto wrong = {L"Schifffahrt", L"schifffahrt", L"SchiffFahrt",
-	              L"SchifFahrt",  L"schiffFahrt", L"schifFahrt"};
+	auto wrong = {"Schifffahrt", "schifffahrt", "SchiffFahrt",
+	              "SchifFahrt",  "schiffFahrt", "schifFahrt"};
 	for (auto& w : wrong)
 		CHECK(d.spell_priv(w) == false);
 }
 
+#if 0
 TEST_CASE("Dictionary suggestions rep_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
@@ -451,7 +452,6 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 }
 
-#if 0
 TEST_CASE("Dictionary suggestions phonetic_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();

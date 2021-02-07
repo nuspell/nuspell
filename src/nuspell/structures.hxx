@@ -1633,6 +1633,7 @@ class Simple_Short_String {
 
 	auto size() const noexcept { return sz; }
 };
+using Short_String = Simple_Short_String<char>;
 using Short_WString = Simple_Short_String<wchar_t>;
 
 /**

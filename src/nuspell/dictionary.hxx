@@ -106,15 +106,15 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 		HAS_HIGH_QUALITY_SUGS = true
 	};
 
-	auto spell_priv(std::wstring& s) const -> bool;
-	auto spell_break(std::wstring& s, size_t depth = 0) const -> bool;
-	auto spell_casing(std::wstring& s) const -> const Flag_Set*;
-	auto spell_casing_upper(std::wstring& s) const -> const Flag_Set*;
-	auto spell_casing_title(std::wstring& s) const -> const Flag_Set*;
-	auto spell_sharps(std::wstring& base, size_t n_pos = 0, size_t n = 0,
+	auto spell_priv(std::string& s) const -> bool;
+	auto spell_break(std::string& s, size_t depth = 0) const -> bool;
+	auto spell_casing(std::string& s) const -> const Flag_Set*;
+	auto spell_casing_upper(std::string& s) const -> const Flag_Set*;
+	auto spell_casing_title(std::string& s) const -> const Flag_Set*;
+	auto spell_sharps(std::string& base, size_t n_pos = 0, size_t n = 0,
 	                  size_t rep = 0) const -> const Flag_Set*;
 
-	auto check_word(std::wstring& s, Forceucase allow_bad_forceucase = {},
+	auto check_word(std::string& s, Forceucase allow_bad_forceucase = {},
 	                Hidden_Homonym skip_hidden_homonym = {}) const
 	    -> const Flag_Set*;
 	auto check_simple_word(std::string& word,

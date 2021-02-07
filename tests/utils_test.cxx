@@ -261,63 +261,63 @@ TEST_CASE("split_on_any_of", "[string_utils]")
 
 TEST_CASE("is_number", "[string_utils]")
 {
-	CHECK_FALSE(is_number(L""));
-	CHECK_FALSE(is_number(L"a"));
-	CHECK_FALSE(is_number(L"1a"));
-	CHECK_FALSE(is_number(L"a1"));
-	CHECK_FALSE(is_number(L".a"));
-	CHECK_FALSE(is_number(L"a."));
-	CHECK_FALSE(is_number(L",a"));
-	CHECK_FALSE(is_number(L"a,"));
-	CHECK_FALSE(is_number(L"-a"));
-	CHECK_FALSE(is_number(L"a-"));
+	CHECK_FALSE(is_number(""));
+	CHECK_FALSE(is_number("a"));
+	CHECK_FALSE(is_number("1a"));
+	CHECK_FALSE(is_number("a1"));
+	CHECK_FALSE(is_number(".a"));
+	CHECK_FALSE(is_number("a."));
+	CHECK_FALSE(is_number(",a"));
+	CHECK_FALSE(is_number("a,"));
+	CHECK_FALSE(is_number("-a"));
+	CHECK_FALSE(is_number("a-"));
 
-	CHECK_FALSE(is_number(L"1..1"));
-	CHECK_FALSE(is_number(L"1.,1"));
-	CHECK_FALSE(is_number(L"1.-1"));
-	CHECK_FALSE(is_number(L"1,.1"));
-	CHECK_FALSE(is_number(L"1,,1"));
-	CHECK_FALSE(is_number(L"1,-1"));
-	CHECK_FALSE(is_number(L"1-.1"));
-	CHECK_FALSE(is_number(L"1-,1"));
-	CHECK_FALSE(is_number(L"1--1"));
+	CHECK_FALSE(is_number("1..1"));
+	CHECK_FALSE(is_number("1.,1"));
+	CHECK_FALSE(is_number("1.-1"));
+	CHECK_FALSE(is_number("1,.1"));
+	CHECK_FALSE(is_number("1,,1"));
+	CHECK_FALSE(is_number("1,-1"));
+	CHECK_FALSE(is_number("1-.1"));
+	CHECK_FALSE(is_number("1-,1"));
+	CHECK_FALSE(is_number("1--1"));
 
-	CHECK(is_number(L"1,1111"));
-	CHECK(is_number(L"-1,1111"));
-	CHECK(is_number(L"1,1111.00"));
-	CHECK(is_number(L"-1,1111.00"));
-	CHECK(is_number(L"1.1111"));
-	CHECK(is_number(L"-1.1111"));
-	CHECK(is_number(L"1.1111,00"));
-	CHECK(is_number(L"-1.1111,00"));
+	CHECK(is_number("1,1111"));
+	CHECK(is_number("-1,1111"));
+	CHECK(is_number("1,1111.00"));
+	CHECK(is_number("-1,1111.00"));
+	CHECK(is_number("1.1111"));
+	CHECK(is_number("-1.1111"));
+	CHECK(is_number("1.1111,00"));
+	CHECK(is_number("-1.1111,00"));
 
 	// below needs extra review
 
-	CHECK(is_number(L"1"));
-	CHECK(is_number(L"-1"));
-	CHECK_FALSE(is_number(L"1-"));
+	CHECK(is_number("1"));
+	CHECK(is_number("-1"));
+	CHECK_FALSE(is_number("1-"));
 
-	CHECK_FALSE(is_number(L"1."));
-	CHECK_FALSE(is_number(L"-1."));
-	CHECK_FALSE(is_number(L"1.-"));
+	CHECK_FALSE(is_number("1."));
+	CHECK_FALSE(is_number("-1."));
+	CHECK_FALSE(is_number("1.-"));
 
-	CHECK_FALSE(is_number(L"1,"));
-	CHECK_FALSE(is_number(L"-1,"));
-	CHECK_FALSE(is_number(L"1,-"));
+	CHECK_FALSE(is_number("1,"));
+	CHECK_FALSE(is_number("-1,"));
+	CHECK_FALSE(is_number("1,-"));
 
-	CHECK(is_number(L"1.1"));
-	CHECK(is_number(L"-1.1"));
-	CHECK_FALSE(is_number(L"1.1-"));
+	CHECK(is_number("1.1"));
+	CHECK(is_number("-1.1"));
+	CHECK_FALSE(is_number("1.1-"));
 
-	CHECK(is_number(L"1,1"));
-	CHECK(is_number(L"-1,1"));
-	CHECK_FALSE(is_number(L"1,1-"));
+	CHECK(is_number("1,1"));
+	CHECK(is_number("-1,1"));
+	CHECK_FALSE(is_number("1,1-"));
 
-	CHECK_FALSE(is_number(L".1"));
-	CHECK_FALSE(is_number(L"-.1"));
-	CHECK_FALSE(is_number(L".1-"));
+	CHECK_FALSE(is_number(".1"));
+	CHECK_FALSE(is_number("-.1"));
+	CHECK_FALSE(is_number(".1-"));
 
-	CHECK_FALSE(is_number(L",1"));
-	CHECK_FALSE(is_number(L"-,1"));
-	CHECK_FALSE(is_number(L",1-"));
+	CHECK_FALSE(is_number(",1"));
+	CHECK_FALSE(is_number("-,1"));
+	CHECK_FALSE(is_number(",1-"));
 }
