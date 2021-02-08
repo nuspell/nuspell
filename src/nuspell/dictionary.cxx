@@ -290,8 +290,7 @@ auto Dict_Base::check_word(std::string& s, Forceucase allow_bad_forceucase,
 	auto ret1 = check_simple_word(s, skip_hidden_homonym);
 	if (ret1)
 		return ret1;
-	auto s_wide = utf8_to_wide(s);
-	auto ret2 = check_compound(s_wide, allow_bad_forceucase);
+	auto ret2 = check_compound(s, allow_bad_forceucase);
 	if (ret2)
 		return &ret2->second;
 
@@ -1442,9 +1441,9 @@ auto Dict_Base::strip_2_pfx_sfx_3(const Prefix<char>& pe1,
 	return {};
 }
 
-auto match_compound_pattern(const Compound_Pattern<wchar_t>& p,
-                            const wstring& word, size_t i,
-                            Compounding_Result first, Compounding_Result second)
+auto match_compound_pattern(const Compound_Pattern<char>& p, string_view word,
+                            size_t i, Compounding_Result first,
+                            Compounding_Result second)
 {
 	if (i < p.begin_end_chars.idx())
 		return false;
@@ -1465,19 +1464,19 @@ auto match_compound_pattern(const Compound_Pattern<wchar_t>& p,
 }
 
 auto is_compound_forbidden_by_patterns(
-    const vector<Compound_Pattern<wchar_t>>& patterns, const wstring& word,
-    size_t i, Compounding_Result first, Compounding_Result second)
+    const vector<Compound_Pattern<char>>& patterns, string_view word, size_t i,
+    Compounding_Result first, Compounding_Result second)
 {
 	return any_of(begin(patterns), end(patterns), [&](auto& p) {
 		return match_compound_pattern(p, word, i, first, second);
 	});
 }
 
-auto Dict_Base::check_compound(std::wstring& word,
+auto Dict_Base::check_compound(std::string& word,
                                Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
-	auto part = std::wstring();
+	auto part = string();
 
 	if (compound_flag || compound_begin_flag || compound_middle_flag ||
 	    compound_last_flag) {
@@ -1496,19 +1495,28 @@ auto Dict_Base::check_compound(std::wstring& word,
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::check_compound(std::wstring& word, size_t start_pos,
-                               size_t num_part, std::wstring& part,
+auto Dict_Base::check_compound(std::string& word, size_t start_pos,
+                               size_t num_part, std::string& part,
                                Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
-	size_t min_length = 3;
+	size_t min_num_cp = 3;
 	if (compound_min_length != 0)
-		min_length = compound_min_length;
-	if (word.size() < min_length * 2)
-		return {};
-	size_t max_length = word.size() - min_length;
-	for (auto i = start_pos + min_length; i <= max_length; ++i) {
+		min_num_cp = compound_min_length;
 
+	auto i = start_pos;
+	for (size_t num_cp = 0; num_cp != min_num_cp; ++num_cp) {
+		if (i == size(word))
+			return {};
+		valid_u8_advance_cp_index(word, i);
+	}
+	auto last_i = size(word);
+	for (size_t num_cp = 0; num_cp != min_num_cp; ++num_cp) {
+		if (last_i < i)
+			return {};
+		valid_u8_reverse_cp_index(word, last_i);
+	}
+	for (; i <= last_i; valid_u8_advance_cp_index(word, i)) {
 		auto part1_entry = check_compound_classic<m>(
 		    word, start_pos, i, num_part, part, allow_bad_forceucase);
 
@@ -1524,10 +1532,29 @@ auto Dict_Base::check_compound(std::wstring& word, size_t start_pos,
 	return {};
 }
 
+auto are_three_code_points_equal(string_view word, size_t i) -> bool
+{
+	auto cp = valid_u8_next_cp(word, i);
+	auto prev_cp = valid_u8_prev_cp(word, i);
+	if (prev_cp.cp == cp.cp) {
+		if (cp.end_i != size(word)) {
+			auto next_cp = valid_u8_next_cp(word, cp.end_i);
+			if (cp.cp == next_cp.cp)
+				return true;
+		}
+		if (prev_cp.begin_i != 0) {
+			auto prev2_cp = valid_u8_prev_cp(word, prev_cp.begin_i);
+			if (prev2_cp.cp == cp.cp)
+				return true;
+		}
+	}
+	return false;
+}
+
 template <Affixing_Mode m>
-auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
+auto Dict_Base::check_compound_classic(std::string& word, size_t start_pos,
                                        size_t i, size_t num_part,
-                                       std::wstring& part,
+                                       std::string& part,
                                        Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
@@ -1539,12 +1566,8 @@ auto Dict_Base::check_compound_classic(std::wstring& word, size_t start_pos,
 	if (part1_entry->second.contains(forbiddenword_flag))
 		return {};
 	if (compound_check_triple) {
-		if (word[i - 1] == word[i]) {
-			if (i + 1 < word.size() && word[i] == word[i + 1])
-				return {};
-			if (i >= 2 && word[i - 2] == word[i])
-				return {};
-		}
+		if (are_three_code_points_equal(word, i))
+			return {};
 	}
 	if (compound_check_case &&
 	    has_uppercase_at_compound_word_boundary(word, i))
@@ -1606,8 +1629,7 @@ try_recursive:
 		part.assign(word, start_pos);
 		if (is_rep_similar(part))
 			goto try_simplified_triple;
-		auto& p2word_u8 = part2_entry->first;
-		auto p2word = utf8_to_wide(p2word_u8);
+		auto& p2word = part2_entry->first;
 		if (word.compare(i, p2word.size(), p2word) == 0) {
 			// part.assign(word, start_pos,
 			//            i - start_pos + p2word.size());
@@ -1622,10 +1644,15 @@ try_recursive:
 try_simplified_triple:
 	if (!compound_simplified_triple)
 		return {};
-	if (!(i >= 2 && word[i - 1] == word[i - 2]))
+	auto prev_cp = valid_u8_prev_cp(word, i);
+	if (prev_cp.begin_i == 0)
 		return {};
-	word.insert(i, 1, word[i - 1]);
-	AT_SCOPE_EXIT(word.erase(i, 1));
+	auto prev2_cp = valid_u8_prev_cp(word, prev_cp.begin_i);
+	if (prev_cp.cp != prev2_cp.cp)
+		return {};
+	auto const enc_cp = string(word, prev_cp.begin_i, i - prev_cp.begin_i);
+	word.insert(i, enc_cp);
+	AT_SCOPE_EXIT(word.erase(i, size(enc_cp)));
 	part.assign(word, i, word.npos);
 	part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
 	if (!part2_entry)
@@ -1642,7 +1669,7 @@ try_simplified_triple:
 
 		// The added char above should not be checked for rep
 		// similarity, instead check the original word.
-		part.erase(i - start_pos, 1);
+		part.erase(i - start_pos, size(enc_cp));
 
 		if (is_rep_similar(part))
 			goto try_simplified_triple_recursive;
@@ -1668,15 +1695,15 @@ try_simplified_triple_recursive:
 	//	return {};
 	if (compound_check_rep) {
 		part.assign(word, start_pos);
-		part.erase(i - start_pos, 1); // for the added char
+		part.erase(i - start_pos, size(enc_cp)); // for the added CP
 		if (is_rep_similar(part))
 			return {};
-		auto& p2word_u8 = part2_entry->first;
-		auto p2word = utf8_to_wide(p2word_u8);
+		auto& p2word = part2_entry->first;
 		if (word.compare(i, p2word.size(), p2word) == 0) {
 			part.assign(word, start_pos,
 			            i - start_pos + p2word.size());
-			part.erase(i - start_pos, 1); // for the added char
+			part.erase(i - start_pos,
+			           size(enc_cp)); // for the added CP
 			if (is_rep_similar(part))
 				return {};
 		}
@@ -1686,8 +1713,8 @@ try_simplified_triple_recursive:
 
 template <Affixing_Mode m>
 auto Dict_Base::check_compound_with_pattern_replacements(
-    std::wstring& word, size_t start_pos, size_t i, size_t num_part,
-    std::wstring& part, Forceucase allow_bad_forceucase) const
+    std::string& word, size_t start_pos, size_t i, size_t num_part,
+    std::string& part, Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
 	for (auto& p : compound_patterns) {
@@ -1715,13 +1742,8 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		    !part1_entry->second.contains(p.first_word_flag))
 			continue;
 		if (compound_check_triple) {
-			if (word[i - 1] == word[i]) {
-				if (i + 1 < word.size() &&
-				    word[i] == word[i + 1])
-					continue;
-				if (i >= 2 && word[i - 2] == word[i])
-					continue;
-			}
+			if (are_three_code_points_equal(word, i))
+				continue;
 		}
 
 		part.assign(word, i, word.npos);
@@ -1770,8 +1792,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			             p.replacement);
 			if (is_rep_similar(part))
 				goto try_simplified_triple;
-			auto& p2word_u8 = part2_entry->first;
-			auto p2word = utf8_to_wide(p2word_u8);
+			auto& p2word = part2_entry->first;
 			if (word.compare(i, p2word.size(), p2word) == 0) {
 				part.assign(word, start_pos,
 				            i - start_pos + p2word.size());
@@ -1782,12 +1803,19 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		return part1_entry;
 
 	try_simplified_triple:
+		// TODO: check code points, not units
 		if (!compound_simplified_triple)
 			continue;
-		if (!(i >= 2 && word[i - 1] == word[i - 2]))
+		auto prev_cp = valid_u8_prev_cp(word, i);
+		if (prev_cp.begin_i == 0)
 			continue;
-		word.insert(i, 1, word[i - 1]);
-		AT_SCOPE_EXIT(word.erase(i, 1));
+		auto prev2_cp = valid_u8_prev_cp(word, prev_cp.begin_i);
+		if (prev_cp.cp != prev2_cp.cp)
+			continue;
+		auto const enc_cp =
+		    string(word, prev_cp.begin_i, i - prev_cp.begin_i);
+		word.insert(i, enc_cp);
+		AT_SCOPE_EXIT(word.erase(i, size(enc_cp)));
 		part.assign(word, i, word.npos);
 		part2_entry = check_word_in_compound<AT_COMPOUND_END>(part);
 		if (!part2_entry)
@@ -1801,7 +1829,8 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 			goto try_simplified_triple_recursive;
 		if (compound_check_rep) {
 			part.assign(word, start_pos);
-			part.erase(i - start_pos, 1); // for the added char
+			part.erase(i - start_pos,
+			           size(enc_cp)); // for the added char
 			part.replace(i - start_pos - p.begin_end_chars.idx(),
 			             p.begin_end_chars.str().size(),
 			             p.replacement);
@@ -1829,19 +1858,19 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		//	continue;
 		if (compound_check_rep) {
 			part.assign(word, start_pos);
-			part.erase(i - start_pos, 1); // for the added char
+			part.erase(i - start_pos,
+			           size(enc_cp)); // for the added char
 			part.replace(i - start_pos - p.begin_end_chars.idx(),
 			             p.begin_end_chars.str().size(),
 			             p.replacement);
 			if (is_rep_similar(part))
 				continue;
-			auto& p2word_u8 = part2_entry->first;
-			auto p2word = utf8_to_wide(p2word_u8);
+			auto& p2word = part2_entry->first;
 			if (word.compare(i, p2word.size(), p2word) == 0) {
 				part.assign(word, start_pos,
 				            i - start_pos + p2word.size());
 				part.erase(i - start_pos,
-				           1); // for the added char
+				           size(enc_cp)); // for the added char
 				if (is_rep_similar(part))
 					continue;
 			}
@@ -1858,7 +1887,7 @@ auto is_modiying_affix(const AffixT& a)
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::check_word_in_compound(std::wstring& word) const
+auto Dict_Base::check_word_in_compound(std::string& word) const
     -> Compounding_Result
 {
 	auto cpd_flag = char16_t();
@@ -1882,21 +1911,20 @@ auto Dict_Base::check_word_in_compound(std::wstring& word) const
 		auto num_syllable_mod = calc_syllable_modifier<m>(we);
 		return {&we, 0, num_syllable_mod};
 	}
-	auto word_u8 = wide_to_utf8(word);
-	auto x2 = strip_suffix_only<m>(word_u8, SKIP_HIDDEN_HOMONYM);
+	auto x2 = strip_suffix_only<m>(word, SKIP_HIDDEN_HOMONYM);
 	if (x2) {
 		auto num_syllable_mod = calc_syllable_modifier<m>(*x2, *x2.a);
 		return {x2, 0, num_syllable_mod, is_modiying_affix(*x2.a)};
 	}
 
-	auto x1 = strip_prefix_only<m>(word_u8, SKIP_HIDDEN_HOMONYM);
+	auto x1 = strip_prefix_only<m>(word, SKIP_HIDDEN_HOMONYM);
 	if (x1) {
 		auto num_words_mod = calc_num_words_modifier(*x1.a);
 		return {x1, num_words_mod, 0, is_modiying_affix(*x1.a)};
 	}
 
-	auto x3 = strip_prefix_then_suffix_commutative<m>(word_u8,
-	                                                  SKIP_HIDDEN_HOMONYM);
+	auto x3 =
+	    strip_prefix_then_suffix_commutative<m>(word, SKIP_HIDDEN_HOMONYM);
 	if (x3) {
 		auto num_words_mod = calc_num_words_modifier(*x3.b);
 		auto num_syllable_mod = calc_syllable_modifier<m>(*x3, *x3.a);
@@ -1911,8 +1939,7 @@ auto Dict_Base::calc_num_words_modifier(const Prefix<char>& pfx) const
 {
 	if (compound_syllable_vowels.empty())
 		return 0;
-	auto pfx_appending_wide = utf8_to_wide(pfx.appending);
-	auto c = count_syllables(pfx_appending_wide);
+	auto c = count_syllables(pfx.appending);
 	return c > 1;
 }
 
@@ -1935,7 +1962,7 @@ auto Dict_Base::calc_syllable_modifier(Word_List::const_reference we,
 		return 0;
 	if (compound_syllable_vowels.empty())
 		return 0;
-	auto appnd = utf8_to_wide(sfx.appending);
+	auto& appnd = sfx.appending;
 	signed char num_syllable_mod = 0 - count_syllables(appnd);
 	auto sfx_extra = !appnd.empty() && appnd.back() == 'i';
 	if (sfx_extra && appnd.size() > 1) {
@@ -1962,24 +1989,33 @@ auto Dict_Base::calc_syllable_modifier(Word_List::const_reference we,
 	return num_syllable_mod;
 }
 
-auto Dict_Base::count_syllables(const std::wstring& word) const -> size_t
+auto Dict_Base::count_syllables(std::string_view word) const -> size_t
 {
 	return count_appereances_of(word, compound_syllable_vowels);
 }
 
 auto Dict_Base::check_compound_with_rules(
-    std::wstring& word, std::vector<const Flag_Set*>& words_data,
-    size_t start_pos, std::wstring& part, Forceucase allow_bad_forceucase) const
+    std::string& word, std::vector<const Flag_Set*>& words_data,
+    size_t start_pos, std::string& part, Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
-	size_t min_length = 3;
+	size_t min_num_cp = 3;
 	if (compound_min_length != 0)
-		min_length = compound_min_length;
-	if (word.size() < min_length * 2)
-		return {};
-	size_t max_length = word.size() - min_length;
-	for (auto i = start_pos + min_length; i <= max_length; ++i) {
+		min_num_cp = compound_min_length;
 
+	auto i = start_pos;
+	for (size_t num_cp = 0; num_cp != min_num_cp; ++num_cp) {
+		if (i == size(word))
+			return {};
+		valid_u8_advance_cp_index(word, i);
+	}
+	auto last_i = size(word);
+	for (size_t num_cp = 0; num_cp != min_num_cp; ++num_cp) {
+		if (last_i < i)
+			return {};
+		valid_u8_reverse_cp_index(word, last_i);
+	}
+	for (; i <= last_i; valid_u8_advance_cp_index(word, i)) {
 		part.assign(word, start_pos, i - start_pos);
 		auto part1_entry = Word_List::const_pointer();
 		auto range = words.equal_range(part);
@@ -2070,9 +2106,10 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 	auto casing = classify_casing(word);
 	auto hq_sugs = High_Quality_Sugs();
 	switch (casing) {
-	case Casing::SMALL:
+	case Casing::SMALL: {
+		auto word_u8 = wide_to_utf8(word);
 		if (compound_force_uppercase &&
-		    check_compound(word, ALLOW_BAD_FORCEUCASE)) {
+		    check_compound(word_u8, ALLOW_BAD_FORCEUCASE)) {
 			to_title(word, icu_locale, word);
 			out.push_back(word);
 			word = backup;
@@ -2080,6 +2117,7 @@ auto Dict_Base::suggest_priv(std::wstring& word, List_WStrings& out) const
 		}
 		hq_sugs |= suggest_low(word, out);
 		break;
+	}
 	case Casing::INIT_CAPITAL:
 		hq_sugs |= suggest_low(word, out);
 		to_lower(word, icu_locale, word);
@@ -2356,8 +2394,9 @@ auto Dict_Base::try_rep_suggestion(std::wstring& word, List_WStrings& out) const
 	out.push_back(word);
 }
 
-auto Dict_Base::is_rep_similar(std::wstring& word) const -> bool
+auto Dict_Base::is_rep_similar(std::string& word_u8) const -> bool
 {
+	auto word = utf8_to_wide(word_u8);
 	auto& reps = replacements;
 	for (auto& r : reps.whole_word_replacements()) {
 		auto& from = r.first;

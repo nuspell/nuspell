@@ -720,6 +720,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	auto replacements = vector<pair<wstring, wstring>>();
 	auto map_related_chars = vector<wstring>();
 	auto phonetic_replacements = vector<pair<wstring, wstring>>();
+	auto cpd_patterns_wide = vector<Compound_Pattern<wchar_t>>();
 
 	max_compound_suggestions = 3;
 	max_ngram_suggestions = 4;
@@ -886,7 +887,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		}
 		else if (command == "CHECKCOMPOUNDPATTERN") {
 			parse_vector_of_T(ss, p, command, cmd_with_vec_cnt,
-			                  compound_patterns);
+			                  cpd_patterns_wide);
 		}
 		else if (command == "COMPOUNDRULE") {
 			parse_vector_of_T(ss, p, command, cmd_with_vec_cnt,
@@ -894,7 +895,9 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		}
 		else if (command == "COMPOUNDSYLLABLE") {
 			ss >> compound_syllable_max;
-			ss >> p(compound_syllable_vowels);
+			auto csv_wide = wstring();
+			ss >> p(csv_wide);
+			wide_to_utf8(csv_wide, compound_syllable_vowels);
 		}
 		else if (command == "WORDCHARS") {
 			ss >> wordchars;
@@ -935,6 +938,19 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	transform(begin(break_patterns), end(break_patterns),
 	          back_inserter(break_patterns_u8),
 	          [](auto& ws) { return wide_to_utf8(ws); });
+
+	compound_patterns.reserve(size(cpd_patterns_wide));
+	transform(begin(cpd_patterns_wide), end(cpd_patterns_wide),
+	          back_inserter(compound_patterns),
+	          [](const Compound_Pattern<wchar_t>& pat) {
+		          return Compound_Pattern<char>{
+				{wide_to_utf8(pat.begin_end_chars.first()),
+					wide_to_utf8(pat.begin_end_chars.second())},
+				wide_to_utf8(pat.replacement),
+			      pat.first_word_flag,
+			      pat.second_word_flag,
+			      pat.match_first_only_unaffixed_or_zero_affixed};
+	          });
 
 	// now fill data structures from temporary data
 	wide_to_utf8(ignored_chars_wide, ignored_chars);

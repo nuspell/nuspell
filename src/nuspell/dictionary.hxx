@@ -263,32 +263,31 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	                       Hidden_Homonym skip_hidden_homonym) const
 	    -> Affixing_Result<>;
 
-	auto check_compound(std::wstring& word,
+	auto check_compound(std::string& word,
 	                    Forceucase allow_bad_forceucase) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
-	auto check_compound(std::wstring& word, size_t start_pos,
-	                    size_t num_part, std::wstring& part,
+	auto check_compound(std::string& word, size_t start_pos,
+	                    size_t num_part, std::string& part,
 	                    Forceucase allow_bad_forceucase) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
-	auto check_compound_classic(std::wstring& word, size_t start_pos,
+	auto check_compound_classic(std::string& word, size_t start_pos,
 	                            size_t i, size_t num_part,
-	                            std::wstring& part,
+	                            std::string& part,
 	                            Forceucase allow_bad_forceucase) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m = AT_COMPOUND_BEGIN>
 	auto check_compound_with_pattern_replacements(
-	    std::wstring& word, size_t start_pos, size_t i, size_t num_part,
-	    std::wstring& part, Forceucase allow_bad_forceucase) const
+	    std::string& word, size_t start_pos, size_t i, size_t num_part,
+	    std::string& part, Forceucase allow_bad_forceucase) const
 	    -> Compounding_Result;
 
 	template <Affixing_Mode m>
-	auto check_word_in_compound(std::wstring& s) const
-	    -> Compounding_Result;
+	auto check_word_in_compound(std::string& s) const -> Compounding_Result;
 
 	auto calc_num_words_modifier(const Prefix<char>& pfx) const
 	    -> unsigned char;
@@ -302,11 +301,11 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	                            const Suffix<char>& sfx) const
 	    -> signed char;
 
-	auto count_syllables(const std::wstring& word) const -> size_t;
+	auto count_syllables(std::string_view word) const -> size_t;
 
-	auto check_compound_with_rules(std::wstring& word,
+	auto check_compound_with_rules(std::string& word,
 	                               std::vector<const Flag_Set*>& words_data,
-	                               size_t start_pos, std::wstring& part,
+	                               size_t start_pos, std::string& part,
 	                               Forceucase allow_bad_forceucase) const
 
 	    -> Compounding_Result;
@@ -327,7 +326,7 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	auto try_rep_suggestion(std::wstring& word, List_WStrings& out) const
 	    -> void;
 
-	auto is_rep_similar(std::wstring& word) const -> bool;
+	auto is_rep_similar(std::string& word) const -> bool;
 
 	auto map_suggest(std::wstring& word, List_WStrings& out,
 	                 size_t i = 0) const -> void;

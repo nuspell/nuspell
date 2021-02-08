@@ -170,8 +170,8 @@ struct NUSPELL_EXPORT Aff_Data {
 	bool compound_simplified_triple;
 	bool compound_syllable_num;
 	unsigned short compound_syllable_max;
-	std::wstring compound_syllable_vowels;
-	std::vector<Compound_Pattern<wchar_t>> compound_patterns;
+	std::string compound_syllable_vowels;
+	std::vector<Compound_Pattern<char>> compound_patterns;
 
 	// data members used only while parsing
 	Flag_Type flag_type;

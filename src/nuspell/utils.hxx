@@ -117,7 +117,7 @@ enum class Casing : char {
 NUSPELL_EXPORT auto classify_casing(std::wstring_view s) -> Casing;
 auto classify_casing(std::string_view s) -> Casing;
 
-auto has_uppercase_at_compound_word_boundary(std::wstring_view word, size_t i)
+auto has_uppercase_at_compound_word_boundary(std::string_view word, size_t i)
     -> bool;
 
 class Encoding_Converter {
@@ -201,7 +201,7 @@ class Setlocale_To_C_In_Scope {
 auto replace_char(std::wstring& s, wchar_t from, wchar_t to) -> void;
 auto erase_chars(std::string& s, std::string_view erase_chars) -> void;
 NUSPELL_EXPORT auto is_number(std::string_view s) -> bool;
-auto count_appereances_of(std::wstring_view haystack, std::wstring_view needles)
+auto count_appereances_of(std::string_view haystack, std::string_view needles)
     -> size_t;
 
 auto inline begins_with(std::wstring_view haystack, std::wstring_view needle)

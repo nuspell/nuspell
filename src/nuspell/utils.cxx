@@ -421,14 +421,15 @@ auto classify_casing(string_view s) -> Casing
  *
  * @return true if at least one is uppercase, false otherwise.
  */
-auto has_uppercase_at_compound_word_boundary(wstring_view word, size_t i)
-    -> bool
+auto has_uppercase_at_compound_word_boundary(string_view word, size_t i) -> bool
 {
-	if (u_isupper(word[i])) {
-		if (u_isalpha(word[i - 1]))
+	auto cp = valid_u8_next_cp(word, i);
+	auto cp_prev = valid_u8_prev_cp(word, i);
+	if (u_isupper(cp.cp)) {
+		if (u_isalpha(cp_prev.cp))
 			return true;
 	}
-	else if (u_isupper(word[i - 1]) && u_isalpha(word[i]))
+	else if (u_isupper(cp_prev.cp) && u_isalpha(cp.cp))
 		return true;
 	return false;
 }
@@ -537,11 +538,15 @@ auto is_number(string_view s) -> bool
 	return false;
 }
 
-auto count_appereances_of(wstring_view haystack, wstring_view needles) -> size_t
+auto count_appereances_of(string_view haystack, string_view needles) -> size_t
 {
-	return std::count_if(begin(haystack), end(haystack), [&](auto c) {
-		return needles.find(c) != needles.npos;
-	});
+	auto ret = size_t(0);
+	for (size_t i = 0, next_i = 0; i != size(haystack); i = next_i) {
+		valid_u8_advance_cp_index(haystack, next_i);
+		auto enc_cp = string_view(&haystack[i], next_i - i);
+		ret += needles.find(enc_cp) != needles.npos;
+	}
+	return ret;
 }
 
 } // namespace v5
