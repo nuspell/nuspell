@@ -310,59 +310,60 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 
 	    -> Compounding_Result;
 
-	auto suggest_priv(std::wstring& word, List_WStrings& out) const -> void;
+	auto suggest_priv(std::string& word, List_Strings& out) const -> void;
 
-	auto suggest_low(std::wstring& word, List_WStrings& out) const
+	auto suggest_low(std::string& word, List_Strings& out) const
 	    -> High_Quality_Sugs;
 
-	auto add_sug_if_correct(std::wstring& word, List_WStrings& out) const
+	auto add_sug_if_correct(std::string& word, List_Strings& out) const
+	    -> bool;
+	auto add_sug_if_correct(std::wstring& word, List_Strings& out) const
 	    -> bool;
 
-	auto uppercase_suggest(std::wstring& word, List_WStrings& out) const
+	auto uppercase_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
-	auto rep_suggest(std::wstring& word, List_WStrings& out) const -> void;
+	auto rep_suggest(std::string& word, List_Strings& out) const -> void;
 
-	auto try_rep_suggestion(std::wstring& word, List_WStrings& out) const
+	auto try_rep_suggestion(std::string& word, List_Strings& out) const
 	    -> void;
 
 	auto is_rep_similar(std::string& word) const -> bool;
 
-	auto map_suggest(std::wstring& word, List_WStrings& out,
+	auto map_suggest(std::string& word, List_Strings& out,
 	                 size_t i = 0) const -> void;
 
-	auto adjacent_swap_suggest(std::wstring& word, List_WStrings& out) const
+	auto adjacent_swap_suggest(std::wstring& word, List_Strings& out) const
 	    -> void;
 
-	auto distant_swap_suggest(std::wstring& word, List_WStrings& out) const
+	auto distant_swap_suggest(std::wstring& word, List_Strings& out) const
 	    -> void;
 
-	auto keyboard_suggest(std::wstring& word, List_WStrings& out) const
+	auto keyboard_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
-	auto extra_char_suggest(std::wstring& word, List_WStrings& out) const
+	auto extra_char_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
-	auto forgotten_char_suggest(std::wstring& word,
-	                            List_WStrings& out) const -> void;
-
-	auto move_char_suggest(std::wstring& word, List_WStrings& out) const
+	auto forgotten_char_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
-	auto bad_char_suggest(std::wstring& word, List_WStrings& out) const
+	auto move_char_suggest(std::wstring& word, List_Strings& out) const
+	    -> void;
+
+	auto bad_char_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
 	auto doubled_two_chars_suggest(std::wstring& word,
-	                               List_WStrings& out) const -> void;
+	                               List_Strings& out) const -> void;
 
-	auto two_words_suggest(std::wstring& word, List_WStrings& out) const
+	auto two_words_suggest(std::wstring& word, List_Strings& out) const
 	    -> void;
 
-	auto phonetic_suggest(std::wstring& word, List_WStrings& out) const
+	auto phonetic_suggest(std::wstring& word, List_Strings& out) const
 	    -> void;
 
-	auto ngram_suggest(std::wstring& word, List_WStrings& out) const
-	    -> void;
+	auto ngram_suggest(std::wstring& word, List_Strings& out) const -> void;
 
 	auto expand_root_word_for_ngram(Word_List::const_reference root,
 	                                std::wstring_view wrong,

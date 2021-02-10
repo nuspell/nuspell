@@ -86,6 +86,8 @@ auto to_upper_ascii(std::string& s) -> void;
 
 auto to_upper(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
     -> void;
+auto to_upper(std::string_view in, const icu::Locale& loc, std::string& out)
+    -> void;
 auto to_title(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
     -> void;
 auto to_title(std::string_view in, const icu::Locale& loc, std::string& out)
@@ -94,10 +96,8 @@ auto to_lower(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
     -> void;
 auto to_lower(std::string_view in, const icu::Locale& loc, std::string& out)
     -> void;
-auto to_lower_char_at(std::wstring& s, size_t i, const icu::Locale& loc)
-    -> void;
-auto to_title_char_at(std::wstring& s, size_t i, const icu::Locale& loc)
-    -> void;
+auto to_lower_char_at(std::string& s, size_t i, const icu::Locale& loc) -> void;
+auto to_title_char_at(std::string& s, size_t i, const icu::Locale& loc) -> void;
 
 /**
  * @internal

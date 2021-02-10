@@ -137,13 +137,13 @@ struct NUSPELL_EXPORT Aff_Data {
 	Substr_Replacer<char> input_substr_replacer;
 	std::string ignored_chars;
 	icu::Locale icu_locale;
-	Substr_Replacer<wchar_t> output_substr_replacer;
+	Substr_Replacer<char> output_substr_replacer;
 
 	// suggestion options
-	Replacement_Table<wchar_t> replacements;
-	std::vector<Similarity_Group<wchar_t>> similarities;
-	std::wstring keyboard_closeness;
-	std::wstring try_chars;
+	Replacement_Table<char> replacements;
+	std::vector<Similarity_Group<char>> similarities;
+	std::string keyboard_closeness;
+	std::string try_chars;
 	Phonetic_Table<wchar_t> phonetic_table;
 
 	char16_t nosuggest_flag;

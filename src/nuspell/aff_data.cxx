@@ -721,6 +721,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	auto map_related_chars = vector<wstring>();
 	auto phonetic_replacements = vector<pair<wstring, wstring>>();
 	auto cpd_patterns_wide = vector<Compound_Pattern<wchar_t>>();
+	auto keyboard_closeness_wide = wstring();
+	auto try_chars_wide = wstring();
 
 	max_compound_suggestions = 3;
 	max_ngram_suggestions = 4;
@@ -730,8 +732,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	unordered_map<string, wstring*> command_wstrings = {
 	    {"IGNORE", &ignored_chars_wide},
 
-	    {"KEY", &keyboard_closeness},
-	    {"TRY", &this->try_chars}};
+	    {"KEY", &keyboard_closeness_wide},
+	    {"TRY", &try_chars_wide}};
 
 	unordered_map<string, bool*> command_bools = {
 	    {"COMPLEXPREFIXES", &complex_prefixes},
@@ -925,13 +927,23 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		replace_char(s, L'_', L' ');
 	}
 	auto input_conversion_u8 = vector<pair<string, string>>();
+	auto output_conversion_u8 = vector<pair<string, string>>();
 	auto break_patterns_u8 = vector<string>();
+	auto rep_u8 = vector<pair<string, string>>();
+	auto map_u8 = vector<string>();
 
 	input_conversion_u8.reserve(size(input_conversion));
 	transform(begin(input_conversion), end(input_conversion),
 	          back_inserter(input_conversion_u8), [](auto& pair_ws) {
 		          return pair{wide_to_utf8(pair_ws.first),
-				      wide_to_utf8(pair_ws.second)};
+		                      wide_to_utf8(pair_ws.second)};
+	          });
+
+	output_conversion_u8.reserve(size(output_conversion));
+	transform(begin(output_conversion), end(output_conversion),
+	          back_inserter(output_conversion_u8), [](auto& pair_ws) {
+		          return pair{wide_to_utf8(pair_ws.first),
+		                      wide_to_utf8(pair_ws.second)};
 	          });
 
 	break_patterns_u8.reserve(size(break_patterns));
@@ -944,22 +956,36 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	          back_inserter(compound_patterns),
 	          [](const Compound_Pattern<wchar_t>& pat) {
 		          return Compound_Pattern<char>{
-				{wide_to_utf8(pat.begin_end_chars.first()),
-					wide_to_utf8(pat.begin_end_chars.second())},
-				wide_to_utf8(pat.replacement),
-			      pat.first_word_flag,
-			      pat.second_word_flag,
-			      pat.match_first_only_unaffixed_or_zero_affixed};
+		              {wide_to_utf8(pat.begin_end_chars.first()),
+		               wide_to_utf8(pat.begin_end_chars.second())},
+		              wide_to_utf8(pat.replacement),
+		              pat.first_word_flag,
+		              pat.second_word_flag,
+		              pat.match_first_only_unaffixed_or_zero_affixed};
 	          });
+
+	rep_u8.reserve(size(replacements));
+	transform(begin(replacements), end(replacements), back_inserter(rep_u8),
+	          [](auto& pair_ws) {
+		          return pair{wide_to_utf8(pair_ws.first),
+		                      wide_to_utf8(pair_ws.second)};
+	          });
+
+	map_u8.reserve(size(map_related_chars));
+	transform(begin(map_related_chars), end(map_related_chars),
+	          back_inserter(map_u8),
+	          [](auto& ws) { return wide_to_utf8(ws); });
 
 	// now fill data structures from temporary data
 	wide_to_utf8(ignored_chars_wide, ignored_chars);
+	wide_to_utf8(keyboard_closeness_wide, keyboard_closeness);
+	wide_to_utf8(try_chars_wide, try_chars);
 	compound_rules = std::move(rules);
-	similarities.assign(begin(map_related_chars), end(map_related_chars));
+	similarities.assign(begin(map_u8), end(map_u8));
 	break_table = std::move(break_patterns_u8);
 	input_substr_replacer = std::move(input_conversion_u8);
-	output_substr_replacer = std::move(output_conversion);
-	this->replacements = std::move(replacements);
+	output_substr_replacer = std::move(output_conversion_u8);
+	this->replacements = std::move(rep_u8);
 	phonetic_table = std::move(phonetic_replacements);
 	auto prefixes_u8 = vector<Prefix<char>>();
 	auto suffixes_u8 = vector<Suffix<char>>();

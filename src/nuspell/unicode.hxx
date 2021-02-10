@@ -207,19 +207,21 @@ struct U8_CP_Pos {
 
 class U8_Encoded_CP {
 	char d[u8_max_cp_length];
+	int sz;
 
       public:
 	explicit U8_Encoded_CP(std::string_view str, U8_CP_Pos pos)
+	    : sz(pos.end_i - pos.begin_i)
 	{
-		str.copy(d, pos.end_i - pos.begin_i, pos.begin_i);
+		str.copy(d, sz, pos.begin_i);
 	}
-
-	auto size() const noexcept -> size_t
+	U8_Encoded_CP(char32_t cp)
 	{
-		size_t s = 0;
-		valid_u8_advance_cp_index(d, s);
-		return s;
+		size_t z = 0;
+		valid_u8_write_cp_and_advance(d, z, cp);
+		sz = z;
 	}
+	auto size() const noexcept -> size_t { return sz; }
 	auto data() const noexcept -> const char* { return d; }
 	operator std::string_view() const noexcept
 	{

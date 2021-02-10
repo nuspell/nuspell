@@ -212,83 +212,82 @@ TEST_CASE("Dictionary::spell_priv compounding triple", "[dictionary]")
 		CHECK(d.spell_priv(w) == false);
 }
 
-#if 0
 TEST_CASE("Dictionary suggestions rep_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	d.replacements = {{L"ph", L"f"},
-	                  {L"shun$", L"tion"},
-	                  {L"^voo", L"foo"},
-	                  {L"^alot$", L"a lot"}};
-	auto good = L"fat";
-	d.words.emplace(L"fat", u"");
+	d.replacements = {{"ph", "f"},
+	                  {"shun$", "tion"},
+	                  {"^voo", "foo"},
+	                  {"^alot$", "a lot"}};
+	auto good = "fat";
+	d.words.emplace("fat", u"");
 	CHECK(d.spell_priv(good) == true);
-	auto w = wstring(L"phat");
+	auto w = string("phat");
 	CHECK(d.spell_priv(w) == false);
-	auto out_sug = List_WStrings();
-	auto expected_sug = List_WStrings{good};
+	auto out_sug = List_Strings();
+	auto expected_sug = List_Strings{good};
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
-	w = wstring(L"fad phat");
+	w = string("fad phat");
 	out_sug.clear();
 	expected_sug.clear();
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	good = L"station";
-	d.words.emplace(L"station", u"");
+	good = "station";
+	d.words.emplace("station", u"");
 	CHECK(d.spell_priv(good) == true);
-	w = wstring(L"stashun");
+	w = string("stashun");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	d.words.emplace(L"stations", u"");
-	w = wstring(L"stashuns");
+	d.words.emplace("stations", u"");
+	w = string("stashuns");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	good = L"food";
-	d.words.emplace(L"food", u"");
+	good = "food";
+	d.words.emplace("food", u"");
 	CHECK(d.spell_priv(good) == true);
-	w = wstring(L"vood");
+	w = string("vood");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	w = wstring(L"vvood");
+	w = string("vvood");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	good = L"a lot";
-	d.words.emplace(L"a lot", u"");
+	good = "a lot";
+	d.words.emplace("a lot", u"");
 	CHECK(d.spell_priv(good) == true);
-	w = wstring(L"alot");
+	w = string("alot");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	w = wstring(L"aalot");
+	w = string("aalot");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
 	d.rep_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	w = wstring(L"alott");
+	w = string("alott");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
@@ -300,23 +299,23 @@ TEST_CASE("Dictionary suggestions extra_char_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	auto good = L"table";
+	auto good = "table";
 	d.try_chars = good;
-	d.words.emplace(L"table", u"");
+	d.words.emplace("table", u"");
 	CHECK(d.spell_priv(good) == true);
 
-	auto w = wstring(L"tabble");
+	auto w = string("tabble");
 	CHECK(d.spell_priv(w) == false);
 
-	auto out_sug = List_WStrings();
-	auto expected_sug = List_WStrings{good, good};
+	auto out_sug = List_Strings();
+	auto expected_sug = List_Strings{good, good};
 	d.extra_char_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
 	d.forbid_warn = true;
 	d.warn_flag = *u"W";
-	d.words.emplace(L"late", u"W");
-	w = wstring(L"laate");
+	d.words.emplace("late", u"W");
+	w = string("laate");
 	out_sug.clear();
 	expected_sug.clear();
 	d.extra_char_suggest(w, out_sug);
@@ -327,46 +326,46 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	auto good = L"naïve";
-	d.words.emplace(L"naïve", u"");
-	d.similarities = {Similarity_Group<wchar_t>(L"iíìîï")};
+	auto good = "naïve";
+	d.words.emplace("naïve", u"");
+	d.similarities = {Similarity_Group<char>("iíìîï")};
 	CHECK(d.spell_priv(good) == true);
 
-	auto w = wstring(L"naive");
+	auto w = string("naive");
 	CHECK(d.spell_priv(w) == false);
 
-	auto out_sug = List_WStrings();
-	auto expected_sug = List_WStrings{good};
+	auto out_sug = List_Strings();
+	auto expected_sug = List_Strings{good};
 	d.map_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	d.words.emplace(L"æon", u"");
-	d.similarities.push_back(Similarity_Group<wchar_t>(L"æ(ae)"));
-	good = L"æon";
+	d.words.emplace("æon", u"");
+	d.similarities.push_back(Similarity_Group<char>("æ(ae)"));
+	good = "æon";
 	CHECK(d.spell_priv(good) == true);
-	w = wstring(L"aeon");
-	CHECK(d.spell_priv(w) == false);
-	out_sug.clear();
-	expected_sug = {good};
-	d.map_suggest(w, out_sug);
-	CHECK(out_sug == expected_sug);
-
-	d.words.emplace(L"zijn", u"");
-	d.similarities.push_back(Similarity_Group<wchar_t>(L"(ij)ĳ"));
-	good = L"zijn";
-	CHECK(d.spell_priv(good) == true);
-	w = wstring(L"zĳn");
+	w = string("aeon");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
 	d.map_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	d.words.emplace(L"hear", u"");
-	d.similarities.push_back(Similarity_Group<wchar_t>(L"(ae)(ea)"));
-	good = L"hear";
+	d.words.emplace("zijn", u"");
+	d.similarities.push_back(Similarity_Group<char>("(ij)ĳ"));
+	good = "zijn";
 	CHECK(d.spell_priv(good) == true);
-	w = wstring(L"haer");
+	w = string("zĳn");
+	CHECK(d.spell_priv(w) == false);
+	out_sug.clear();
+	expected_sug = {good};
+	d.map_suggest(w, out_sug);
+	CHECK(out_sug == expected_sug);
+
+	d.words.emplace("hear", u"");
+	d.similarities.push_back(Similarity_Group<char>("(ae)(ea)"));
+	good = "hear";
+	CHECK(d.spell_priv(good) == true);
+	w = string("haer");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good};
@@ -378,36 +377,36 @@ TEST_CASE("Dictionary suggestions keyboard_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	auto good1 = L"abcd";
-	auto good2 = L"Abb";
-	d.words.emplace(L"abcd", u"");
-	d.words.emplace(L"Abb", u"");
-	d.keyboard_closeness = L"uiop|xdf|nm";
+	auto good1 = "abcd";
+	auto good2 = "Abb";
+	d.words.emplace("abcd", u"");
+	d.words.emplace("Abb", u"");
+	d.keyboard_closeness = "uiop|xdf|nm";
 	CHECK(d.spell_priv(good1) == true);
 
-	auto w = wstring(L"abcf");
+	auto w = string("abcf");
 	CHECK(d.spell_priv(w) == false);
 
-	auto out_sug = List_WStrings();
-	auto expected_sug = List_WStrings{good1};
+	auto out_sug = List_Strings();
+	auto expected_sug = List_Strings{good1};
 	d.keyboard_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	w = wstring(L"abcx");
+	w = string("abcx");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug = {good1};
 	d.keyboard_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	w = wstring(L"abcg");
+	w = string("abcg");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
 	d.keyboard_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 
-	w = wstring(L"abb");
+	w = string("abb");
 	CHECK(d.spell_priv(w) == false);
 	out_sug.clear();
 	expected_sug.clear();
@@ -420,16 +419,16 @@ TEST_CASE("Dictionary suggestions bad_char_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	auto good = L"chair";
-	d.words.emplace(L"chair", u"");
+	auto good = "chair";
+	d.words.emplace("chair", u"");
 	d.try_chars = good;
 	CHECK(d.spell_priv(good) == true);
 
-	auto w = wstring(L"cháir");
+	auto w = string("cháir");
 	CHECK(d.spell_priv(w) == false);
 
-	auto out_sug = List_WStrings();
-	auto expected_sug = List_WStrings{good};
+	auto out_sug = List_Strings();
+	auto expected_sug = List_Strings{good};
 	d.bad_char_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 }
@@ -438,20 +437,21 @@ TEST_CASE("forgotten_char_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	auto good = L"abcd";
-	d.words.emplace(L"abcd", u"");
+	auto good = "abcd";
+	d.words.emplace("abcd", u"");
 	d.try_chars = good;
 	CHECK(d.spell_priv(good) == true);
 
-	auto w = wstring(L"abd");
+	auto w = string("abd");
 	CHECK(d.spell_priv(w) == false);
 
-	auto out_sug = List_WStrings();
-	auto expected_sug = List_WStrings{good};
+	auto out_sug = List_Strings();
+	auto expected_sug = List_Strings{good};
 	d.forgotten_char_suggest(w, out_sug);
 	CHECK(out_sug == expected_sug);
 }
 
+#if 0
 TEST_CASE("Dictionary suggestions phonetic_suggest", "[dictionary]")
 {
 	auto d = Dict_Test();
@@ -627,17 +627,18 @@ TEST_CASE("Dictionary suggestions suggest_priv", "[dictionary]")
 {
 	auto d = Dict_Test();
 
-	d.try_chars = L"ailrt";
+	d.try_chars = "ailrt";
 
 	// extra char, bad char, bad char, forgotten char
-	auto words = {L"tral", L"trial", L"trail", L"traalt"};
+	auto words = vector<string>{"tral", "traalt", "trial", "trail"};
 	for (auto& x : words)
 		d.words.emplace(x, u"");
 
-	auto w = wstring(L"traal");
-	auto out_sug = List_WStrings();
+	auto w = string("traal");
+	auto out_sug = List_Strings();
 	d.suggest_priv(w, out_sug);
-	CHECK(words.size() == out_sug.size());
+	auto out_sug2 = out_sug.extract_sequence();
+	CHECK(words == out_sug2);
 }
 
 #if 0

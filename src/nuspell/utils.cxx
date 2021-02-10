@@ -290,6 +290,13 @@ auto to_upper(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 	us.toUpper(loc);
 	icu_to_wide(us, out);
 }
+auto to_upper(string_view in, const icu::Locale& loc, string& out) -> void
+{
+	auto us = icu::UnicodeString::fromUTF8(in);
+	us.toUpper(loc);
+	out.clear();
+	us.toUTF8String(out);
+}
 auto to_title(wstring_view in, const icu::Locale& loc, wstring& out) -> void
 {
 	auto us = wide_to_icu(in);
@@ -317,29 +324,23 @@ auto to_lower(string_view in, const icu::Locale& loc, string& out) -> void
 	us.toUTF8String(out);
 }
 
-auto to_lower_char_at(std::wstring& s, size_t i, const icu::Locale& loc) -> void
+auto to_lower_char_at(std::string& s, size_t i, const icu::Locale& loc) -> void
 {
-	auto us = icu::UnicodeString(UChar32(s[i]));
+	auto cp = valid_u8_next_cp(s, i);
+	auto us = icu::UnicodeString(UChar32(cp.cp));
 	us.toLower(loc);
-	if (likely(us.length() == 1)) {
-		s[i] = us[0];
-		return;
-	}
-	auto ws = wstring();
-	icu_to_wide(us, ws);
-	s.replace(i, 1, ws);
+	auto u8_low = string();
+	us.toUTF8String(u8_low);
+	s.replace(i, cp.end_i - i, u8_low);
 }
-auto to_title_char_at(std::wstring& s, size_t i, const icu::Locale& loc) -> void
+auto to_title_char_at(std::string& s, size_t i, const icu::Locale& loc) -> void
 {
-	auto us = icu::UnicodeString(UChar32(s[i]));
+	auto cp = valid_u8_next_cp(s, i);
+	auto us = icu::UnicodeString(UChar32(cp.cp));
 	us.toTitle(nullptr, loc);
-	if (likely(us.length() == 1)) {
-		s[i] = us[0];
-		return;
-	}
-	auto ws = wstring();
-	icu_to_wide(us, ws);
-	s.replace(i, 1, ws);
+	auto u8_title = string();
+	us.toUTF8String(u8_title);
+	s.replace(i, cp.end_i - i, u8_title);
 }
 
 /**
