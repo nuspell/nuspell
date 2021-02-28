@@ -48,19 +48,6 @@ auto Encoding::normalize_name() -> void
 		name.erase(0, 10);
 }
 
-auto Word_List::equal_range(const wstring& key) const
-    -> pair<local_const_iterator, local_const_iterator>
-{
-	auto u8str = wide_to_utf8(key);
-	return equal_range(u8str);
-}
-
-auto Word_List::emplace(const wchar_t* key, const char16_t* value)
-    -> Hash_Multimap::local_iterator
-{
-	return emplace(wide_to_utf8(key), value);
-}
-
 namespace {
 
 void reset_failbit_istream(std::istream& in)
@@ -388,12 +375,12 @@ class Aff_Line_IO_Manip {
 		return in;
 	}
 
-	auto& parse(istream& in, std::wstring& wstr)
+	auto& parse(istream& in, std::string& str)
 	{
 		in >> str_buf;
 		if (in.fail()) // str_buf is unmodified on fail
 			return in;
-		auto ok = cvt.to_wide(str_buf, wstr);
+		auto ok = cvt.to_utf8(str_buf, str);
 		if (!ok)
 			in.setstate(in.failbit);
 		return in;
@@ -460,8 +447,7 @@ class Aff_Line_IO_Manip {
 		return in;
 	}
 
-	auto& parse_word_slash_flags(istream& in, wstring& word,
-	                             Flag_Set& flags)
+	auto& parse_word_slash_flags(istream& in, string& word, Flag_Set& flags)
 	{
 		using Err = Parsing_Error_Code;
 		in >> str_buf;
@@ -480,7 +466,7 @@ class Aff_Line_IO_Manip {
 				err = Err::NO_FLAGS_AFTER_SLASH_WARNING;
 			flags = flag_buffer;
 		}
-		auto ok = cvt.to_wide(str_buf, word);
+		auto ok = cvt.to_utf8(str_buf, word);
 		if (!ok)
 			in.setstate(in.failbit);
 		if (static_cast<int>(err) > 0)
@@ -488,7 +474,7 @@ class Aff_Line_IO_Manip {
 		return in;
 	}
 
-	auto parse_word_slash_single_flag(istream& in, wstring& word,
+	auto parse_word_slash_single_flag(istream& in, string& word,
 	                                  char16_t& flag) -> istream&
 	{
 		in >> str_buf;
@@ -505,7 +491,7 @@ class Aff_Line_IO_Manip {
 			if (!flag_buffer.empty())
 				flag = flag_buffer[0];
 		}
-		auto ok = cvt.to_wide(str_buf, word);
+		auto ok = cvt.to_utf8(str_buf, word);
 		if (!ok)
 			in.setstate(in.failbit);
 		if (static_cast<int>(err) > 0)
@@ -550,19 +536,19 @@ auto& operator>>(istream& in, Ref_Wrapper_1<T> x)
 	return x.manip.parse(in, x.data);
 }
 
-auto& operator>>(istream& in, Ref_Wrapper_1<pair<wstring, wstring>> x)
+auto& operator>>(istream& in, Ref_Wrapper_1<pair<string, string>> x)
 {
 	return in >> x.manip(x.data.first) >> x.manip(x.data.second);
 }
 
-auto& operator>>(istream& in, Ref_Wrapper_1<Condition<wchar_t>> x)
+auto& operator>>(istream& in, Ref_Wrapper_1<Condition<char>> x)
 {
-	auto wstr = wstring();
-	in >> x.manip(wstr);
+	auto str = string();
+	in >> x.manip(str);
 	if (in.fail())
 		return in;
 	try {
-		x.data = std::move(wstr);
+		x.data = std::move(str);
 	}
 	catch (const Condition_Exception& ex) {
 		x.manip.err = Parsing_Error_Code::AFX_CONDITION_INVALID_FORMAT;
@@ -576,27 +562,27 @@ auto& operator>>(istream& in, Ref_Wrapper_1_Cpd_Rule x)
 	return x.manip.parse_compound_rule(in, x.data.rule);
 }
 
-auto& operator>>(istream& in, Ref_Wrapper_2<wstring, Flag_Set> x)
+auto& operator>>(istream& in, Ref_Wrapper_2<string, Flag_Set> x)
 {
 	return x.manip.parse_word_slash_flags(in, x.data1, x.data2);
 }
 
-auto& operator>>(istream& in, Ref_Wrapper_2<wstring, char16_t> x)
+auto& operator>>(istream& in, Ref_Wrapper_2<string, char16_t> x)
 {
 	return x.manip.parse_word_slash_single_flag(in, x.data1, x.data2);
 }
 
-auto& operator>>(istream& in, Ref_Wrapper_1<Compound_Pattern<wchar_t>> x)
+auto& operator>>(istream& in, Ref_Wrapper_1<Compound_Pattern<char>> x)
 {
 	auto [manip, p] = x;
-	auto first_word_end = wstring();
-	auto second_word_begin = wstring();
+	auto first_word_end = string();
+	auto second_word_begin = string();
 	p.match_first_only_unaffixed_or_zero_affixed = false;
 	in >> manip(first_word_end, p.first_word_flag);
 	in >> manip(second_word_begin, p.second_word_flag);
 	if (in.fail())
 		return in;
-	if (first_word_end == L"0") {
+	if (first_word_end == "0") {
 		first_word_end.clear();
 		p.match_first_only_unaffixed_or_zero_affixed = true;
 	}
@@ -680,10 +666,10 @@ auto parse_affix(istream& in, Aff_Line_IO_Manip& p, string& command,
 		elem.flag = f;
 		elem.cross_product = dat->second.first;
 		in >> p(elem.stripping);
-		if (elem.stripping == L"0")
+		if (elem.stripping == "0")
 			elem.stripping.clear();
 		in >> p(elem.appending, elem.cont_flags);
-		if (elem.appending == L"0")
+		if (elem.appending == "0")
 			elem.appending.clear();
 		if (in.fail())
 			return;
@@ -691,7 +677,7 @@ auto parse_affix(istream& in, Aff_Line_IO_Manip& p, string& command,
 		in.exceptions(in.goodbit);
 		in >> p(elem.condition); // optional
 		if (in.fail() && in.eof() && !in.bad()) {
-			elem.condition = L".";
+			elem.condition = ".";
 			reset_failbit_istream(in);
 		}
 		in.exceptions(old_mask);
@@ -708,32 +694,28 @@ auto parse_affix(istream& in, Aff_Line_IO_Manip& p, string& command,
 
 auto Aff_Data::parse_aff(istream& in) -> bool
 {
-	auto prefixes = vector<Prefix<wchar_t>>();
-	auto suffixes = vector<Suffix<wchar_t>>();
-	auto break_patterns = vector<wstring>();
+	auto prefixes = vector<Prefix<char>>();
+	auto suffixes = vector<Suffix<char>>();
+	auto break_patterns = vector<string>();
 	auto break_exists = false;
-	auto input_conversion = vector<pair<wstring, wstring>>();
-	auto output_conversion = vector<pair<wstring, wstring>>();
-	auto ignored_chars_wide = wstring();
+	auto input_conversion = vector<pair<string, string>>();
+	auto output_conversion = vector<pair<string, string>>();
 	// auto morphological_aliases = vector<vector<string>>();
 	auto rules = vector<u16string>();
-	auto replacements = vector<pair<wstring, wstring>>();
-	auto map_related_chars = vector<wstring>();
-	auto phonetic_replacements = vector<pair<wstring, wstring>>();
-	auto cpd_patterns_wide = vector<Compound_Pattern<wchar_t>>();
-	auto keyboard_closeness_wide = wstring();
-	auto try_chars_wide = wstring();
+	auto replacements = vector<pair<string, string>>();
+	auto map_related_chars = vector<string>();
+	auto phonetic_replacements = vector<pair<string, string>>();
 
 	max_compound_suggestions = 3;
 	max_ngram_suggestions = 4;
 	max_diff_factor = 5;
 	flag_type = Flag_Type::SINGLE_CHAR;
 
-	unordered_map<string, wstring*> command_wstrings = {
-	    {"IGNORE", &ignored_chars_wide},
+	unordered_map<string, string*> command_strings = {
+	    {"IGNORE", &ignored_chars},
 
-	    {"KEY", &keyboard_closeness_wide},
-	    {"TRY", &try_chars_wide}};
+	    {"KEY", &keyboard_closeness},
+	    {"TRY", &try_chars}};
 
 	unordered_map<string, bool*> command_bools = {
 	    {"COMPLEXPREFIXES", &complex_prefixes},
@@ -762,11 +744,11 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	    {"COMPOUNDMIN", &compound_min_length},
 	    {"COMPOUNDWORDMAX", &compound_max_word_count}};
 
-	unordered_map<string, vector<pair<wstring, wstring>>*>
-	    command_vec_pair = {{"REP", &replacements},
-	                        {"PHONE", &phonetic_replacements},
-	                        {"ICONV", &input_conversion},
-	                        {"OCONV", &output_conversion}};
+	unordered_map<string, vector<pair<string, string>>*> command_vec_pair =
+	    {{"REP", &replacements},
+	     {"PHONE", &phonetic_replacements},
+	     {"ICONV", &input_conversion},
+	     {"OCONV", &output_conversion}};
 
 	unordered_map<string, char16_t*> command_flag = {
 	    {"NOSUGGEST", &nosuggest_flag},
@@ -822,8 +804,8 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		else if (command == "PFX") {
 			parse_affix(ss, p, command, prefixes, cmd_affix);
 		}
-		else if (command_wstrings.count(command)) {
-			auto& str = *command_wstrings[command];
+		else if (command_strings.count(command)) {
+			auto& str = *command_strings[command];
 			if (str.empty())
 				ss >> p(str);
 			else
@@ -889,7 +871,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		}
 		else if (command == "CHECKCOMPOUNDPATTERN") {
 			parse_vector_of_T(ss, p, command, cmd_with_vec_cnt,
-			                  cpd_patterns_wide);
+			                  compound_patterns);
 		}
 		else if (command == "COMPOUNDRULE") {
 			parse_vector_of_T(ss, p, command, cmd_with_vec_cnt,
@@ -897,9 +879,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		}
 		else if (command == "COMPOUNDSYLLABLE") {
 			ss >> compound_syllable_max;
-			auto csv_wide = wstring();
-			ss >> p(csv_wide);
-			wide_to_utf8(csv_wide, compound_syllable_vowels);
+			ss >> p(compound_syllable_vowels);
 		}
 		else if (command == "WORDCHARS") {
 			ss >> wordchars;
@@ -920,93 +900,29 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	}
 	// default BREAK definition
 	if (!break_exists) {
-		break_patterns = {L"-", L"^-", L"-$"};
+		break_patterns = {"-", "^-", "-$"};
 	}
 	for (auto& r : replacements) {
 		auto& s = r.second;
-		replace_char(s, L'_', L' ');
+		replace_ascii_char(s, '_', ' ');
 	}
-	auto input_conversion_u8 = vector<pair<string, string>>();
-	auto output_conversion_u8 = vector<pair<string, string>>();
-	auto break_patterns_u8 = vector<string>();
-	auto rep_u8 = vector<pair<string, string>>();
-	auto map_u8 = vector<string>();
-
-	input_conversion_u8.reserve(size(input_conversion));
-	transform(begin(input_conversion), end(input_conversion),
-	          back_inserter(input_conversion_u8), [](auto& pair_ws) {
-		          return pair{wide_to_utf8(pair_ws.first),
-		                      wide_to_utf8(pair_ws.second)};
-	          });
-
-	output_conversion_u8.reserve(size(output_conversion));
-	transform(begin(output_conversion), end(output_conversion),
-	          back_inserter(output_conversion_u8), [](auto& pair_ws) {
-		          return pair{wide_to_utf8(pair_ws.first),
-		                      wide_to_utf8(pair_ws.second)};
-	          });
-
-	break_patterns_u8.reserve(size(break_patterns));
-	transform(begin(break_patterns), end(break_patterns),
-	          back_inserter(break_patterns_u8),
-	          [](auto& ws) { return wide_to_utf8(ws); });
-
-	compound_patterns.reserve(size(cpd_patterns_wide));
-	transform(begin(cpd_patterns_wide), end(cpd_patterns_wide),
-	          back_inserter(compound_patterns),
-	          [](const Compound_Pattern<wchar_t>& pat) {
-		          return Compound_Pattern<char>{
-		              {wide_to_utf8(pat.begin_end_chars.first()),
-		               wide_to_utf8(pat.begin_end_chars.second())},
-		              wide_to_utf8(pat.replacement),
-		              pat.first_word_flag,
-		              pat.second_word_flag,
-		              pat.match_first_only_unaffixed_or_zero_affixed};
-	          });
-
-	rep_u8.reserve(size(replacements));
-	transform(begin(replacements), end(replacements), back_inserter(rep_u8),
-	          [](auto& pair_ws) {
-		          return pair{wide_to_utf8(pair_ws.first),
-		                      wide_to_utf8(pair_ws.second)};
-	          });
-
-	map_u8.reserve(size(map_related_chars));
-	transform(begin(map_related_chars), end(map_related_chars),
-	          back_inserter(map_u8),
-	          [](auto& ws) { return wide_to_utf8(ws); });
 
 	// now fill data structures from temporary data
-	wide_to_utf8(ignored_chars_wide, ignored_chars);
-	wide_to_utf8(keyboard_closeness_wide, keyboard_closeness);
-	wide_to_utf8(try_chars_wide, try_chars);
 	compound_rules = std::move(rules);
-	similarities.assign(begin(map_u8), end(map_u8));
-	break_table = std::move(break_patterns_u8);
-	input_substr_replacer = std::move(input_conversion_u8);
-	output_substr_replacer = std::move(output_conversion_u8);
-	this->replacements = std::move(rep_u8);
-	phonetic_table = std::move(phonetic_replacements);
-	auto prefixes_u8 = vector<Prefix<char>>();
-	auto suffixes_u8 = vector<Suffix<char>>();
-	prefixes_u8.reserve(size(prefixes));
-	suffixes_u8.reserve(size(suffixes));
+	similarities.assign(begin(map_related_chars), end(map_related_chars));
+	break_table = std::move(break_patterns);
+	input_substr_replacer = std::move(input_conversion);
+	output_substr_replacer = std::move(output_conversion);
+	this->replacements = std::move(replacements);
+	// phonetic_table = std::move(phonetic_replacements);
 	for (auto& x : prefixes) {
-		prefixes_u8.push_back(
-		    {x.flag, x.cross_product, wide_to_utf8(x.stripping),
-		     wide_to_utf8(x.appending), move(x.cont_flags),
-		     Condition<char>(wide_to_utf8(x.condition.str()))});
-		erase_chars(prefixes_u8.back().appending, ignored_chars);
+		erase_chars(x.appending, ignored_chars);
 	}
 	for (auto& x : suffixes) {
-		suffixes_u8.push_back(
-		    {x.flag, x.cross_product, wide_to_utf8(x.stripping),
-		     wide_to_utf8(x.appending), move(x.cont_flags),
-		     Condition<char>(wide_to_utf8(x.condition.str()))});
-		erase_chars(suffixes_u8.back().appending, ignored_chars);
+		erase_chars(x.appending, ignored_chars);
 	}
-	this->prefixes = std::move(prefixes_u8);
-	this->suffixes = std::move(suffixes_u8);
+	this->prefixes = std::move(prefixes);
+	this->suffixes = std::move(suffixes);
 
 	cerr.flush();
 	return in.eof() && !error_happened; // true for success
@@ -1051,7 +967,6 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	string word;
 	string flags_str;
 	u16string flags;
-	wstring wide_word;
 	string u8word;
 	auto enc_conv = Encoding_Converter(encoding.value_or_default());
 
@@ -1114,13 +1029,11 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		}
 		if (word.empty())
 			continue;
-		auto ok = enc_conv.to_wide(word, wide_word);
+		auto ok = enc_conv.to_utf8(word, u8word);
 		if (!ok)
 			continue;
-		wide_to_utf8(wide_word, u8word);
 		erase_chars(u8word, ignored_chars);
-		utf8_to_wide(u8word, wide_word);
-		auto casing = classify_casing(wide_word);
+		auto casing = classify_casing(u8word);
 		auto inserted = words.emplace(u8word, flags);
 		switch (casing) {
 		case Casing::ALL_CAPITAL:

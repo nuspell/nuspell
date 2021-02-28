@@ -265,21 +265,21 @@ auto static icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool
 #endif
 }
 
-auto to_upper(wstring_view in, const icu::Locale& loc) -> std::wstring
+auto to_upper(std::string_view in, const icu::Locale& loc) -> std::string
 {
-	auto out = wstring();
+	auto out = std::string();
 	to_upper(in, loc, out);
 	return out;
 }
-auto to_title(wstring_view in, const icu::Locale& loc) -> std::wstring
+auto to_title(std::string_view in, const icu::Locale& loc) -> std::string
 {
-	auto out = wstring();
+	auto out = std::string();
 	to_title(in, loc, out);
 	return out;
 }
-auto to_lower(wstring_view in, const icu::Locale& loc) -> std::wstring
+auto to_lower(std::string_view in, const icu::Locale& loc) -> std::string
 {
-	auto out = wstring();
+	auto out = std::string();
 	to_lower(in, loc, out);
 	return out;
 }
@@ -352,37 +352,6 @@ auto to_title_char_at(std::string& s, size_t i, const icu::Locale& loc) -> void
  * @param s word.
  * @return The casing type.
  */
-auto classify_casing(wstring_view s) -> Casing
-{
-	// TODO implement Default Case Detection from unicode standard
-	// https://www.unicode.org/versions/Unicode11.0.0/ch03.pdf
-	// See Chapter 13.3. This might be feature for ICU.
-
-	size_t upper = 0;
-	size_t lower = 0;
-	for (auto& c : s) {
-		if (u_isupper(c))
-			upper++;
-		else if (u_islower(c))
-			lower++;
-		// else neutral
-	}
-	if (upper == 0)               // all lowercase, maybe with some neutral
-		return Casing::SMALL; // most common case
-
-	auto first_capital = u_isupper(s[0]);
-	if (first_capital && upper == 1)
-		return Casing::INIT_CAPITAL; // second most common
-
-	if (lower == 0)
-		return Casing::ALL_CAPITAL;
-
-	if (first_capital)
-		return Casing::PASCAL;
-	else
-		return Casing::CAMEL;
-}
-
 auto classify_casing(string_view s) -> Casing
 {
 	size_t upper = 0;
@@ -462,30 +431,32 @@ auto Encoding_Converter::operator=(const Encoding_Converter& other)
 	return *this;
 }
 
-auto Encoding_Converter::to_wide(string_view in, wstring& out) -> bool
+auto Encoding_Converter::to_utf8(string_view in, string& out) -> bool
 {
-	if (ucnv_getType(cnv) == UCNV_UTF8)
-		return utf8_to_wide(in, out);
-
-	auto err = U_ZERO_ERROR;
-	auto us = icu::UnicodeString(in.data(), in.size(), cnv, err);
-	if (U_FAILURE(err)) {
-		out.clear();
-		return false;
+	if (ucnv_getType(cnv) == UCNV_UTF8) {
+		if (validate_utf8(in)) {
+			out = in;
+			return true;
+		}
+		else {
+			out.clear();
+			return false;
+		}
 	}
-	if (icu_to_wide(us, out))
-		return true;
-	return false;
+	auto err = U_ZERO_ERROR;
+	out.resize(out.capacity());
+	auto len = ucnv_toAlgorithmic(UCNV_UTF8, cnv, out.data(), out.size(),
+	                              in.data(), in.size(), &err);
+	out.resize(len);
+	if (err == U_BUFFER_OVERFLOW_ERROR) {
+		err = U_ZERO_ERROR;
+		ucnv_toAlgorithmic(UCNV_UTF8, cnv, out.data(), out.size(),
+		                   in.data(), in.size(), &err);
+	}
+	return U_SUCCESS(err);
 }
 
-auto Encoding_Converter::to_wide(string_view in) -> wstring
-{
-	auto out = wstring();
-	this->to_wide(in, out);
-	return out;
-}
-
-auto replace_char(wstring& s, wchar_t from, wchar_t to) -> void
+auto replace_ascii_char(string& s, char from, char to) -> void
 {
 	for (auto i = s.find(from); i != s.npos; i = s.find(from, i + 1)) {
 		s[i] = to;

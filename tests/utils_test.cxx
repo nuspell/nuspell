@@ -70,184 +70,184 @@ TEST_CASE("wide_to_utf8", "[locale_utils]")
 
 TEST_CASE("classify_casing", "[locale_utils]")
 {
-	CHECK(Casing::SMALL == classify_casing(L""));
-	CHECK(Casing::SMALL == classify_casing(L"alllowercase"));
-	CHECK(Casing::SMALL == classify_casing(L"alllowercase3"));
-	CHECK(Casing::INIT_CAPITAL == classify_casing(L"Initandlowercase"));
-	CHECK(Casing::INIT_CAPITAL == classify_casing(L"Initandlowercase_"));
-	CHECK(Casing::ALL_CAPITAL == classify_casing(L"ALLUPPERCASE"));
-	CHECK(Casing::ALL_CAPITAL == classify_casing(L"ALLUPPERCASE."));
-	CHECK(Casing::CAMEL == classify_casing(L"iCamelCase"));
-	CHECK(Casing::CAMEL == classify_casing(L"iCamelCase@"));
-	CHECK(Casing::PASCAL == classify_casing(L"InitCamelCase"));
-	CHECK(Casing::PASCAL == classify_casing(L"InitCamelCase "));
-	CHECK(Casing::INIT_CAPITAL == classify_casing(L"İstanbul"));
+	CHECK(Casing::SMALL == classify_casing(""));
+	CHECK(Casing::SMALL == classify_casing("alllowercase"));
+	CHECK(Casing::SMALL == classify_casing("alllowercase3"));
+	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase"));
+	CHECK(Casing::INIT_CAPITAL == classify_casing("Initandlowercase_"));
+	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE"));
+	CHECK(Casing::ALL_CAPITAL == classify_casing("ALLUPPERCASE."));
+	CHECK(Casing::CAMEL == classify_casing("iCamelCase"));
+	CHECK(Casing::CAMEL == classify_casing("iCamelCase@"));
+	CHECK(Casing::PASCAL == classify_casing("InitCamelCase"));
+	CHECK(Casing::PASCAL == classify_casing("InitCamelCase "));
+	CHECK(Casing::INIT_CAPITAL == classify_casing("İstanbul"));
 }
 
 TEST_CASE("to_upper", "[locale_utils]")
 {
 	auto l = icu::Locale();
 
-	CHECK(L"" == to_upper(L"", l));
-	CHECK(L"A" == to_upper(L"a", l));
-	CHECK(L"A" == to_upper(L"A", l));
-	CHECK(L"AA" == to_upper(L"aa", l));
-	CHECK(L"AA" == to_upper(L"aA", l));
-	CHECK(L"AA" == to_upper(L"Aa", l));
-	CHECK(L"AA" == to_upper(L"AA", l));
+	CHECK("" == to_upper("", l));
+	CHECK("A" == to_upper("a", l));
+	CHECK("A" == to_upper("A", l));
+	CHECK("AA" == to_upper("aa", l));
+	CHECK("AA" == to_upper("aA", l));
+	CHECK("AA" == to_upper("Aa", l));
+	CHECK("AA" == to_upper("AA", l));
 
-	CHECK(L"TABLE" == to_upper(L"table", l));
-	CHECK(L"TABLE" == to_upper(L"Table", l));
-	CHECK(L"TABLE" == to_upper(L"tABLE", l));
-	CHECK(L"TABLE" == to_upper(L"TABLE", l));
+	CHECK("TABLE" == to_upper("table", l));
+	CHECK("TABLE" == to_upper("Table", l));
+	CHECK("TABLE" == to_upper("tABLE", l));
+	CHECK("TABLE" == to_upper("TABLE", l));
 
 	// Note that i is converted to I, not İ
-	CHECK_FALSE(L"İSTANBUL" == to_upper(L"istanbul", l));
+	CHECK_FALSE("İSTANBUL" == to_upper("istanbul", l));
 
 	l = icu::Locale("tr_TR");
-	CHECK(L"İSTANBUL" == to_upper(L"istanbul", l));
+	CHECK("İSTANBUL" == to_upper("istanbul", l));
 	// Note that I remains and is not converted to İ
-	CHECK_FALSE(L"İSTANBUL" == to_upper(L"Istanbul", l));
-	CHECK(L"DİYARBAKIR" == to_upper(L"Diyarbakır", l));
+	CHECK_FALSE("İSTANBUL" == to_upper("Istanbul", l));
+	CHECK("DİYARBAKIR" == to_upper("Diyarbakır", l));
 
 	l = icu::Locale("de_DE");
 	// Note that lower case ü is not converted to upper case Ü.
 	// Note that lower case ß is converted to double SS.
-	// CHECK(L"GRüSSEN" == to_upper(L"grüßen", l));
-	CHECK(L"GRÜSSEN" == to_upper(L"GRÜßEN", l));
+	// CHECK("GRüSSEN" == to_upper("grüßen", l));
+	CHECK("GRÜSSEN" == to_upper("GRÜßEN", l));
 	// Note that upper case ẞ is kept in upper case.
-	CHECK(L"GRÜẞEN" == to_upper(L"GRÜẞEN", l));
+	CHECK("GRÜẞEN" == to_upper("GRÜẞEN", l));
 
 	l = icu::Locale("nl_NL");
-	CHECK(L"ÉÉN" == to_upper(L"één", l));
-	CHECK(L"ÉÉN" == to_upper(L"Één", l));
-	CHECK(L"IJSSELMEER" == to_upper(L"ijsselmeer", l));
-	CHECK(L"IJSSELMEER" == to_upper(L"IJsselmeer", l));
-	CHECK(L"IJSSELMEER" == to_upper(L"IJSSELMEER", l));
-	CHECK(L"ĲSSELMEER" == to_upper(L"ĳsselmeer", l));
-	CHECK(L"ĲSSELMEER" == to_upper(L"Ĳsselmeer", l));
-	CHECK(L"ĲSSELMEER" == to_upper(L"ĲSSELMEER", l));
+	CHECK("ÉÉN" == to_upper("één", l));
+	CHECK("ÉÉN" == to_upper("Één", l));
+	CHECK("IJSSELMEER" == to_upper("ijsselmeer", l));
+	CHECK("IJSSELMEER" == to_upper("IJsselmeer", l));
+	CHECK("IJSSELMEER" == to_upper("IJSSELMEER", l));
+	CHECK("ĲSSELMEER" == to_upper("ĳsselmeer", l));
+	CHECK("ĲSSELMEER" == to_upper("Ĳsselmeer", l));
+	CHECK("ĲSSELMEER" == to_upper("ĲSSELMEER", l));
 }
 
 TEST_CASE("to_lower", "[locale_utils]")
 {
 	auto l = icu::Locale("en_US");
 
-	CHECK(L"" == to_lower(L"", l));
-	CHECK(L"a" == to_lower(L"A", l));
-	CHECK(L"a" == to_lower(L"a", l));
-	CHECK(L"aa" == to_lower(L"aa", l));
-	CHECK(L"aa" == to_lower(L"aA", l));
-	CHECK(L"aa" == to_lower(L"Aa", l));
-	CHECK(L"aa" == to_lower(L"AA", l));
+	CHECK("" == to_lower("", l));
+	CHECK("a" == to_lower("A", l));
+	CHECK("a" == to_lower("a", l));
+	CHECK("aa" == to_lower("aa", l));
+	CHECK("aa" == to_lower("aA", l));
+	CHECK("aa" == to_lower("Aa", l));
+	CHECK("aa" == to_lower("AA", l));
 
-	CHECK(L"table" == to_lower(L"table", l));
-	CHECK(L"table" == to_lower(L"Table", l));
-	CHECK(L"table" == to_lower(L"TABLE", l));
+	CHECK("table" == to_lower("table", l));
+	CHECK("table" == to_lower("Table", l));
+	CHECK("table" == to_lower("TABLE", l));
 
 	// Note that İ is converted to i followed by COMBINING DOT ABOVE U+0307
-	CHECK_FALSE(L"istanbul" == to_lower(L"İSTANBUL", l));
+	CHECK_FALSE("istanbul" == to_lower("İSTANBUL", l));
 	// Note that İ is converted to i followed by COMBINING DOT ABOVE U+0307
-	CHECK_FALSE(L"istanbul" == to_lower(L"İstanbul", l));
+	CHECK_FALSE("istanbul" == to_lower("İstanbul", l));
 
 	l = icu::Locale("tr_TR");
-	CHECK(L"istanbul" == to_lower(L"İSTANBUL", l));
-	CHECK(L"istanbul" == to_lower(L"İstanbul", l));
-	CHECK(L"diyarbakır" == to_lower(L"Diyarbakır", l));
+	CHECK("istanbul" == to_lower("İSTANBUL", l));
+	CHECK("istanbul" == to_lower("İstanbul", l));
+	CHECK("diyarbakır" == to_lower("Diyarbakır", l));
 
 	l = icu::Locale("el_GR");
-	CHECK(L"ελλάδα" == to_lower(L"ελλάδα", l));
-	CHECK(L"ελλάδα" == to_lower(L"Ελλάδα", l));
-	CHECK(L"ελλάδα" == to_lower(L"ΕΛΛΆΔΑ", l));
+	CHECK("ελλάδα" == to_lower("ελλάδα", l));
+	CHECK("ελλάδα" == to_lower("Ελλάδα", l));
+	CHECK("ελλάδα" == to_lower("ΕΛΛΆΔΑ", l));
 
 	l = icu::Locale("de_DE");
-	CHECK(L"grüßen" == to_lower(L"grüßen", l));
-	CHECK(L"grüssen" == to_lower(L"grüssen", l));
+	CHECK("grüßen" == to_lower("grüßen", l));
+	CHECK("grüssen" == to_lower("grüssen", l));
 	// Note that double SS is not converted to lower case ß.
-	CHECK(L"grüssen" == to_lower(L"GRÜSSEN", l));
+	CHECK("grüssen" == to_lower("GRÜSSEN", l));
 	// Note that upper case ẞ is converted to lower case ß.
 	// this assert fails on windows with icu 62
-	// CHECK(L"grüßen" == to_lower(L"GRÜẞEN", l));
+	// CHECK("grüßen" == to_lower("GRÜẞEN", l));
 
 	l = icu::Locale("nl_NL");
-	CHECK(L"één" == to_lower(L"Één", l));
-	CHECK(L"één" == to_lower(L"ÉÉN", l));
-	CHECK(L"ijsselmeer" == to_lower(L"ijsselmeer", l));
-	CHECK(L"ijsselmeer" == to_lower(L"IJsselmeer", l));
-	CHECK(L"ijsselmeer" == to_lower(L"IJSSELMEER", l));
-	CHECK(L"ĳsselmeer" == to_lower(L"Ĳsselmeer", l));
-	CHECK(L"ĳsselmeer" == to_lower(L"ĲSSELMEER", l));
-	CHECK(L"ĳsselmeer" == to_lower(L"Ĳsselmeer", l));
+	CHECK("één" == to_lower("Één", l));
+	CHECK("één" == to_lower("ÉÉN", l));
+	CHECK("ijsselmeer" == to_lower("ijsselmeer", l));
+	CHECK("ijsselmeer" == to_lower("IJsselmeer", l));
+	CHECK("ijsselmeer" == to_lower("IJSSELMEER", l));
+	CHECK("ĳsselmeer" == to_lower("Ĳsselmeer", l));
+	CHECK("ĳsselmeer" == to_lower("ĲSSELMEER", l));
+	CHECK("ĳsselmeer" == to_lower("Ĳsselmeer", l));
 }
 
 TEST_CASE("to_title", "[locale_utils]")
 {
 	auto l = icu::Locale("en_US");
-	CHECK(L"" == to_title(L"", l));
-	CHECK(L"A" == to_title(L"a", l));
-	CHECK(L"A" == to_title(L"A", l));
-	CHECK(L"Aa" == to_title(L"aa", l));
-	CHECK(L"Aa" == to_title(L"Aa", l));
-	CHECK(L"Aa" == to_title(L"aA", l));
-	CHECK(L"Aa" == to_title(L"AA", l));
+	CHECK("" == to_title("", l));
+	CHECK("A" == to_title("a", l));
+	CHECK("A" == to_title("A", l));
+	CHECK("Aa" == to_title("aa", l));
+	CHECK("Aa" == to_title("Aa", l));
+	CHECK("Aa" == to_title("aA", l));
+	CHECK("Aa" == to_title("AA", l));
 
-	CHECK(L"Table" == to_title(L"table", l));
-	CHECK(L"Table" == to_title(L"Table", l));
-	CHECK(L"Table" == to_title(L"tABLE", l));
-	CHECK(L"Table" == to_title(L"TABLE", l));
+	CHECK("Table" == to_title("table", l));
+	CHECK("Table" == to_title("Table", l));
+	CHECK("Table" == to_title("tABLE", l));
+	CHECK("Table" == to_title("TABLE", l));
 
 	// Note that i is converted to I, not İ
-	CHECK_FALSE(L"İstanbul" == to_title(L"istanbul", l));
+	CHECK_FALSE("İstanbul" == to_title("istanbul", l));
 	// Note that i is converted to I, not İ
-	CHECK_FALSE(L"İstanbul" == to_title(L"iSTANBUL", l));
-	CHECK(L"İstanbul" == to_title(L"İSTANBUL", l));
-	CHECK(L"Istanbul" == to_title(L"ISTANBUL", l));
+	CHECK_FALSE("İstanbul" == to_title("iSTANBUL", l));
+	CHECK("İstanbul" == to_title("İSTANBUL", l));
+	CHECK("Istanbul" == to_title("ISTANBUL", l));
 
-	CHECK(to_title(L"ß", l) == L"Ss");
+	CHECK(to_title("ß", l) == "Ss");
 
 	l = icu::Locale("tr_TR");
-	CHECK(L"İstanbul" == to_title(L"istanbul", l));
-	CHECK(L"İstanbul" == to_title(L"iSTANBUL", l));
-	CHECK(L"İstanbul" == to_title(L"İSTANBUL", l));
-	CHECK(L"Istanbul" == to_title(L"ISTANBUL", l));
-	CHECK(L"Diyarbakır" == to_title(L"diyarbakır", l));
+	CHECK("İstanbul" == to_title("istanbul", l));
+	CHECK("İstanbul" == to_title("iSTANBUL", l));
+	CHECK("İstanbul" == to_title("İSTANBUL", l));
+	CHECK("Istanbul" == to_title("ISTANBUL", l));
+	CHECK("Diyarbakır" == to_title("diyarbakır", l));
 	l = icu::Locale("tr_CY");
-	CHECK(L"İstanbul" == to_title(L"istanbul", l));
+	CHECK("İstanbul" == to_title("istanbul", l));
 	l = icu::Locale("crh_UA");
 	// Note that lower case i is not converted to upper case İ, bug?
-	CHECK(L"Istanbul" == to_title(L"istanbul", l));
+	CHECK("Istanbul" == to_title("istanbul", l));
 	l = icu::Locale("az_AZ");
-	CHECK(L"İstanbul" == to_title(L"istanbul", l));
+	CHECK("İstanbul" == to_title("istanbul", l));
 	l = icu::Locale("az_IR");
-	CHECK(L"İstanbul" == to_title(L"istanbul", l));
+	CHECK("İstanbul" == to_title("istanbul", l));
 
 	l = icu::Locale("el_GR");
-	CHECK(L"Ελλάδα" == to_title(L"ελλάδα", l));
-	CHECK(L"Ελλάδα" == to_title(L"Ελλάδα", l));
-	CHECK(L"Ελλάδα" == to_title(L"ΕΛΛΆΔΑ", l));
-	CHECK(L"Σίγμα" == to_title(L"Σίγμα", l));
-	CHECK(L"Σίγμα" == to_title(L"σίγμα", l));
+	CHECK("Ελλάδα" == to_title("ελλάδα", l));
+	CHECK("Ελλάδα" == to_title("Ελλάδα", l));
+	CHECK("Ελλάδα" == to_title("ΕΛΛΆΔΑ", l));
+	CHECK("Σίγμα" == to_title("Σίγμα", l));
+	CHECK("Σίγμα" == to_title("σίγμα", l));
 	// Use of ς where σ is expected, should convert to upper case Σ.
-	CHECK(L"Σίγμα" == to_title(L"ςίγμα", l));
+	CHECK("Σίγμα" == to_title("ςίγμα", l));
 
 	l = icu::Locale("de_DE");
-	CHECK(L"Grüßen" == to_title(L"grüßen", l));
-	CHECK(L"Grüßen" == to_title(L"GRÜßEN", l));
+	CHECK("Grüßen" == to_title("grüßen", l));
+	CHECK("Grüßen" == to_title("GRÜßEN", l));
 	// Use of upper case ẞ where lower case ß is expected.
 	// this assert fails on windows with icu 62
-	// CHECK(L"Grüßen" == to_title(L"GRÜẞEN", l));
+	// CHECK("Grüßen" == to_title("GRÜẞEN", l));
 
 	l = icu::Locale("nl_NL");
-	CHECK(L"Één" == to_title(L"één", l));
-	CHECK(L"Één" == to_title(L"ÉÉN", l));
-	CHECK(L"IJsselmeer" == to_title(L"ijsselmeer", l));
-	CHECK(L"IJsselmeer" == to_title(L"Ijsselmeer", l));
-	CHECK(L"IJsselmeer" == to_title(L"iJsselmeer", l));
-	CHECK(L"IJsselmeer" == to_title(L"IJsselmeer", l));
-	CHECK(L"IJsselmeer" == to_title(L"IJSSELMEER", l));
-	CHECK(L"Ĳsselmeer" == to_title(L"ĳsselmeer", l));
-	CHECK(L"Ĳsselmeer" == to_title(L"Ĳsselmeer", l));
-	CHECK(L"Ĳsselmeer" == to_title(L"ĲSSELMEER", l));
+	CHECK("Één" == to_title("één", l));
+	CHECK("Één" == to_title("ÉÉN", l));
+	CHECK("IJsselmeer" == to_title("ijsselmeer", l));
+	CHECK("IJsselmeer" == to_title("Ijsselmeer", l));
+	CHECK("IJsselmeer" == to_title("iJsselmeer", l));
+	CHECK("IJsselmeer" == to_title("IJsselmeer", l));
+	CHECK("IJsselmeer" == to_title("IJSSELMEER", l));
+	CHECK("Ĳsselmeer" == to_title("ĳsselmeer", l));
+	CHECK("Ĳsselmeer" == to_title("Ĳsselmeer", l));
+	CHECK("Ĳsselmeer" == to_title("ĲSSELMEER", l));
 }
 
 TEST_CASE("split_on_any_of", "[string_utils]")

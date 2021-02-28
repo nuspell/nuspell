@@ -74,15 +74,15 @@ NUSPELL_EXPORT auto is_all_bmp(std::u16string_view s) -> bool;
 
 auto to_upper_ascii(std::string& s) -> void;
 
-[[nodiscard]] NUSPELL_EXPORT auto to_upper(std::wstring_view in,
+[[nodiscard]] NUSPELL_EXPORT auto to_upper(std::string_view in,
                                            const icu::Locale& loc)
-    -> std::wstring;
-[[nodiscard]] NUSPELL_EXPORT auto to_title(std::wstring_view in,
+    -> std::string;
+[[nodiscard]] NUSPELL_EXPORT auto to_title(std::string_view in,
                                            const icu::Locale& loc)
-    -> std::wstring;
-[[nodiscard]] NUSPELL_EXPORT auto to_lower(std::wstring_view in,
+    -> std::string;
+[[nodiscard]] NUSPELL_EXPORT auto to_lower(std::string_view in,
                                            const icu::Locale& loc)
-    -> std::wstring;
+    -> std::string;
 
 auto to_upper(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
     -> void;
@@ -114,8 +114,7 @@ enum class Casing : char {
 	PASCAL /**< @internal  PascalCase i.e. mixed case with first capital */
 };
 
-NUSPELL_EXPORT auto classify_casing(std::wstring_view s) -> Casing;
-auto classify_casing(std::string_view s) -> Casing;
+NUSPELL_EXPORT auto classify_casing(std::string_view s) -> Casing;
 
 auto has_uppercase_at_compound_word_boundary(std::string_view word, size_t i)
     -> bool;
@@ -144,8 +143,7 @@ class Encoding_Converter {
 		std::swap(cnv, other.cnv);
 		return *this;
 	}
-	auto to_wide(std::string_view in, std::wstring& out) -> bool;
-	auto to_wide(std::string_view in) -> std::wstring;
+	auto to_utf8(std::string_view in, std::string& out) -> bool;
 	auto valid() -> bool { return cnv != nullptr; }
 };
 
@@ -198,25 +196,11 @@ class Setlocale_To_C_In_Scope {
 };
 #endif
 
-auto replace_char(std::wstring& s, wchar_t from, wchar_t to) -> void;
+auto replace_ascii_char(std::string& s, char from, char to) -> void;
 auto erase_chars(std::string& s, std::string_view erase_chars) -> void;
 NUSPELL_EXPORT auto is_number(std::string_view s) -> bool;
 auto count_appereances_of(std::string_view haystack, std::string_view needles)
     -> size_t;
-
-auto inline begins_with(std::wstring_view haystack, std::wstring_view needle)
-    -> bool
-{
-	return haystack.compare(0, needle.size(), needle) == 0;
-}
-
-auto inline ends_with(std::wstring_view haystack, std::wstring_view needle)
-    -> bool
-{
-	return haystack.size() >= needle.size() &&
-	       haystack.compare(haystack.size() - needle.size(), needle.size(),
-	                        needle) == 0;
-}
 
 auto inline begins_with(std::string_view haystack, std::string_view needle)
     -> bool
