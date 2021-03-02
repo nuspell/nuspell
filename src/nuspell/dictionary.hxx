@@ -317,10 +317,8 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 
 	auto add_sug_if_correct(std::string& word, List_Strings& out) const
 	    -> bool;
-	auto add_sug_if_correct(std::wstring& word, List_Strings& out) const
-	    -> bool;
 
-	auto uppercase_suggest(std::string& word, List_Strings& out) const
+	auto uppercase_suggest(const std::string& word, List_Strings& out) const
 	    -> void;
 
 	auto rep_suggest(std::string& word, List_Strings& out) const -> void;
@@ -333,10 +331,10 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	auto map_suggest(std::string& word, List_Strings& out,
 	                 size_t i = 0) const -> void;
 
-	auto adjacent_swap_suggest(std::wstring& word, List_Strings& out) const
+	auto adjacent_swap_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
-	auto distant_swap_suggest(std::wstring& word, List_Strings& out) const
+	auto distant_swap_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
 	auto keyboard_suggest(std::string& word, List_Strings& out) const
@@ -348,19 +346,16 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	auto forgotten_char_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
-	auto move_char_suggest(std::wstring& word, List_Strings& out) const
+	auto move_char_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
 	auto bad_char_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
-	auto doubled_two_chars_suggest(std::wstring& word,
+	auto doubled_two_chars_suggest(std::string& word,
 	                               List_Strings& out) const -> void;
 
-	auto two_words_suggest(std::wstring& word, List_Strings& out) const
-	    -> void;
-
-	auto phonetic_suggest(std::wstring& word, List_Strings& out) const
+	auto two_words_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
 	auto ngram_suggest(std::wstring& word, List_Strings& out) const -> void;

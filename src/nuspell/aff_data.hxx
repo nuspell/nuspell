@@ -132,7 +132,7 @@ struct NUSPELL_EXPORT Aff_Data {
 	std::vector<Similarity_Group<char>> similarities;
 	std::string keyboard_closeness;
 	std::string try_chars;
-	Phonetic_Table<wchar_t> phonetic_table;
+	// Phonetic_Table<wchar_t> phonetic_table;
 
 	char16_t nosuggest_flag;
 	char16_t substandard_flag;

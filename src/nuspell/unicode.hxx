@@ -17,6 +17,7 @@
  */
 #ifndef NUSPELL_UNICODE_HXX
 #define NUSPELL_UNICODE_HXX
+#include <string>
 #include <string_view>
 #include <unicode/utf16.h>
 #include <unicode/utf8.h>
@@ -213,7 +214,12 @@ class U8_Encoded_CP {
 	explicit U8_Encoded_CP(std::string_view str, U8_CP_Pos pos)
 	    : sz(pos.end_i - pos.begin_i)
 	{
-		str.copy(d, sz, pos.begin_i);
+		auto i = sz;
+		auto j = pos.end_i;
+		auto max_len = 4;
+		do {
+			d[--i] = str[--j];
+		} while (i && --max_len);
 	}
 	U8_Encoded_CP(char32_t cp)
 	{
@@ -227,7 +233,42 @@ class U8_Encoded_CP {
 	{
 		return std::string_view(data(), size());
 	}
+	auto copy_to(std::string& str, size_t j) const
+	{
+		auto i = sz;
+		j += sz;
+		auto max_len = 4;
+		do {
+			str[--j] = d[--i];
+		} while (i && --max_len);
+	}
 };
+
+auto inline u8_swap_adjacent_cp(std::string& str, size_t i1, size_t i2,
+                                size_t i3) -> size_t
+{
+	auto cp1 = U8_Encoded_CP(str, {i1, i2});
+	auto cp2 = U8_Encoded_CP(str, {i2, i3});
+	auto new_i2 = i1 + std::size(cp2);
+	cp1.copy_to(str, new_i2);
+	cp2.copy_to(str, i1);
+	return new_i2;
+}
+
+auto inline u8_swap_cp(std::string& str, U8_CP_Pos pos1, U8_CP_Pos pos2)
+    -> std::pair<size_t, size_t>
+{
+	using std::size;
+	auto cp1 = U8_Encoded_CP(str, pos1);
+	auto cp2 = U8_Encoded_CP(str, pos2);
+	auto new_p1_end_i = pos1.begin_i + size(cp2);
+	auto new_p2_begin_i = pos2.end_i - size(cp1);
+	std::char_traits<char>::move(&str[new_p1_end_i], &str[pos1.end_i],
+	                             pos2.begin_i - pos1.end_i);
+	cp2.copy_to(str, pos1.begin_i);
+	cp1.copy_to(str, new_p2_begin_i);
+	return {new_p1_end_i, new_p2_begin_i};
+}
 
 // bellow go func without out-parametars
 
