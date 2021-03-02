@@ -60,8 +60,8 @@ TEST_CASE("Dictionary::spell_priv suffixes", "[dictionary]")
 	d.words.emplace("May", u"T");
 	d.words.emplace("vary", u"");
 
-	d.suffixes = {{u'T', true, "y", "ies", Flag_Set(),
-	               Condition<char>(".[^aeiou]y")}};
+	d.suffixes = {
+	    {u'T', true, "y", "ies", Flag_Set(), Condition(".[^aeiou]y")}};
 
 	auto good = {"berry", "Berry", "berries", "BERRIES",
 	             "May",   "MAY",   "vary"};
@@ -78,9 +78,8 @@ TEST_CASE("Dictionary::spell_priv complex_prefixes", "[dictionary]")
 	auto d = Dict_Test();
 
 	d.words.emplace("drink", u"X");
-	d.suffixes = {
-	    {u'Y', true, "", "s", Flag_Set(), Condition<char>(".")},
-	    {u'X', true, "", "able", Flag_Set(u"Y"), Condition<char>(".")}};
+	d.suffixes = {{u'Y', true, "", "s", Flag_Set(), Condition(".")},
+	              {u'X', true, "", "able", Flag_Set(u"Y"), Condition(".")}};
 
 	auto good = {"drink", "drinkable", "drinkables"};
 	for (auto& g : good)
@@ -100,14 +99,12 @@ TEST_CASE("Dictionary::spell_priv extra_stripping", "[dictionary]")
 	d.words.emplace("aa", u"ABC");
 	d.words.emplace("bb", u"XYZ");
 
-	d.prefixes = {
-	    {u'A', true, "", "W", Flag_Set(u"B"), Condition<char>("aa")},
-	    {u'B', true, "", "Q", Flag_Set(u"C"), Condition<char>("Wa")},
-	    {u'X', true, "b", "1", Flag_Set(u"Y"), Condition<char>("b")},
-	    {u'Z', true, "", "3", Flag_Set(), Condition<char>("1")}};
-	d.suffixes = {
-	    {u'C', true, "", "E", Flag_Set(), Condition<char>("a")},
-	    {u'Y', true, "", "2", Flag_Set(u"Z"), Condition<char>("b")}};
+	d.prefixes = {{u'A', true, "", "W", Flag_Set(u"B"), Condition("aa")},
+	              {u'B', true, "", "Q", Flag_Set(u"C"), Condition("Wa")},
+	              {u'X', true, "b", "1", Flag_Set(u"Y"), Condition("b")},
+	              {u'Z', true, "", "3", Flag_Set(), Condition("1")}};
+	d.suffixes = {{u'C', true, "", "E", Flag_Set(), Condition("a")},
+	              {u'Y', true, "", "2", Flag_Set(u"Z"), Condition("b")}};
 	// complex strip suffix prefix prefix
 	CHECK(d.spell_priv("QWaaE") == true);
 	// complex strip prefix suffix prefix
@@ -328,7 +325,7 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 
 	auto good = "naïve";
 	d.words.emplace("naïve", u"");
-	d.similarities = {Similarity_Group<char>("iíìîï")};
+	d.similarities = {Similarity_Group("iíìîï")};
 	CHECK(d.spell_priv(good) == true);
 
 	auto w = string("naive");
@@ -340,7 +337,7 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 
 	d.words.emplace("æon", u"");
-	d.similarities.push_back(Similarity_Group<char>("æ(ae)"));
+	d.similarities.push_back(Similarity_Group("æ(ae)"));
 	good = "æon";
 	CHECK(d.spell_priv(good) == true);
 	w = string("aeon");
@@ -351,7 +348,7 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 
 	d.words.emplace("zijn", u"");
-	d.similarities.push_back(Similarity_Group<char>("(ij)ĳ"));
+	d.similarities.push_back(Similarity_Group("(ij)ĳ"));
 	good = "zijn";
 	CHECK(d.spell_priv(good) == true);
 	w = string("zĳn");
@@ -362,7 +359,7 @@ TEST_CASE("Dictionary suggestions map_suggest", "[dictionary]")
 	CHECK(out_sug == expected_sug);
 
 	d.words.emplace("hear", u"");
-	d.similarities.push_back(Similarity_Group<char>("(ae)(ea)"));
+	d.similarities.push_back(Similarity_Group("(ae)(ea)"));
 	good = "hear";
 	CHECK(d.spell_priv(good) == true);
 	w = string("haer");

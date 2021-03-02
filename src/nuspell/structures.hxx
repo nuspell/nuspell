@@ -35,20 +35,6 @@
 
 namespace nuspell {
 inline namespace v5 {
-#define NUSPELL_LITERAL(T, x) ::nuspell::literal_choose<T>(x, L##x)
-
-template <class CharT>
-auto constexpr literal_choose(const char* narrow, const wchar_t* wide);
-template <>
-auto constexpr literal_choose<char>(const char* narrow, const wchar_t*)
-{
-	return narrow;
-}
-template <>
-auto constexpr literal_choose<wchar_t>(const char*, const wchar_t* wide)
-{
-	return wide;
-}
 
 template <class It>
 class Subrange {
@@ -325,11 +311,10 @@ auto swap(String_Set<CharT>& a, String_Set<CharT>& b)
 
 using Flag_Set = String_Set<char16_t>;
 
-template <class CharT>
 class Substr_Replacer {
       public:
-	using Str = std::basic_string<CharT>;
-	using Str_View = std::basic_string_view<CharT>;
+	using Str = std::string;
+	using Str_View = std::string_view;
 	using Pair_Str = std::pair<Str, Str>;
 	using Table_Pairs = std::vector<Pair_Str>;
 
@@ -369,8 +354,8 @@ class Substr_Replacer {
 		return s;
 	}
 };
-template <class CharT>
-auto Substr_Replacer<CharT>::sort_uniq() -> void
+
+auto inline Substr_Replacer::sort_uniq() -> void
 {
 	auto first = begin(table);
 	auto last = end(table);
@@ -384,8 +369,7 @@ auto Substr_Replacer<CharT>::sort_uniq() -> void
 		table.erase(begin(table));
 }
 
-template <class CharT>
-auto Substr_Replacer<CharT>::find_match(Str_View s) const
+auto inline Substr_Replacer::find_match(Str_View s) const
 {
 	auto& t = table;
 	struct Comparer_Str_Rep {
@@ -431,8 +415,7 @@ auto Substr_Replacer<CharT>::find_match(Str_View s) const
 	return last_match;
 }
 
-template <class CharT>
-auto Substr_Replacer<CharT>::replace(Str& s) const -> Str&
+auto inline Substr_Replacer::replace(Str& s) const -> Str&
 {
 
 	if (table.empty())
@@ -453,10 +436,9 @@ auto Substr_Replacer<CharT>::replace(Str& s) const -> Str&
 	return s;
 }
 
-template <class CharT>
 class Break_Table {
       public:
-	using Str = std::basic_string<CharT>;
+	using Str = std::string;
 	using Table_Str = std::vector<Str>;
 	using iterator = typename Table_Str::iterator;
 	using const_iterator = typename Table_Str::const_iterator;
@@ -505,8 +487,7 @@ class Break_Table {
 		return {begin(table) + end_word_breaks_last_idx, end(table)};
 	}
 };
-template <class CharT>
-auto Break_Table<CharT>::order_entries() -> void
+auto inline Break_Table::order_entries() -> void
 {
 	auto it = remove_if(begin(table), end(table), [](auto& s) {
 		return s.empty() ||
@@ -658,10 +639,9 @@ struct Condition_Exception : public std::runtime_error {
  * @internal
  * @brief Minimal regex used as the condition in affix entries.
  */
-template <class CharT>
 class Condition {
-	using Str = std::basic_string<CharT>;
-	using Str_View = std::basic_string_view<CharT>;
+	using Str = std::string;
+	using Str_View = std::string_view;
 	enum Span_Type { NORMAL, DOT, ANY_OF, NONE_OF };
 	struct Span {
 		size_t pos = {};
@@ -690,7 +670,7 @@ class Condition {
 	{
 		construct();
 	}
-	explicit Condition(const CharT* condition) : cond(condition)
+	explicit Condition(const char* condition) : cond(condition)
 	{
 		construct();
 	}
@@ -708,7 +688,7 @@ class Condition {
 		construct();
 		return *this;
 	}
-	auto& operator=(const CharT* condition)
+	auto& operator=(const char* condition)
 	{
 		cond = condition;
 		num_cp = 0;
@@ -719,28 +699,27 @@ class Condition {
 	auto match_prefix(Str_View s) const -> bool;
 	auto match_suffix(Str_View s) const
 	{
-		auto cp_cnt = 0;
+		auto cp_cnt = size_t(0);
 		auto i = size(s);
 		for (; cp_cnt != num_cp && i != 0; ++cp_cnt) {
-			UTF_Traits<CharT>::move_back_valid_cp(s, i);
+			valid_u8_reverse_index(s, i);
 		}
 		if (cp_cnt != num_cp)
 			return false;
 		return match_prefix(s.substr(i));
 	}
 };
-template <class CharT>
-auto Condition<CharT>::construct() -> void
+auto inline Condition::construct() -> void
 {
 	size_t i = 0;
 	for (; i != cond.size();) {
-		size_t j = cond.find_first_of(NUSPELL_LITERAL(CharT, "[]."), i);
+		size_t j = cond.find_first_of("[].", i);
 		if (i != j) {
 			if (j == cond.npos)
 				j = size(cond);
 			spans.emplace_back(i, j - i, NORMAL);
 			do {
-				UTF_Traits<CharT>::decode_valid(cond, i);
+				valid_u8_advance_index(cond, i);
 				++num_cp;
 			} while (i != j);
 			i = j;
@@ -790,8 +769,7 @@ auto Condition<CharT>::construct() -> void
 	}
 }
 
-template <class CharT>
-auto Condition<CharT>::match_prefix(Str_View s) const -> bool
+auto inline Condition::match_prefix(Str_View s) const -> bool
 {
 	size_t i = 0;
 	for (auto& x : spans) {
@@ -807,13 +785,13 @@ auto Condition<CharT>::match_prefix(Str_View s) const -> bool
 		case DOT:
 			if (i == size(s))
 				return false;
-			UTF_Traits<CharT>::decode_valid(s, i); // advances i
+			valid_u8_advance_index(s, i);
 			break;
 		case ANY_OF: {
 			if (i == size(s))
 				return false;
 			auto i1 = i;
-			auto cp = UTF_Traits<CharT>::decode_valid(s, i);
+			valid_u8_advance_index(s, i);
 			auto i2 = i;
 			auto encoded_cp = s.substr(i1, i2 - i1);
 			if (Str_View(&cond[x.pos], x.len).find(encoded_cp) ==
@@ -825,7 +803,7 @@ auto Condition<CharT>::match_prefix(Str_View s) const -> bool
 			if (i == size(s))
 				return false;
 			auto i1 = i;
-			auto cp = UTF_Traits<CharT>::decode_valid(s, i);
+			valid_u8_advance_index(s, i);
 			auto i2 = i;
 			auto encoded_cp = s.substr(i1, i2 - i1);
 			if (Str_View(&cond[x.pos], x.len).find(encoded_cp) !=
@@ -838,18 +816,15 @@ auto Condition<CharT>::match_prefix(Str_View s) const -> bool
 	return true;
 }
 
-template <class CharT>
 struct Prefix {
-	using Str = std::basic_string<CharT>;
-	using Cond = Condition<CharT>;
-	using value_type = CharT;
+	using Str = std::string;
 
 	char16_t flag = 0;
 	bool cross_product = false;
 	Str stripping;
 	Str appending;
 	Flag_Set cont_flags;
-	Cond condition;
+	Condition condition;
 
 	auto to_root(Str& word) const -> Str&
 	{
@@ -877,18 +852,15 @@ struct Prefix {
 	}
 };
 
-template <class CharT>
 struct Suffix {
-	using Str = std::basic_string<CharT>;
-	using Cond = Condition<CharT>;
-	using value_type = CharT;
+	using Str = std::string;
 
 	char16_t flag = 0;
 	bool cross_product = false;
 	Str stripping;
 	Str appending;
 	Flag_Set cont_flags;
-	Cond condition;
+	Condition condition;
 
 	auto to_root(Str& word) const -> Str&
 	{
@@ -1271,8 +1243,7 @@ using Suffix_Multiset = Prefix_Multiset<
 
 class Prefix_Table {
 	using Prefix_Multiset_Type =
-	    Prefix_Multiset<Prefix<char>,
-	                    Extractor_Of_Appending_From_Affix<Prefix<char>>>;
+	    Prefix_Multiset<Prefix, Extractor_Of_Appending_From_Affix<Prefix>>;
 	using Key_Type = typename Prefix_Multiset_Type::Key_Type;
 	using Vector_Type = typename Prefix_Multiset_Type::Vector_Type;
 	Prefix_Multiset_Type table;
@@ -1323,8 +1294,7 @@ class Prefix_Table {
 
 class Suffix_Table {
 	using Suffix_Multiset_Type =
-	    Suffix_Multiset<Suffix<char>,
-	                    Extractor_Of_Appending_From_Affix<Suffix<char>>>;
+	    Suffix_Multiset<Suffix, Extractor_Of_Appending_From_Affix<Suffix>>;
 	using Key_Type = typename Suffix_Multiset_Type::Key_Type;
 	using Vector_Type = typename Suffix_Multiset_Type::Vector_Type;
 	Suffix_Multiset_Type table;
@@ -1377,10 +1347,9 @@ class Suffix_Table {
  * @internal
  * @brief A pair of strings concatenated into one string.
  */
-template <class CharT>
 class String_Pair {
-	using Str = std::basic_string<CharT>;
-	using Str_View = std::basic_string_view<CharT>;
+	using Str = std::string;
+	using Str_View = std::string_view;
 	size_t i = 0;
 	Str s;
 
@@ -1417,12 +1386,9 @@ class String_Pair {
 	auto& str() const { return s; }
 	auto idx() const { return i; }
 };
-template <class CharT>
 struct Compound_Pattern {
-	using StrT = std::basic_string<CharT>;
-
-	String_Pair<CharT> begin_end_chars;
-	StrT replacement;
+	String_Pair begin_end_chars;
+	std::string replacement;
 	char16_t first_word_flag = 0;
 	char16_t second_word_flag = 0;
 	bool match_first_only_unaffixed_or_zero_affixed = false;
@@ -1634,7 +1600,6 @@ class Simple_Short_String {
 	auto size() const noexcept { return sz; }
 };
 using Short_String = Simple_Short_String<char>;
-using Short_WString = Simple_Short_String<wchar_t>;
 
 /**
  * @internal
@@ -2006,12 +1971,10 @@ auto swap(List_Basic_Strings<CharT>& a, List_Basic_Strings<CharT>& b)
 }
 
 using List_Strings = List_Basic_Strings<char>;
-using List_WStrings = List_Basic_Strings<wchar_t>;
 
-template <class CharT>
 class Replacement_Table {
       public:
-	using Str = std::basic_string<CharT>;
+	using Str = std::string;
 	using Table_Str = std::vector<std::pair<Str, Str>>;
 	using iterator = typename Table_Str::iterator;
 	using const_iterator = typename Table_Str::const_iterator;
@@ -2068,8 +2031,7 @@ class Replacement_Table {
 		return {begin(table) + end_word_reps_last_idx, end(table)};
 	}
 };
-template <class CharT>
-auto Replacement_Table<CharT>::order_entries() -> void
+auto inline Replacement_Table::order_entries() -> void
 {
 	auto it = remove_if(begin(table), end(table), [](auto& p) {
 		auto& s = p.first;
@@ -2100,9 +2062,8 @@ auto Replacement_Table<CharT>::order_entries() -> void
 	         [](auto& e) { e.first.pop_back(); });
 }
 
-template <class CharT>
 struct Similarity_Group {
-	using Str = std::basic_string<CharT>;
+	using Str = std::string;
 	Str chars;
 	std::vector<Str> strings;
 
@@ -2115,8 +2076,7 @@ struct Similarity_Group {
 		return *this;
 	}
 };
-template <class CharT>
-auto Similarity_Group<CharT>::parse(const Str& s) -> void
+auto inline Similarity_Group::parse(const Str& s) -> void
 {
 	auto i = size_t(0);
 	for (;;) {
@@ -2137,9 +2097,9 @@ auto Similarity_Group<CharT>::parse(const Str& s) -> void
 	}
 }
 
-template <class CharT>
 class Phonetic_Table {
-	using Str = std::basic_string<CharT>;
+	using Char_Type = char; // not aware of unicode
+	using Str = std::string;
 	using Pair_Str = std::pair<Str, Str>;
 
 	struct Phonet_Match_Result {
@@ -2181,8 +2141,7 @@ class Phonetic_Table {
 	auto replace(Str& word) const -> bool;
 };
 
-template <class CharT>
-auto Phonetic_Table<CharT>::order() -> void
+auto inline Phonetic_Table::order() -> void
 {
 	stable_sort(begin(table), end(table), [](auto& pair1, auto& pair2) {
 		if (pair2.first.empty())
@@ -2195,18 +2154,16 @@ auto Phonetic_Table<CharT>::order() -> void
 	                      [](auto& p) { return p.first.empty(); });
 	table.erase(begin(table), it);
 	for (auto& r : table) {
-		if (r.second == NUSPELL_LITERAL(CharT, "_"))
+		if (r.second == "_")
 			r.second.clear();
 	}
 }
 
-template <class CharT>
-auto Phonetic_Table<CharT>::match(const Str& data, size_t i, const Str& pattern,
+auto inline Phonetic_Table::match(const Str& data, size_t i, const Str& pattern,
                                   bool at_begin) -> Phonet_Match_Result
 {
 	auto ret = Phonet_Match_Result();
-	auto j =
-	    pattern.find_first_of(NUSPELL_LITERAL(CharT, "(<-0123456789^$"));
+	auto j = pattern.find_first_of("(<-0123456789^$");
 	if (j == pattern.npos)
 		j = pattern.size();
 	if (data.compare(i, j, pattern, 0, j) == 0)
@@ -2219,7 +2176,7 @@ auto Phonetic_Table<CharT>::match(const Str& data, size_t i, const Str& pattern,
 		auto k = pattern.find(')', j);
 		if (k == pattern.npos)
 			return {}; // bad rule
-		auto x = std::char_traits<CharT>::find(
+		auto x = std::char_traits<Char_Type>::find(
 		    &pattern[j + 1], k - (j + 1), data[i + j]);
 		if (!x)
 			return {};
@@ -2272,15 +2229,14 @@ auto Phonetic_Table<CharT>::match(const Str& data, size_t i, const Str& pattern,
 	return {};
 }
 
-template <class CharT>
-auto Phonetic_Table<CharT>::replace(Str& word) const -> bool
+auto inline Phonetic_Table::replace(Str& word) const -> bool
 {
 	struct Cmp {
-		auto operator()(CharT c, const Pair_Str& s)
+		auto operator()(Char_Type c, const Pair_Str& s)
 		{
 			return c < s.first[0];
 		}
-		auto operator()(const Pair_Str& s, CharT c)
+		auto operator()(const Pair_Str& s, Char_Type c)
 		{
 			return s.first[0] < c;
 		}

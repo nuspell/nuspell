@@ -121,18 +121,18 @@ struct NUSPELL_EXPORT Aff_Data {
 	Compound_Rule_Table compound_rules;
 
 	// spell checking options
-	Break_Table<char> break_table;
-	Substr_Replacer<char> input_substr_replacer;
+	Break_Table break_table;
+	Substr_Replacer input_substr_replacer;
 	std::string ignored_chars;
 	icu::Locale icu_locale;
-	Substr_Replacer<char> output_substr_replacer;
+	Substr_Replacer output_substr_replacer;
 
 	// suggestion options
-	Replacement_Table<char> replacements;
-	std::vector<Similarity_Group<char>> similarities;
+	Replacement_Table replacements;
+	std::vector<Similarity_Group> similarities;
 	std::string keyboard_closeness;
 	std::string try_chars;
-	// Phonetic_Table<wchar_t> phonetic_table;
+	// Phonetic_Table phonetic_table;
 
 	char16_t nosuggest_flag;
 	char16_t substandard_flag;
@@ -159,7 +159,7 @@ struct NUSPELL_EXPORT Aff_Data {
 	bool compound_syllable_num;
 	unsigned short compound_syllable_max;
 	std::string compound_syllable_vowels;
-	std::vector<Compound_Pattern<char>> compound_patterns;
+	std::vector<Compound_Pattern> compound_patterns;
 
 	// data members used only while parsing
 	Flag_Type flag_type;

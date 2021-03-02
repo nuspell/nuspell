@@ -541,7 +541,7 @@ auto& operator>>(istream& in, Ref_Wrapper_1<pair<string, string>> x)
 	return in >> x.manip(x.data.first) >> x.manip(x.data.second);
 }
 
-auto& operator>>(istream& in, Ref_Wrapper_1<Condition<char>> x)
+auto& operator>>(istream& in, Ref_Wrapper_1<Condition> x)
 {
 	auto str = string();
 	in >> x.manip(str);
@@ -572,7 +572,7 @@ auto& operator>>(istream& in, Ref_Wrapper_2<string, char16_t> x)
 	return x.manip.parse_word_slash_single_flag(in, x.data1, x.data2);
 }
 
-auto& operator>>(istream& in, Ref_Wrapper_1<Compound_Pattern<char>> x)
+auto& operator>>(istream& in, Ref_Wrapper_1<Compound_Pattern> x)
 {
 	auto [manip, p] = x;
 	auto first_word_end = string();
@@ -694,8 +694,8 @@ auto parse_affix(istream& in, Aff_Line_IO_Manip& p, string& command,
 
 auto Aff_Data::parse_aff(istream& in) -> bool
 {
-	auto prefixes = vector<Prefix<char>>();
-	auto suffixes = vector<Suffix<char>>();
+	auto prefixes = vector<Prefix>();
+	auto suffixes = vector<Suffix>();
 	auto break_patterns = vector<string>();
 	auto break_exists = false;
 	auto input_conversion = vector<pair<string, string>>();
