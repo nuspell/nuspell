@@ -468,7 +468,7 @@ auto erase_chars(string& s, string_view erase_chars) -> void
 	if (erase_chars.empty())
 		return;
 	for (size_t i = 0, next_i = 0; i != size(s); i = next_i) {
-		valid_u8_advance_cp_index(s, next_i);
+		valid_u8_advance_index(s, next_i);
 		auto enc_cp = string_view(&s[i], next_i - i);
 		if (erase_chars.find(enc_cp) != erase_chars.npos) {
 			s.erase(i, next_i - i);
@@ -514,7 +514,7 @@ auto count_appereances_of(string_view haystack, string_view needles) -> size_t
 {
 	auto ret = size_t(0);
 	for (size_t i = 0, next_i = 0; i != size(haystack); i = next_i) {
-		valid_u8_advance_cp_index(haystack, next_i);
+		valid_u8_advance_index(haystack, next_i);
 		auto enc_cp = string_view(&haystack[i], next_i - i);
 		ret += needles.find(enc_cp) != needles.npos;
 	}

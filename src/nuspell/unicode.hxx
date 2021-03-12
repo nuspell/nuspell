@@ -48,7 +48,7 @@ auto u8_advance_cp(const Range& str, size_t& i, int32_t& cp) -> void
 }
 
 template <class Range>
-auto u8_advance_cp_index(const Range& str, size_t& i) -> void
+auto u8_advance_index(const Range& str, size_t& i) -> void
 {
 	using std::size;
 	auto len = size(str);
@@ -66,7 +66,7 @@ auto u8_reverse_cp(const Range& str, size_t& i, int32_t& cp) -> void
 }
 
 template <class Range>
-auto u8_reverse_cp_index(const Range& str, size_t& i) -> void
+auto u8_reverse_index(const Range& str, size_t& i) -> void
 {
 	using std::size, std::data;
 	auto ptr = data(str);
@@ -101,7 +101,7 @@ auto valid_u8_advance_cp(const Range& str, size_t& i, char32_t& cp) -> void
 }
 
 template <class Range>
-auto valid_u8_advance_cp_index(const Range& str, size_t& i) -> void
+auto valid_u8_advance_index(const Range& str, size_t& i) -> void
 {
 	U8_FWD_1_UNSAFE(str, i);
 }
@@ -113,7 +113,7 @@ auto valid_u8_reverse_cp(const Range& str, size_t& i, char32_t& cp) -> void
 }
 
 template <class Range>
-auto valid_u8_reverse_cp_index(const Range& str, size_t& i) -> void
+auto valid_u8_reverse_index(const Range& str, size_t& i) -> void
 {
 	U8_BACK_1_UNSAFE(str, i);
 }
@@ -139,7 +139,7 @@ auto u16_advance_cp(const Range& str, size_t& i, int32_t& cp) -> void
 }
 
 template <class Range>
-auto u16_advance_cp_index(const Range& str, size_t& i) -> void
+auto u16_advance_index(const Range& str, size_t& i) -> void
 {
 	using std::size;
 	auto len = size(str);
@@ -153,7 +153,7 @@ auto u16_reverse_cp(const Range& str, size_t& i, int32_t& cp) -> void
 }
 
 template <class Range>
-auto u16_reverse_cp_index(const Range& str, size_t& i) -> void
+auto u16_reverse_index(const Range& str, size_t& i) -> void
 {
 	U16_BACK_1(str, 0, i);
 }
@@ -176,7 +176,7 @@ auto valid_u16_advance_cp(const Range& str, size_t& i, char32_t& cp) -> void
 }
 
 template <class Range>
-auto valid_u16_advance_cp_index(const Range& str, size_t& i) -> void
+auto valid_u16_advance_index(const Range& str, size_t& i) -> void
 {
 	U16_FWD_1_UNSAFE(str, i);
 }
@@ -188,7 +188,7 @@ auto valid_u16_reverse_cp(const Range& str, size_t& i, char32_t& cp) -> void
 }
 
 template <class Range>
-auto valid_u16_reverse_cp_index(const Range& str, size_t& i) -> void
+auto valid_u16_reverse_index(const Range& str, size_t& i) -> void
 {
 	U16_BACK_1_UNSAFE(str, i);
 }
@@ -298,9 +298,9 @@ template <class Range>
 }
 
 template <class Range>
-[[nodiscard]] auto u8_next_cp_index(const Range& str, size_t i) -> size_t
+[[nodiscard]] auto u8_next_index(const Range& str, size_t i) -> size_t
 {
-	u8_advance_cp_index(str, i);
+	u8_advance_index(str, i);
 	return i;
 }
 
@@ -313,9 +313,9 @@ template <class Range>
 }
 
 template <class Range>
-[[nodiscard]] auto u8_prev_cp_index(const Range& str, size_t i) -> size_t
+[[nodiscard]] auto u8_prev_index(const Range& str, size_t i) -> size_t
 {
-	u8_reverse_cp_index(str, i);
+	u8_reverse_index(str, i);
 	return i;
 }
 
@@ -350,9 +350,9 @@ template <class Range>
 }
 
 template <class Range>
-[[nodiscard]] auto valid_u8_next_cp_index(const Range& str, size_t i) -> size_t
+[[nodiscard]] auto valid_u8_next_index(const Range& str, size_t i) -> size_t
 {
-	valid_u8_advance_cp_index(str, i);
+	valid_u8_advance_index(str, i);
 	return i;
 }
 
@@ -366,9 +366,9 @@ template <class Range>
 }
 
 template <class Range>
-[[nodiscard]] auto valid_u8_prev_cp_index(const Range& str, size_t i) -> size_t
+[[nodiscard]] auto valid_u8_prev_index(const Range& str, size_t i) -> size_t
 {
-	valid_u8_reverse_cp_index(str, i);
+	valid_u8_reverse_index(str, i);
 	return i;
 }
 
@@ -414,7 +414,7 @@ struct UTF16_Traits {
 	auto static encode_valid(char32_t cp) -> Encoded_CP { return cp; }
 	auto static move_back_valid_cp(String_View s, size_t& i) -> void
 	{
-		valid_u16_reverse_cp_index(s, i);
+		valid_u16_reverse_index(s, i);
 	}
 };
 
@@ -479,7 +479,7 @@ struct UTF_Traits<char> {
 	auto static encode_valid(char32_t cp) -> Encoded_CP { return cp; }
 	auto static move_back_valid_cp(String_View s, size_t& i) -> void
 	{
-		valid_u8_reverse_cp_index(s, i);
+		valid_u8_reverse_index(s, i);
 	}
 };
 
