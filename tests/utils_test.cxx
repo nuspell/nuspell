@@ -47,24 +47,24 @@ TEST_CASE("is_all_bmp", "[locale_utils]")
 
 TEST_CASE("wide_to_utf8", "[locale_utils]")
 {
-	CHECK("abгшß" == wide_to_utf8(L"abгшß"));
-	CHECK("\U0010FFFF" == wide_to_utf8(L"\U0010FFFF"));
-	CHECK("\U0010FFFF\U0010FF12" == wide_to_utf8(L"\U0010FFFF\U0010FF12"));
-	CHECK("\U0010FFFF ß" == wide_to_utf8(L"\U0010FFFF ß"));
+	CHECK("abгшß" == utf32_to_utf8(U"abгшß"));
+	CHECK("\U0010FFFF" == utf32_to_utf8(U"\U0010FFFF"));
+	CHECK("\U0010FFFF\U0010FF12" == utf32_to_utf8(U"\U0010FFFF\U0010FF12"));
+	CHECK("\U0010FFFF ß" == utf32_to_utf8(U"\U0010FFFF ß"));
 
 	auto in =
-	    wstring(L"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59");
+	    u32string(U"\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59");
 	auto out = string();
-	wide_to_utf8(in, out);
+	utf32_to_utf8(in, out);
 	CHECK("\U00011D59\U00011D59\U00011D59\U00011D59\U00011D59" == out);
 
-	in.assign(256, L'a');
-	in += L"\U0010FFFF";
+	in.assign(256, U'a');
+	in += U'\U0010FFFF';
 	out.clear();
 	out.shrink_to_fit();
 	auto exp = string(256, 'a');
 	exp += "\U0010FFFF";
-	wide_to_utf8(in, out);
+	utf32_to_utf8(in, out);
 	CHECK(exp == out);
 }
 

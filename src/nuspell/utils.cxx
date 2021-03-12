@@ -138,43 +138,32 @@ auto static utf_to_utf_replace_err(std::basic_string_view<InChar> in,
 	return utf_to_utf<Utf_Error_Handling::REPLACE>(in, out);
 }
 
-auto wide_to_utf8(std::wstring_view in, std::string& out) -> void
+auto utf32_to_utf8(std::u32string_view in, std::string& out) -> void
 {
-#if U_SIZEOF_WCHAR_T == 4
 	valid_utf_to_utf(in, out);
-#else
-	// TODO: remove the ifdefs once we move to char32_t
-	// This is needed for Windows, as there, wchar_t strings are UTF-16 and
-	// in our suggestion routines, where we operate on single wchar_t values
-	// (code units), we can easlt get faulty surrogate pair.
-	// On Linux where wchar_t is UTF-32, a single code unit (single wchar_t
-	// value) is also a code point and there (on Linux) we can assume all
-	// wchar_t strings are always valid.
-	utf_to_utf_replace_err(in, out);
-#endif
 }
-auto wide_to_utf8(std::wstring_view in) -> std::string
+auto utf32_to_utf8(std::u32string_view in) -> std::string
 {
 	auto out = string();
-	wide_to_utf8(in, out);
+	utf32_to_utf8(in, out);
 	return out;
 }
 
-auto utf8_to_wide(std::string_view in, std::wstring& out) -> bool
+auto valid_utf8_to_32(std::string_view in, std::u32string& out) -> void
 {
-	return utf_to_utf_replace_err(in, out);
+	valid_utf_to_utf(in, out);
 }
-auto utf8_to_wide(std::string_view in) -> std::wstring
+auto valid_utf8_to_32(std::string_view in) -> std::u32string
 {
-	auto out = wstring();
-	utf_to_utf_replace_err(in, out);
+	auto out = u32string();
+	valid_utf8_to_32(in, out);
 	return out;
 }
 
 auto utf8_to_16(std::string_view in) -> std::u16string
 {
 	auto out = u16string();
-	utf_to_utf_replace_err(in, out);
+	utf8_to_16(in, out);
 	return out;
 }
 
@@ -234,25 +223,16 @@ auto to_upper_ascii(std::string& s) -> void
 	char_type.toupper(begin_ptr(s), end_ptr(s));
 }
 
-auto static wide_to_icu(wstring_view in) -> icu::UnicodeString
+auto static utf32_to_icu(u32string_view in) -> icu::UnicodeString
 {
-#if U_SIZEOF_WCHAR_T == 2
-	// TODO: consider using aliasing features of UnicodeString
-	return icu::UnicodeString(in.data(), in.size());
-#elif U_SIZEOF_WCHAR_T == 4
+	static_assert(sizeof(UChar32) == sizeof(char32_t));
 	return icu::UnicodeString::fromUTF32(
 	    reinterpret_cast<const UChar32*>(in.data()), in.size());
-#else
-#error "wchar_t can not fit utf-16 or utf-32"
-#endif
 }
-auto static icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool
+auto static icu_to_utf32(const icu::UnicodeString& in, std::u32string& out)
+    -> bool
 {
 	out.resize(in.length());
-#if U_SIZEOF_WCHAR_T == 2
-	in.extract(0, in.length(), out.data());
-	return true;
-#elif U_SIZEOF_WCHAR_T == 4
 	auto err = U_ZERO_ERROR;
 	auto len =
 	    in.toUTF32(reinterpret_cast<UChar32*>(out.data()), out.size(), err);
@@ -262,7 +242,6 @@ auto static icu_to_wide(const icu::UnicodeString& in, std::wstring& out) -> bool
 	}
 	out.clear();
 	return false;
-#endif
 }
 
 auto to_upper(std::string_view in, const icu::Locale& loc) -> std::string
@@ -284,24 +263,12 @@ auto to_lower(std::string_view in, const icu::Locale& loc) -> std::string
 	return out;
 }
 
-auto to_upper(wstring_view in, const icu::Locale& loc, wstring& out) -> void
-{
-	auto us = wide_to_icu(in);
-	us.toUpper(loc);
-	icu_to_wide(us, out);
-}
 auto to_upper(string_view in, const icu::Locale& loc, string& out) -> void
 {
 	auto us = icu::UnicodeString::fromUTF8(in);
 	us.toUpper(loc);
 	out.clear();
 	us.toUTF8String(out);
-}
-auto to_title(wstring_view in, const icu::Locale& loc, wstring& out) -> void
-{
-	auto us = wide_to_icu(in);
-	us.toTitle(nullptr, loc);
-	icu_to_wide(us, out);
 }
 auto to_title(string_view in, const icu::Locale& loc, string& out) -> void
 {
@@ -310,11 +277,11 @@ auto to_title(string_view in, const icu::Locale& loc, string& out) -> void
 	out.clear();
 	us.toUTF8String(out);
 }
-auto to_lower(wstring_view in, const icu::Locale& loc, wstring& out) -> void
+auto to_lower(u32string_view in, const icu::Locale& loc, u32string& out) -> void
 {
-	auto us = wide_to_icu(in);
+	auto us = utf32_to_icu(in);
 	us.toLower(loc);
-	icu_to_wide(us, out);
+	icu_to_utf32(us, out);
 }
 auto to_lower(string_view in, const icu::Locale& loc, string& out) -> void
 {

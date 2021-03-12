@@ -2180,8 +2180,7 @@ auto Dict_Base::suggest_priv(std::string& word, List_Strings& out) const -> void
 		else
 			to_lower(backup, icu_locale, word);
 		auto old_size = out.size();
-		auto wide_word = utf8_to_wide(word);
-		ngram_suggest(wide_word, out);
+		ngram_suggest(word, out);
 		if (casing == Casing::ALL_CAPITAL) {
 			for (auto i = old_size; i != out.size(); ++i)
 				to_upper(out[i], icu_locale, out[i]);
@@ -2735,7 +2734,7 @@ auto Dict_Base::two_words_suggest(std::string& word, List_Strings& out) const
 }
 
 namespace {
-auto ngram_similarity_low_level(size_t n, wstring_view a, wstring_view b)
+auto ngram_similarity_low_level(size_t n, u32string_view a, u32string_view b)
     -> ptrdiff_t
 {
 	auto score = ptrdiff_t(0);
@@ -2754,8 +2753,8 @@ auto ngram_similarity_low_level(size_t n, wstring_view a, wstring_view b)
 	}
 	return score;
 }
-auto ngram_similarity_weighted_low_level(size_t n, wstring_view a,
-                                         wstring_view b) -> ptrdiff_t
+auto ngram_similarity_weighted_low_level(size_t n, u32string_view a,
+                                         u32string_view b) -> ptrdiff_t
 {
 	auto score = ptrdiff_t(0);
 	n = min(n, a.size());
@@ -2778,7 +2777,7 @@ auto ngram_similarity_weighted_low_level(size_t n, wstring_view a,
 	return score;
 }
 
-auto ngram_similarity_longer_worse(size_t n, wstring_view a, wstring_view b)
+auto ngram_similarity_longer_worse(size_t n, u32string_view a, u32string_view b)
     -> ptrdiff_t
 {
 	if (b.empty())
@@ -2789,7 +2788,7 @@ auto ngram_similarity_longer_worse(size_t n, wstring_view a, wstring_view b)
 		score -= d;
 	return score;
 }
-auto ngram_similarity_any_mismatch(size_t n, wstring_view a, wstring_view b)
+auto ngram_similarity_any_mismatch(size_t n, u32string_view a, u32string_view b)
     -> ptrdiff_t
 {
 	if (b.empty())
@@ -2800,8 +2799,8 @@ auto ngram_similarity_any_mismatch(size_t n, wstring_view a, wstring_view b)
 		score -= d;
 	return score;
 }
-auto ngram_similarity_any_mismatch_weighted(size_t n, wstring_view a,
-                                            wstring_view b) -> ptrdiff_t
+auto ngram_similarity_any_mismatch_weighted(size_t n, u32string_view a,
+                                            u32string_view b) -> ptrdiff_t
 {
 	if (b.empty())
 		return 0;
@@ -2812,16 +2811,17 @@ auto ngram_similarity_any_mismatch_weighted(size_t n, wstring_view a,
 	return score;
 }
 
-auto left_common_substring_length(wstring_view a, wstring_view b) -> ptrdiff_t
+auto left_common_substring_length(u32string_view a, u32string_view b)
+    -> ptrdiff_t
 {
 	if (a.empty() || b.empty())
 		return 0;
-	if (a[0] != b[0] && a[0] != u_tolower(b[0]))
+	if (a[0] != b[0] && UChar32(a[0]) != u_tolower(b[0]))
 		return 0;
 	auto it = std::mismatch(begin(a) + 1, end(a), begin(b) + 1, end(b));
 	return it.first - begin(a);
 }
-auto longest_common_subsequence_length(wstring_view a, wstring_view b,
+auto longest_common_subsequence_length(u32string_view a, u32string_view b,
                                        vector<size_t>& state_buffer)
     -> ptrdiff_t
 {
@@ -2848,7 +2848,7 @@ struct Count_Eq_Chars_At_Same_Pos_Result {
 	ptrdiff_t num;
 	bool is_swap;
 };
-auto count_eq_chars_at_same_pos(wstring_view a, wstring_view b)
+auto count_eq_chars_at_same_pos(u32string_view a, u32string_view b)
     -> Count_Eq_Chars_At_Same_Pos_Result
 {
 	auto n = min(a.size(), b.size());
@@ -2876,7 +2876,7 @@ struct Word_Entry_And_Score {
 	}
 };
 struct Word_And_Score {
-	wstring word = {};
+	u32string word = {};
 	ptrdiff_t score = {};
 	[[maybe_unused]] auto operator<(const Word_And_Score& rhs) const
 	{
@@ -2885,13 +2885,13 @@ struct Word_And_Score {
 };
 } // namespace
 
-auto Dict_Base::ngram_suggest(std::wstring& word, List_Strings& out) const
-    -> void
+auto Dict_Base::ngram_suggest(const std::string& word_u8,
+                              List_Strings& out) const -> void
 {
-	auto backup = Short_WString(word);
-	auto wrong_word = wstring_view(backup);
+	auto const wrong_word = valid_utf8_to_32(word_u8);
+	auto wide_buf = u32string();
 	auto roots = vector<Word_Entry_And_Score>();
-	auto dict_word = wstring();
+	auto dict_word = u32string();
 	for (size_t bucket = 0; bucket != words.bucket_count(); ++bucket) {
 		for (auto& word_entry : words.bucket_data(bucket)) {
 			auto& [dict_word_u8, flags] = word_entry;
@@ -2900,10 +2900,10 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_Strings& out) const
 			    flags.contains(nosuggest_flag) ||
 			    flags.contains(compound_onlyin_flag))
 				continue;
-			utf8_to_wide(dict_word_u8, dict_word);
+			valid_utf8_to_32(dict_word_u8, dict_word);
 			auto score =
 			    left_common_substring_length(wrong_word, dict_word);
-			auto& lower_dict_word = word;
+			auto& lower_dict_word = wide_buf;
 			to_lower(dict_word, icu_locale, lower_dict_word);
 			score += ngram_similarity_longer_worse(3, wrong_word,
 			                                       lower_dict_word);
@@ -2921,7 +2921,7 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_Strings& out) const
 
 	auto threshold = ptrdiff_t();
 	for (auto k : {1u, 2u, 3u}) {
-		auto& mangled_wrong_word = word;
+		auto& mangled_wrong_word = wide_buf;
 		mangled_wrong_word = wrong_word;
 		for (size_t i = k; i < mangled_wrong_word.size(); i += 4)
 			mangled_wrong_word[i] = '*';
@@ -2930,16 +2930,18 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_Strings& out) const
 	}
 	threshold /= 3;
 
-	auto expanded_list = List_WStrings();
+	auto expanded_list = List_Strings();
 	auto expanded_cross_afx = vector<bool>();
+	auto expanded_word = u32string();
 	auto guess_words = vector<Word_And_Score>();
 	for (auto& root : roots) {
-		expand_root_word_for_ngram(*root.word_entry, wrong_word,
+		expand_root_word_for_ngram(*root.word_entry, word_u8,
 		                           expanded_list, expanded_cross_afx);
-		for (auto& expanded_word : expanded_list) {
+		for (auto& expanded_word_u8 : expanded_list) {
+			valid_utf8_to_32(expanded_word_u8, expanded_word);
 			auto score = left_common_substring_length(
 			    wrong_word, expanded_word);
-			auto& lower_expanded_word = word;
+			auto& lower_expanded_word = wide_buf;
 			to_lower(expanded_word, icu_locale,
 			         lower_expanded_word);
 			score += ngram_similarity_any_mismatch(
@@ -2964,7 +2966,7 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_Strings& out) const
 
 	auto lcs_state = vector<size_t>();
 	for (auto& [guess_word, score] : guess_words) {
-		auto& lower_guess_word = word;
+		auto& lower_guess_word = wide_buf;
 		to_lower(guess_word, icu_locale, lower_guess_word);
 		auto lcs = longest_common_subsequence_length(
 		    wrong_word, lower_guess_word, lcs_state);
@@ -2999,7 +3001,6 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_Strings& out) const
 		        (10 - max_diff_factor))
 			score -= 1000;
 	}
-	word = wrong_word;
 
 	sort(begin(guess_words), end(guess_words));
 
@@ -3016,7 +3017,7 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_Strings& out) const
 		if (score < -100 &&
 		    (old_num_sugs != out.size() || only_max_diff))
 			break;
-		auto guess_word_u8 = wide_to_utf8(guess_word);
+		auto guess_word_u8 = utf32_to_utf8(guess_word);
 		if (any_of(begin(out), end(out),
 		           [&g = guess_word_u8](auto& sug) {
 			           return g.find(sug) != g.npos;
@@ -3031,14 +3032,12 @@ auto Dict_Base::ngram_suggest(std::wstring& word, List_Strings& out) const
 }
 
 auto Dict_Base::expand_root_word_for_ngram(
-    Word_List::const_reference root_entry, std::wstring_view wrong,
-    List_WStrings& expanded_list, std::vector<bool>& cross_affix) const -> void
+    Word_List::const_reference root_entry, std::string_view wrong,
+    List_Strings& expanded_list, std::vector<bool>& cross_affix) const -> void
 {
 	expanded_list.clear();
 	cross_affix.clear();
-	auto& [root_u8, flags] = root_entry;
-	auto root = utf8_to_wide(root_u8);
-	auto wrong_u8 = wide_to_utf8(wrong);
+	auto& [root, flags] = root_entry;
 	if (!flags.contains(need_affix_flag)) {
 		expanded_list.push_back(root);
 		cross_affix.push_back(false);
@@ -3055,18 +3054,17 @@ auto Dict_Base::expand_root_word_for_ngram(
 		// TODO Suffixes marked with needaffix or circumfix should not
 		// be just skipped as we can later add prefix. This is not
 		// handled in hunspell, too.
-		if (!ends_with(root_u8, suffix.stripping))
+		if (!ends_with(root, suffix.stripping))
 			continue;
-		if (!suffix.check_condition(root_u8))
+		if (!suffix.check_condition(root))
 			continue;
 
 		if (!suffix.appending.empty() &&
-		    !ends_with(wrong_u8, suffix.appending))
+		    !ends_with(wrong, suffix.appending))
 			continue;
 
-		auto expanded = root_u8;
-		suffix.to_derived(expanded);
-		expanded_list.push_back(utf8_to_wide(expanded));
+		auto expanded = suffix.to_derived_copy(root);
+		expanded_list.push_back(move(expanded));
 		cross_affix.push_back(suffix.cross_product);
 	}
 
@@ -3076,25 +3074,23 @@ auto Dict_Base::expand_root_word_for_ngram(
 
 		for (auto& prefix : prefixes) {
 			auto& root_sfx = expanded_list[i];
-			auto root_sfx_u8 = wide_to_utf8(root_sfx);
 			if (!cross_valid_inner_outer(flags, prefix))
 				continue;
 			if (outer_affix_NOT_valid<FULL_WORD>(prefix))
 				continue;
 			if (is_circumfix(prefix))
 				continue;
-			if (!begins_with(root_sfx_u8, prefix.stripping))
+			if (!begins_with(root_sfx, prefix.stripping))
 				continue;
-			if (!prefix.check_condition(root_sfx_u8))
+			if (!prefix.check_condition(root_sfx))
 				continue;
 
 			if (!prefix.appending.empty() &&
-			    !begins_with(wrong_u8, prefix.appending))
+			    !begins_with(wrong, prefix.appending))
 				continue;
 
-			auto expanded = root_sfx_u8;
-			prefix.to_derived(expanded);
-			expanded_list.push_back(utf8_to_wide(expanded));
+			auto expanded = prefix.to_derived_copy(root_sfx);
+			expanded_list.push_back(move(expanded));
 		}
 	}
 
@@ -3105,18 +3101,17 @@ auto Dict_Base::expand_root_word_for_ngram(
 			continue;
 		if (is_circumfix(prefix))
 			continue;
-		if (!begins_with(root_u8, prefix.stripping))
+		if (!begins_with(root, prefix.stripping))
 			continue;
-		if (!prefix.check_condition(root_u8))
+		if (!prefix.check_condition(root))
 			continue;
 
 		if (!prefix.appending.empty() &&
-		    !begins_with(wrong_u8, prefix.appending))
+		    !begins_with(wrong, prefix.appending))
 			continue;
 
-		auto expanded = root_u8;
-		prefix.to_derived(expanded);
-		expanded_list.push_back(utf8_to_wide(expanded));
+		auto expanded = prefix.to_derived_copy(root);
+		expanded_list.push_back(move(expanded));
 	}
 }
 

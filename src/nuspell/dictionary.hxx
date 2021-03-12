@@ -358,11 +358,12 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	auto two_words_suggest(std::string& word, List_Strings& out) const
 	    -> void;
 
-	auto ngram_suggest(std::wstring& word, List_Strings& out) const -> void;
+	auto ngram_suggest(const std::string& word_u8, List_Strings& out) const
+	    -> void;
 
 	auto expand_root_word_for_ngram(Word_List::const_reference root,
-	                                std::wstring_view wrong,
-	                                List_WStrings& expanded_list,
+	                                std::string_view wrong,
+	                                List_Strings& expanded_list,
 	                                std::vector<bool>& cross_affix) const
 	    -> void;
 

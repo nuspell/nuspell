@@ -53,12 +53,12 @@ NUSPELL_EXPORT auto split_on_any_of(std::string_view s, const char* sep,
                                     std::vector<std::string>& out)
     -> std::vector<std::string>&;
 
-NUSPELL_EXPORT auto wide_to_utf8(std::wstring_view in, std::string& out)
+NUSPELL_EXPORT auto utf32_to_utf8(std::u32string_view in, std::string& out)
     -> void;
-NUSPELL_EXPORT auto wide_to_utf8(std::wstring_view in) -> std::string;
+NUSPELL_EXPORT auto utf32_to_utf8(std::u32string_view in) -> std::string;
 
-auto utf8_to_wide(std::string_view in, std::wstring& out) -> bool;
-auto utf8_to_wide(std::string_view in) -> std::wstring;
+auto valid_utf8_to_32(std::string_view in, std::u32string& out) -> void;
+auto valid_utf8_to_32(std::string_view in) -> std::u32string;
 
 auto utf8_to_16(std::string_view in) -> std::u16string;
 auto utf8_to_16(std::string_view in, std::u16string& out) -> bool;
@@ -84,16 +84,12 @@ auto to_upper_ascii(std::string& s) -> void;
                                            const icu::Locale& loc)
     -> std::string;
 
-auto to_upper(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
-    -> void;
 auto to_upper(std::string_view in, const icu::Locale& loc, std::string& out)
-    -> void;
-auto to_title(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
     -> void;
 auto to_title(std::string_view in, const icu::Locale& loc, std::string& out)
     -> void;
-auto to_lower(std::wstring_view in, const icu::Locale& loc, std::wstring& out)
-    -> void;
+auto to_lower(std::u32string_view in, const icu::Locale& loc,
+              std::u32string& out) -> void;
 auto to_lower(std::string_view in, const icu::Locale& loc, std::string& out)
     -> void;
 auto to_lower_char_at(std::string& s, size_t i, const icu::Locale& loc) -> void;
