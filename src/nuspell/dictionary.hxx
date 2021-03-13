@@ -352,7 +352,7 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	auto doubled_two_chars_suggest(std::string& word,
 	                               List_Strings& out) const -> void;
 
-	auto two_words_suggest(std::string& word, List_Strings& out) const
+	auto two_words_suggest(const std::string& word, List_Strings& out) const
 	    -> void;
 
 	auto ngram_suggest(const std::string& word_u8, List_Strings& out) const

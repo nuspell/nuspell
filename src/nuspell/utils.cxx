@@ -29,9 +29,6 @@
 
 #if ' ' != 32 || '.' != 46 || 'A' != 65 || 'Z' != 90 || 'a' != 97 || 'z' != 122
 #error "Basic execution character set is not ASCII"
-#elif L' ' != 32 || L'.' != 46 || L'A' != 65 || L'Z' != 90 || L'a' != 97 ||    \
-    L'z' != 122
-#error "Basic wide execution character set is not ASCII-compatible"
 #endif
 
 using namespace std;
@@ -90,57 +87,14 @@ auto split_on_any_of(std::string_view s, const char* sep,
 	return split_on_any_of_low(s, sep, out);
 }
 
-enum class Utf_Error_Handling { ALWAYS_VALID, REPLACE, SKIP };
-
-template <Utf_Error_Handling eh, class InChar, class OutChar>
-auto static utf_to_utf(std::basic_string_view<InChar> in,
-                       std::basic_string<OutChar>& out) -> bool
-{
-	using UEH = Utf_Error_Handling;
-
-	out.clear();
-	if (in.size() > out.capacity())
-		out.reserve(in.size());
-	auto valid = true;
-	for (size_t i = 0; i != in.size();) {
-		auto cp = int32_t();
-		if (eh == UEH::ALWAYS_VALID) {
-			cp = UTF_Traits<InChar>::decode_valid(in, i);
-		}
-		else {
-			cp = UTF_Traits<InChar>::decode(in, i);
-			if (unlikely(
-			        UTF_Traits<InChar>::is_decoded_cp_error(cp))) {
-				valid = false;
-				if (eh == UEH::SKIP)
-					continue;
-				else if (eh == UEH::REPLACE)
-					cp = 0xFFFD;
-			}
-		}
-		auto encoded_cp = UTF_Traits<OutChar>::encode_valid(cp);
-		out.append(encoded_cp.seq, encoded_cp.size);
-	}
-	return valid;
-}
-
-template <class InChar, class OutChar>
-auto static valid_utf_to_utf(std::basic_string_view<InChar> in,
-                             std::basic_string<OutChar>& out) -> void
-{
-	utf_to_utf<Utf_Error_Handling::ALWAYS_VALID>(in, out);
-}
-
-template <class InChar, class OutChar>
-auto static utf_to_utf_replace_err(std::basic_string_view<InChar> in,
-                                   std::basic_string<OutChar>& out) -> bool
-{
-	return utf_to_utf<Utf_Error_Handling::REPLACE>(in, out);
-}
-
 auto utf32_to_utf8(std::u32string_view in, std::string& out) -> void
 {
-	valid_utf_to_utf(in, out);
+	out.clear();
+	for (size_t i = 0; i != size(in); ++i) {
+		auto cp = in[i];
+		auto enc_cp = U8_Encoded_CP(cp);
+		out += enc_cp;
+	}
 }
 auto utf32_to_utf8(std::u32string_view in) -> std::string
 {
@@ -151,7 +105,12 @@ auto utf32_to_utf8(std::u32string_view in) -> std::string
 
 auto valid_utf8_to_32(std::string_view in, std::u32string& out) -> void
 {
-	valid_utf_to_utf(in, out);
+	out.clear();
+	for (size_t i = 0; i != size(in);) {
+		char32_t cp;
+		valid_u8_advance_cp(in, i, cp);
+		out.push_back(cp);
+	}
 }
 auto valid_utf8_to_32(std::string_view in) -> std::u32string
 {
@@ -169,7 +128,19 @@ auto utf8_to_16(std::string_view in) -> std::u16string
 
 bool utf8_to_16(std::string_view in, std::u16string& out)
 {
-	return utf_to_utf_replace_err(in, out);
+	int32_t len;
+	auto err = U_ZERO_ERROR;
+	u_strFromUTF8(data(out), size(out), &len, data(in), size(in), &err);
+	out.resize(len);
+	if (err == U_BUFFER_OVERFLOW_ERROR) {
+		err = U_ZERO_ERROR;
+		u_strFromUTF8(data(out), size(out), &len, data(in), size(in),
+		              &err);
+	}
+	if (U_SUCCESS(err))
+		return true;
+	out.clear();
+	return false;
 }
 
 bool validate_utf8(string_view s)
@@ -265,14 +236,16 @@ auto to_lower(std::string_view in, const icu::Locale& loc) -> std::string
 
 auto to_upper(string_view in, const icu::Locale& loc, string& out) -> void
 {
-	auto us = icu::UnicodeString::fromUTF8(in);
+	auto sp = icu::StringPiece(data(in), size(in));
+	auto us = icu::UnicodeString::fromUTF8(sp);
 	us.toUpper(loc);
 	out.clear();
 	us.toUTF8String(out);
 }
 auto to_title(string_view in, const icu::Locale& loc, string& out) -> void
 {
-	auto us = icu::UnicodeString::fromUTF8(in);
+	auto sp = icu::StringPiece(data(in), size(in));
+	auto us = icu::UnicodeString::fromUTF8(sp);
 	us.toTitle(nullptr, loc);
 	out.clear();
 	us.toUTF8String(out);
@@ -285,7 +258,8 @@ auto to_lower(u32string_view in, const icu::Locale& loc, u32string& out) -> void
 }
 auto to_lower(string_view in, const icu::Locale& loc, string& out) -> void
 {
-	auto us = icu::UnicodeString::fromUTF8(in);
+	auto sp = icu::StringPiece(data(in), size(in));
+	auto us = icu::UnicodeString::fromUTF8(sp);
 	us.toLower(loc);
 	out.clear();
 	us.toUTF8String(out);
@@ -411,7 +385,6 @@ auto Encoding_Converter::to_utf8(string_view in, string& out) -> bool
 		}
 	}
 	auto err = U_ZERO_ERROR;
-	out.resize(out.capacity());
 	auto len = ucnv_toAlgorithmic(UCNV_UTF8, cnv, out.data(), out.size(),
 	                              in.data(), in.size(), &err);
 	out.resize(len);

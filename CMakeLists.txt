@@ -7,7 +7,7 @@ option(BUILD_SHARED_LIBS "Build as shared library" ON)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-find_package(ICU REQUIRED COMPONENTS uc data)
+find_package(ICU 59 REQUIRED COMPONENTS uc data)
 
 get_directory_property(subproject PARENT_DIRECTORY)
 

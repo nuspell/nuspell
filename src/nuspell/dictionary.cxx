@@ -1648,7 +1648,7 @@ try_simplified_triple:
 	auto prev2_cp = valid_u8_prev_cp(word, prev_cp.begin_i);
 	if (prev_cp.cp != prev2_cp.cp)
 		return {};
-	auto const enc_cp = string(word, prev_cp.begin_i, i - prev_cp.begin_i);
+	auto const enc_cp = U8_Encoded_CP(prev_cp.cp);
 	word.insert(i, enc_cp);
 	AT_SCOPE_EXIT(word.erase(i, size(enc_cp)));
 	part.assign(word, i, word.npos);
@@ -1810,8 +1810,7 @@ auto Dict_Base::check_compound_with_pattern_replacements(
 		auto prev2_cp = valid_u8_prev_cp(word, prev_cp.begin_i);
 		if (prev_cp.cp != prev2_cp.cp)
 			continue;
-		auto const enc_cp =
-		    string(word, prev_cp.begin_i, i - prev_cp.begin_i);
+		auto const enc_cp = U8_Encoded_CP(prev_cp.cp);
 		word.insert(i, enc_cp);
 		AT_SCOPE_EXIT(word.erase(i, size(enc_cp)));
 		part.assign(word, i, word.npos);
@@ -2425,7 +2424,7 @@ auto Dict_Base::map_suggest(std::string& word, List_Strings& out,
 {
 	for (size_t next_i = i; i != size(word); i = next_i) {
 		valid_u8_advance_index(word, next_i);
-		auto word_cp = word.substr(i, next_i - i);
+		auto word_cp = U8_Encoded_CP(word, {i, next_i});
 		for (auto& e : similarities) {
 			auto j = e.chars.find(word_cp);
 			if (j == word.npos)
@@ -2479,13 +2478,11 @@ auto Dict_Base::map_suggest(std::string& word, List_Strings& out,
 auto Dict_Base::adjacent_swap_suggest(std::string& word,
                                       List_Strings& out) const -> void
 {
-	using std::swap;
 	if (word.empty())
 		return;
 
 	auto i1 = size_t(0);
 	auto i2 = valid_u8_next_index(word, i1);
-
 	for (size_t i3 = i2; i3 != size(word); i1 = i2, i2 = i3) {
 		valid_u8_advance_index(word, i3);
 		i2 = u8_swap_adjacent_cp(word, i1, i2, i3);
@@ -2600,17 +2597,13 @@ auto Dict_Base::forgotten_char_suggest(std::string& word,
 	for (size_t t = 0, next_t = 0; t != size(try_chars); t = next_t) {
 		valid_u8_advance_index(try_chars, next_t);
 		auto cp = string_view(&try_chars[t], next_t - t);
-		for (size_t i = 0, next_i = 0; i != size(word); i = next_i) {
-			valid_u8_advance_index(word, next_i);
+		for (size_t i = 0;; valid_u8_advance_index(word, i)) {
 			word.insert(i, cp);
 			add_sug_if_correct(word, out);
 			word.erase(i, size(cp));
+			if (i == size(word))
+				break;
 		}
-		// TODO: simplify this.
-		auto i = word.size();
-		word.insert(i, cp);
-		add_sug_if_correct(word, out);
-		word.erase(i, size(cp));
 	}
 }
 
@@ -2653,16 +2646,18 @@ auto Dict_Base::bad_char_suggest(std::string& word, List_Strings& out) const
     -> void
 {
 	for (size_t t = 0, next_t = 0; t != size(try_chars); t = next_t) {
-		valid_u8_advance_index(try_chars, next_t);
-		auto t_cp = string_view(&try_chars[t], next_t - t);
+		char32_t t_cp;
+		valid_u8_advance_cp(try_chars, next_t, t_cp);
+		auto t_enc_cp = string_view(&try_chars[t], next_t - t);
 		for (size_t i = 0, next_i = 0; i != size(word); i = next_i) {
-			valid_u8_advance_index(word, next_i);
-			auto w_cp = U8_Encoded_CP(word, {i, next_i});
+			char32_t w_cp;
+			valid_u8_advance_cp(word, next_i, w_cp);
+			auto w_enc_cp = U8_Encoded_CP(word, {i, next_i});
 			if (t_cp == w_cp)
 				continue;
-			word.replace(i, size(w_cp), t_cp);
+			word.replace(i, size(w_enc_cp), t_enc_cp);
 			add_sug_if_correct(word, out);
-			word.replace(i, size(t_cp), w_cp);
+			word.replace(i, size(t_enc_cp), w_enc_cp);
 		}
 	}
 }
@@ -2678,6 +2673,8 @@ auto Dict_Base::doubled_two_chars_suggest(std::string& word,
 		i[num_cp] = j;
 		valid_u8_advance_cp(word, j, cp[num_cp]);
 	}
+	if (num_cp != 4) // Not really needed. Makes static analysis happy.
+		return;
 	while (j != size(word)) {
 		i[4] = j;
 		valid_u8_advance_cp(word, j, cp[4]);
@@ -2691,8 +2688,8 @@ auto Dict_Base::doubled_two_chars_suggest(std::string& word,
 	}
 }
 
-auto Dict_Base::two_words_suggest(std::string& word, List_Strings& out) const
-    -> void
+auto Dict_Base::two_words_suggest(const std::string& word,
+                                  List_Strings& out) const -> void
 {
 	if (empty(word))
 		return;
