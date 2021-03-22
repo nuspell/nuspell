@@ -194,29 +194,27 @@ auto Dict_Base::spell_casing_upper(std::string& s) const -> const Flag_Set*
 		if (res)
 			return res;
 	}
-
-	auto backup = Short_String(s);
-	AT_SCOPE_EXIT(s = backup);
+	auto s2 = string();
 
 	// handle sharp s for German
 	if (checksharps && s.find("SS") != s.npos) {
-		to_lower(backup, loc, s);
-		res = spell_sharps(s);
+		to_lower(s, loc, s2);
+		res = spell_sharps(s2);
 		if (res)
 			return res;
 
-		to_title(backup, loc, s);
-		res = spell_sharps(s);
+		to_title(s, loc, s2);
+		res = spell_sharps(s2);
 		if (res)
 			return res;
 	}
-	to_title(backup, loc, s);
-	res = check_word(s, ALLOW_BAD_FORCEUCASE);
+	to_title(s, loc, s2);
+	res = check_word(s2, ALLOW_BAD_FORCEUCASE);
 	if (res && !res->contains(keepcase_flag))
 		return res;
 
-	to_lower(backup, loc, s);
-	res = check_word(s, ALLOW_BAD_FORCEUCASE);
+	to_lower(s, loc, s2);
+	res = check_word(s2, ALLOW_BAD_FORCEUCASE);
 	if (res && !res->contains(keepcase_flag))
 		return res;
 	return nullptr;
@@ -231,16 +229,15 @@ auto Dict_Base::spell_casing_title(std::string& s) const -> const Flag_Set*
 	if (res)
 		return res;
 
-	auto backup = Short_String(s);
-	to_lower(backup, loc, s);
-	res = check_word(s, ALLOW_BAD_FORCEUCASE);
+	auto s2 = string();
+	to_lower(s, loc, s2);
+	res = check_word(s2, ALLOW_BAD_FORCEUCASE);
 
 	// with CHECKSHARPS, ß is allowed too in KEEPCASE words with title case
 	if (res && res->contains(keepcase_flag) &&
-	    !(checksharps && (s.find("ß") != s.npos))) {
+	    !(checksharps && (s2.find("ß") != s.npos))) {
 		res = nullptr;
 	}
-	s = backup;
 	return res;
 }
 
@@ -2079,10 +2076,12 @@ auto& operator|=(Dict_Base::High_Quality_Sugs& lhs,
 	return lhs;
 }
 
-auto Dict_Base::suggest_priv(std::string& word, List_Strings& out) const -> void
+auto Dict_Base::suggest_priv(string_view input_word, List_Strings& out) const
+    -> void
 {
-	if (word.empty())
+	if (empty(input_word))
 		return;
+	auto word = string(input_word);
 	input_substr_replacer.replace(word);
 	auto abbreviation = word.back() == '.';
 	if (abbreviation) {
@@ -2093,24 +2092,23 @@ auto Dict_Base::suggest_priv(std::string& word, List_Strings& out) const -> void
 		if (word.empty())
 			return;
 	}
-	auto backup = Short_String(word);
+	auto buffer = string();
 	auto casing = classify_casing(word);
 	auto hq_sugs = High_Quality_Sugs();
 	switch (casing) {
 	case Casing::SMALL:
 		if (compound_force_uppercase &&
 		    check_compound(word, ALLOW_BAD_FORCEUCASE)) {
-			to_title(word, icu_locale, word);
-			out.push_back(word);
-			word = backup;
+			to_title(word, icu_locale, buffer);
+			out.push_back(buffer);
 			return;
 		}
 		hq_sugs |= suggest_low(word, out);
 		break;
 	case Casing::INIT_CAPITAL:
 		hq_sugs |= suggest_low(word, out);
-		to_lower(word, icu_locale, word);
-		hq_sugs |= suggest_low(word, out);
+		to_lower(word, icu_locale, buffer);
+		hq_sugs |= suggest_low(buffer, out);
 		break;
 	case Casing::CAMEL:
 	case Casing::PASCAL: {
@@ -2126,20 +2124,21 @@ auto Dict_Base::suggest_priv(std::string& word, List_Strings& out) const -> void
 			}
 		}
 		if (casing == Casing::PASCAL) {
-			to_lower_char_at(word, 0, icu_locale);
-			if (spell_priv(word))
-				insert_sug_first(word, out);
-			hq_sugs |= suggest_low(word, out);
+			buffer = word;
+			to_lower_char_at(buffer, 0, icu_locale);
+			if (spell_priv(buffer))
+				insert_sug_first(buffer, out);
+			hq_sugs |= suggest_low(buffer, out);
 		}
-		to_lower(backup, icu_locale, word);
-		if (spell_priv(word))
-			insert_sug_first(word, out);
-		hq_sugs |= suggest_low(word, out);
+		to_lower(word, icu_locale, buffer);
+		if (spell_priv(buffer))
+			insert_sug_first(buffer, out);
+		hq_sugs |= suggest_low(buffer, out);
 		if (casing == Casing::PASCAL) {
-			to_title(backup, icu_locale, word);
-			if (spell_priv(word))
-				insert_sug_first(word, out);
-			hq_sugs |= suggest_low(word, out);
+			to_title(word, icu_locale, buffer);
+			if (spell_priv(buffer))
+				insert_sug_first(buffer, out);
+			hq_sugs |= suggest_low(buffer, out);
 		}
 		for (auto it = begin(out); it != end(out); ++it) {
 			auto& sug = *it;
@@ -2148,10 +2147,9 @@ auto Dict_Base::suggest_priv(std::string& word, List_Strings& out) const -> void
 				continue;
 			auto i = space_idx + 1;
 			auto len = sug.size() - i;
-			if (len > backup.size())
+			if (len > word.size())
 				continue;
-			if (sug.compare(i, len, backup, backup.size() - len) ==
-			    0)
+			if (sug.compare(i, len, word, word.size() - len) == 0)
 				continue;
 			to_title_char_at(sug, i, icu_locale);
 			rotate(begin(out), it, it + 1);
@@ -2159,12 +2157,12 @@ auto Dict_Base::suggest_priv(std::string& word, List_Strings& out) const -> void
 		break;
 	}
 	case Casing::ALL_CAPITAL:
-		to_lower(backup, icu_locale, word);
-		if (keepcase_flag != 0 && spell_priv(word))
-			insert_sug_first(word, out);
-		hq_sugs |= suggest_low(word, out);
-		to_title(backup, icu_locale, word);
-		hq_sugs |= suggest_low(word, out);
+		to_lower(word, icu_locale, buffer);
+		if (keepcase_flag != 0 && spell_priv(buffer))
+			insert_sug_first(buffer, out);
+		hq_sugs |= suggest_low(buffer, out);
+		to_title(word, icu_locale, buffer);
+		hq_sugs |= suggest_low(buffer, out);
 		for (auto& sug : out)
 			to_upper(sug, icu_locale, sug);
 		break;
@@ -2172,19 +2170,18 @@ auto Dict_Base::suggest_priv(std::string& word, List_Strings& out) const -> void
 
 	if (!hq_sugs && max_ngram_suggestions != 0) {
 		if (casing == Casing::SMALL)
-			word = backup;
+			buffer = word;
 		else
-			to_lower(backup, icu_locale, word);
+			to_lower(word, icu_locale, buffer);
 		auto old_size = out.size();
-		ngram_suggest(word, out);
+		ngram_suggest(buffer, out);
 		if (casing == Casing::ALL_CAPITAL) {
 			for (auto i = old_size; i != out.size(); ++i)
 				to_upper(out[i], icu_locale, out[i]);
 		}
 	}
 
-	auto orig_word = string_view(backup);
-	auto has_dash = orig_word.find('-') != orig_word.npos;
+	auto has_dash = word.find('-') != word.npos;
 	auto has_dash_sug =
 	    has_dash && any_of(begin(out), end(out), [](const string& s) {
 		    return s.find('-') != s.npos;
@@ -2193,25 +2190,24 @@ auto Dict_Base::suggest_priv(std::string& word, List_Strings& out) const -> void
 		auto sugs_tmp = List_Strings();
 		auto i = size_t();
 		for (;;) {
-			auto j = orig_word.find('-', i);
-			word.assign(orig_word, i, j - i);
-			if (!spell_priv(word)) {
-				suggest_priv(word, sugs_tmp);
+			auto j = word.find('-', i);
+			buffer.assign(word, i, j - i);
+			if (!spell_priv(buffer)) {
+				suggest_priv(buffer, sugs_tmp);
 				for (auto& t : sugs_tmp) {
-					word = backup;
-					word.replace(i, j - i, t);
-					auto flg = check_word(word);
+					buffer = word;
+					buffer.replace(i, j - i, t);
+					auto flg = check_word(buffer);
 					if (!flg ||
 					    !flg->contains(forbiddenword_flag))
-						out.push_back(word);
+						out.push_back(buffer);
 				}
 			}
-			if (j == orig_word.npos)
+			if (j == word.npos)
 				break;
 			i = j + 1;
 		}
 	}
-	word = backup;
 
 	if (casing == Casing::INIT_CAPITAL || casing == Casing::PASCAL) {
 		for (auto& sug : out)
@@ -3167,13 +3163,12 @@ auto Dictionary::load_from_path(const std::string& file_path_without_extension)
  */
 auto Dictionary::spell(std::string_view word) const -> bool
 {
-	auto static thread_local word_buf = string();
 	auto ok_enc = validate_utf8(word);
 	if (unlikely(word.size() > 360))
 		return false;
 	if (unlikely(!ok_enc))
 		return false;
-	word_buf = word;
+	auto word_buf = string(word);
 	return spell_priv(word_buf);
 }
 
@@ -3185,17 +3180,13 @@ auto Dictionary::spell(std::string_view word) const -> bool
 auto Dictionary::suggest(std::string_view word,
                          std::vector<std::string>& out) const -> void
 {
-	auto static thread_local word_buf = string();
-	auto list = List_Strings(move(out));
-	list.clear();
+	out.clear();
 	auto ok_enc = validate_utf8(word);
 	if (unlikely(word.size() > 360))
 		return;
 	if (unlikely(!ok_enc))
 		return;
-	word_buf = word;
-	suggest_priv(word_buf, list);
-	out = list.extract_sequence();
+	suggest_priv(word, out);
 }
 } // namespace v5
 } // namespace nuspell

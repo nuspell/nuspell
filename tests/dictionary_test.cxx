@@ -634,8 +634,7 @@ TEST_CASE("Dictionary suggestions suggest_priv", "[dictionary]")
 	auto w = string("traal");
 	auto out_sug = List_Strings();
 	d.suggest_priv(w, out_sug);
-	auto out_sug2 = out_sug.extract_sequence();
-	CHECK(words == out_sug2);
+	CHECK(words == out_sug);
 }
 
 #if 0

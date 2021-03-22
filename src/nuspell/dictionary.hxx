@@ -307,7 +307,8 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 
 	    -> Compounding_Result;
 
-	auto suggest_priv(std::string& word, List_Strings& out) const -> void;
+	auto suggest_priv(std::string_view input_word, List_Strings& out) const
+	    -> void;
 
 	auto suggest_low(std::string& word, List_Strings& out) const
 	    -> High_Quality_Sugs;
