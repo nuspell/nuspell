@@ -146,8 +146,9 @@ class String_Set {
 	}
 
 	// non standard underlying storage access:
-	auto& data() const noexcept { return d; }
+	auto data() const noexcept -> const_pointer { return d.data(); }
 	operator const Str&() const noexcept { return d; }
+	auto& str() const noexcept { return d; }
 
 	// iterators:
 	iterator begin() noexcept { return d.begin(); }
@@ -600,6 +601,7 @@ class Hash_Multimap {
 			if (curr->first != key)
 				break;
 		}
+		++sz;
 		// insert after last
 		return bucket.insert_after(prev, move(value));
 	}
@@ -678,6 +680,7 @@ class Condition {
 	{
 		cond = condition;
 		num_cp = 0;
+		spans.clear();
 		construct();
 		return *this;
 	}
@@ -685,6 +688,7 @@ class Condition {
 	{
 		cond = std::move(condition);
 		num_cp = 0;
+		spans.clear();
 		construct();
 		return *this;
 	}
@@ -692,6 +696,7 @@ class Condition {
 	{
 		cond = condition;
 		num_cp = 0;
+		spans.clear();
 		construct();
 		return *this;
 	}

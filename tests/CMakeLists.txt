@@ -1,9 +1,4 @@
-add_executable(unit_test
-    aff_data_test.cxx
-    dictionary_test.cxx
-    structures_test.cxx
-    utils_test.cxx
-    catch_main.cxx)
+add_executable(unit_test unit_test.cxx catch_main.cxx)
 target_link_libraries(unit_test nuspell Catch2::Catch2)
 if (MSVC)
     target_compile_options(unit_test PRIVATE "/utf-8")
