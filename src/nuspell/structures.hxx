@@ -644,20 +644,8 @@ struct Condition_Exception : public std::runtime_error {
 class Condition {
 	using Str = std::string;
 	using Str_View = std::string_view;
-	enum Span_Type { NORMAL, DOT, ANY_OF, NONE_OF };
-	struct Span {
-		size_t pos = {};
-		size_t len = {};
-		Span_Type type = {};
-		Span() = default;
-		Span(size_t pos, size_t len, Span_Type type)
-		    : pos(pos), len(len), type(type)
-		{
-		}
-	};
 
 	Str cond;
-	std::vector<Span> spans; // pos, len, type
 	size_t num_cp = 0;
 
 	auto construct() -> void;
@@ -680,7 +668,6 @@ class Condition {
 	{
 		cond = condition;
 		num_cp = 0;
-		spans.clear();
 		construct();
 		return *this;
 	}
@@ -688,7 +675,6 @@ class Condition {
 	{
 		cond = std::move(condition);
 		num_cp = 0;
-		spans.clear();
 		construct();
 		return *this;
 	}
@@ -696,7 +682,6 @@ class Condition {
 	{
 		cond = condition;
 		num_cp = 0;
-		spans.clear();
 		construct();
 		return *this;
 	}
@@ -716,47 +701,35 @@ class Condition {
 };
 auto inline Condition::construct() -> void
 {
-	size_t i = 0;
-	for (; i != cond.size();) {
+	for (size_t i = 0; i != size(cond);) {
 		size_t j = cond.find_first_of("[].", i);
-		if (i != j) {
-			if (j == cond.npos)
-				j = size(cond);
-			spans.emplace_back(i, j - i, NORMAL);
-			do {
-				valid_u8_advance_index(cond, i);
-				++num_cp;
-			} while (i != j);
-			i = j;
-			if (i == size(cond))
-				break;
+		if (j == cond.npos)
+			j = size(cond);
+		while (i != j) {
+			valid_u8_advance_index(cond, i);
+			++num_cp;
 		}
+		if (i == size(cond))
+			break;
 		if (cond[i] == '.') {
-			spans.emplace_back(i, 1, DOT);
 			++num_cp;
 			++i;
 			continue;
 		}
-		if (cond[i] == ']') {
+		else if (cond[i] == ']') {
 			auto what =
 			    "closing bracket has no matching opening bracket";
 			throw Condition_Exception(what);
 		}
-		if (cond[i] == '[') {
+		else if (cond[i] == '[') {
 			++i;
-			if (i == cond.size()) {
+			if (i == size(cond)) {
 				auto what = "opening bracket has no matching "
 				            "closing bracket";
 				throw Condition_Exception(what);
 			}
-			Span_Type type;
-			if (cond[i] == '^') {
-				type = NONE_OF;
+			if (cond[i] == '^')
 				++i;
-			}
-			else {
-				type = ANY_OF;
-			}
 			j = cond.find(']', i);
 			if (j == i) {
 				auto what = "empty bracket expression";
@@ -767,7 +740,6 @@ auto inline Condition::construct() -> void
 				            "closing bracket";
 				throw Condition_Exception(what);
 			}
-			spans.emplace_back(i, j - i, type);
 			++num_cp;
 			i = j + 1;
 		}
@@ -776,49 +748,45 @@ auto inline Condition::construct() -> void
 
 auto inline Condition::match_prefix(Str_View s) const -> bool
 {
-	size_t i = 0;
-	for (auto& x : spans) {
-		using tr = typename Str::traits_type;
-		switch (x.type) {
-		case NORMAL:
-			if (i + x.len <= size(s) &&
-			    tr::compare(&s[i], &cond[x.pos], x.len) == 0)
-				i += x.len;
-			else
+	if (size(s) < num_cp)
+		return false;
+
+	auto s_i = size_t(0);
+	auto cond_i = size_t(0);
+	for (; s_i != size(s) && cond_i != size(cond); ++cond_i) {
+		auto s_cu = s[s_i];
+		auto cond_cu = cond[cond_i];
+		switch (cond_cu) {
+		default:
+			if (s_cu != cond_cu)
+				return false;
+			++s_i;
+			break;
+		case '.':
+			valid_u8_advance_index(s, s_i);
+			break;
+		case '[':
+			++cond_i;
+			cond_cu = cond[cond_i];
+			if (cond_cu == '^')
+				++cond_i;
+			char32_t str_cp;
+			valid_u8_advance_cp(s, s_i, str_cp);
+			auto found = false;
+			while (cond[cond_i] != ']') {
+				char32_t cond_cp;
+				valid_u8_advance_cp(cond, cond_i, cond_cp);
+				if (str_cp == cond_cp)
+					found = true;
+			}
+			if (cond_cu != '^' && !found)
+				return false;
+			if (cond_cu == '^' && found)
 				return false;
 			break;
-		case DOT:
-			if (i == size(s))
-				return false;
-			valid_u8_advance_index(s, i);
-			break;
-		case ANY_OF: {
-			if (i == size(s))
-				return false;
-			auto i1 = i;
-			valid_u8_advance_index(s, i);
-			auto i2 = i;
-			auto encoded_cp = s.substr(i1, i2 - i1);
-			if (Str_View(&cond[x.pos], x.len).find(encoded_cp) ==
-			    Str_View::npos)
-				return false;
-			break;
-		}
-		case NONE_OF: {
-			if (i == size(s))
-				return false;
-			auto i1 = i;
-			valid_u8_advance_index(s, i);
-			auto i2 = i;
-			auto encoded_cp = s.substr(i1, i2 - i1);
-			if (Str_View(&cond[x.pos], x.len).find(encoded_cp) !=
-			    Str_View::npos)
-				return false;
-			break;
-		}
 		}
 	}
-	return true;
+	return cond_i == size(cond);
 }
 
 struct Prefix {
