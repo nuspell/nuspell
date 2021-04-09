@@ -545,8 +545,8 @@ class Hash_Multimap {
 
 	Hash_Multimap() = default;
 
-	auto size() const { return sz; }
-	auto empty() const { return size() == 0; }
+	auto size() const noexcept { return sz; }
+	auto empty() const noexcept { return size() == 0; }
 
 	auto rehash(size_t count)
 	{
@@ -578,14 +578,14 @@ class Hash_Multimap {
 		rehash(std::ceil(count / max_load_fact));
 	}
 
-	auto insert(value_type&& value)
+      private:
+	auto prepare_for_insert(const key_type& key)
+	    -> std::pair<bucket_type&, local_iterator>
 	{
-		using namespace std;
 		auto hash = hasher();
 		if (sz == max_load_factor_capacity) {
 			reserve(sz + 1);
 		}
-		auto&& key = value.first;
 		auto h = hash(key);
 		auto h_mod = h & (data.size() - 1);
 		auto& bucket = data[h_mod];
@@ -602,19 +602,30 @@ class Hash_Multimap {
 				break;
 		}
 		++sz;
-		// insert after last
-		return bucket.insert_after(prev, move(value));
+		return {bucket, prev};
+	}
+
+      public:
+	auto insert(value_type&& value)
+	{
+		auto& key = value.first;
+		auto [bucket, it] = prepare_for_insert(key);
+		return bucket.insert_after(it, move(value));
 	}
 	template <class... Args>
 	auto emplace(Args&&... a)
 	{
-		return insert(value_type(std::forward<Args>(a)...));
+		auto node = bucket_type();
+		auto& val = node.emplace_front(std::forward<Args>(a)...);
+		auto& key = val.first;
+		auto [bucket, it] = prepare_for_insert(key);
+		bucket.splice_after(it, node, node.before_begin());
+		return next(it);
 	}
 
 	auto equal_range(const key_type& key) const
 	    -> std::pair<local_const_iterator, local_const_iterator>
 	{
-		using namespace std;
 		auto hash = hasher();
 		if (data.empty())
 			return {};
