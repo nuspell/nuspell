@@ -615,6 +615,8 @@ int main(int argc, char* argv[])
 	char* loc_str = nullptr;
 #ifdef _WIN32
 	loc_str = setlocale(LC_CTYPE, nullptr); // will return "C"
+	SetConsoleCP(GetACP());
+	SetConsoleOutputCP(GetACP());
 
 	/* On Windows, the console is a buggy thing. If the default C locale is
 	active, then the encoding of the strings gotten from C or C++ stdio
