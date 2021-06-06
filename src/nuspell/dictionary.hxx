@@ -326,8 +326,12 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 
 	auto is_rep_similar(std::string& word) const -> bool;
 
-	auto map_suggest(std::string& word, List_Strings& out,
-	                 size_t i = 0) const -> void;
+	auto max_attempts_for_long_alogs(std::string_view word) const -> size_t;
+
+	auto map_suggest(std::string& word, List_Strings& out) const -> void;
+
+	auto map_suggest(std::string& word, List_Strings& out, size_t i,
+	                 size_t& remaining_attempts) const -> void;
 
 	auto adjacent_swap_suggest(std::string& word, List_Strings& out) const
 	    -> void;

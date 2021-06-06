@@ -2415,8 +2415,23 @@ auto Dict_Base::is_rep_similar(std::string& word) const -> bool
 	return false;
 }
 
-auto Dict_Base::map_suggest(std::string& word, List_Strings& out,
-                            size_t i) const -> void
+auto Dict_Base::max_attempts_for_long_alogs(string_view word) const -> size_t
+{
+	auto ret = 10'000'000 / size(word);
+	if (compound_flag || compound_begin_flag || compound_last_flag ||
+	    compound_middle_flag)
+		ret /= size(word);
+	return ret;
+}
+
+auto Dict_Base::map_suggest(std::string& word, List_Strings& out) const -> void
+{
+	auto remaining_attempts = max_attempts_for_long_alogs(word);
+	map_suggest(word, out, 0, remaining_attempts);
+}
+
+auto Dict_Base::map_suggest(std::string& word, List_Strings& out, size_t i,
+                            size_t& remaining_attempts) const -> void
 {
 	for (size_t next_i = i; i != size(word); i = next_i) {
 		valid_u8_advance_index(word, next_i);
@@ -2430,17 +2445,25 @@ auto Dict_Base::map_suggest(std::string& word, List_Strings& out,
 				valid_u8_advance_index(e.chars, next_k);
 				if (k == j)
 					continue;
+				if (remaining_attempts == 0)
+					return;
+				--remaining_attempts;
 				auto rep_cp =
 				    string_view(&e.chars[k], next_k - k);
 				word.replace(i, size(word_cp), rep_cp);
 				add_sug_if_correct(word, out);
-				map_suggest(word, out, i + size(rep_cp));
+				map_suggest(word, out, i + size(rep_cp),
+				            remaining_attempts);
 				word.replace(i, size(rep_cp), word_cp);
 			}
 			for (auto& r : e.strings) {
+				if (remaining_attempts == 0)
+					return;
+				--remaining_attempts;
 				word.replace(i, size(word_cp), r);
 				add_sug_if_correct(word, out);
-				map_suggest(word, out, i + size(r));
+				map_suggest(word, out, i + size(r),
+				            remaining_attempts);
 				word.replace(i, size(r), word_cp);
 			}
 		try_find_strings:
@@ -2449,21 +2472,28 @@ auto Dict_Base::map_suggest(std::string& word, List_Strings& out,
 					continue;
 				for (size_t k = 0, next_k = 0;
 				     k != size(e.chars); k = next_k) {
+					if (remaining_attempts == 0)
+						return;
+					--remaining_attempts;
 					valid_u8_advance_index(e.chars, next_k);
 					auto rep_cp = string_view(&e.chars[k],
 					                          next_k - k);
 					word.replace(i, size(f), rep_cp);
 					add_sug_if_correct(word, out);
-					map_suggest(word, out,
-					            i + size(rep_cp));
+					map_suggest(word, out, i + size(rep_cp),
+					            remaining_attempts);
 					word.replace(i, size(rep_cp), f);
 				}
 				for (auto& r : e.strings) {
 					if (f == r)
 						continue;
+					if (remaining_attempts == 0)
+						return;
+					--remaining_attempts;
 					word.replace(i, size(f), r);
 					add_sug_if_correct(word, out);
-					map_suggest(word, out, i + size(r));
+					map_suggest(word, out, i + size(r),
+					            remaining_attempts);
 					word.replace(i, size(r), f);
 				}
 			}
@@ -2524,12 +2554,16 @@ auto Dict_Base::distant_swap_suggest(std::string& word, List_Strings& out) const
 {
 	if (empty(word))
 		return;
+	auto remaining_attempts = max_attempts_for_long_alogs(word);
 	auto i1 = size_t(0);
 	auto i2 = valid_u8_next_index(word, i1);
 	for (auto i3 = i2; i3 != size(word); i1 = i2, i2 = i3) {
 		valid_u8_advance_index(word, i3);
 		for (size_t j = i3, j2 = i3; j != size(word); j = j2) {
 			valid_u8_advance_index(word, j2);
+			if (remaining_attempts == 0)
+				return;
+			--remaining_attempts;
 			auto [new_i2, new_j] =
 			    u8_swap_cp(word, {i1, i2}, {j, j2});
 			add_sug_if_correct(word, out);
@@ -2590,10 +2624,14 @@ auto Dict_Base::extra_char_suggest(std::string& word, List_Strings& out) const
 auto Dict_Base::forgotten_char_suggest(std::string& word,
                                        List_Strings& out) const -> void
 {
+	auto remaining_attempts = max_attempts_for_long_alogs(word);
 	for (size_t t = 0, next_t = 0; t != size(try_chars); t = next_t) {
 		valid_u8_advance_index(try_chars, next_t);
 		auto cp = string_view(&try_chars[t], next_t - t);
 		for (size_t i = 0;; valid_u8_advance_index(word, i)) {
+			if (remaining_attempts == 0)
+				return;
+			--remaining_attempts;
 			word.insert(i, cp);
 			add_sug_if_correct(word, out);
 			word.erase(i, size(cp));
@@ -2608,7 +2646,7 @@ auto Dict_Base::move_char_suggest(std::string& word, List_Strings& out) const
 {
 	if (empty(word))
 		return;
-
+	auto remaining_attempts = max_attempts_for_long_alogs(word);
 	auto i1 = size_t(0);
 	auto i2 = valid_u8_next_index(word, i1);
 	for (auto i3 = i2; i3 != size(word); i1 = i2, i2 = i3) {
@@ -2617,9 +2655,17 @@ auto Dict_Base::move_char_suggest(std::string& word, List_Strings& out) const
 		for (auto j1 = new_i2, j2 = i3, j3 = i3; j3 != size(word);
 		     j1 = j2, j2 = j3) {
 			valid_u8_advance_index(word, j3);
+			if (remaining_attempts == 0) {
+				// revert word to initial value
+				rotate(begin(word) + i1, begin(word) + j1,
+				       begin(word) + j2);
+				return;
+			}
+			--remaining_attempts;
 			j2 = u8_swap_adjacent_cp(word, j1, j2, j3);
 			add_sug_if_correct(word, out);
 		}
+		// revert word to initial value
 		rotate(begin(word) + i1, end(word) - (i2 - i1), end(word));
 	}
 
@@ -2631,9 +2677,17 @@ auto Dict_Base::move_char_suggest(std::string& word, List_Strings& out) const
 		for (auto j3 = new_i2, j2 = i1, j1 = i1; j1 != 0;
 		     j3 = j2, j2 = j1) {
 			valid_u8_reverse_index(word, j1);
+			if (remaining_attempts == 0) {
+				// revert word
+				rotate(begin(word) + j2, begin(word) + j3,
+				       begin(word) + i3);
+				return;
+			}
+			--remaining_attempts;
 			j2 = u8_swap_adjacent_cp(word, j1, j2, j3);
 			add_sug_if_correct(word, out);
 		}
+		// revert word
 		rotate(begin(word), begin(word) + (i3 - i2), begin(word) + i3);
 	}
 }
@@ -2641,6 +2695,7 @@ auto Dict_Base::move_char_suggest(std::string& word, List_Strings& out) const
 auto Dict_Base::bad_char_suggest(std::string& word, List_Strings& out) const
     -> void
 {
+	auto remaining_attempts = max_attempts_for_long_alogs(word);
 	for (size_t t = 0, next_t = 0; t != size(try_chars); t = next_t) {
 		char32_t t_cp;
 		valid_u8_advance_cp(try_chars, next_t, t_cp);
@@ -2651,6 +2706,9 @@ auto Dict_Base::bad_char_suggest(std::string& word, List_Strings& out) const
 			auto w_enc_cp = U8_Encoded_CP(word, {i, next_i});
 			if (t_cp == w_cp)
 				continue;
+			if (remaining_attempts == 0)
+				return;
+			--remaining_attempts;
 			word.replace(i, size(w_enc_cp), t_enc_cp);
 			add_sug_if_correct(word, out);
 			word.replace(i, size(t_enc_cp), w_enc_cp);
