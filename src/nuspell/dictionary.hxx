@@ -28,9 +28,6 @@
 
 #include <locale>
 
-NUSPELL_MSVC_PRAGMA_WARNING(push)
-NUSPELL_MSVC_PRAGMA_WARNING(disable : 4251 4275)
-
 namespace nuspell {
 inline namespace v5 {
 
@@ -379,7 +376,7 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 /**
  * @brief The only important public exception
  */
-class NUSPELL_EXPORT Dictionary_Loading_Error : public std::runtime_error {
+class Dictionary_Loading_Error : public std::runtime_error {
       public:
 	using std::runtime_error::runtime_error;
 };
@@ -402,5 +399,4 @@ class NUSPELL_EXPORT Dictionary : private Dict_Base {
 };
 } // namespace v5
 } // namespace nuspell
-NUSPELL_MSVC_PRAGMA_WARNING(pop)
 #endif // NUSPELL_DICTIONARY_HXX

@@ -25,14 +25,6 @@
 #include <iosfwd>
 #include <unicode/locid.h>
 
-#ifdef _MSC_VER
-#define NUSPELL_MSVC_PRAGMA_WARNING(x) __pragma(warning(x))
-#else
-#define NUSPELL_MSVC_PRAGMA_WARNING(x)
-#endif
-NUSPELL_MSVC_PRAGMA_WARNING(push)
-NUSPELL_MSVC_PRAGMA_WARNING(disable : 4251)
-
 namespace nuspell {
 inline namespace v5 {
 
@@ -93,7 +85,7 @@ enum class Flag_Type { SINGLE_CHAR, DOUBLE_CHAR, NUMBER, UTF8 };
  */
 using Word_List = Hash_Multimap<std::string, Flag_Set>;
 
-struct NUSPELL_EXPORT Aff_Data {
+struct Aff_Data {
 	static constexpr auto HIDDEN_HOMONYM_FLAG = char16_t(-1);
 	static constexpr auto MAX_SUGGESTIONS = size_t(16);
 
@@ -178,5 +170,4 @@ struct NUSPELL_EXPORT Aff_Data {
 };
 } // namespace v5
 } // namespace nuspell
-NUSPELL_MSVC_PRAGMA_WARNING(pop)
 #endif // NUSPELL_AFF_DATA_HXX
