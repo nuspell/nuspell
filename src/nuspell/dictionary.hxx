@@ -86,8 +86,7 @@ struct Compounding_Result {
 	auto operator->() const { return word_entry; }
 };
 
-struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
-
+struct Checker : public Aff_Data {
 	enum Forceucase : bool {
 		FORBID_BAD_FORCEUCASE = false,
 		ALLOW_BAD_FORCEUCASE = true
@@ -97,12 +96,10 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 		ACCEPT_HIDDEN_HOMONYM = false,
 		SKIP_HIDDEN_HOMONYM = true
 	};
-
-	enum High_Quality_Sugs : bool {
-		ALL_LOW_QUALITY_SUGS = false,
-		HAS_HIGH_QUALITY_SUGS = true
-	};
-
+	Checker()
+	    : Aff_Data() // we explicity do value init so content is zeroed
+	{
+	}
 	auto spell_priv(std::string& s) const -> bool;
 	auto spell_break(std::string& s, size_t depth = 0) const -> bool;
 	auto spell_casing(std::string& s) const -> const Flag_Set*;
@@ -303,6 +300,15 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	                               Forceucase allow_bad_forceucase) const
 
 	    -> Compounding_Result;
+	auto is_rep_similar(std::string& word) const -> bool;
+};
+
+struct NUSPELL_EXPORT Suggester : public Checker {
+
+	enum High_Quality_Sugs : bool {
+		ALL_LOW_QUALITY_SUGS = false,
+		HAS_HIGH_QUALITY_SUGS = true
+	};
 
 	auto suggest_priv(std::string_view input_word, List_Strings& out) const
 	    -> void;
@@ -320,8 +326,6 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 
 	auto try_rep_suggestion(std::string& word, List_Strings& out) const
 	    -> void;
-
-	auto is_rep_similar(std::string& word) const -> bool;
 
 	auto max_attempts_for_long_alogs(std::string_view word) const -> size_t;
 
@@ -365,12 +369,6 @@ struct NUSPELL_EXPORT Dict_Base : public Aff_Data {
 	                                List_Strings& expanded_list,
 	                                std::vector<bool>& cross_affix) const
 	    -> void;
-
-      public:
-	Dict_Base()
-	    : Aff_Data() // we explicity do value init so content is zeroed
-	{
-	}
 };
 
 /**
@@ -384,7 +382,7 @@ class Dictionary_Loading_Error : public std::runtime_error {
 /**
  * @brief The only important public class
  */
-class NUSPELL_EXPORT Dictionary : private Dict_Base {
+class NUSPELL_EXPORT Dictionary : private Suggester {
 	Dictionary(std::istream& aff, std::istream& dic);
 
       public:

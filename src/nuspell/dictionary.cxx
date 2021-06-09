@@ -53,7 +53,7 @@ class At_Scope_Exit {
 
 #define AT_SCOPE_EXIT(...) ASE_INTERNAL2(__COUNTER__, __VA_ARGS__)
 
-auto Dict_Base::spell_priv(string& s) const -> bool
+auto Checker::spell_priv(string& s) const -> bool
 {
 	// do input conversion (iconv)
 	input_substr_replacer.replace(s);
@@ -91,7 +91,7 @@ auto Dict_Base::spell_priv(string& s) const -> bool
 	return ret;
 }
 
-auto Dict_Base::spell_break(std::string& s, size_t depth) const -> bool
+auto Checker::spell_break(std::string& s, size_t depth) const -> bool
 {
 	// check spelling accoring to case
 	auto res = spell_casing(s);
@@ -146,7 +146,7 @@ auto Dict_Base::spell_break(std::string& s, size_t depth) const -> bool
 	return false;
 }
 
-auto Dict_Base::spell_casing(std::string& s) const -> const Flag_Set*
+auto Checker::spell_casing(std::string& s) const -> const Flag_Set*
 {
 	auto casing_type = classify_casing(s);
 	const Flag_Set* res = nullptr;
@@ -167,7 +167,7 @@ auto Dict_Base::spell_casing(std::string& s) const -> const Flag_Set*
 	return res;
 }
 
-auto Dict_Base::spell_casing_upper(std::string& s) const -> const Flag_Set*
+auto Checker::spell_casing_upper(std::string& s) const -> const Flag_Set*
 {
 	auto& loc = icu_locale;
 
@@ -220,7 +220,7 @@ auto Dict_Base::spell_casing_upper(std::string& s) const -> const Flag_Set*
 	return nullptr;
 }
 
-auto Dict_Base::spell_casing_title(std::string& s) const -> const Flag_Set*
+auto Checker::spell_casing_title(std::string& s) const -> const Flag_Set*
 {
 	auto& loc = icu_locale;
 
@@ -258,8 +258,8 @@ auto Dict_Base::spell_casing_title(std::string& s) const -> const Flag_Set*
  * @param rep counter for the number of replacements done.
  * @return The flags of the corresponding dictionary word.
  */
-auto Dict_Base::spell_sharps(std::string& base, size_t pos, size_t n,
-                             size_t rep) const -> const Flag_Set*
+auto Checker::spell_sharps(std::string& base, size_t pos, size_t n,
+                           size_t rep) const -> const Flag_Set*
 {
 	const size_t MAX_SHARPS = 5;
 	pos = base.find("ss", pos);
@@ -279,8 +279,8 @@ auto Dict_Base::spell_sharps(std::string& base, size_t pos, size_t n,
 	return nullptr;
 }
 
-auto Dict_Base::check_word(std::string& s, Forceucase allow_bad_forceucase,
-                           Hidden_Homonym skip_hidden_homonym) const
+auto Checker::check_word(std::string& s, Forceucase allow_bad_forceucase,
+                         Hidden_Homonym skip_hidden_homonym) const
     -> const Flag_Set*
 {
 
@@ -294,8 +294,8 @@ auto Dict_Base::check_word(std::string& s, Forceucase allow_bad_forceucase,
 	return nullptr;
 }
 
-auto Dict_Base::check_simple_word(std::string& s,
-                                  Hidden_Homonym skip_hidden_homonym) const
+auto Checker::check_simple_word(std::string& s,
+                                Hidden_Homonym skip_hidden_homonym) const
     -> const Flag_Set*
 {
 	for (auto& we : Subrange(words.equal_range(s))) {
@@ -380,7 +380,7 @@ class To_Root_Unroot_RAII {
 };
 
 template <Affixing_Mode m>
-auto Dict_Base::affix_NOT_valid(const Prefix& e) const
+auto Checker::affix_NOT_valid(const Prefix& e) const
 {
 	if (m == FULL_WORD && e.cont_flags.contains(compound_onlyin_flag))
 		return true;
@@ -392,7 +392,7 @@ auto Dict_Base::affix_NOT_valid(const Prefix& e) const
 	return false;
 }
 template <Affixing_Mode m>
-auto Dict_Base::affix_NOT_valid(const Suffix& e) const
+auto Checker::affix_NOT_valid(const Suffix& e) const
 {
 	if (m == FULL_WORD && e.cont_flags.contains(compound_onlyin_flag))
 		return true;
@@ -404,7 +404,7 @@ auto Dict_Base::affix_NOT_valid(const Suffix& e) const
 	return false;
 }
 template <Affixing_Mode m, class AffixT>
-auto Dict_Base::outer_affix_NOT_valid(const AffixT& e) const
+auto Checker::outer_affix_NOT_valid(const AffixT& e) const
 {
 	if (affix_NOT_valid<m>(e))
 		return true;
@@ -413,7 +413,7 @@ auto Dict_Base::outer_affix_NOT_valid(const AffixT& e) const
 	return false;
 }
 template <class AffixT>
-auto Dict_Base::is_circumfix(const AffixT& a) const
+auto Checker::is_circumfix(const AffixT& a) const
 {
 	return a.cont_flags.contains(circumfix_flag);
 }
@@ -431,7 +431,7 @@ auto cross_valid_inner_outer(const Flag_Set& word_flags, const Affix& afx)
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::is_valid_inside_compound(const Flag_Set& flags) const
+auto Checker::is_valid_inside_compound(const Flag_Set& flags) const
 {
 	if (m == AT_COMPOUND_BEGIN && !flags.contains(compound_flag) &&
 	    !flags.contains(compound_begin_flag))
@@ -452,8 +452,8 @@ auto Dict_Base::is_valid_inside_compound(const Flag_Set& flags) const
  * @return if found, root word + prefix
  */
 template <Affixing_Mode m>
-auto Dict_Base::strip_prefix_only(std::string& word,
-                                  Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_prefix_only(std::string& word,
+                                Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Prefix>
 {
 	auto& dic = words;
@@ -495,8 +495,8 @@ auto Dict_Base::strip_prefix_only(std::string& word,
  * @return if found, root word + suffix
  */
 template <Affixing_Mode m>
-auto Dict_Base::strip_suffix_only(std::string& word,
-                                  Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_suffix_only(std::string& word,
+                                Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Suffix>
 {
 	auto& dic = words;
@@ -544,8 +544,8 @@ auto Dict_Base::strip_suffix_only(std::string& word,
  * @return if found, root word + suffix + prefix
  */
 template <Affixing_Mode m>
-auto Dict_Base::strip_prefix_then_suffix(
-    std::string& word, Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_prefix_then_suffix(std::string& word,
+                                       Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Suffix, Prefix>
 {
 	for (auto it = prefixes.iterate_prefixes_of(word); it; ++it) {
@@ -566,8 +566,8 @@ auto Dict_Base::strip_prefix_then_suffix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_pfx_then_sfx_2(const Prefix& pe, std::string& word,
-                                     Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_pfx_then_sfx_2(const Prefix& pe, std::string& word,
+                                   Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Suffix, Prefix>
 {
 	auto& dic = words;
@@ -620,8 +620,8 @@ auto Dict_Base::strip_pfx_then_sfx_2(const Prefix& pe, std::string& word,
  * @return if found, root word + prefix + suffix
  */
 template <Affixing_Mode m>
-auto Dict_Base::strip_suffix_then_prefix(
-    std::string& word, Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_suffix_then_prefix(std::string& word,
+                                       Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Prefix, Suffix>
 {
 	for (auto it = suffixes.iterate_suffixes_of(word); it; ++it) {
@@ -642,8 +642,8 @@ auto Dict_Base::strip_suffix_then_prefix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_sfx_then_pfx_2(const Suffix& se, std::string& word,
-                                     Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_sfx_then_pfx_2(const Suffix& se, std::string& word,
+                                   Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Prefix, Suffix>
 {
 	auto& dic = words;
@@ -685,7 +685,7 @@ auto Dict_Base::strip_sfx_then_pfx_2(const Suffix& se, std::string& word,
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_prefix_then_suffix_commutative(
+auto Checker::strip_prefix_then_suffix_commutative(
     std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Suffix, Prefix>
 {
@@ -707,7 +707,7 @@ auto Dict_Base::strip_prefix_then_suffix_commutative(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_pfx_then_sfx_comm_2(
+auto Checker::strip_pfx_then_sfx_comm_2(
     const Prefix& pe, std::string& word,
     Hidden_Homonym skip_hidden_homonym) const -> Affixing_Result<Suffix, Prefix>
 {
@@ -767,8 +767,8 @@ auto Dict_Base::strip_pfx_then_sfx_comm_2(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_suffix_then_suffix(
-    std::string& word, Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_suffix_then_suffix(std::string& word,
+                                       Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Suffix, Suffix>
 {
 	// The following check is purely for performance, it does not change
@@ -799,8 +799,8 @@ auto Dict_Base::strip_suffix_then_suffix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_sfx_then_sfx_2(const Suffix& se1, std::string& word,
-                                     Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_sfx_then_sfx_2(const Suffix& se1, std::string& word,
+                                   Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Suffix, Suffix>
 {
 
@@ -836,8 +836,8 @@ auto Dict_Base::strip_sfx_then_sfx_2(const Suffix& se1, std::string& word,
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_prefix_then_prefix(
-    std::string& word, Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_prefix_then_prefix(std::string& word,
+                                       Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Prefix, Prefix>
 {
 	// The following check is purely for performance, it does not change
@@ -867,8 +867,8 @@ auto Dict_Base::strip_prefix_then_prefix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_pfx_then_pfx_2(const Prefix& pe1, std::string& word,
-                                     Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_pfx_then_pfx_2(const Prefix& pe1, std::string& word,
+                                   Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<Prefix, Prefix>
 {
 	auto& dic = words;
@@ -903,7 +903,7 @@ auto Dict_Base::strip_pfx_then_pfx_2(const Prefix& pe1, std::string& word,
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_prefix_then_2_suffixes(
+auto Checker::strip_prefix_then_2_suffixes(
     std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -948,9 +948,9 @@ auto Dict_Base::strip_prefix_then_2_suffixes(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_pfx_2_sfx_3(const Prefix& pe1, const Suffix& se1,
-                                  std::string& word,
-                                  Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_pfx_2_sfx_3(const Prefix& pe1, const Suffix& se1,
+                                std::string& word,
+                                Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	auto& dic = words;
@@ -989,7 +989,7 @@ auto Dict_Base::strip_pfx_2_sfx_3(const Prefix& pe1, const Suffix& se1,
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_suffix_prefix_suffix(
+auto Checker::strip_suffix_prefix_suffix(
     std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -1034,9 +1034,9 @@ auto Dict_Base::strip_suffix_prefix_suffix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_s_p_s_3(const Suffix& se1, const Prefix& pe1,
-                              std::string& word,
-                              Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_s_p_s_3(const Suffix& se1, const Prefix& pe1,
+                            std::string& word,
+                            Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	auto& dic = words;
@@ -1082,7 +1082,7 @@ auto Dict_Base::strip_s_p_s_3(const Suffix& se1, const Prefix& pe1,
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_2_suffixes_then_prefix(
+auto Checker::strip_2_suffixes_then_prefix(
     std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -1127,9 +1127,9 @@ auto Dict_Base::strip_2_suffixes_then_prefix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_2_sfx_pfx_3(const Suffix& se1, const Suffix& se2,
-                                  std::string& word,
-                                  Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_2_sfx_pfx_3(const Suffix& se1, const Suffix& se2,
+                                std::string& word,
+                                Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	auto& dic = words;
@@ -1171,7 +1171,7 @@ auto Dict_Base::strip_2_sfx_pfx_3(const Suffix& se1, const Suffix& se2,
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_suffix_then_2_prefixes(
+auto Checker::strip_suffix_then_2_prefixes(
     std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -1216,9 +1216,9 @@ auto Dict_Base::strip_suffix_then_2_prefixes(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_sfx_2_pfx_3(const Suffix& se1, const Prefix& pe1,
-                                  std::string& word,
-                                  Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_sfx_2_pfx_3(const Suffix& se1, const Prefix& pe1,
+                                std::string& word,
+                                Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	auto& dic = words;
@@ -1256,7 +1256,7 @@ auto Dict_Base::strip_sfx_2_pfx_3(const Suffix& se1, const Prefix& pe1,
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_prefix_suffix_prefix(
+auto Checker::strip_prefix_suffix_prefix(
     std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -1301,9 +1301,9 @@ auto Dict_Base::strip_prefix_suffix_prefix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_p_s_p_3(const Prefix& pe1, const Suffix& se1,
-                              std::string& word,
-                              Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_p_s_p_3(const Prefix& pe1, const Suffix& se1,
+                            std::string& word,
+                            Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	auto& dic = words;
@@ -1348,7 +1348,7 @@ auto Dict_Base::strip_p_s_p_3(const Prefix& pe1, const Suffix& se1,
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_2_prefixes_then_suffix(
+auto Checker::strip_2_prefixes_then_suffix(
     std::string& word, Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
@@ -1393,9 +1393,9 @@ auto Dict_Base::strip_2_prefixes_then_suffix(
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::strip_2_pfx_sfx_3(const Prefix& pe1, const Prefix& pe2,
-                                  std::string& word,
-                                  Hidden_Homonym skip_hidden_homonym) const
+auto Checker::strip_2_pfx_sfx_3(const Prefix& pe1, const Prefix& pe2,
+                                std::string& word,
+                                Hidden_Homonym skip_hidden_homonym) const
     -> Affixing_Result<>
 {
 	auto& dic = words;
@@ -1467,8 +1467,8 @@ auto is_compound_forbidden_by_patterns(const vector<Compound_Pattern>& patterns,
 	});
 }
 
-auto Dict_Base::check_compound(std::string& word,
-                               Forceucase allow_bad_forceucase) const
+auto Checker::check_compound(std::string& word,
+                             Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
 	auto part = string();
@@ -1490,9 +1490,9 @@ auto Dict_Base::check_compound(std::string& word,
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::check_compound(std::string& word, size_t start_pos,
-                               size_t num_part, std::string& part,
-                               Forceucase allow_bad_forceucase) const
+auto Checker::check_compound(std::string& word, size_t start_pos,
+                             size_t num_part, std::string& part,
+                             Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
 	size_t min_num_cp = 3;
@@ -1547,10 +1547,10 @@ auto are_three_code_points_equal(string_view word, size_t i) -> bool
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::check_compound_classic(std::string& word, size_t start_pos,
-                                       size_t i, size_t num_part,
-                                       std::string& part,
-                                       Forceucase allow_bad_forceucase) const
+auto Checker::check_compound_classic(std::string& word, size_t start_pos,
+                                     size_t i, size_t num_part,
+                                     std::string& part,
+                                     Forceucase allow_bad_forceucase) const
     -> Compounding_Result
 {
 	auto old_num_part = num_part;
@@ -1707,7 +1707,7 @@ try_simplified_triple_recursive:
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::check_compound_with_pattern_replacements(
+auto Checker::check_compound_with_pattern_replacements(
     std::string& word, size_t start_pos, size_t i, size_t num_part,
     std::string& part, Forceucase allow_bad_forceucase) const
     -> Compounding_Result
@@ -1881,7 +1881,7 @@ auto is_modiying_affix(const AffixT& a)
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::check_word_in_compound(std::string& word) const
+auto Checker::check_word_in_compound(std::string& word) const
     -> Compounding_Result
 {
 	auto cpd_flag = char16_t();
@@ -1928,8 +1928,7 @@ auto Dict_Base::check_word_in_compound(std::string& word) const
 	return {};
 }
 
-auto Dict_Base::calc_num_words_modifier(const Prefix& pfx) const
-    -> unsigned char
+auto Checker::calc_num_words_modifier(const Prefix& pfx) const -> unsigned char
 {
 	if (compound_syllable_vowels.empty())
 		return 0;
@@ -1938,7 +1937,7 @@ auto Dict_Base::calc_num_words_modifier(const Prefix& pfx) const
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::calc_syllable_modifier(Word_List::const_reference we) const
+auto Checker::calc_syllable_modifier(Word_List::const_reference we) const
     -> signed char
 {
 	auto subtract_syllable =
@@ -1948,8 +1947,8 @@ auto Dict_Base::calc_syllable_modifier(Word_List::const_reference we) const
 }
 
 template <Affixing_Mode m>
-auto Dict_Base::calc_syllable_modifier(Word_List::const_reference we,
-                                       const Suffix& sfx) const -> signed char
+auto Checker::calc_syllable_modifier(Word_List::const_reference we,
+                                     const Suffix& sfx) const -> signed char
 {
 	if (m != AT_COMPOUND_END)
 		return 0;
@@ -1982,12 +1981,12 @@ auto Dict_Base::calc_syllable_modifier(Word_List::const_reference we,
 	return num_syllable_mod;
 }
 
-auto Dict_Base::count_syllables(std::string_view word) const -> size_t
+auto Checker::count_syllables(std::string_view word) const -> size_t
 {
 	return count_appereances_of(word, compound_syllable_vowels);
 }
 
-auto Dict_Base::check_compound_with_rules(
+auto Checker::check_compound_with_rules(
     std::string& word, std::vector<const Flag_Set*>& words_data,
     size_t start_pos, std::string& part, Forceucase allow_bad_forceucase) const
     -> Compounding_Result
@@ -2069,14 +2068,14 @@ auto static insert_sug_first(const string& word, List_Strings& out)
 	out.insert(begin(out), word);
 }
 
-auto& operator|=(Dict_Base::High_Quality_Sugs& lhs,
-                 Dict_Base::High_Quality_Sugs rhs)
+auto& operator|=(Suggester::High_Quality_Sugs& lhs,
+                 Suggester::High_Quality_Sugs rhs)
 {
-	lhs = Dict_Base::High_Quality_Sugs(lhs || rhs);
+	lhs = Suggester::High_Quality_Sugs(lhs || rhs);
 	return lhs;
 }
 
-auto Dict_Base::suggest_priv(string_view input_word, List_Strings& out) const
+auto Suggester::suggest_priv(string_view input_word, List_Strings& out) const
     -> void
 {
 	if (empty(input_word))
@@ -2256,7 +2255,7 @@ auto Dict_Base::suggest_priv(string_view input_word, List_Strings& out) const
 		output_substr_replacer.replace(sug);
 }
 
-auto Dict_Base::suggest_low(std::string& word, List_Strings& out) const
+auto Suggester::suggest_low(std::string& word, List_Strings& out) const
     -> High_Quality_Sugs
 {
 	auto ret = ALL_LOW_QUALITY_SUGS;
@@ -2277,7 +2276,7 @@ auto Dict_Base::suggest_low(std::string& word, List_Strings& out) const
 	return ret;
 }
 
-auto Dict_Base::add_sug_if_correct(std::string& word, List_Strings& out) const
+auto Suggester::add_sug_if_correct(std::string& word, List_Strings& out) const
     -> bool
 {
 	auto res = check_word(word, FORBID_BAD_FORCEUCASE, SKIP_HIDDEN_HOMONYM);
@@ -2291,14 +2290,14 @@ auto Dict_Base::add_sug_if_correct(std::string& word, List_Strings& out) const
 	return true;
 }
 
-auto Dict_Base::uppercase_suggest(const std::string& word,
+auto Suggester::uppercase_suggest(const std::string& word,
                                   List_Strings& out) const -> void
 {
 	auto upp = to_upper(word, icu_locale);
 	add_sug_if_correct(upp, out);
 }
 
-auto Dict_Base::rep_suggest(std::string& word, List_Strings& out) const
+auto Suggester::rep_suggest(std::string& word, List_Strings& out) const
 
     -> void
 {
@@ -2343,7 +2342,7 @@ auto Dict_Base::rep_suggest(std::string& word, List_Strings& out) const
 	}
 }
 
-auto Dict_Base::try_rep_suggestion(std::string& word, List_Strings& out) const
+auto Suggester::try_rep_suggestion(std::string& word, List_Strings& out) const
     -> void
 {
 	if (add_sug_if_correct(word, out))
@@ -2363,7 +2362,7 @@ auto Dict_Base::try_rep_suggestion(std::string& word, List_Strings& out) const
 	out.push_back(word);
 }
 
-auto Dict_Base::is_rep_similar(std::string& word) const -> bool
+auto Checker::is_rep_similar(std::string& word) const -> bool
 {
 	auto& reps = replacements;
 	for (auto& r : reps.whole_word_replacements()) {
@@ -2415,7 +2414,7 @@ auto Dict_Base::is_rep_similar(std::string& word) const -> bool
 	return false;
 }
 
-auto Dict_Base::max_attempts_for_long_alogs(string_view word) const -> size_t
+auto Suggester::max_attempts_for_long_alogs(string_view word) const -> size_t
 {
 	auto ret = 10'000'000 / size(word);
 	if (compound_flag || compound_begin_flag || compound_last_flag ||
@@ -2424,13 +2423,13 @@ auto Dict_Base::max_attempts_for_long_alogs(string_view word) const -> size_t
 	return ret;
 }
 
-auto Dict_Base::map_suggest(std::string& word, List_Strings& out) const -> void
+auto Suggester::map_suggest(std::string& word, List_Strings& out) const -> void
 {
 	auto remaining_attempts = max_attempts_for_long_alogs(word);
 	map_suggest(word, out, 0, remaining_attempts);
 }
 
-auto Dict_Base::map_suggest(std::string& word, List_Strings& out, size_t i,
+auto Suggester::map_suggest(std::string& word, List_Strings& out, size_t i,
                             size_t& remaining_attempts) const -> void
 {
 	for (size_t next_i = i; i != size(word); i = next_i) {
@@ -2501,7 +2500,7 @@ auto Dict_Base::map_suggest(std::string& word, List_Strings& out, size_t i,
 	}
 }
 
-auto Dict_Base::adjacent_swap_suggest(std::string& word,
+auto Suggester::adjacent_swap_suggest(std::string& word,
                                       List_Strings& out) const -> void
 {
 	if (word.empty())
@@ -2549,7 +2548,7 @@ auto Dict_Base::adjacent_swap_suggest(std::string& word,
 	}
 }
 
-auto Dict_Base::distant_swap_suggest(std::string& word, List_Strings& out) const
+auto Suggester::distant_swap_suggest(std::string& word, List_Strings& out) const
     -> void
 {
 	if (empty(word))
@@ -2572,7 +2571,7 @@ auto Dict_Base::distant_swap_suggest(std::string& word, List_Strings& out) const
 	}
 }
 
-auto Dict_Base::keyboard_suggest(std::string& word, List_Strings& out) const
+auto Suggester::keyboard_suggest(std::string& word, List_Strings& out) const
     -> void
 {
 	auto& kb = keyboard_closeness;
@@ -2609,7 +2608,7 @@ auto Dict_Base::keyboard_suggest(std::string& word, List_Strings& out) const
 	}
 }
 
-auto Dict_Base::extra_char_suggest(std::string& word, List_Strings& out) const
+auto Suggester::extra_char_suggest(std::string& word, List_Strings& out) const
     -> void
 {
 	for (size_t i = 0, next_i = 0; i != size(word); i = next_i) {
@@ -2621,7 +2620,7 @@ auto Dict_Base::extra_char_suggest(std::string& word, List_Strings& out) const
 	}
 }
 
-auto Dict_Base::forgotten_char_suggest(std::string& word,
+auto Suggester::forgotten_char_suggest(std::string& word,
                                        List_Strings& out) const -> void
 {
 	auto remaining_attempts = max_attempts_for_long_alogs(word);
@@ -2641,7 +2640,7 @@ auto Dict_Base::forgotten_char_suggest(std::string& word,
 	}
 }
 
-auto Dict_Base::move_char_suggest(std::string& word, List_Strings& out) const
+auto Suggester::move_char_suggest(std::string& word, List_Strings& out) const
     -> void
 {
 	if (empty(word))
@@ -2692,7 +2691,7 @@ auto Dict_Base::move_char_suggest(std::string& word, List_Strings& out) const
 	}
 }
 
-auto Dict_Base::bad_char_suggest(std::string& word, List_Strings& out) const
+auto Suggester::bad_char_suggest(std::string& word, List_Strings& out) const
     -> void
 {
 	auto remaining_attempts = max_attempts_for_long_alogs(word);
@@ -2716,7 +2715,7 @@ auto Dict_Base::bad_char_suggest(std::string& word, List_Strings& out) const
 	}
 }
 
-auto Dict_Base::doubled_two_chars_suggest(std::string& word,
+auto Suggester::doubled_two_chars_suggest(std::string& word,
                                           List_Strings& out) const -> void
 {
 	char32_t cp[5];
@@ -2742,7 +2741,7 @@ auto Dict_Base::doubled_two_chars_suggest(std::string& word,
 	}
 }
 
-auto Dict_Base::two_words_suggest(const std::string& word,
+auto Suggester::two_words_suggest(const std::string& word,
                                   List_Strings& out) const -> void
 {
 	if (empty(word))
@@ -2933,7 +2932,7 @@ struct Word_And_Score {
 };
 } // namespace
 
-auto Dict_Base::ngram_suggest(const std::string& word_u8,
+auto Suggester::ngram_suggest(const std::string& word_u8,
                               List_Strings& out) const -> void
 {
 	auto const wrong_word = valid_utf8_to_32(word_u8);
@@ -3079,7 +3078,7 @@ auto Dict_Base::ngram_suggest(const std::string& word_u8,
 	}
 }
 
-auto Dict_Base::expand_root_word_for_ngram(
+auto Suggester::expand_root_word_for_ngram(
     Word_List::const_reference root_entry, std::string_view wrong,
     List_Strings& expanded_list, std::vector<bool>& cross_affix) const -> void
 {

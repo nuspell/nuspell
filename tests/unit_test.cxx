@@ -485,7 +485,7 @@ TEST_CASE("is_number()")
 
 TEST_CASE("Dict_Base::forgotten_char_suggest()")
 {
-	auto d = nuspell::Dict_Base();
+	auto d = nuspell::Suggester();
 	d.words.emplace("Забвгд", u"");
 	d.words.emplace("абвШгд", u"");
 	d.words.emplace("абвгдИ", u"");
