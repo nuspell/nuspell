@@ -1,6 +1,7 @@
 add_library(nuspell
 aff_data.cxx     aff_data.hxx
 checker.cxx      checker.hxx
+suggester.cxx    suggester.hxx
 dictionary.cxx   dictionary.hxx
 finder.cxx       finder.hxx
                  unicode.hxx
@@ -12,8 +13,9 @@ add_library(Nuspell::nuspell ALIAS nuspell)
 include(GenerateExportHeader)
 generate_export_header(nuspell)
 
-set(nuspell_headers aff_data.hxx checker.hxx dictionary.hxx finder.hxx
-    structures.hxx unicode.hxx ${CMAKE_CURRENT_BINARY_DIR}/nuspell_export.h)
+set(nuspell_headers aff_data.hxx checker.hxx suggester.hxx dictionary.hxx
+    finder.hxx structures.hxx unicode.hxx
+    ${CMAKE_CURRENT_BINARY_DIR}/nuspell_export.h)
 set_target_properties(nuspell PROPERTIES
     PUBLIC_HEADER "${nuspell_headers}"
     VERSION ${PROJECT_VERSION}
