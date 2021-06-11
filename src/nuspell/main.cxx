@@ -27,7 +27,7 @@
 #include <unicode/ucnv.h>
 
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
-    (defined(__APPLE__) && defined(__MACH__))
+    (defined(__APPLE__) && defined(__MACH__)) || defined(__HAIKU__)
 #include <getopt.h>
 #include <unistd.h>
 #endif
