@@ -75,7 +75,7 @@ Bug reports: <https://github.com/nuspell/nuspell/issues>
 
 # COPYRIGHT
 
-Copyright 2016-2020 Dimitrij Mijoski, Sander van Geloven
+Copyright 2016-2021 Dimitrij Mijoski, Sander van Geloven
     
 # SEE ALSO
 

@@ -6,6 +6,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2021-06-12
+### Fixed
+- Greatly reduce memory usage. See issues #80 and #97.
+- Increase speed of spellchecking.
+- Fix long lagging when generating suggestions in edge cases. See #45.
+- Fix building on OS Haiku. Fixes #44.
+
+### Changed
+- Split file `dictionary.hxx/cxx` into multiple files. The other files are
+  implementation details and the public header `dictionary.hxx` is now clean of
+  private details.
+
+### Removed
+- Remove functions and classes that were deprecated in v4.x. See issue #103.
+
 ## [4.2.0] - 2020-12-12
 ### Deprecated
 - Deprecate functions that allowed non-Unicode encoding. In particular,
@@ -184,7 +199,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v4.2.0...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.0.0...HEAD
+[5.0.0]: https://github.com/nuspell/nuspell/compare/v4.2.0...v5.0.0
 [4.2.0]: https://github.com/nuspell/nuspell/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/nuspell/nuspell/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/nuspell/nuspell/compare/v4.0.0...v4.0.1

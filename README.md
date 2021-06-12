@@ -9,7 +9,7 @@ Main features of Nuspell spelling checker:
   - Provides software library and command-line tool.
   - Suggests high-quality spelling corrections.
   - Backward compatibility with Hunspell dictionary file format.
-  - Up to 3 times faster than Hunspell.
+  - Up to 3.5 times faster than Hunspell.
   - Full Unicode support backed by ICU.
   - Twofold affix stripping (for agglutinative languages, like Azeri,
     Basque, Estonian, Finnish, Hungarian, Turkish, etc.).
