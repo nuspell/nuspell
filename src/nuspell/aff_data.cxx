@@ -928,37 +928,6 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	return in.eof() && !error_happened; // true for success
 }
 
-/**
- * @internal
- * @brief Scans @p line for morphological field [a-z][a-z]:
- *
- * Scans the line for space, two lowercase alphabetic chars and colon.
- *
- * @param line
- * @returns the end of the word before the morph field, or npos
- */
-auto dic_find_end_of_word_heuristics(const string& line)
-{
-	if (line.size() < 4)
-		return line.npos;
-	size_t a = 0;
-	for (;;) {
-		a = line.find(' ', a);
-		if (a == line.npos)
-			break;
-		auto b = line.find_first_not_of(' ', a);
-		if (b == line.npos)
-			break;
-		if (b > line.size() - 3)
-			break;
-		if (line[b] >= 'a' && line[b] <= 'z' && line[b + 1] >= 'a' &&
-		    line[b + 1] <= 'z' && line[b + 2] == ':')
-			return a;
-		a = b;
-	}
-	return line.npos;
-}
-
 auto Aff_Data::parse_dic(istream& in) -> bool
 {
 	size_t line_number = 1;
@@ -969,6 +938,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	u16string flags;
 	string u8word;
 	auto enc_conv = Encoding_Converter(encoding.value_or_default());
+	auto success = true;
 
 	// locale must be without thousands separator.
 	auto& ctype = use_facet<std::ctype<char>>(locale::classic());
@@ -987,25 +957,46 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 		word.clear();
 		flags_str.clear();
 		flags.clear();
-		if (!line.empty() && line.back() == '\r')
+		if (!empty(line) && line.back() == '\r')
 			line.pop_back();
 
-		size_t slash_pos = 0;
-		size_t tab_pos = 0;
-		for (;;) {
-			slash_pos = line.find('/', slash_pos);
-			if (slash_pos == line.npos)
+		auto end_word_pos = line.npos;
+		for (size_t i = 0; i != size(line); ++i) {
+			switch (line[i]) {
+			case '/':
+				if (i == 0)
+					continue;
+				if (line[i - 1] == '\\') {
+					--i;
+					line.erase(i, 1);
+				}
+				else {
+					end_word_pos = i;
+				}
 				break;
-			if (slash_pos == 0)
+			case '\t':
+				end_word_pos = i;
 				break;
-			if (line[slash_pos - 1] != '\\')
+			case ' ': {
+				auto p = ctype.scan_not(
+				    ctype.space, &line[i + 1], end_ptr(line));
+				size_t k = p - begin_ptr(line);
+				if (k == size(line) ||
+				    (size(line) - k >= 3 &&
+				     line[k + 2] == ':' &&
+				     ctype.is(ctype.lower, line[k]) &&
+				     ctype.is(ctype.lower, line[k + 1])))
+					end_word_pos = i;
 				break;
-
-			line.erase(slash_pos - 1, 1);
+			}
+			}
+			if (end_word_pos != line.npos)
+				break;
 		}
-		if (slash_pos != line.npos && slash_pos != 0) {
+		word.assign(line, 0, end_word_pos);
+		if (end_word_pos != line.npos && line[end_word_pos] == '/') {
 			// slash found, word until slash
-			word.assign(line, 0, slash_pos);
+			auto slash_pos = end_word_pos;
 			auto ptr = ctype.scan_is(ctype.space, &line[slash_pos],
 			                         end_ptr(line));
 			auto end_flags_pos = ptr - begin_ptr(line);
@@ -1014,20 +1005,21 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			auto err = decode_flags_possible_alias(
 			    flags_str, flag_type, encoding, flag_aliases,
 			    flags);
+			if (err == Parsing_Error_Code::MISSING_FLAGS ||
+
+			    (/* bug in eu.dic that we fix here. Remove this once
+			        fixed there. */
+			     err == Parsing_Error_Code::INVALID_NUMERIC_FLAG &&
+			     flags_str == "None"))
+				err = Parsing_Error_Code::
+				    NO_FLAGS_AFTER_SLASH_WARNING;
 			report_parsing_error(err, line_number);
-			if (static_cast<int>(err) > 0)
+			if (static_cast<int>(err) > 0) {
+				success = false;
 				continue;
+			}
 		}
-		else if ((tab_pos = line.find('\t')) != line.npos) {
-			// Tab found, word until tab. No flags.
-			// After tab follow morphological fields
-			word.assign(line, 0, tab_pos);
-		}
-		else {
-			auto end = dic_find_end_of_word_heuristics(line);
-			word.assign(line, 0, end);
-		}
-		if (word.empty())
+		if (empty(word))
 			continue;
 		auto ok = enc_conv.to_utf8(word, u8word);
 		if (!ok)
@@ -1058,7 +1050,7 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 			break;
 		}
 	}
-	return in.eof(); // success if we reached eof
+	return in.eof() && success; // success if we reached eof
 }
 } // namespace v5
 } // namespace nuspell
