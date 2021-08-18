@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <limits>
 
+#include <unicode/stringoptions.h>
 #include <unicode/uchar.h>
 #include <unicode/ucnv.h>
 #include <unicode/unistr.h>
@@ -246,7 +247,7 @@ auto to_title(string_view in, const icu::Locale& loc, string& out) -> void
 {
 	auto sp = icu::StringPiece(data(in), size(in));
 	auto us = icu::UnicodeString::fromUTF8(sp);
-	us.toTitle(nullptr, loc);
+	us.toTitle(nullptr, loc, U_TITLECASE_WHOLE_STRING);
 	out.clear();
 	us.toUTF8String(out);
 }
@@ -278,7 +279,7 @@ auto to_title_char_at(std::string& s, size_t i, const icu::Locale& loc) -> void
 {
 	auto cp = valid_u8_next_cp(s, i);
 	auto us = icu::UnicodeString(UChar32(cp.cp));
-	us.toTitle(nullptr, loc);
+	us.toTitle(nullptr, loc, U_TITLECASE_WHOLE_STRING);
 	auto u8_title = string();
 	us.toUTF8String(u8_title);
 	s.replace(i, cp.end_i - i, u8_title);
