@@ -21,17 +21,9 @@
 
 #include "nuspell_export.h"
 
-#include <clocale>
-#include <locale>
 #include <string>
 #include <string_view>
 #include <vector>
-
-#if !defined(_WIN32) &&                                                        \
-    (defined(__unix__) || defined(__unix) ||                                   \
-     (defined(__APPLE__) && defined(__MACH__)) || defined(__HAIKU__))
-#include <unistd.h>
-#endif
 
 #include <unicode/locid.h>
 
@@ -143,55 +135,6 @@ class Encoding_Converter {
 	auto to_utf8(std::string_view in, std::string& out) -> bool;
 	auto valid() -> bool { return cnv != nullptr; }
 };
-
-//#if _POSIX_VERSION >= 200809L
-#if defined(_POSIX_VERSION) && !defined(__NetBSD__) && !defined(__HAIKU__)
-class Setlocale_To_C_In_Scope {
-	locale_t old_loc = nullptr;
-
-      public:
-	Setlocale_To_C_In_Scope()
-	    : old_loc{uselocale(newlocale(0, "C", nullptr))}
-	{
-	}
-	~Setlocale_To_C_In_Scope()
-	{
-		auto new_loc = uselocale(old_loc);
-		if (new_loc != old_loc)
-			freelocale(new_loc);
-	}
-	Setlocale_To_C_In_Scope(const Setlocale_To_C_In_Scope&) = delete;
-};
-#else
-class Setlocale_To_C_In_Scope {
-	std::string old_name;
-#ifdef _WIN32
-	int old_per_thread;
-#endif
-      public:
-	Setlocale_To_C_In_Scope() : old_name(setlocale(LC_ALL, nullptr))
-	{
-#ifdef _WIN32
-		old_per_thread = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-#endif
-		auto x = setlocale(LC_ALL, "C");
-		if (!x)
-			old_name.clear();
-	}
-	~Setlocale_To_C_In_Scope()
-	{
-#ifdef _WIN32
-		_configthreadlocale(old_per_thread);
-		if (old_per_thread == _ENABLE_PER_THREAD_LOCALE)
-#endif
-		{
-			if (!old_name.empty())
-				setlocale(LC_ALL, old_name.c_str());
-		}
-	}
-	Setlocale_To_C_In_Scope(const Setlocale_To_C_In_Scope&) = delete;
-};
-#endif
 
 auto replace_ascii_char(std::string& s, char from, char to) -> void;
 auto erase_chars(std::string& s, std::string_view erase_chars) -> void;

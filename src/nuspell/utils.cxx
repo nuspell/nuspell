@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <locale>
 
 #include <unicode/stringoptions.h>
 #include <unicode/uchar.h>

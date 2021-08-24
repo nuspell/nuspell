@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <locale>
 #include <unicode/brkiter.h>
 #include <unicode/ucnv.h>
 

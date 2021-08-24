@@ -19,7 +19,9 @@
 #include "aff_data.hxx"
 #include "utils.hxx"
 
+#include <charconv>
 #include <iostream>
+#include <locale>
 #include <sstream>
 #include <unordered_map>
 
@@ -70,7 +72,7 @@ enum class Parsing_Error_Code {
 	COMPOUND_RULE_INVALID_FORMAT
 };
 
-auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
+auto decode_flags(string_view s, Flag_Type t, const Encoding& enc,
                   u16string& out) -> Parsing_Error_Code
 {
 	using Err = Parsing_Error_Code;
@@ -108,30 +110,22 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
 		}
 		break;
 	}
-	case Ft::NUMBER: {
-		auto p = s.c_str();
-		char* p2 = nullptr;
-		errno = 0;
-		for (;;) {
-			auto flag = strtoul(p, &p2, 10);
-			if (p2 == p)
+	case Ft::NUMBER:
+		for (auto p = begin_ptr(s);;) {
+			unsigned short flag;
+			auto fc = from_chars(p, end_ptr(s), flag);
+			if (fc.ec == errc::invalid_argument)
 				return Err::INVALID_NUMERIC_FLAG;
-			if (flag == numeric_limits<decltype(flag)>::max() &&
-			    errno == ERANGE) {
-				errno = 0;
-				return Err::FLAG_ABOVE_65535;
-			}
-			if (flag > 0xFFFF)
+			if (fc.ec == errc::result_out_of_range || flag > 0xFFFF)
 				return Err::FLAG_ABOVE_65535;
 			out.push_back(flag);
 
-			if (p2 == end_ptr(s) || *p2 != ',')
+			if (fc.ptr == end_ptr(s) || *fc.ptr != ',')
 				break;
 
-			p = p2 + 1;
+			p = fc.ptr + 1;
 		}
 		break;
-	}
 	case Ft::UTF8: {
 		// if (!enc.is_utf8())
 		//	return Err::FLAGS_ARE_UTF8_BUT_FILE_NOT;
@@ -152,7 +146,7 @@ auto decode_flags(const string& s, Flag_Type t, const Encoding& enc,
 	return warn;
 }
 
-auto decode_flags_possible_alias(const string& s, Flag_Type t,
+auto decode_flags_possible_alias(string_view s, Flag_Type t,
                                  const Encoding& enc,
                                  const vector<Flag_Set>& flag_aliases,
                                  u16string& out) -> Parsing_Error_Code
@@ -160,14 +154,11 @@ auto decode_flags_possible_alias(const string& s, Flag_Type t,
 	if (flag_aliases.empty())
 		return decode_flags(s, t, enc, out);
 
-	char* p;
-	errno = 0;
 	out.clear();
-	auto i = strtoul(s.c_str(), &p, 10);
-	if (p == s.c_str())
-		return Parsing_Error_Code::INVALID_NUMERIC_ALIAS;
-
-	if (i == numeric_limits<decltype(i)>::max() && errno == ERANGE)
+	size_t i;
+	auto fc = from_chars(begin_ptr(s), end_ptr(s), i);
+	if (fc.ec == errc::invalid_argument ||
+	    fc.ec == errc::result_out_of_range)
 		return Parsing_Error_Code::INVALID_NUMERIC_ALIAS;
 
 	if (0 < i && i <= flag_aliases.size()) {
@@ -237,7 +228,7 @@ auto report_parsing_error(Parsing_Error_Code err, size_t line_num)
 	}
 }
 
-auto decode_compound_rule(const string& s, Flag_Type t, const Encoding& enc,
+auto decode_compound_rule(string_view s, Flag_Type t, const Encoding& enc,
                           u16string& out) -> Parsing_Error_Code
 {
 	using Ft = Flag_Type;
@@ -272,27 +263,23 @@ auto decode_compound_rule(const string& s, Flag_Type t, const Encoding& enc,
 		out.clear();
 		if (s.empty())
 			return Err::MISSING_FLAGS;
-		errno = 0;
-		for (auto p = s.c_str(); *p != 0;) {
+		for (auto p = begin_ptr(s); p != end_ptr(s);) {
 			if (*p != '(')
 				return Err::COMPOUND_RULE_INVALID_FORMAT;
 			++p;
-			char* p2;
-			auto flag = strtoul(p, &p2, 10);
-			if (p2 == p)
+			unsigned short flag;
+			auto fc = from_chars(p, end_ptr(s), flag);
+			if (fc.ec == errc::invalid_argument)
 				return Err::INVALID_NUMERIC_FLAG;
-			if (flag == numeric_limits<decltype(flag)>::max() &&
-			    errno == ERANGE) {
-				errno = 0;
+			if (fc.ec == errc::result_out_of_range || flag > 0xFFFF)
 				return Err::FLAG_ABOVE_65535;
-			}
-			if (flag > 0xFFFF)
-				return Err::FLAG_ABOVE_65535;
-			p = p2;
-			if (*p != ')')
+			p = fc.ptr;
+			if (p == end_ptr(s) || *p != ')')
 				return Err::COMPOUND_RULE_INVALID_FORMAT;
 			out.push_back(flag);
 			++p;
+			if (p == end_ptr(s))
+				break;
 			if (*p == '?' || *p == '*') {
 				out.push_back(*p);
 				++p;
@@ -778,7 +765,6 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	auto line_num = size_t(0);
 	auto ss = istringstream();
 	auto p = Aff_Line_IO_Manip(*this);
-	Setlocale_To_C_In_Scope setlocale_to_C;
 	auto error_happened = false;
 	// while parsing, the streams must have plain ascii locale without
 	// any special number separator otherwise istream >> int might fail
@@ -943,7 +929,6 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	// locale must be without thousands separator.
 	auto& ctype = use_facet<std::ctype<char>>(locale::classic());
 	in.imbue(locale::classic());
-	Setlocale_To_C_In_Scope setlocale_to_C;
 
 	strip_utf8_bom(in);
 	if (in >> approximate_size)
