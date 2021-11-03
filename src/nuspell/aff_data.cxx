@@ -112,11 +112,11 @@ auto decode_flags(string_view s, Flag_Type t, const Encoding& enc,
 	}
 	case Ft::NUMBER:
 		for (auto p = begin_ptr(s);;) {
-			unsigned short flag;
+			uint16_t flag;
 			auto fc = from_chars(p, end_ptr(s), flag);
 			if (fc.ec == errc::invalid_argument)
 				return Err::INVALID_NUMERIC_FLAG;
-			if (fc.ec == errc::result_out_of_range || flag > 0xFFFF)
+			if (fc.ec == errc::result_out_of_range)
 				return Err::FLAG_ABOVE_65535;
 			out.push_back(flag);
 
@@ -267,11 +267,11 @@ auto decode_compound_rule(string_view s, Flag_Type t, const Encoding& enc,
 			if (*p != '(')
 				return Err::COMPOUND_RULE_INVALID_FORMAT;
 			++p;
-			unsigned short flag;
+			uint16_t flag;
 			auto fc = from_chars(p, end_ptr(s), flag);
 			if (fc.ec == errc::invalid_argument)
 				return Err::INVALID_NUMERIC_FLAG;
-			if (fc.ec == errc::result_out_of_range || flag > 0xFFFF)
+			if (fc.ec == errc::result_out_of_range)
 				return Err::FLAG_ABOVE_65535;
 			p = fc.ptr;
 			if (p == end_ptr(s) || *p != ')')
