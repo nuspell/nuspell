@@ -14,8 +14,3 @@
 
 # https://vim.sourceforge.io/
 .?*.swp
-
-# Sourcetrail https://sourcetrail.com
-/Nuspell.srctrlbm
-/Nuspell.srctrldb
-/Nuspell.srctrlprj
