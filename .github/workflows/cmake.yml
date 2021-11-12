@@ -55,8 +55,10 @@ jobs:
 
     - uses: actions/cache@v2
       with:
-        path: ${{ env.local_app_data }}/vcpkg/archives
-        key: windows-vcpkg-${{ env.icu_ver }}-${{ env.catch2_ver }}
+        # use backslashes in path here for Windows.
+        path: ${{ env.local_app_data }}\vcpkg\archives
+        key: windows-vcpkg-cache-${{ env.icu_ver }}-${{ env.catch2_ver }}
+        restore-keys: windows-vcpkg-cache-
 
     - name: Pull Vcpkg dependencies
       run: vcpkg install icu catch2 --triplet=x64-windows
