@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.1] - 2021-11-12
+### Fixed
+- Fix parsing of .dic files for some problematic dictionaries. Fixes #99.
+
+### Changed
+- Simplify internal calls to `icu::UnicodeString::toTitle()` which results with
+  a minor speedup. This enables Nuspell to be linked to unconventional ICU
+  builds without break iterator, like the one in Firefox.
+- Require GCC 8 as minimal version of GCC because internally `std::from_chars()`
+  is used now.
+
 ## [5.0.0] - 2021-06-12
 ### Fixed
 - Greatly reduce memory usage. See issues #80 and #97.
@@ -199,7 +210,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.0.0...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.0.1...HEAD
+[5.0.1]: https://github.com/nuspell/nuspell/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/nuspell/nuspell/compare/v4.2.0...v5.0.0
 [4.2.0]: https://github.com/nuspell/nuspell/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/nuspell/nuspell/compare/v4.0.1...v4.1.0
