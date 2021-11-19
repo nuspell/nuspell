@@ -12,14 +12,13 @@ find_package(ICU 60 REQUIRED COMPONENTS uc data)
 get_directory_property(subproject PARENT_DIRECTORY)
 
 add_subdirectory(src/nuspell)
+add_subdirectory(src/tools)
 
 if (subproject)
     # if added as subproject just build Nuspell
     # no need to test, build docs or install
     return()
 endif()
-
-add_subdirectory(docs)
 
 function(find_catch2_from_source)
     set(Catch2_FOUND Catch2-NOTFOUND PARENT_SCOPE)

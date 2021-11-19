@@ -29,7 +29,6 @@ Build-only dependencies:
   - CMake >= v3.8
   - Catch2 >= v2.3.0 (It is only needed when building the tests. If it is not
     available as a system package, the the Git submodule will be used.)
-  - Pandoc (optional, needed for building the manpage)
 
 Run-time (and build-time) dependencies:
 
@@ -159,7 +158,7 @@ with a Nuspell, Hunspell or Myspell dictionary:
 
     nuspell -d en_US text.txt
 
-For more details see the [man-page](docs/nuspell.1.md).
+For more details run `nuspell --help`.
 
 <!-- old hunspell v1 stuff
 The src/tools directory contains ten executables after compiling.

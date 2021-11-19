@@ -31,22 +31,6 @@ target_include_directories(nuspell
 
 target_link_libraries(nuspell PUBLIC ICU::uc ICU::data)
 
-add_executable(nuspell-bin main.cxx)
-set_target_properties(nuspell-bin PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ../tools
-    RUNTIME_OUTPUT_NAME nuspell)
-target_compile_definitions(nuspell-bin PRIVATE
-    PROJECT_VERSION=\"${PROJECT_VERSION}\")
-target_link_libraries(nuspell-bin nuspell)
-if (BUILD_SHARED_LIBS AND WIN32)
-    # This should be PRE_LINK (or PRE_BUILD), so Vcpkg's POST_BUILD
-    # step (see VCPKG_APPLOCAL_DEPS) that copies dll can pick up nuspell.dll
-    # inside the folder ../tools.
-    add_custom_command(TARGET nuspell-bin PRE_LINK
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:nuspell> $<TARGET_FILE_DIR:nuspell-bin>)
-endif()
-
 if (NOT subproject)
     install(TARGETS nuspell
         EXPORT NuspellTargets
@@ -57,5 +41,4 @@ if (NOT subproject)
     install(EXPORT NuspellTargets
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/nuspell
         NAMESPACE Nuspell::)
-    install(TARGETS nuspell-bin DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
