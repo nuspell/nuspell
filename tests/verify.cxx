@@ -1,4 +1,4 @@
-/* Copyright 2018-2021 Dimitrij Mijoski, Sander van Geloven
+/* Copyright 2018-2022 Dimitrij Mijoski, Sander van Geloven
  *
  * This file is part of Nuspell.
  *
@@ -184,7 +184,7 @@ auto print_version() -> void
 {
 	cout << PACKAGE_STRING
 	    "\n"
-	    "Copyright (C) 2018-2021 Dimitrij Mijoski and Sander van Geloven\n"
+	    "Copyright (C) 2018-2022 Dimitrij Mijoski and Sander van Geloven\n"
 	    "License LGPLv3+: GNU LGPL version 3 or later "
 	    "<http://gnu.org/licenses/lgpl.html>.\n"
 	    "This is free software: you are free to change and "
