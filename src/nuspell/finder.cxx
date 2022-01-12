@@ -20,49 +20,26 @@
 #include "utils.hxx"
 
 #include <algorithm>
-#include <array>
-#include <iostream>
-#include <iterator>
-#include <sstream>
-#include <unordered_set>
-#include <utility>
+#include <filesystem>
+#include <set>
 
-#if !defined(_WIN32) &&                                                        \
-    (defined(__unix__) || defined(__unix) ||                                   \
-     (defined(__APPLE__) && defined(__MACH__)) || defined(__HAIKU__))
-#include <unistd.h>
-#ifdef _POSIX_VERSION
-#include <dirent.h>
-#include <glob.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#if __has_include(<unistd.h>)
+#include <unistd.h> // defines _POSIX_VERSION
 #endif
-
-#elif defined(_WIN32)
-
-#include <io.h>
+#if _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-
-#ifdef __MINGW32__
-#include <dirent.h>
-//#include <glob.h> //not present in mingw-w64. present in vanilla mingw
-#include <sys/stat.h>
-#include <sys/types.h>
-#endif //__MINGW32__
-
 #endif
 
 using namespace std;
 
 namespace nuspell {
 inline namespace v5 {
-#ifdef _WIN32
-const auto PATHSEP = ';';
-const auto DIRSEP = '\\';
-#else
-const auto PATHSEP = ':';
-const auto DIRSEP = '/';
-#endif
+
+namespace fs = std::filesystem;
 
 /**
  * @brief Append the paths of the default directories to be searched for
@@ -71,6 +48,11 @@ const auto DIRSEP = '/';
  */
 auto append_default_dir_paths(std::vector<string>& paths) -> void
 {
+#ifdef _WIN32
+	const auto PATHSEP = ';';
+#else
+	const auto PATHSEP = ':';
+#endif
 	auto dicpath = getenv("DICPATH");
 	if (dicpath && *dicpath)
 		split(dicpath, PATHSEP, paths);
@@ -121,172 +103,43 @@ auto append_default_dir_paths(std::vector<string>& paths) -> void
 #endif
 }
 
-#ifdef _WIN32
-class FileListerWindows {
-	struct _finddata_t data = {};
-	intptr_t handle = -1;
-	bool goodbit = false;
-
-      public:
-	FileListerWindows() {}
-	FileListerWindows(const char* pattern) { first(pattern); }
-	FileListerWindows(const string& pattern) { first(pattern); }
-	FileListerWindows(const FileListerWindows& d) = delete;
-	void operator=(const FileListerWindows& d) = delete;
-	~FileListerWindows() { close(); }
-
-	auto first(const char* pattern) -> bool
-	{
-		close();
-		handle = _findfirst(pattern, &data);
-		goodbit = handle != -1;
-		return goodbit;
+auto static append_lo_global(const fs::path& p, vector<string>& paths) -> void
+{
+	for (auto& de : fs::directory_iterator(p)) {
+		if (!de.is_directory())
+			continue;
+		if (!begins_with(de.path().filename().string(), "dict-"))
+			continue;
+		paths.push_back(de.path().string());
 	}
-	auto first(const string& pattern) -> bool
-	{
-		return first(pattern.c_str());
-	}
+}
 
-	auto name() const -> const char* { return data.name; }
-	auto good() const -> bool { return goodbit; }
-	auto next() -> bool
-	{
-		goodbit = _findnext(handle, &data) == 0;
-		return goodbit;
-	}
-	auto close() -> void
-	{
-		if (handle == -1)
-			return;
-		_findclose(handle);
-		handle = -1;
-		goodbit = false;
-	}
-	auto list_all() -> vector<string>
-	{
-		vector<string> ret;
-		for (; good(); next()) {
-			ret.push_back(name());
-		}
-		return ret;
-	}
-};
-#endif
-
-#ifdef _POSIX_VERSION
-class Globber {
-      private:
-	glob_t g = {};
-	int ret = 1;
-
-      public:
-	Globber(const char* pattern) { ret = ::glob(pattern, 0, nullptr, &g); }
-	Globber(const string& pattern) : Globber(pattern.c_str()) {}
-	Globber(const Globber&) = delete;
-	auto operator=(const Globber&) = delete;
-	auto glob(const char* pattern) -> bool
-	{
-		globfree(&g);
-		ret = ::glob(pattern, 0, nullptr, &g);
-		return ret == 0;
-	}
-	auto glob(const string& pattern) -> bool
-	{
-		return glob(pattern.c_str());
-	}
-	auto begin() -> const char* const* { return g.gl_pathv; }
-	auto end() -> const char* const* { return begin() + g.gl_pathc; }
-	auto append_glob_paths_to(vector<string>& out) -> void
-	{
-		if (ret == 0)
-			out.insert(out.end(), begin(), end());
-	}
-	~Globber() { globfree(&g); }
-};
-#elif defined(_WIN32)
-class Globber {
-	vector<string> data;
-
-      public:
-	Globber(const char* pattern) { glob(pattern); }
-	Globber(const string& pattern) { glob(pattern); }
-	auto glob(const char* pattern) -> bool { return glob(string(pattern)); }
-	auto glob(const string& pattern) -> bool
-	{
-		data.clear();
-
-		if (pattern.empty())
-			return false;
-		auto first_two = pattern.substr(0, 2);
-		if (first_two == "\\\\" || first_two == "//" ||
-		    first_two == "\\/" || first_two == "//")
-			return false;
-
-		auto q1 = vector<string>();
-		auto q2 = q1;
-		auto v = q1;
-
-		split_on_any_of(pattern, "\\/", v);
-		auto i = v.begin();
-		if (i == v.end())
-			return false;
-
-		FileListerWindows fl;
-
-		if (i->find(':') != i->npos) {
-			// absolute path
-			q1.push_back(*i++);
-		}
-		else if (pattern[0] == '\\' || pattern[0] == '/') {
-			// relative to drive
-			q1.push_back("");
-		}
-		else {
-			// relative
-			q1.push_back(".");
-		}
-		for (; i != v.end(); ++i) {
-			if (i->empty())
+auto static append_lo_user(const fs::directory_entry& de1,
+                           vector<string>& paths) -> void
+{
+	for (auto& de2 : fs::directory_iterator(de1)) {
+		try {
+			if (!de2.is_directory())
 				continue;
-			for (auto& q1e : q1) {
-				auto p = q1e + DIRSEP + *i;
-				// cout << "P " << p << endl;
-				fl.first(p.c_str());
-				for (; fl.good(); fl.next()) {
-
-					if (fl.name() == string(".") ||
-					    fl.name() == string(".."))
-						continue;
-					auto n = q1e + DIRSEP + fl.name();
-					q2.push_back(n);
-					// cout << "Q2 " << n << endl;
+			if (de2.path().extension() != ".oxt")
+				continue;
+			for (auto& de3 : fs::directory_iterator(de2)) {
+				if (de3.is_directory() &&
+				    begins_with(de3.path().filename().string(),
+				                "dict")) {
+					paths.push_back(de3.path().string());
+				}
+				else if (de3.is_regular_file() &&
+				         de3.path().extension() == ".aff") {
+					paths.push_back(de2.path().string());
+					break;
 				}
 			}
-			q1.clear();
-			q1.swap(q2);
 		}
-		data.insert(data.end(), q1.begin(), q1.end());
-		return true;
+		catch (const fs::filesystem_error&) {
+		}
 	}
-	auto begin() -> vector<string>::iterator { return data.begin(); }
-	auto end() -> vector<string>::iterator { return data.end(); }
-	auto append_glob_paths_to(vector<string>& out) -> void
-	{
-		out.insert(out.end(), begin(), end());
-	}
-};
-#else
-// unimplemented
-struct Globber {
-	Globber(const char* pattern) {}
-	Globber(const string& pattern) {}
-	auto glob(const char* pattern) -> bool { return false; }
-	auto glob(const string& pattern) -> bool { return false; }
-	auto begin() -> char** { return nullptr; }
-	auto end() -> char** { return nullptr; }
-	auto append_glob_paths_to(vector<string>& out) -> void {}
-};
-#endif
+}
 
 /**
  * @brief Append the paths of the LibreOffice's directories to be searched for
@@ -300,120 +153,87 @@ struct Globber {
  */
 auto append_libreoffice_dir_paths(std::vector<std::string>& paths) -> void
 {
-	auto lo_user_glob = string();
-#ifdef _POSIX_VERSION
-	// add LibreOffice Linux global paths
-	auto prefixes = {"/usr/local/lib/libreoffice", "/usr/lib/libreoffice",
-	                 "/opt/libreoffice*"};
-	for (auto& prefix : prefixes) {
-		Globber g(string(prefix) + "/share/extensions/dict-*");
-		g.append_glob_paths_to(paths);
-	}
-
-	// add LibreOffice Linux local
-
-	auto home = getenv("HOME");
-	if (home == nullptr)
-		return;
-	lo_user_glob = home;
-	lo_user_glob += "/.config/libreoffice/?/user/uno_packages/cache"
-	                "/uno_packages/*/*.oxt/";
-#elif defined(_WIN32)
-	// add Libreoffice Windows global paths
-	auto prefixes = {getenv("PROGRAMFILES"), getenv("PROGRAMFILES(x86)")};
-	for (auto& prefix : prefixes) {
-		if (prefix == nullptr)
-			continue;
-		Globber g(string(prefix) +
-		          "\\LibreOffice ?\\share\\extensions\\dict-*");
-		g.append_glob_paths_to(paths);
-	}
-
-	auto home = getenv("APPDATA");
-	if (home == nullptr)
-		return;
-	lo_user_glob = home;
-	lo_user_glob += "\\libreoffice\\?\\user\\uno_packages\\cache"
-	                "\\uno_packages\\*\\*.oxt\\";
-#else
-	return;
+	using namespace filesystem;
+	auto p1 = path();
+	// add LibreOffice global paths
+	try {
+#if _WIN32
+		auto lo_ins_dir_sz = DWORD(260);
+		auto lo_install_dir = string(lo_ins_dir_sz - 1, '*');
+		auto subkey = "SOFTWARE\\LibreOffice\\UNO\\InstallPath";
+		auto regerr = RegGetValueA(
+		    HKEY_LOCAL_MACHINE, subkey, nullptr, RRF_RT_REG_SZ, nullptr,
+		    data(lo_install_dir), &lo_ins_dir_sz);
+		lo_install_dir.resize(lo_ins_dir_sz - 1);
+		if (regerr == ERROR_MORE_DATA) {
+			regerr = RegGetValueA(
+			    HKEY_LOCAL_MACHINE, subkey, nullptr, RRF_RT_REG_SZ,
+			    nullptr, data(lo_install_dir), &lo_ins_dir_sz);
+		}
+		if (regerr == ERROR_SUCCESS) {
+			p1 = lo_install_dir;
+			p1.replace_filename("share\\extensions");
+			append_lo_global(p1, paths);
+		}
+#elif defined(__APPLE__) && defined(__MACH__)
+		p1 = "/Applications/LibreOffice.app/Contents/Resources/"
+		     "extensions";
+		append_lo_global(p1, paths);
+#elif _POSIX_VERSION
+		p1 = "/opt";
+		for (auto& de1 : directory_iterator(p1)) {
+			try {
+				if (!de1.is_directory())
+					continue;
+				if (!begins_with(de1.path().filename().string(),
+				                 "libreoffice "))
+					continue;
+				append_lo_global(
+				    de1.path() / "share/extensions", paths);
+			}
+			catch (const filesystem_error&) {
+			}
+		}
 #endif
-	// finish adding LibreOffice user path dicts (Linux and Windows)
-	Globber g(lo_user_glob + "dict*");
-	g.append_glob_paths_to(paths);
-
-	g.glob(lo_user_glob + "*.aff");
-	auto path_str = string();
-	for (auto& path : g) {
-		path_str = path;
-		path_str.erase(path_str.rfind(DIRSEP));
-		paths.push_back(path_str);
 	}
-}
-
-#if defined(_POSIX_VERSION) || defined(__MINGW32__)
-class Directory {
-	DIR* dp = nullptr;
-	struct dirent* ent_p = nullptr;
-
-      public:
-	Directory() = default;
-	Directory(const Directory& d) = delete;
-	void operator=(const Directory& d) = delete;
-	auto open(const string& dirname) -> bool
-	{
-		close();
-		dp = opendir(dirname.c_str());
-		return dp;
+	catch (const filesystem_error&) {
 	}
-	auto next() -> bool { return (ent_p = readdir(dp)); }
-	auto entry_name() const -> const char* { return ent_p->d_name; }
-	auto close() -> void
-	{
-		if (dp) {
-			(void)closedir(dp);
-			dp = nullptr;
+
+	// add LibreOffice user paths
+	p1.clear();
+	try {
+#if _WIN32
+		auto appdata = getenv("APPDATA");
+		if (appdata == nullptr)
+			return;
+		p1 = appdata;
+#elif _POSIX_VERSION
+		auto home = getenv("HOME");
+		if (home == nullptr)
+			return;
+		p1 = home;
+#if defined(__APPLE__) && defined(__MACH__)
+		p1 /= "Library/Application Support";
+#else
+		p1 /= ".config";
+#endif
+#else
+		return;
+#endif
+		p1 /= "libreoffice/4/user/uno_packages/cache/uno_packages";
+		p1.make_preferred();
+		for (auto& de1 : directory_iterator(p1)) {
+			try {
+				if (de1.is_directory())
+					append_lo_user(de1, paths);
+			}
+			catch (const filesystem_error&) {
+			}
 		}
 	}
-	~Directory() { close(); }
-};
-#elif defined(_WIN32)
-class Directory {
-	FileListerWindows fl;
-	bool first = true;
-
-      public:
-	Directory() {}
-	Directory(const Directory& d) = delete;
-	void operator=(const Directory& d) = delete;
-	auto open(const string& dirname) -> bool
-	{
-		fl.first(dirname + "\\*");
-		first = true;
-		return fl.good();
+	catch (const filesystem_error&) {
 	}
-	auto next() -> bool
-	{
-		if (first)
-			first = false;
-		else
-			fl.next();
-		return fl.good();
-	}
-	auto entry_name() const -> const char* { return fl.name(); }
-	auto close() -> void { fl.close(); }
-};
-#else
-struct Directory {
-	Directory() {}
-	Directory(const Directory& d) = delete;
-	void operator=(const Directory& d) = delete;
-	auto open(const string& dirname) -> bool { return false; }
-	auto next() -> bool { return false; }
-	auto entry_name() const -> const char* { return nullptr; }
-	auto close() -> void {}
-};
-#endif
+}
 
 /**
  * @brief Search a directory for dictionaries.
@@ -444,37 +264,34 @@ struct Directory {
  */
 auto search_dir_for_dicts(const string& dir_path,
                           vector<pair<string, string>>& dict_list) -> void
-{
-	Directory d;
-	if (d.open(dir_path) == false)
-		return;
-
-	unordered_set<string> dics;
-	string file_name;
-	while (d.next()) {
-		file_name = d.entry_name();
-		auto sz = file_name.size();
-		if (sz < 4)
-			continue;
-
-		if (file_name.compare(sz - 4, 4, ".dic") == 0) {
-			dics.insert(file_name);
-			file_name.replace(sz - 4, 4, ".aff");
+try {
+	using namespace filesystem;
+	auto dp = path(dir_path);
+	auto dics = set<path>();
+	auto fp = path();
+	for (auto& entry : directory_iterator(dp)) {
+		fp = entry.path();
+		auto name = fp.filename();
+		auto ext = fp.extension();
+		if (ext == ".dic") {
+			dics.insert(name);
+			name.replace_extension(".aff");
 		}
-		else if (file_name.compare(sz - 4, 4, ".aff") == 0) {
-			dics.insert(file_name);
-			file_name.replace(sz - 4, 4, ".dic");
+		else if (ext == ".aff") {
+			dics.insert(name);
+			name.replace_extension(".dic");
 		}
 		else {
 			continue;
 		}
-		if (dics.count(file_name)) {
-			file_name.erase(sz - 4);
-			auto full_path = dir_path + DIRSEP + file_name;
-			dict_list.emplace_back(move(file_name),
-			                       move(full_path));
+		if (dics.count(name)) {
+			name.replace_extension();
+			fp.replace_extension();
+			dict_list.emplace_back(name.string(), fp.string());
 		}
 	}
+}
+catch (const fs::filesystem_error&) {
 }
 
 /**
