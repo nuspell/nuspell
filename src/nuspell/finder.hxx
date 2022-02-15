@@ -26,6 +26,7 @@
 
 #include "nuspell_export.h"
 
+#include <filesystem>
 #include <string>
 #include <utility>
 #include <vector>
@@ -41,24 +42,38 @@ NUSPELL_MSVC_PRAGMA_WARNING(disable : 4251)
 namespace nuspell {
 inline namespace v5 {
 
-NUSPELL_EXPORT auto append_default_dir_paths(std::vector<std::string>& paths)
-    -> void;
-
 NUSPELL_EXPORT auto
+append_default_dir_paths(std::vector<std::filesystem::path>& paths) -> void;
+NUSPELL_EXPORT auto
+append_libreoffice_dir_paths(std::vector<std::filesystem::path>& paths) -> void;
+NUSPELL_EXPORT auto
+search_dirs_for_one_dict(const std::vector<std::filesystem::path>& dir_paths,
+                         const std::filesystem::path& dict_name_stem)
+    -> std::filesystem::path;
+NUSPELL_EXPORT auto
+search_dirs_for_dicts(const std::vector<std::filesystem::path>& dir_paths,
+                      std::vector<std::filesystem::path>& dict_list) -> void;
+NUSPELL_EXPORT auto search_default_dirs_for_dicts()
+    -> std::vector<std::filesystem::path>;
+
+NUSPELL_DEPRECATED_EXPORT
+auto append_default_dir_paths(std::vector<std::string>& paths) -> void;
+
+NUSPELL_DEPRECATED_EXPORT auto
 append_libreoffice_dir_paths(std::vector<std::string>& paths) -> void;
 
-NUSPELL_EXPORT auto search_dir_for_dicts(
+NUSPELL_DEPRECATED_EXPORT auto search_dir_for_dicts(
     const std::string& dir_path,
     std::vector<std::pair<std::string, std::string>>& dict_list) -> void;
 
-NUSPELL_EXPORT auto search_dirs_for_dicts(
+NUSPELL_DEPRECATED_EXPORT auto search_dirs_for_dicts(
     const std::vector<std::string>& dir_paths,
     std::vector<std::pair<std::string, std::string>>& dict_list) -> void;
 
-NUSPELL_EXPORT auto search_default_dirs_for_dicts(
+NUSPELL_DEPRECATED_EXPORT auto search_default_dirs_for_dicts(
     std::vector<std::pair<std::string, std::string>>& dict_list) -> void;
 
-NUSPELL_EXPORT auto find_dictionary(
+NUSPELL_DEPRECATED_EXPORT auto find_dictionary(
     const std::vector<std::pair<std::string, std::string>>& dict_list,
     const std::string& dict_name)
     -> std::vector<std::pair<std::string, std::string>>::const_iterator;
@@ -68,7 +83,7 @@ NUSPELL_EXPORT auto find_dictionary(
  *
  * There are no promises of the API.
  */
-class NUSPELL_EXPORT Dict_Finder_For_CLI_Tool {
+class NUSPELL_DEPRECATED_EXPORT Dict_Finder_For_CLI_Tool {
 	std::vector<std::string> dir_paths;
 	std::vector<std::pair<std::string, std::string>> dict_multimap;
 
@@ -78,6 +93,22 @@ class NUSPELL_EXPORT Dict_Finder_For_CLI_Tool {
 	auto& get_dictionaries() const { return dict_multimap; }
 	auto get_dictionary_path(const std::string& dict) const -> std::string;
 };
+
+/**
+ * @brief Don't use this except from Nuspell CLI tool.
+ *
+ * There are no promises of the API.
+ */
+class NUSPELL_EXPORT Dict_Finder_For_CLI_Tool_2 {
+	using fs_path = std::filesystem::path;
+	std::vector<fs_path> dir_paths;
+
+      public:
+	Dict_Finder_For_CLI_Tool_2();
+	auto& get_dir_paths() const { return dir_paths; }
+	auto get_dictionary_path(const fs_path& dict) const -> fs_path;
+};
+
 } // namespace v5
 } // namespace nuspell
 NUSPELL_MSVC_PRAGMA_WARNING(pop)

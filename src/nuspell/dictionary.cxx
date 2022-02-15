@@ -30,11 +30,48 @@ inline namespace v5 {
 
 Dictionary::Dictionary(std::istream& aff, std::istream& dic)
 {
+	load_aff_dic(aff, dic);
+}
+
+Dictionary::Dictionary() = default;
+
+/**
+ * @brief Load the dictionary from opened files as iostreams
+ * @pre Before calling this the dictionary object must be empty e.g
+ *      default-constructed or assigned with another empty object.
+ * @param aff The iostream of the .aff file
+ * @param dic The iostream of the .dic file
+ * @throws Dictionary_Loading_Error on error
+ */
+auto Dictionary::load_aff_dic(std::istream& aff, std::istream& dic) -> void
+{
 	if (!parse_aff_dic(aff, dic))
 		throw Dictionary_Loading_Error("error parsing");
 }
 
-Dictionary::Dictionary() = default;
+/**
+ * @brief Load the dictionary from file on filesystem
+ * @pre Before calling this the dictionary object must be empty e.g
+ *      default-constructed or assigned with another empty object.
+ * @param aff_path path to .aff file. The path of .dic is inffered from this.
+ * @throws Dictionary_Loading_Error on error
+ */
+auto Dictionary::load_aff_dic(const std::filesystem::path& aff_path) -> void
+{
+	auto aff_file = ifstream(aff_path);
+	if (aff_file.fail()) {
+		auto err = "Aff file " + aff_path.string() + " not found";
+		throw Dictionary_Loading_Error(err);
+	}
+	auto dic_path = aff_path;
+	dic_path.replace_extension(".dic");
+	auto dic_file = ifstream(dic_path);
+	if (dic_file.fail()) {
+		auto err = "Dic file " + dic_path.string() + " not found";
+		throw Dictionary_Loading_Error(err);
+	}
+	load_aff_dic(aff_file, dic_file);
+}
 
 /**
  * @brief Create a dictionary from opened files as iostreams
@@ -42,6 +79,8 @@ Dictionary::Dictionary() = default;
  * Prefer using load_from_path(). Use this if you have a specific use case,
  * like when .aff and .dic are in-memory buffers istringstream.
  *
+ * @deprecated Use new non-static member function
+ *             load_aff_dic(std::istream&,std::istream&).
  * @param aff The iostream of the .aff file
  * @param dic The iostream of the .dic file
  * @return Dictionary object
@@ -55,6 +94,9 @@ auto Dictionary::load_from_aff_dic(std::istream& aff, std::istream& dic)
 
 /**
  * @brief Create a dictionary from files
+ * @deprecated Use new non-static member function
+ * load_aff_dic(const std::filesystem::path&). Note that the new function takes
+ * path **WITH .aff extension**.
  * @param file_path_without_extension path *without* extensions (without .dic or
  * .aff)
  * @return Dictionary object
@@ -63,20 +105,9 @@ auto Dictionary::load_from_aff_dic(std::istream& aff, std::istream& dic)
 auto Dictionary::load_from_path(const std::string& file_path_without_extension)
     -> Dictionary
 {
-	auto path = file_path_without_extension;
-	path += ".aff";
-	std::ifstream aff_file(path);
-	if (aff_file.fail()) {
-		auto err = "Aff file " + path + " not found";
-		throw Dictionary_Loading_Error(err);
-	}
-	path.replace(path.size() - 3, 3, "dic");
-	std::ifstream dic_file(path);
-	if (dic_file.fail()) {
-		auto err = "Dic file " + path + " not found";
-		throw Dictionary_Loading_Error(err);
-	}
-	return load_from_aff_dic(aff_file, dic_file);
+	auto d = Dictionary();
+	d.load_aff_dic(file_path_without_extension + ".aff");
+	return d;
 }
 
 /**

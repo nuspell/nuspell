@@ -355,7 +355,7 @@ int main(int argc, char* argv[])
 	default:
 		break;
 	}
-	auto f = Dict_Finder_For_CLI_Tool();
+	auto f = Dict_Finder_For_CLI_Tool_2();
 
 	auto loc_str = setlocale(LC_CTYPE, "");
 	if (!loc_str) {
@@ -386,19 +386,19 @@ int main(int argc, char* argv[])
 		cerr << "Dictionary " << args.dictionary << " not found\n";
 		return 1;
 	}
-	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
+	clog << "INFO: Pointed dictionary " << filename.string() << '\n';
 	auto peak_ram_a = get_peak_ram_usage();
 	auto dic = Dictionary();
 	try {
-		dic = Dictionary::load_from_path(filename);
+		dic.load_aff_dic(filename);
 	}
 	catch (const Dictionary_Loading_Error& e) {
 		cerr << e.what() << '\n';
 		return 1;
 	}
 	auto nuspell_ram = get_peak_ram_usage() - peak_ram_a;
-	auto aff_name = filename + ".aff";
-	auto dic_name = filename + ".dic";
+	auto aff_name = filename.string();
+	auto dic_name = filename.replace_extension(".dic").string();
 	peak_ram_a = get_peak_ram_usage();
 	Hunspell hun(aff_name.c_str(), dic_name.c_str());
 	auto hunspell_ram = get_peak_ram_usage() - peak_ram_a;

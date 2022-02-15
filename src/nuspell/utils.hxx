@@ -40,10 +40,9 @@ struct UConverter; // unicode/ucnv.h
 namespace nuspell {
 inline namespace v5 {
 
-auto split(std::string_view s, char sep, std::vector<std::string>& out)
-    -> std::vector<std::string>&;
-NUSPELL_EXPORT auto split_on_any_of(std::string_view s, const char* sep,
-                                    std::vector<std::string>& out)
+NUSPELL_DEPRECATED_EXPORT auto split_on_any_of(std::string_view s,
+                                               const char* sep,
+                                               std::vector<std::string>& out)
     -> std::vector<std::string>&;
 
 NUSPELL_EXPORT auto utf32_to_utf8(std::u32string_view in, std::string& out)

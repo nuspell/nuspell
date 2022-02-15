@@ -39,8 +39,16 @@ int main(int argc, char* argv[])
 		return 2;
 	}
 	file.close();
+	test.replace(test.size() - 4, 4, ".aff");
+	auto d = nuspell::Dictionary();
+	try {
+		d.load_aff_dic(test);
+	}
+	catch (const nuspell::Dictionary_Loading_Error& err) {
+		cerr << err.what() << '\n';
+		return 2;
+	}
 	test.erase(test.size() - 4);
-	auto d = nuspell::Dictionary::load_from_path(test);
 	auto word = string();
 	if (type == ".dic") {
 		auto error = vector<string>();

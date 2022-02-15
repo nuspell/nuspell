@@ -53,7 +53,7 @@
 
 using namespace std;
 using nuspell::Dictionary, nuspell::Dictionary_Loading_Error,
-    nuspell::Dict_Finder_For_CLI_Tool;
+    nuspell::Dict_Finder_For_CLI_Tool_2;
 namespace {
 enum Mode { NORMAL, HELP, VERSION, LIST_DICTS };
 auto print_help(const char* program_name) -> void
@@ -76,18 +76,22 @@ that recognizes punctuation and then each word is checked.
   --help                    print this help
   --version                 print version number
 
-The dictionary name is its filename without the extension (.dic or .aff).
-If just a name is given it will be searched in the default directories for
-dictionaries. If a path is given (if the string contains slash), only that
-dictionary is considered. The path must be without extension too.
+One dictionary consists of two files with extensions .dic and .aff.
+The -d option accepts either dictionary name without filename extension or a
+path with slash (and with extension) to the .aff file of the dictionary. When
+just a name is given, it will be searched among the list of dictionaries in the
+default directories (see option -D). When a path to .aff is given, only the
+dictionary under the path is considered.
 
 The following environment variables can have effect:
 
   DICTIONARY - same as -d,
-  DICPATH    - additional path to search for dictionaries.
+  DICPATH    - additional directory path to search for dictionaries.
 
-Example: )"
-	  << p << " -d en_US file.txt\n"
+Example:
+)"
+	  << "    " << p << " -d en_US file.txt\n"
+	  << "    " << p << " -d ../../subdir/di_CT.aff\n"
 	  << R"(
 Bug reports: <https://github.com/nuspell/nuspell/issues>
 Full documentation: <https://github.com/nuspell/nuspell/wiki>
@@ -106,26 +110,28 @@ Written by Dimitrij Mijoski.
 
 auto print_version() -> void { cout << ver_str; }
 
-auto list_dictionaries(const Dict_Finder_For_CLI_Tool& f) -> void
+auto list_dictionaries(const Dict_Finder_For_CLI_Tool_2& f) -> void
 {
-	if (f.get_dir_paths().empty()) {
+	if (empty(f.get_dir_paths())) {
 		cout << "No search paths available" << '\n';
 	}
 	else {
 		cout << "Search paths:" << '\n';
 		for (auto& p : f.get_dir_paths()) {
-			cout << p << '\n';
+			cout << p.string() << '\n';
 		}
 	}
-
-	if (f.get_dictionaries().empty()) {
+	auto dicts = vector<filesystem::path>();
+	nuspell::search_dirs_for_dicts(f.get_dir_paths(), dicts);
+	if (empty(dicts)) {
 		cout << "No dictionaries available\n";
 	}
 	else {
+		stable_sort(begin(dicts), end(dicts));
 		cout << "Available dictionaries:\n";
-		for (auto& d : f.get_dictionaries()) {
-			cout << left << setw(15) << d.first << ' ' << d.second
-			     << '\n';
+		for (auto& d : dicts) {
+			cout << left << setw(15) << d.stem().string() << ' '
+			     << d.string() << '\n';
 		}
 	}
 }
@@ -389,7 +395,7 @@ int main(int argc, char* argv[])
 		print_help(program_name);
 		return 0;
 	}
-	auto f = Dict_Finder_For_CLI_Tool();
+	auto f = Dict_Finder_For_CLI_Tool_2();
 	if (mode == Mode::LIST_DICTS) {
 		list_dictionaries(f);
 		return 0;
@@ -465,10 +471,10 @@ int main(int argc, char* argv[])
 		cerr << "Dictionary " << dictionary << " not found\n";
 		return EXIT_FAILURE;
 	}
-	clog << "INFO: Pointed dictionary " << filename << ".{dic,aff}\n";
+	clog << "INFO: Pointed dictionary " << filename.string() << '\n';
 	auto dic = Dictionary();
 	try {
-		dic = Dictionary::load_from_path(filename);
+		dic.load_aff_dic(filename);
 	}
 	catch (const Dictionary_Loading_Error& e) {
 		cerr << e.what() << '\n';

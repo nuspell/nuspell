@@ -26,6 +26,8 @@
 
 #include "suggester.hxx"
 
+#include <filesystem>
+
 namespace nuspell {
 inline namespace v5 {
 
@@ -45,9 +47,12 @@ class NUSPELL_EXPORT Dictionary : private Suggester {
 
       public:
 	Dictionary();
-	auto static load_from_aff_dic(std::istream& aff, std::istream& dic)
+	auto load_aff_dic(std::istream& aff, std::istream& dic) -> void;
+	auto load_aff_dic(const std::filesystem::path& aff_path) -> void;
+	[[deprecated]] auto static load_from_aff_dic(std::istream& aff,
+	                                             std::istream& dic)
 	    -> Dictionary;
-	auto static load_from_path(
+	[[deprecated]] auto static load_from_path(
 	    const std::string& file_path_without_extension) -> Dictionary;
 	auto spell(std::string_view word) const -> bool;
 	auto suggest(std::string_view word, std::vector<std::string>& out) const

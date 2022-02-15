@@ -398,20 +398,6 @@ TEST_CASE("Similarity_Group")
 	REQUIRE(sg.strings == vector{"AB"s, "ghgh"s});
 }
 
-TEST_CASE("split_on_any_of()")
-{
-	auto in = "abc.qwe--12334556!@#"s;
-	auto v = vector<string>{"HAHA"};
-	REQUIRE(split_on_any_of(in, ".-@#", v) ==
-	        vector<string>{"HAHA", "abc", "qwe", "", "12334556!", "", ""});
-
-	v.clear();
-	REQUIRE(split_on_any_of(in, "", v) == vector{in});
-
-	v.clear();
-	REQUIRE(split_on_any_of("", "qwe", v) == vector{""s});
-}
-
 TEST_CASE("utf32_to_utf8()")
 {
 	REQUIRE(utf32_to_utf8(U"") == "");

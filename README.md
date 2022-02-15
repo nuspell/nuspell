@@ -198,16 +198,21 @@ using namespace std;
 
 int main()
 {
-	auto dict_list = vector<pair<string, string>>();
-	nuspell::search_default_dirs_for_dicts(dict_list);
-	auto dict_name_and_path = nuspell::find_dictionary(dict_list, "en_US");
-	if (dict_name_and_path == end(dict_list))
+	auto dirs = vector<filesystem::path>();
+	nuspell::append_default_dir_paths(dirs);
+	auto dict_path = nuspell::search_dirs_for_one_dict(dirs, "en_US");
+	if (empty(dict_path))
 		return 1; // Return error because we can not find the requested
-		          // dictionary in the list.
-	auto& dict_path = dict_name_and_path->second;
+		          // dictionary.
 
-	auto dict = nuspell::Dictionary::load_from_path(dict_path);
-
+	auto dict = nuspell::Dictionary();
+	try {
+		dict.load_aff_dic(dict_path);
+	}
+	catch (const nuspell::Dictionary_Loading_Error& e) {
+		cerr << e.what() << '\n';
+		return 1;
+	}
 	auto word = string();
 	auto sugs = vector<string>();
 	while (cin >> word) {

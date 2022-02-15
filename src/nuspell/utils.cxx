@@ -38,55 +38,23 @@ using namespace std;
 namespace nuspell {
 inline namespace v5 {
 
-template <class SepT>
-static auto& split_on_any_of_low(std::string_view s, const SepT& sep,
-                                 std::vector<std::string>& out)
-{
-	size_t i1 = 0;
-	size_t i2;
-	do {
-		i2 = s.find_first_of(sep, i1);
-		out.emplace_back(s.substr(i1, i2 - i1));
-		i1 = i2 + 1; // we can only add +1 if separator is single char.
-
-		// i2 gets s.npos after the last separator.
-		// Length of i2-i1 will always go past the end. That is defined.
-	} while (i2 != s.npos);
-	return out;
-}
-
-/**
- * @internal
- * @brief Splits string on single char seperator.
- *
- * Consecutive separators are treated as separate and will emit empty strings.
- *
- * @param s string to split.
- * @param sep char that acts as separator to split on.
- * @param out vector where separated strings are appended.
- * @return @p out.
- */
-auto split(std::string_view s, char sep, std::vector<std::string>& out)
-    -> std::vector<std::string>&
-{
-	return split_on_any_of_low(s, sep, out);
-}
-
 /**
  * @internal
  * @brief Splits string on set of single char seperators.
  *
  * Consecutive separators are treated as separate and will emit empty strings.
  *
+ * @deprecated TODO delete this on new major version. it was exported internal
+ * symbol, but now it isn't used internally. it was exported for unit_test.
  * @param s string to split.
  * @param sep seperator(s) to split on.
  * @param out vector where separated strings are appended.
  * @return @p out.
  */
-auto split_on_any_of(std::string_view s, const char* sep,
+auto split_on_any_of(std::string_view, const char*,
                      std::vector<std::string>& out) -> std::vector<std::string>&
 {
-	return split_on_any_of_low(s, sep, out);
+	return out;
 }
 
 auto utf32_to_utf8(std::u32string_view in, std::string& out) -> void
