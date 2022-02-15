@@ -6,6 +6,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] - 2022-02-15
+### Added
+- Add new API for finding dictionaries on the filesystem that uses facilities
+  from C++17 `std::filesystem`.
+
+### Changed
+- Simplify CLI tool and removed some unused features from it.
+
+### Deprecated
+- Deprecate old API for finding dictionaries on the filesystem that used
+  strings for paths.
+
+### Removed
+- Remove man-page for CLI tool and dependency on pandoc. Just use --help to get
+  manual for the CLI tool.
+
 ## [5.0.1] - 2021-11-12
 ### Fixed
 - Fix parsing of .dic files for some problematic dictionaries. Fixes #99.
@@ -210,7 +226,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.0.1...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.1.0...HEAD
+[5.1.0]: https://github.com/nuspell/nuspell/compare/v5.0.1...v5.1.0
 [5.0.1]: https://github.com/nuspell/nuspell/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/nuspell/nuspell/compare/v4.2.0...v5.0.0
 [4.2.0]: https://github.com/nuspell/nuspell/compare/v4.1.0...v4.2.0
