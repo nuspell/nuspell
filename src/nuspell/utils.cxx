@@ -327,21 +327,6 @@ Encoding_Converter::~Encoding_Converter()
 		ucnv_close(cnv);
 }
 
-Encoding_Converter::Encoding_Converter(const Encoding_Converter& other)
-{
-	auto err = UErrorCode();
-	cnv = ucnv_safeClone(other.cnv, nullptr, nullptr, &err);
-}
-
-auto Encoding_Converter::operator=(const Encoding_Converter& other)
-    -> Encoding_Converter&
-{
-	this->~Encoding_Converter();
-	auto err = UErrorCode();
-	cnv = ucnv_safeClone(other.cnv, nullptr, nullptr, &err);
-	return *this;
-}
-
 auto Encoding_Converter::to_utf8(string_view in, string& out) -> bool
 {
 	if (ucnv_getType(cnv) == UCNV_UTF8) {

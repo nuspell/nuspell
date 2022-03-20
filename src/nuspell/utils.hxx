@@ -118,13 +118,14 @@ class Encoding_Converter {
 	{
 	}
 	~Encoding_Converter();
-	Encoding_Converter(const Encoding_Converter& other);
+	Encoding_Converter(const Encoding_Converter& other) = delete;
 	Encoding_Converter(Encoding_Converter&& other) noexcept
 	{
 		cnv = other.cnv;
 		cnv = nullptr;
 	}
-	auto operator=(const Encoding_Converter& other) -> Encoding_Converter&;
+	auto operator=(const Encoding_Converter& other)
+	    -> Encoding_Converter& = delete;
 	auto operator=(Encoding_Converter&& other) noexcept
 	    -> Encoding_Converter&
 	{
