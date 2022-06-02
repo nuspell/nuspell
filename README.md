@@ -25,7 +25,7 @@ Main features of Nuspell spelling checker:
 
 Build-only dependencies:
 
-  - C++ 17 compiler, GCC >= v8, Clang >= v7, MSVC >= 2017
+  - C++ 17 compiler with support for `std::filesystem`, e.g. GCC >= v9
   - CMake >= v3.8
   - Catch2 >= v2.3.0 (It is only needed when building the tests. If it is not
     available as a system package, the the Git submodule will be used.)

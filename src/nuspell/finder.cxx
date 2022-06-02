@@ -349,32 +349,43 @@ auto append_libreoffice_dir_paths(std::vector<std::string>& paths) -> void
 	          [](const fs::path& p) { return p.string(); });
 }
 
-auto search_dir_for_dicts(const string& dir_path,
-                          vector<pair<string, string>>& dict_list) -> void
+static auto new_to_old_dict_list(vector<fs::path>& new_aff_paths,
+                                 vector<pair<string, string>>& dict_list)
+    -> void
 {
-	auto out = vector<fs::path>();
-	search_dir_for_dicts(dir_path, out);
-	transform(begin(out), end(out), back_inserter(dict_list),
-	          [](const fs::path& p) {
+	transform(begin(new_aff_paths), end(new_aff_paths),
+	          back_inserter(dict_list), [](const fs::path& p) {
 		          return pair{p.stem().string(),
 		                      fs::path(p).replace_extension().string()};
 	          });
+}
+
+auto search_dir_for_dicts(const string& dir_path,
+                          vector<pair<string, string>>& dict_list) -> void
+{
+	auto new_dict_list = vector<fs::path>();
+	search_dir_for_dicts(dir_path, new_dict_list);
+	new_to_old_dict_list(new_dict_list, dict_list);
 }
 
 auto search_dirs_for_dicts(const std::vector<string>& dir_paths,
                            std::vector<std::pair<string, string>>& dict_list)
     -> void
 {
+	auto new_dict_list = vector<fs::path>();
 	for (auto& p : dir_paths)
-		search_dir_for_dicts(p, dict_list);
+		search_dir_for_dicts(p, new_dict_list);
+	new_to_old_dict_list(new_dict_list, dict_list);
 }
 
 auto search_default_dirs_for_dicts(
     std::vector<std::pair<std::string, std::string>>& dict_list) -> void
 {
-	auto dir_paths = vector<string>();
-	append_default_dir_paths(dir_paths);
-	search_dirs_for_dicts(dir_paths, dict_list);
+	auto new_dir_paths = vector<fs::path>();
+	auto new_dict_list = vector<fs::path>();
+	append_default_dir_paths(new_dir_paths);
+	search_dirs_for_dicts(new_dir_paths, new_dict_list);
+	new_to_old_dict_list(new_dict_list, dict_list);
 }
 
 auto find_dictionary(
