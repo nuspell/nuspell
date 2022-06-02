@@ -21,7 +21,7 @@ jobs:
     env:
       CXXFLAGS: ${{ matrix.cxxflags }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with: { submodules: true }
 
     - name: Configure CMake
@@ -43,7 +43,8 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with: { submodules: true }
 
     - name: Bring runner env vars to workflows
       shell: bash
@@ -51,17 +52,16 @@ jobs:
         echo "local_app_data=$LOCALAPPDATA" >> $GITHUB_ENV
         echo "vcpkg_root=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
         vcpkg x-history icu | awk 'NR==2{ print "icu_ver="$1 }' >> $GITHUB_ENV
-        vcpkg x-history catch2 | awk 'NR==2{ print "catch2_ver="$1 }' >> $GITHUB_ENV
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       with:
         # use backslashes in path here for Windows.
         path: ${{ env.local_app_data }}\vcpkg\archives
-        key: windows-vcpkg-cache-${{ env.icu_ver }}-${{ env.catch2_ver }}
+        key: windows-vcpkg-cache-${{ env.icu_ver }}
         restore-keys: windows-vcpkg-cache-
 
     - name: Pull Vcpkg dependencies
-      run: vcpkg install icu catch2 --triplet=x64-windows
+      run: vcpkg install icu --triplet=x64-windows
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
