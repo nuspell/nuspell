@@ -14,31 +14,33 @@ include(GenerateExportHeader)
 generate_export_header(nuspell)
 
 set(nuspell_headers aff_data.hxx checker.hxx suggester.hxx dictionary.hxx
-    finder.hxx structures.hxx unicode.hxx
-    ${CMAKE_CURRENT_BINARY_DIR}/nuspell_export.h)
+	finder.hxx structures.hxx unicode.hxx
+	${CMAKE_CURRENT_BINARY_DIR}/nuspell_export.h)
 set_target_properties(nuspell PROPERTIES
-    PUBLIC_HEADER "${nuspell_headers}"
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-    CXX_VISIBILITY_PRESET hidden)
+	PUBLIC_HEADER "${nuspell_headers}"
+	VERSION ${PROJECT_VERSION}
+	SOVERSION ${PROJECT_VERSION_MAJOR}
+	CXX_VISIBILITY_PRESET hidden)
 
 target_compile_features(nuspell PUBLIC cxx_std_17)
 
 target_include_directories(nuspell
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
-              $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+	PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+	INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+	          $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_link_libraries(nuspell PUBLIC ICU::uc ICU::data)
 
-if (NOT subproject)
-    install(TARGETS nuspell
-        EXPORT NuspellTargets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nuspell)
-    install(EXPORT NuspellTargets
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/nuspell
-        NAMESPACE Nuspell::)
+if (subproject)
+	return()
 endif()
+
+install(TARGETS nuspell
+	EXPORT NuspellTargets
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nuspell)
+install(EXPORT NuspellTargets
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/nuspell
+	NAMESPACE Nuspell::)
