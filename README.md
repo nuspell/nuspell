@@ -29,6 +29,9 @@ Build-only dependencies:
   - CMake >= v3.8
   - Catch2 >= v2.3.0 (It is only needed when building the tests. If it is not
     available as a system package, the the Git submodule will be used.)
+  - Getopt (It is needed only on Windows + MSVC and only when the CLI tool or
+    the tests are built. It is available in vcpkg. Other platforms provide
+    it out of the box.)
 
 Run-time (and build-time) dependencies:
 
@@ -100,7 +103,7 @@ manuals.
     Visual Studio Build Tools.
 2.  Install Git for Windows and Cmake.
 3.  Install vcpkg in some folder, e.g. in `c:\vcpkg`.
-4.  With vcpkg install: icu.
+4.  Run `vcpkg install icu getopt --triplet=x64-windows`.
 5.  Run the commands bellow.
 
 <!-- end list -->
@@ -108,7 +111,7 @@ manuals.
 ```bat
 mkdir build
 cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=c:\vcpkg\scripts\buildsystems\vcpkg.cmake -A Win32
+cmake .. -DCMAKE_TOOLCHAIN_FILE=c:\vcpkg\scripts\buildsystems\vcpkg.cmake -A x64
 cmake --build .
 ```
 

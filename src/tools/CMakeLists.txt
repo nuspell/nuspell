@@ -2,7 +2,11 @@ add_executable(nuspell-exe nuspell.cxx)
 set_target_properties(nuspell-exe PROPERTIES RUNTIME_OUTPUT_NAME nuspell)
 target_compile_definitions(nuspell-exe PRIVATE
 	PROJECT_VERSION=\"${PROJECT_VERSION}\")
-target_link_libraries(nuspell-exe Nuspell::nuspell)
+target_link_libraries(nuspell-exe PRIVATE Nuspell::nuspell)
+if (MSVC)
+	target_include_directories(nuspell-exe PRIVATE ${GETOPT_INCLUDE_DIR})
+	target_link_libraries(nuspell-exe PRIVATE ${GETOPT_LIBRARY})
+endif()
 if (BUILD_SHARED_LIBS AND WIN32)
 	# This should be PRE_LINK (or PRE_BUILD), so Vcpkg's POST_BUILD
 	# step (see VCPKG_APPLOCAL_DEPS) that copies dll can pick up nuspell.dll

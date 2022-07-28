@@ -27,10 +27,8 @@
 #include <unicode/brkiter.h>
 #include <unicode/ucnv.h>
 
-#if __has_include(<getopt.h>)
-#define HAVE_GETOPT_H 1
 #include <getopt.h>
-#endif
+
 #if __has_include(<unistd.h>)
 #include <unistd.h> // defines _POSIX_VERSION
 #endif
@@ -344,7 +342,6 @@ int main(int argc, char* argv[])
 
 	ios_base::sync_with_stdio(false);
 
-#if HAVE_GETOPT_H
 	auto optstring = "d:D";
 	option longopts[] = {
 	    {"help", no_argument, &mode_int, Mode::HELP},
@@ -385,7 +382,6 @@ int main(int argc, char* argv[])
 	}
 	files_first = &argv[optind];
 	files_last = &argv[argc];
-#endif
 	auto mode = static_cast<Mode>(mode_int);
 	if (mode == Mode::VERSION) {
 		print_version();

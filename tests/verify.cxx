@@ -26,9 +26,10 @@
 #include <iostream>
 #include <unicode/ucnv.h>
 
+#include <getopt.h>
+
 #if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
     (defined(__APPLE__) && defined(__MACH__)) || defined(__HAIKU__)
-#include <getopt.h>
 #include <unistd.h>
 #endif
 #ifdef _POSIX_VERSION
@@ -72,9 +73,6 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 {
 	if (argc != 0 && argv[0] && argv[0][0] != '\0')
 		program_name = argv[0];
-// See POSIX Utility argument syntax
-// http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
-#if defined(_POSIX_VERSION) || defined(__MINGW32__)
 	int c;
 	// The program can run in various modes depending on the
 	// command line options. mode is FSM state, this while loop is FSM.
@@ -137,7 +135,6 @@ auto Args_t::parse_args(int argc, char* argv[]) -> void
 		}
 	}
 	files.insert(files.end(), argv + optind, argv + argc);
-#endif
 }
 
 /**

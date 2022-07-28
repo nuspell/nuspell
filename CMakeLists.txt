@@ -4,14 +4,27 @@ set(PROJECT_HOMEPAGE_URL "https://nuspell.github.io/")
 
 option(BUILD_SHARED_LIBS "Build as shared library" ON)
 option(BUILD_TESTING "Build the testing tree." ON)
+option(BUILD_TOOLS "Build the CLI tool." ON)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 find_package(ICU 60 REQUIRED COMPONENTS uc data)
 get_directory_property(subproject PARENT_DIRECTORY)
 add_subdirectory(src/nuspell)
-add_subdirectory(src/tools)
 
+if (MSVC AND (BUILD_TOOLS OR BUILD_TESTING))
+	find_path(GETOPT_INCLUDE_DIR getopt.h)
+	if (NOT GETOPT_INCLUDE_DIR)
+		message(FATAL_ERROR "Can not find getopt.h")
+	endif()
+	find_library(GETOPT_LIBRARY getopt)
+	if (NOT GETOPT_LIBRARY)
+		message(FATAL_ERROR "Can not find library getopt")
+	endif()
+endif()
+if (BUILD_TOOLS)
+	add_subdirectory(src/tools)
+endif()
 if (subproject)
 	# if added as subproject just build Nuspell
 	# no need to test, build docs or install
