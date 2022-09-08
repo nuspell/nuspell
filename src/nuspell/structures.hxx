@@ -878,18 +878,17 @@ template <class T, class Key_Extr = identity, class Key_Transform = identity>
 class Prefix_Multiset {
       public:
 	using Value_Type = T;
-	using Key_Type = std::remove_reference_t<decltype(
-	    std::declval<Key_Extr>()(std::declval<T>()))>;
+	using Key_Type =
+	    std::remove_reference_t<decltype(std::declval<Key_Extr>()(
+	        std::declval<T>()))>;
 	using Char_Type = typename Key_Type::value_type;
 	using Traits = typename Key_Type::traits_type;
 	using Vector_Type = std::vector<T>;
 	using Iterator = typename Vector_Type::const_iterator;
 
       private:
-	struct Ebo_Key_Extr : public Key_Extr {
-	};
-	struct Ebo_Key_Transf : public Key_Transform {
-	};
+	struct Ebo_Key_Extr : public Key_Extr {};
+	struct Ebo_Key_Transf : public Key_Transform {};
 	struct Ebo : public Ebo_Key_Extr, Ebo_Key_Transf {
 		Vector_Type table;
 	} ebo;

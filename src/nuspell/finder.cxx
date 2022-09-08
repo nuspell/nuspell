@@ -397,9 +397,7 @@ auto find_dictionary(
 	               [&](auto& e) { return e.first == dict_name; });
 }
 
-Dict_Finder_For_CLI_Tool::Dict_Finder_For_CLI_Tool()
-{
-}
+Dict_Finder_For_CLI_Tool::Dict_Finder_For_CLI_Tool() {}
 auto Dict_Finder_For_CLI_Tool::get_dictionary_path(const std::string&) const
     -> std::string
 {
