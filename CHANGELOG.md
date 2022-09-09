@@ -6,6 +6,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.1] - 2022-09-09
+### Added
+- Add configuration option `BUILD_TOOLS` that can be used to disable building
+  the CLI tool. It is ON by default. See #122.
+
+### Changed
+- Made error reporting more detailed and robust. The message in the thrown
+  exception is much richer when there are parsing errors. The library does
+  not write directly to `cerr`, it does not pollute it. See #123.
+
+### Fixed
+- Fix compiler warnings regarding usage of deprecated functions.
+- Fix CLI tool on Windows + MSVC to properly accept arguments. Windows + MSVC
+  now requires library `getopt` from Vcpkg. Fixes #122.
+
 ## [5.1.0] - 2022-02-15
 ### Added
 - Add new API for finding dictionaries on the filesystem that uses facilities
@@ -226,7 +241,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.1.0...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.1.1...HEAD
+[5.1.1]: https://github.com/nuspell/nuspell/compare/v5.1.0...v5.1.1
 [5.1.0]: https://github.com/nuspell/nuspell/compare/v5.0.1...v5.1.0
 [5.0.1]: https://github.com/nuspell/nuspell/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/nuspell/nuspell/compare/v4.2.0...v5.0.0
