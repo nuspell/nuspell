@@ -21,7 +21,6 @@
 
 #include <cassert>
 #include <charconv>
-#include <iostream>
 #include <locale>
 #include <sstream>
 #include <unordered_map>
@@ -675,7 +674,7 @@ auto parse_affix(istream& in, Aff_Line_Parser& p, string& command,
 
 } // namespace
 
-auto Aff_Data::parse_aff(istream& in) -> bool
+auto Aff_Data::parse_aff(istream& in, ostream& err_msg) -> bool
 {
 	auto prefixes = vector<Prefix>();
 	auto suffixes = vector<Suffix>();
@@ -860,15 +859,15 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 		if (ss.fail()) {
 			assert(static_cast<int>(p.err) > 0);
 			error_happened = true;
-			cerr << "Nuspell error: could not parse affix file. "
-			     << line_num << ": " << line << '\n'
-			     << get_parsing_error_message(p.err) << endl;
+			err_msg << "Nuspell error: could not parse affix file. "
+			        << line_num << ": " << line << '\n'
+			        << get_parsing_error_message(p.err) << endl;
 		}
 		else if (p.err != Parsing_Error_Code::NO_ERROR) {
 			assert(static_cast<int>(p.err) < 0);
-			cerr << "Nuspell warning: while parsing affix file. "
-			     << line_num << ": " << line << '\n'
-			     << get_parsing_error_message(p.err) << endl;
+			err_msg << "Nuspell warning: while parsing affix file. "
+			        << line_num << ": " << line << '\n'
+			        << get_parsing_error_message(p.err) << endl;
 		}
 	}
 	// default BREAK definition
@@ -900,7 +899,7 @@ auto Aff_Data::parse_aff(istream& in) -> bool
 	return in.eof() && !error_happened; // true for success
 }
 
-auto Aff_Data::parse_dic(istream& in) -> bool
+auto Aff_Data::parse_dic(istream& in, ostream& err_msg) -> bool
 {
 	size_t line_number = 1;
 	size_t approximate_size;
@@ -917,10 +916,14 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 	in.imbue(locale::classic());
 
 	strip_utf8_bom(in);
-	if (in >> approximate_size)
-		words.reserve(approximate_size);
-	else
+	in >> approximate_size;
+	if (in.fail()) {
+		err_msg << "Nuspell error: while parsing first line of .dic "
+		           "file. There is no number."
+		        << endl;
 		return false;
+	}
+	words.reserve(approximate_size);
 	getline(in, line);
 
 	while (getline(in, line)) {
@@ -985,18 +988,20 @@ auto Aff_Data::parse_dic(istream& in) -> bool
 				err = Parsing_Error_Code::
 				    NO_FLAGS_AFTER_SLASH_WARNING;
 			if (static_cast<int>(err) > 0) {
-				cerr << "Nuspell error: while parsing "
-				        ".dic file. "
-				     << line_number << ": " << line << '\n'
-				     << get_parsing_error_message(err) << endl;
+				err_msg << "Nuspell error: while parsing "
+				           ".dic file. "
+				        << line_number << ": " << line << '\n'
+				        << get_parsing_error_message(err)
+				        << endl;
 				success = false;
 				continue;
 			}
 			else if (static_cast<int>(err) < 0) {
-				cerr << "Nuspell warning: while parsing "
-				        ".dic file. "
-				     << line_number << ": " << line << '\n'
-				     << get_parsing_error_message(err) << endl;
+				err_msg << "Nuspell warning: while parsing "
+				           ".dic file. "
+				        << line_number << ": " << line << '\n'
+				        << get_parsing_error_message(err)
+				        << endl;
 			}
 		}
 		if (empty(word))

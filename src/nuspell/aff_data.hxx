@@ -159,12 +159,13 @@ struct Aff_Data {
 	std::vector<Flag_Set> flag_aliases;
 	std::string wordchars; // deprecated?
 
-	auto parse_aff(std::istream& in) -> bool;
-	auto parse_dic(std::istream& in) -> bool;
-	auto parse_aff_dic(std::istream& aff, std::istream& dic)
+	auto parse_aff(std::istream& in, std::ostream& err_msg) -> bool;
+	auto parse_dic(std::istream& in, std::ostream& err_msg) -> bool;
+	auto parse_aff_dic(std::istream& aff, std::istream& dic,
+	                   std::ostream& err_msg)
 	{
-		if (parse_aff(aff))
-			return parse_dic(dic);
+		if (parse_aff(aff, err_msg))
+			return parse_dic(dic, err_msg);
 		return false;
 	}
 };

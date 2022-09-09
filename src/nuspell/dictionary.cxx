@@ -20,7 +20,7 @@
 #include "utils.hxx"
 
 #include <fstream>
-#include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 using namespace std;
@@ -45,8 +45,27 @@ Dictionary::Dictionary() = default;
  */
 auto Dictionary::load_aff_dic(std::istream& aff, std::istream& dic) -> void
 {
-	if (!parse_aff_dic(aff, dic))
-		throw Dictionary_Loading_Error("error parsing");
+	auto err_msg = ostringstream();
+	if (!parse_aff_dic(aff, dic, err_msg))
+		throw Dictionary_Loading_Error(std::move(err_msg).str());
+}
+
+static auto open_aff_dic(const filesystem::path& aff_path)
+    -> pair<ifstream, ifstream>
+{
+	auto aff_file = ifstream(aff_path);
+	if (aff_file.fail()) {
+		auto err = "Aff file " + aff_path.string() + " not found.";
+		throw Dictionary_Loading_Error(err);
+	}
+	auto dic_path = aff_path;
+	dic_path.replace_extension(".dic");
+	auto dic_file = ifstream(dic_path);
+	if (dic_file.fail()) {
+		auto err = "Dic file " + dic_path.string() + " not found.";
+		throw Dictionary_Loading_Error(err);
+	}
+	return {move(aff_file), move(dic_file)};
 }
 
 /**
@@ -58,19 +77,16 @@ auto Dictionary::load_aff_dic(std::istream& aff, std::istream& dic) -> void
  */
 auto Dictionary::load_aff_dic(const std::filesystem::path& aff_path) -> void
 {
-	auto aff_file = ifstream(aff_path);
-	if (aff_file.fail()) {
-		auto err = "Aff file " + aff_path.string() + " not found";
-		throw Dictionary_Loading_Error(err);
-	}
-	auto dic_path = aff_path;
-	dic_path.replace_extension(".dic");
-	auto dic_file = ifstream(dic_path);
-	if (dic_file.fail()) {
-		auto err = "Dic file " + dic_path.string() + " not found";
-		throw Dictionary_Loading_Error(err);
-	}
-	load_aff_dic(aff_file, dic_file);
+	auto [aff, dic] = open_aff_dic(aff_path);
+	load_aff_dic(aff, dic);
+}
+
+auto Dictionary::load_aff_dic_internal(const std::filesystem::path& aff_path,
+                                       std::ostream& err_msg) -> void
+{
+	auto [aff, dic] = open_aff_dic(aff_path);
+	if (!parse_aff_dic(aff, dic, err_msg))
+		throw Dictionary_Loading_Error("Parsing error.");
 }
 
 /**
@@ -89,7 +105,9 @@ auto Dictionary::load_aff_dic(const std::filesystem::path& aff_path) -> void
 auto Dictionary::load_from_aff_dic(std::istream& aff, std::istream& dic)
     -> Dictionary
 {
-	return Dictionary(aff, dic);
+	auto d = Dictionary();
+	d.load_aff_dic(aff, dic);
+	return d;
 }
 
 /**

@@ -445,7 +445,7 @@ int main(int argc, char* argv[])
 	auto loc_str_sv = string_view(loc_str);
 	clog << "INFO: Locale LC_CTYPE=" << loc_str_sv
 	     << ", Input encoding=" << input_enc
-	     << ", Output encoding=" << output_enc << '\n';
+	     << ", Output encoding=" << output_enc << endl;
 
 	if (dictionary.empty()) {
 		auto denv = getenv("DICTIONARY");
@@ -458,22 +458,22 @@ int main(int argc, char* argv[])
 		dictionary = loc_str_sv.substr(0, idx);
 	}
 	if (dictionary.empty()) {
-		cerr << "No dictionary provided and can not infer from OS "
-		        "locale\n";
+		clog << "ERROR: No dictionary provided and can not infer from "
+		        "OS locale\n";
 		return EXIT_FAILURE;
 	}
 	auto filename = f.get_dictionary_path(dictionary);
 	if (filename.empty()) {
-		cerr << "Dictionary " << dictionary << " not found\n";
+		clog << "ERROR: Dictionary " << dictionary << " not found\n";
 		return EXIT_FAILURE;
 	}
-	clog << "INFO: Pointed dictionary " << filename.string() << '\n';
+	clog << "INFO: Pointed dictionary " << filename.string() << endl;
 	auto dic = Dictionary();
 	try {
-		dic.load_aff_dic(filename);
+		dic.load_aff_dic_internal(filename, clog);
 	}
 	catch (const Dictionary_Loading_Error& e) {
-		cerr << e.what() << '\n';
+		clog << "ERROR: " << e.what() << '\n';
 		return EXIT_FAILURE;
 	}
 	// ICU reports all types of errors, logic errors and runtime errors
@@ -494,7 +494,7 @@ int main(int argc, char* argv[])
 	auto in_ucnv =
 	    icu::LocalUConverterPointer(ucnv_open(inp_enc_cstr, &uerr));
 	if (U_FAILURE(uerr)) {
-		cerr << "ERROR: Invalid encoding " << input_enc << ".\n";
+		clog << "ERROR: Invalid encoding " << input_enc << ".\n";
 		return EXIT_FAILURE;
 	}
 
@@ -507,7 +507,7 @@ int main(int argc, char* argv[])
 	auto out_ucnv =
 	    icu::LocalUConverterPointer(ucnv_open(out_enc_cstr, &uerr));
 	if (U_FAILURE(uerr)) {
-		cerr << "ERROR: Invalid encoding " << output_enc << ".\n";
+		clog << "ERROR: Invalid encoding " << output_enc << ".\n";
 		return EXIT_FAILURE;
 	}
 
@@ -520,7 +520,8 @@ int main(int argc, char* argv[])
 			auto file_name = *it;
 			ifstream in(file_name);
 			if (!in.is_open()) {
-				cerr << "Can't open " << file_name << '\n';
+				clog << "ERROR: Can't open " << file_name
+				     << '\n';
 				return EXIT_FAILURE;
 			}
 			process_text(dic, in, in_ucnv.getAlias(), cout,

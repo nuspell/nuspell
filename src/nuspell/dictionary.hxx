@@ -43,12 +43,20 @@ class Dictionary_Loading_Error : public std::runtime_error {
  * @brief The only important public class
  */
 class NUSPELL_EXPORT Dictionary : private Suggester {
-	Dictionary(std::istream& aff, std::istream& dic);
+	[[deprecated]] Dictionary(std::istream& aff, std::istream& dic);
 
       public:
 	Dictionary();
 	auto load_aff_dic(std::istream& aff, std::istream& dic) -> void;
 	auto load_aff_dic(const std::filesystem::path& aff_path) -> void;
+
+	/**
+	 * @internal
+	 * @brief Do not use, only for Nuspell's CLI tool
+	 */
+	auto load_aff_dic_internal(const std::filesystem::path& aff_path,
+	                           std::ostream& err_msg) -> void;
+
 	[[deprecated]] auto static load_from_aff_dic(std::istream& aff,
 	                                             std::istream& dic)
 	    -> Dictionary;
