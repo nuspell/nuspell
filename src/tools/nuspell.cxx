@@ -334,8 +334,6 @@ int main(int argc, char* argv[])
 	auto dictionary = string();
 	auto input_enc = string();
 	auto output_enc = string();
-	const char* const* files_first = nullptr;
-	const char* const* files_last = nullptr;
 
 	if (argc > 0 && argv[0])
 		program_name = argv[0];
@@ -380,8 +378,6 @@ int main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 	}
-	files_first = &argv[optind];
-	files_last = &argv[argc];
 	auto mode = static_cast<Mode>(mode_int);
 	if (mode == Mode::VERSION) {
 		print_version();
@@ -433,7 +429,7 @@ int main(int argc, char* argv[])
 	if (output_enc.empty())
 		output_enc = enc_str;
 #elif _WIN32
-	if (_isatty(_fileno(stdin)))
+	if (optind == argc && _isatty(_fileno(stdin)))
 		input_enc = "cp" + to_string(GetConsoleCP());
 	else if (input_enc.empty())
 		input_enc = "UTF-8";
@@ -498,26 +494,32 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	auto out_enc_cstr = output_enc.c_str();
-	if (output_enc.empty()) {
-		out_enc_cstr = nullptr;
-		clog << "WARNING: using default ICU encoding converter for IO"
-		     << endl;
-	}
-	auto out_ucnv =
-	    icu::LocalUConverterPointer(ucnv_open(out_enc_cstr, &uerr));
-	if (U_FAILURE(uerr)) {
-		clog << "ERROR: Invalid encoding " << output_enc << ".\n";
-		return EXIT_FAILURE;
+	auto out_ucnv_smart_ptr = icu::LocalUConverterPointer();
+	auto out_ucnv = in_ucnv.getAlias(); // often output_enc is same as input
+	if (output_enc != input_enc) {
+		auto output_enc_cstr = output_enc.c_str();
+		if (output_enc.empty()) {
+			output_enc_cstr = nullptr;
+			clog << "WARNING: using default ICU encoding converter "
+			        "for IO"
+			     << endl;
+		}
+		out_ucnv = ucnv_open(output_enc_cstr, &uerr);
+		out_ucnv_smart_ptr.adoptInstead(out_ucnv);
+		if (U_FAILURE(uerr)) {
+			clog << "ERROR: Invalid encoding " << output_enc
+			     << ".\n";
+			return EXIT_FAILURE;
+		}
 	}
 
-	if (files_first == files_last) {
-		process_text(dic, cin, in_ucnv.getAlias(), cout,
-		             out_ucnv.getAlias(), uerr);
+	if (optind == argc) {
+		process_text(dic, cin, in_ucnv.getAlias(), cout, out_ucnv,
+		             uerr);
 	}
 	else {
-		for (auto it = files_first; it != files_last; ++it) {
-			auto file_name = *it;
+		for (; optind != argc; ++optind) {
+			auto file_name = argv[optind];
 			ifstream in(file_name);
 			if (!in.is_open()) {
 				clog << "ERROR: Can't open " << file_name
@@ -525,7 +527,7 @@ int main(int argc, char* argv[])
 				return EXIT_FAILURE;
 			}
 			process_text(dic, in, in_ucnv.getAlias(), cout,
-			             out_ucnv.getAlias(), uerr);
+			             out_ucnv, uerr);
 		}
 	}
 }
