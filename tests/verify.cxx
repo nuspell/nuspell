@@ -1,4 +1,4 @@
-/* Copyright 2018-2022 Dimitrij Mijoski, Sander van Geloven
+/* Copyright 2016-2022 Dimitrij Mijoski
  *
  * This file is part of Nuspell.
  *
@@ -21,185 +21,99 @@
 #include <nuspell/finder.hxx>
 
 #include <chrono>
+#include <clocale>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <unicode/ucnv.h>
 
 #include <getopt.h>
 
-#if defined(__MINGW32__) || defined(__unix__) || defined(__unix) ||            \
-    (defined(__APPLE__) && defined(__MACH__)) || defined(__HAIKU__)
-#include <unistd.h>
+#if __has_include(<unistd.h>)
+#include <unistd.h> // defines _POSIX_VERSION
 #endif
 #ifdef _POSIX_VERSION
 #include <langinfo.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 #endif
+#ifdef _WIN32
+#include <io.h>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+#include <psapi.h>
+#endif
 
 // manually define if not supplied by the build system
 #ifndef PROJECT_VERSION
 #define PROJECT_VERSION "unknown.version"
 #endif
-#define PACKAGE_STRING "nuspell " PROJECT_VERSION
 
 using namespace std;
-using namespace nuspell;
-
-enum Mode {
-	DEFAULT_MODE /**< verification test */,
-	HELP_MODE /**< printing help information */,
-	VERSION_MODE /**< printing version information */,
-	ERROR_MODE /**< where the arguments used caused an error */
-};
-
-struct Args_t {
-	Mode mode = DEFAULT_MODE;
-	string program_name = "verify";
-	string dictionary;
-	string encoding;
-	vector<string> other_dicts;
-	vector<string> files;
-	bool print_false = false;
-	bool sugs = false;
-
-	Args_t() = default;
-	Args_t(int argc, char* argv[]) { parse_args(argc, argv); }
-	auto parse_args(int argc, char* argv[]) -> void;
-};
-
-auto Args_t::parse_args(int argc, char* argv[]) -> void
+using nuspell::Dictionary, nuspell::Dictionary_Loading_Error,
+    nuspell::Dict_Finder_For_CLI_Tool_2;
+namespace {
+enum Mode { NORMAL, HELP, VERSION };
+auto print_help(const char* program_name) -> void
 {
-	if (argc != 0 && argv[0] && argv[0][0] != '\0')
-		program_name = argv[0];
-	int c;
-	// The program can run in various modes depending on the
-	// command line options. mode is FSM state, this while loop is FSM.
-	const char* shortopts = ":d:i:fshv";
-	const struct option longopts[] = {
-	    {"version", 0, nullptr, 'v'},
-	    {"help", 0, nullptr, 'h'},
-	    {nullptr, 0, nullptr, 0},
-	};
-	while ((c = getopt_long(argc, argv, shortopts, longopts, nullptr)) !=
-	       -1) {
-		switch (c) {
-		case 'd':
-			if (dictionary.empty())
-				dictionary = optarg;
-			else
-				cerr << "WARNING: Detected not yet supported "
-				        "other dictionary "
-				     << optarg << '\n';
-			other_dicts.emplace_back(optarg);
-
-			break;
-		case 'i':
-			encoding = optarg;
-
-			break;
-		case 'f':
-			print_false = true;
-
-			break;
-		case 's':
-			sugs = true;
-			break;
-		case 'h':
-			if (mode == DEFAULT_MODE)
-				mode = HELP_MODE;
-			else
-				mode = ERROR_MODE;
-
-			break;
-		case 'v':
-			if (mode == DEFAULT_MODE)
-				mode = VERSION_MODE;
-			else
-				mode = ERROR_MODE;
-
-			break;
-		case ':':
-			cerr << "Option -" << static_cast<char>(optopt)
-			     << " requires an operand\n";
-			mode = ERROR_MODE;
-
-			break;
-		case '?':
-			cerr << "Unrecognized option: '-"
-			     << static_cast<char>(optopt) << "'\n";
-			mode = ERROR_MODE;
-
-			break;
-		}
-	}
-	files.insert(files.end(), argv + optind, argv + argc);
-}
-
-/**
- * @brief Prints help information to standard output.
- *
- * @param program_name pass argv[0] here.
- */
-auto print_help(const string& program_name) -> void
-{
-	auto& p = program_name;
+	auto p = string_view(program_name);
 	auto& o = cout;
 	o << "Usage:\n"
-	     "\n";
-	o << p << " [-d dict_NAME] [-i enc] [-f] [-s] [file_name]...\n";
-	o << p << " -h|--help|-v|--version\n";
-	o << "\n"
-	     "Verification testing of Nuspell for each FILE.\n"
-	     "Without FILE, check standard input.\n"
-	     "\n"
-	     "  -d di_CT      use di_CT dictionary. Only one dictionary is\n"
-	     "                currently supported\n"
-	     "  -i enc        input encoding, default is active locale\n"
-	     "  -f            print false negative and false positive words\n"
-	     "  -s            also test suggestions (usable only in debugger)\n"
-	     "  -h, --help    print this help and exit\n"
-	     "  -v, --version print version number and exit\n"
-	     "\n";
-	o << "Example: " << p << " -d en_US /usr/share/dict/american-english\n";
-	o << "\n"
-	     "The input should contain one word per line. Each word is\n"
-	     "checked in Nuspell and Hunspell and the results are compared.\n"
-	     "After all words are processed, some statistics are printed like\n"
-	     "correctness and speed of Nuspell compared to Hunspell.\n"
-	     "\n"
-	     "Please note, messages containing:\n"
-	     "  This UTF-8 encoding can't convert to UTF-16:"
-	     "are caused by Hunspell and can be ignored.\n";
+	  << p << " [-d dict_NAME] [OPTION]... [FILE...]\n"
+	  << p << " --help|--version\n"
+	  << R"(
+Check spelling of each FILE, and measure speed and correctness in regard to
+other spellchecking libraries. If no FILE is specified, check standard input.
+The input text should be a simple wordlist with one word per line.
+
+  -d, --dictionary=di_CT    use di_CT dictionary (only one is supported)
+  -m, --print-mismatches    print mismatches (false positives and negatives)
+  -s, --test-suggestions    call suggest function (useful only for debugging)
+  --encoding=enc            set both input and output encoding
+  --input-encoding=enc      input encoding, default is active locale
+  --output-encoding=enc     output encoding, default is active locale
+  --help                    print this help
+  --version                 print version number
+
+The following environment variables can have effect:
+
+  DICTIONARY - same as -d,
+  DICPATH    - additional directory path to search for dictionaries.
+
+Example:
+)"
+	  << "    " << p << " -d en_US file.txt\n"
+	  << "    " << p << " -d ../../subdir/di_CT.aff\n";
 }
 
-/**
- * @brief Prints the version number to standard output.
- */
-auto print_version() -> void
-{
-	cout << PACKAGE_STRING
-	    "\n"
-	    "Copyright (C) 2018-2022 Dimitrij Mijoski and Sander van Geloven\n"
-	    "License LGPLv3+: GNU LGPL version 3 or later "
-	    "<http://gnu.org/licenses/lgpl.html>.\n"
-	    "This is free software: you are free to change and "
-	    "redistribute it.\n"
-	    "There is NO WARRANTY, to the extent permitted by law.\n"
-	    "\n"
-	    "Written by Dimitrij Mijoski and Sander van Geloven.\n";
-}
+auto ver_str = "nuspell " PROJECT_VERSION R"(
+Copyright (C) 2016-2022 Dimitrij Mijoski
+License LGPLv3+: GNU LGPL version 3 or later <http://gnu.org/licenses/lgpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written by Dimitrij Mijoski.
+)";
+
+auto print_version() -> void { cout << ver_str; }
 
 auto get_peak_ram_usage() -> long
 {
 #ifdef _POSIX_VERSION
 	rusage r;
-	getrusage(RUSAGE_SELF, &r);
-	return r.ru_maxrss;
-#else
-	return 0;
+	auto err = getrusage(RUSAGE_SELF, &r);
+	if (!err)
+		return r.ru_maxrss;
+#elif _WIN32
+	PROCESS_MEMORY_COUNTERS pmc;
+	auto suc = GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
+	if (suc)
+		return pmc.PeakWorkingSetSize >> 10;
 #endif
+	return 0;
 }
 
 auto to_utf8(string_view source, string& dest, UConverter* ucnv,
@@ -231,11 +145,15 @@ auto from_utf8(string_view source, string& dest, UConverter* ucnv,
 	}
 }
 
-auto normal_loop(const Args_t& args, const Dictionary& dic, Hunspell& hun,
-                 istream& in, ostream& out)
+struct Options {
+	bool print_mismatches = false;
+	bool test_suggestions = false;
+};
+
+auto process_text(Options opt, const Dictionary& dic, Hunspell& hun,
+                  UConverter* hun_cnv, istream& in, UConverter* in_cnv,
+                  ostream& out, UErrorCode& uerr)
 {
-	auto print_false = args.print_false;
-	auto test_sugs = args.sugs;
 	auto word = string();
 	auto u8_buffer = string();
 	auto hun_word = string();
@@ -244,176 +162,263 @@ auto normal_loop(const Args_t& args, const Dictionary& dic, Hunspell& hun,
 	auto true_neg = 0;
 	auto false_pos = 0;
 	auto false_neg = 0;
-	auto duration_hun = chrono::high_resolution_clock::duration();
-	auto duration_nu = duration_hun;
-	auto in_loc = in.getloc();
+	auto time_hun = chrono::high_resolution_clock::duration();
+	auto time_nu = time_hun;
 
-	auto uerr = U_ZERO_ERROR;
-	auto io_cnv = icu::LocalUConverterPointer(
-	    ucnv_open(args.encoding.c_str(), &uerr));
-	if (U_FAILURE(uerr))
-		throw runtime_error("Invalid io encoding");
 	auto hun_enc =
 	    nuspell::Encoding(hun.get_dict_encoding()).value_or_default();
-	auto hun_cnv =
-	    icu::LocalUConverterPointer(ucnv_open(hun_enc.c_str(), &uerr));
-	if (U_FAILURE(uerr))
-		throw runtime_error("Invalid hun encoding");
-	auto io_is_utf8 = ucnv_getType(io_cnv.getAlias()) == UCNV_UTF8;
-	auto hun_is_utf8 = ucnv_getType(hun_cnv.getAlias()) == UCNV_UTF8;
+	auto in_is_utf8 = ucnv_getType(in_cnv) == UCNV_UTF8;
+	// auto out_is_utf8 = ucnv_getType(out_cnv) == UCNV_UTF8;
+	auto hun_is_utf8 = ucnv_getType(hun_cnv) == UCNV_UTF8;
 
-	// need to take entine line here, not `in >> word`
-	while (getline(in, word)) {
+	while (in >> word) {
 		auto u8_word = string_view();
-		auto tick_a = chrono::high_resolution_clock::now();
-		if (io_is_utf8) {
+		auto time_a = chrono::high_resolution_clock::now();
+		if (in_is_utf8) {
 			u8_word = word;
 		}
 		else {
-			to_utf8(word, u8_buffer, io_cnv.getAlias(), uerr);
+			to_utf8(word, u8_buffer, in_cnv, uerr);
 			u8_word = u8_buffer;
 		}
 		auto res_nu = dic.spell(u8_word);
-		auto tick_b = chrono::high_resolution_clock::now();
+		auto time_b = chrono::high_resolution_clock::now();
 		if (hun_is_utf8)
 			hun_word = u8_word;
 		else
-			from_utf8(u8_word, hun_word, hun_cnv.getAlias(), uerr);
+			from_utf8(u8_word, hun_word, hun_cnv, uerr);
 		auto res_hun = hun.spell(hun_word);
-		auto tick_c = chrono::high_resolution_clock::now();
-		duration_nu += tick_b - tick_a;
-		duration_hun += tick_c - tick_b;
+		auto time_c = chrono::high_resolution_clock::now();
+		time_nu += time_b - time_a;
+		time_hun += time_c - time_b;
 		if (res_hun) {
 			if (res_nu) {
 				++true_pos;
 			}
 			else {
 				++false_neg;
-				if (print_false)
-					out << "FalseNegativeWord   " << word
-					    << '\n';
+				if (opt.print_mismatches)
+					out << "FN: " << word << '\n';
 			}
 		}
 		else {
 			if (res_nu) {
 				++false_pos;
-				if (print_false)
-					out << "FalsePositiveWord   " << word
-					    << '\n';
+				if (opt.print_mismatches)
+					out << "FP: " << word << '\n';
 			}
 			else {
 				++true_neg;
 			}
 		}
 		++total;
-		if (test_sugs && !res_nu && !res_hun) {
+		if (opt.test_suggestions && !res_nu && !res_hun) {
 			auto nus_sugs = vector<string>();
-			auto hun_sugs = vector<string>();
 			dic.suggest(word, nus_sugs);
-			hun.suggest(hun_word);
+			/* auto hun_sugs = */ hun.suggest(hun_word);
 		}
 	}
-	out << "Total Words         " << total << '\n';
-	// prevent devision by zero
+	out << "Total Words = " << total << '\n';
 	if (total == 0)
 		return;
 	auto accuracy = (true_pos + true_neg) * 1.0 / total;
 	auto precision = true_pos * 1.0 / (true_pos + false_pos);
-	auto speedup = duration_hun.count() * 1.0 / duration_nu.count();
-	out << "True Positives      " << true_pos << '\n';
-	out << "True Negatives      " << true_neg << '\n';
-	out << "False Positives     " << false_pos << '\n';
-	out << "False Negatives     " << false_neg << '\n';
-	out << "Accuracy            " << accuracy << '\n';
-	out << "Precision           " << precision << '\n';
-	out << "Duration Nuspell    " << duration_nu.count() << '\n';
-	out << "Duration Hunspell   " << duration_hun.count() << '\n';
-	out << "Speedup Rate        " << speedup << '\n';
+	auto speedup = time_hun.count() * 1.0 / time_nu.count();
+	out << "TP = " << true_pos << '\n';
+	out << "TN = " << true_neg << '\n';
+	out << "FP = " << false_pos << '\n';
+	out << "FN = " << false_neg << '\n';
+	out << "Accuracy  = " << accuracy << '\n';
+	out << "Precision = " << precision << '\n';
+	out << "Time Nuspell  = " << time_nu.count() << '\n';
+	out << "Time Hunspell = " << time_hun.count() << '\n';
+	out << "Speedup = " << speedup << '\n';
 }
-
+} // namespace
 int main(int argc, char* argv[])
 {
-	// May speed up I/O. After this, don't use C printf, scanf etc.
+	auto mode_int = int(Mode::NORMAL);
+	auto program_name = "nuspell";
+	auto dictionary = string();
+	auto input_enc = string();
+	auto output_enc = string();
+	auto options = Options();
+
+	if (argc > 0 && argv[0])
+		program_name = argv[0];
+
 	ios_base::sync_with_stdio(false);
 
-	auto args = Args_t(argc, argv);
-
-	switch (args.mode) {
-	case HELP_MODE:
-		print_help(args.program_name);
-		return 0;
-	case VERSION_MODE:
+	auto optstring = "d:ms";
+	option longopts[] = {
+	    {"help", no_argument, &mode_int, Mode::HELP},
+	    {"version", no_argument, &mode_int, Mode::VERSION},
+	    {"dictionary", required_argument, nullptr, 'd'},
+	    {"print-mismatches", no_argument, nullptr, 'm'},
+	    {"test-suggestions", no_argument, nullptr, 's'},
+	    {"encoding", required_argument, nullptr, 'e'},
+	    {"input-encoding", required_argument, nullptr, 'i'},
+	    {"output-encoding", required_argument, nullptr, 'o'},
+	    {}};
+	int longindex;
+	int c;
+	while ((c = getopt_long(argc, argv, optstring, longopts, &longindex)) !=
+	       -1) {
+		switch (c) {
+		case 0:
+			// check longopts[longindex] if needed
+			break;
+		case 'd':
+			dictionary = optarg;
+			break;
+		case 'm':
+			options.print_mismatches = true;
+			break;
+		case 's':
+			options.test_suggestions = true;
+			break;
+		case 'e':
+			input_enc = optarg;
+			output_enc = optarg;
+			break;
+		case 'i':
+			input_enc = optarg;
+			break;
+		case 'o':
+			output_enc = optarg;
+			break;
+		case '?':
+			return EXIT_FAILURE;
+		}
+	}
+	auto mode = static_cast<Mode>(mode_int);
+	if (mode == Mode::VERSION) {
 		print_version();
 		return 0;
-	case ERROR_MODE:
-		cerr << "Invalid (combination of) arguments, try '"
-		     << args.program_name << " --help' for more information\n";
-		return 1;
-	default:
-		break;
+	}
+	else if (mode == Mode::HELP) {
+		print_help(program_name);
+		return 0;
 	}
 	auto f = Dict_Finder_For_CLI_Tool_2();
 
-	auto loc_str = setlocale(LC_CTYPE, "");
+	char* loc_str = nullptr;
+#if _WIN32
+	loc_str = setlocale(LC_CTYPE, nullptr); // will return "C"
+#else
+	loc_str = setlocale(LC_CTYPE, "");
 	if (!loc_str) {
-		clog << "WARNING: Invalid locale string, fall back to \"C\".\n";
+		clog << "WARNING: Can not set to system locale, fall back to "
+		        "\"C\".\n";
 		loc_str = setlocale(LC_CTYPE, nullptr); // will return "C"
 	}
-	auto loc_str_sv = string_view(loc_str);
-	if (args.encoding.empty()) {
-#if _POSIX_VERSION
-		auto enc_str = nl_langinfo(CODESET);
-		args.encoding = enc_str;
-#elif _WIN32
 #endif
-	}
+#if _POSIX_VERSION
+	auto enc_str = nl_langinfo(CODESET);
+	if (input_enc.empty())
+		input_enc = enc_str;
+	if (output_enc.empty())
+		output_enc = enc_str;
+#elif _WIN32
+	if (optind == argc && _isatty(_fileno(stdin)))
+		input_enc = "cp" + to_string(GetConsoleCP());
+	else if (input_enc.empty())
+		input_enc = "UTF-8";
+	if (_isatty(_fileno(stdout)))
+		output_enc = "cp" + to_string(GetConsoleOutputCP());
+	else if (output_enc.empty())
+		output_enc = "UTF-8";
+#endif
+	auto loc_str_sv = string_view(loc_str);
 	clog << "INFO: Locale LC_CTYPE=" << loc_str_sv
-	     << ", Used encoding=" << args.encoding << '\n';
-	if (args.dictionary.empty()) {
+	     << ", Input encoding=" << input_enc
+	     << ", Output encoding=" << output_enc << endl;
+
+	if (dictionary.empty()) {
+		auto denv = getenv("DICTIONARY");
+		if (denv)
+			dictionary = denv;
+	}
+	if (dictionary.empty()) {
 		// infer dictionary from locale
 		auto idx = min(loc_str_sv.find('.'), loc_str_sv.find('@'));
-		args.dictionary = loc_str_sv.substr(0, idx);
+		dictionary = loc_str_sv.substr(0, idx);
 	}
-	if (args.dictionary.empty()) {
-		cerr << "No dictionary provided and can not infer from OS "
-		        "locale\n";
+	if (dictionary.empty()) {
+		clog << "ERROR: No dictionary provided and can not infer from "
+		        "OS locale\n";
+		return EXIT_FAILURE;
 	}
-	auto filename = f.get_dictionary_path(args.dictionary);
+	auto filename = f.get_dictionary_path(dictionary);
 	if (filename.empty()) {
-		cerr << "Dictionary " << args.dictionary << " not found\n";
-		return 1;
+		clog << "ERROR: Dictionary " << dictionary << " not found\n";
+		return EXIT_FAILURE;
 	}
-	clog << "INFO: Pointed dictionary " << filename.string() << '\n';
+	clog << "INFO: Pointed dictionary " << filename.string() << endl;
 	auto peak_ram_a = get_peak_ram_usage();
 	auto dic = Dictionary();
 	try {
-		dic.load_aff_dic(filename);
+		dic.load_aff_dic_internal(filename, clog);
 	}
 	catch (const Dictionary_Loading_Error& e) {
-		cerr << e.what() << '\n';
-		return 1;
+		clog << "ERROR: " << e.what() << '\n';
+		return EXIT_FAILURE;
 	}
 	auto nuspell_ram = get_peak_ram_usage() - peak_ram_a;
 	auto aff_name = filename.string();
 	auto dic_name = filename.replace_extension(".dic").string();
 	peak_ram_a = get_peak_ram_usage();
-	Hunspell hun(aff_name.c_str(), dic_name.c_str());
+	auto hun = Hunspell(aff_name.c_str(), dic_name.c_str());
 	auto hunspell_ram = get_peak_ram_usage() - peak_ram_a;
-	cout << "Nuspell peak RAM usage:  " << nuspell_ram << "kB\n"
-	     << "Hunspell peak RAM usage: " << hunspell_ram << "kB\n";
-	if (args.files.empty()) {
-		normal_loop(args, dic, hun, cin, cout);
+	cout << "Nuspell peak RAM usage:  " << nuspell_ram << "KB\n"
+	     << "Hunspell peak RAM usage: " << hunspell_ram << "KB\n";
+
+	// ICU reports all types of errors, logic errors and runtime errors
+	// using this enum. We should not check for logic errors, they should
+	// not happened. Optionally, only assert that they are not there can be
+	// used. We should check for runtime errors.
+	// The encoding conversion is a common case where runtime error can
+	// happen, but by default ICU uses Unicode replacement character on
+	// errors and reprots success. This can be changed, but there is no need
+	// for that.
+	auto uerr = U_ZERO_ERROR;
+	auto inp_enc_cstr = input_enc.c_str();
+	if (input_enc.empty()) {
+		inp_enc_cstr = nullptr;
+		clog << "WARNING: using default ICU encoding converter for IO"
+		     << endl;
+	}
+	auto in_ucnv =
+	    icu::LocalUConverterPointer(ucnv_open(inp_enc_cstr, &uerr));
+	if (U_FAILURE(uerr)) {
+		clog << "ERROR: Invalid encoding " << input_enc << ".\n";
+		return EXIT_FAILURE;
+	}
+
+	auto hun_enc =
+	    nuspell::Encoding(hun.get_dict_encoding()).value_or_default();
+	auto hun_cnv =
+	    icu::LocalUConverterPointer(ucnv_open(hun_enc.c_str(), &uerr));
+	if (U_FAILURE(uerr)) {
+		clog << "ERROR: Invalid Hun encoding " << hun_enc << ".\n";
+		return EXIT_FAILURE;
+	}
+
+	if (optind == argc) {
+		process_text(options, dic, hun, hun_cnv.getAlias(), cin,
+		             in_ucnv.getAlias(), cout, uerr);
 	}
 	else {
-		for (auto& file_name : args.files) {
+		for (; optind != argc; ++optind) {
+			auto file_name = argv[optind];
 			ifstream in(file_name);
 			if (!in.is_open()) {
-				cerr << "Can't open " << file_name << '\n';
-				return 1;
+				clog << "ERROR: Can't open " << file_name
+				     << '\n';
+				return EXIT_FAILURE;
 			}
-			in.imbue(cin.getloc());
-			normal_loop(args, dic, hun, in, cout);
+			process_text(options, dic, hun, hun_cnv.getAlias(), in,
+			             in_ucnv.getAlias(), cout, uerr);
 		}
 	}
-	return 0;
 }
