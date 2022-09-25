@@ -72,9 +72,11 @@ The input text should be a simple wordlist with one word per line.
   -d, --dictionary=di_CT    use di_CT dictionary (only one is supported)
   -m, --print-mismatches    print mismatches (false positives and negatives)
   -s, --test-suggestions    call suggest function (useful only for debugging)
+  -w, --wikipedia-list      input is Wikipedia's list of common misspellings
   --encoding=enc            set both input and output encoding
   --input-encoding=enc      input encoding, default is active locale
-  --output-encoding=enc     output encoding, default is active locale
+  --output-encoding=enc     (UNUSED, always UTF-8) output encoding, default is
+                            active locale
   --help                    print this help
   --version                 print version number
 
@@ -148,22 +150,24 @@ auto from_utf8(string_view source, string& dest, UConverter* ucnv,
 struct Options {
 	bool print_mismatches = false;
 	bool test_suggestions = false;
+	bool wikipedia_list = false;
 };
 
 auto process_text(Options opt, const Dictionary& dic, Hunspell& hun,
                   UConverter* hun_cnv, istream& in, UConverter* in_cnv,
                   ostream& out, UErrorCode& uerr)
 {
-	auto word = string();
-	auto u8_buffer = string();
-	auto hun_word = string();
-	auto total = 0;
-	auto true_pos = 0;
-	auto true_neg = 0;
-	auto false_pos = 0;
-	auto false_neg = 0;
-	auto time_hun = chrono::high_resolution_clock::duration();
-	auto time_nu = time_hun;
+	using Duration = chrono::high_resolution_clock::duration;
+	string word, line, u8_tmp_buf, hun_word;
+	size_t total = 0;
+	size_t true_pos = 0, true_neg = 0, false_pos = 0, false_neg = 0;
+	Duration time_nu_true = {}, time_nu_false = {};
+	Duration time_hun_true = {}, time_hun_false = {};
+
+	auto nus_sugs = vector<string>();
+	Duration time_nu_sugs = {}, time_hun_sugs = {};
+	size_t nus_hits = 0, nus_misses = 0, nus_sum_orders = 0;
+	size_t hun_hits = 0, hun_misses = 0, hun_sum_orders = 0;
 
 	auto hun_enc =
 	    nuspell::Encoding(hun.get_dict_encoding()).value_or_default();
@@ -171,26 +175,58 @@ auto process_text(Options opt, const Dictionary& dic, Hunspell& hun,
 	// auto out_is_utf8 = ucnv_getType(out_cnv) == UCNV_UTF8;
 	auto hun_is_utf8 = ucnv_getType(hun_cnv) == UCNV_UTF8;
 
-	while (in >> word) {
-		auto u8_word = string_view();
+	for (;;) {
+		size_t i = 0;
+		if (opt.wikipedia_list) {
+			if (!getline(in, line))
+				break;
+			if (line.empty() || line.front() == '#')
+				continue;
+			auto rtrim_idx = line.find_last_not_of(" \t\r");
+			if (rtrim_idx != line.npos)
+				line.erase(++rtrim_idx);
+			if (!in_is_utf8) {
+				to_utf8(line, u8_tmp_buf, in_cnv, uerr);
+				line = u8_tmp_buf;
+			}
+			if ((i = line.find("->")) != line.npos) {
+				word.assign(line, 0, i);
+				i += 2;
+			}
+			else if ((i = line.find('\t')) != line.npos) {
+				word.assign(line, 0, i);
+				i += 1;
+			}
+			else
+				continue;
+		}
+		else if (in >> word) {
+			if (!in_is_utf8) {
+				to_utf8(word, u8_tmp_buf, in_cnv, uerr);
+				word = u8_tmp_buf;
+			}
+		}
+		else
+			break;
 		auto time_a = chrono::high_resolution_clock::now();
-		if (in_is_utf8) {
-			u8_word = word;
-		}
-		else {
-			to_utf8(word, u8_buffer, in_cnv, uerr);
-			u8_word = u8_buffer;
-		}
-		auto res_nu = dic.spell(u8_word);
+		auto res_nu = dic.spell(word);
 		auto time_b = chrono::high_resolution_clock::now();
 		if (hun_is_utf8)
-			hun_word = u8_word;
+			hun_word = word;
 		else
-			from_utf8(u8_word, hun_word, hun_cnv, uerr);
+			from_utf8(word, hun_word, hun_cnv, uerr);
 		auto res_hun = hun.spell(hun_word);
 		auto time_c = chrono::high_resolution_clock::now();
-		time_nu += time_b - time_a;
-		time_hun += time_c - time_b;
+		auto time_nu = time_b - time_a;
+		auto time_hun = time_c - time_b;
+		if (res_nu)
+			time_nu_true += time_nu;
+		else
+			time_nu_false += time_nu;
+		if (res_hun)
+			time_hun_true += time_hun;
+		else
+			time_hun_false += time_hun;
 		if (res_hun) {
 			if (res_nu) {
 				++true_pos;
@@ -212,27 +248,115 @@ auto process_text(Options opt, const Dictionary& dic, Hunspell& hun,
 			}
 		}
 		++total;
-		if (opt.test_suggestions && !res_nu && !res_hun) {
-			auto nus_sugs = vector<string>();
-			dic.suggest(word, nus_sugs);
-			/* auto hun_sugs = */ hun.suggest(hun_word);
+
+		if (!opt.test_suggestions && !opt.wikipedia_list)
+			continue;
+		time_a = chrono::high_resolution_clock::now();
+		dic.suggest(word, nus_sugs);
+		time_b = chrono::high_resolution_clock::now();
+		auto hun_sugs = hun.suggest(hun_word);
+		time_c = chrono::high_resolution_clock::now();
+		time_nu_sugs += time_b - time_a;
+		time_hun_sugs += time_c - time_b;
+		if (!opt.wikipedia_list)
+			continue;
+		if (opt.print_mismatches && (res_nu || res_hun)) {
+			out << "Word " << word << " detected as correct.\n"
+			    << "Suggestions from list: " << line.substr(i)
+			    << '\n';
 		}
+		if (opt.print_mismatches && res_nu && !empty(nus_sugs)) {
+			out << "Nuspell sugs : ";
+			for (auto it = begin(nus_sugs);;) {
+				out << *it;
+				if (++it == end(nus_sugs))
+					break;
+				out << ", ";
+			}
+			out << '\n';
+		}
+
+		for (auto& hs : hun_sugs) {
+			to_utf8(hs, u8_tmp_buf, hun_cnv, uerr);
+			hs = u8_tmp_buf;
+		}
+		// hun_sugs is now utf8
+
+		if (opt.print_mismatches && res_hun && !empty(hun_sugs)) {
+			out << "Hunspell sugs: ";
+			for (auto it = begin(hun_sugs);;) {
+				out << *it;
+				if (++it == end(hun_sugs))
+					break;
+				out << ", ";
+			}
+			out << '\n';
+		}
+		for (auto needle = ", "sv;;) {
+			auto j = line.find(needle, i);
+			auto wiki_sug = line.substr(i, j - i);
+
+			// process wiki_sug
+			auto it =
+			    find(begin(nus_sugs), end(nus_sugs), wiki_sug);
+			if (it != end(nus_sugs)) {
+				++nus_hits;
+				auto order = distance(begin(nus_sugs), it) + 1;
+				nus_sum_orders += order;
+			}
+			else {
+				++nus_misses;
+			}
+
+			it = find(begin(hun_sugs), end(hun_sugs), wiki_sug);
+			if (it != end(hun_sugs)) {
+				++hun_hits;
+				auto order = distance(begin(hun_sugs), it) + 1;
+				hun_sum_orders += order;
+			}
+			else {
+				++hun_misses;
+			}
+
+			// stop condition
+			if (j == line.npos)
+				break;
+			// increment
+			i = j + size(needle);
+		}
+		if (total % 100 == 0)
+			out << total << " words processed." << endl;
 	}
 	out << "Total Words = " << total << '\n';
 	if (total == 0)
 		return;
 	auto accuracy = (true_pos + true_neg) * 1.0 / total;
 	auto precision = true_pos * 1.0 / (true_pos + false_pos);
-	auto speedup = time_hun.count() * 1.0 / time_nu.count();
+	auto total_hun_time = time_hun_true + time_hun_false;
+	auto total_nu_time = time_nu_true + time_nu_false;
+	auto speedup = total_hun_time.count() * 1.0 / total_nu_time.count();
 	out << "TP = " << true_pos << '\n';
 	out << "TN = " << true_neg << '\n';
 	out << "FP = " << false_pos << '\n';
 	out << "FN = " << false_neg << '\n';
 	out << "Accuracy  = " << accuracy << '\n';
 	out << "Precision = " << precision << '\n';
-	out << "Time Nuspell  = " << time_nu.count() << '\n';
-	out << "Time Hunspell = " << time_hun.count() << '\n';
+	out << "Time Nuspell True   = " << time_nu_true.count() << '\n';
+	out << "Time Nuspell False  = " << time_nu_false.count() << '\n';
+	out << "Time Hunspell True  = " << time_hun_true.count() << '\n';
+	out << "Time Hunspell False = " << time_hun_false.count() << '\n';
 	out << "Speedup = " << speedup << '\n';
+	if (!opt.test_suggestions && !opt.wikipedia_list)
+		return;
+	out << '\n';
+	out << "Nus hits      = " << nus_hits << '\n';
+	out << "Nus misses    = " << nus_misses << '\n';
+	out << "Nus avg order = " << nus_sum_orders * 1.0 / nus_hits << '\n';
+	out << "Hun hits      = " << hun_hits << '\n';
+	out << "Hun misses    = " << hun_misses << '\n';
+	out << "Hun avg order = " << hun_sum_orders * 1.0 / hun_hits << '\n';
+	out << "Time Nuspell sugs  = " << time_nu_sugs.count() << '\n';
+	out << "Time Hunspell sugs = " << time_hun_sugs.count() << '\n';
 }
 } // namespace
 int main(int argc, char* argv[])
@@ -249,13 +373,14 @@ int main(int argc, char* argv[])
 
 	ios_base::sync_with_stdio(false);
 
-	auto optstring = "d:ms";
+	auto optstring = "d:msw";
 	option longopts[] = {
 	    {"help", no_argument, &mode_int, Mode::HELP},
 	    {"version", no_argument, &mode_int, Mode::VERSION},
 	    {"dictionary", required_argument, nullptr, 'd'},
 	    {"print-mismatches", no_argument, nullptr, 'm'},
 	    {"test-suggestions", no_argument, nullptr, 's'},
+	    {"wikipedia-list", no_argument, nullptr, 'w'},
 	    {"encoding", required_argument, nullptr, 'e'},
 	    {"input-encoding", required_argument, nullptr, 'i'},
 	    {"output-encoding", required_argument, nullptr, 'o'},
@@ -276,6 +401,9 @@ int main(int argc, char* argv[])
 			break;
 		case 's':
 			options.test_suggestions = true;
+			break;
+		case 'w':
+			options.wikipedia_list = true;
 			break;
 		case 'e':
 			input_enc = optarg;
