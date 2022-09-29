@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.2] - 2022-09-29
+### Changed
+- Rewrite internal testing tool verify and improve it to support testing
+  suggestions.
+
+### Fixed
+- Greatly improve the speed of suggestions in certain edge cases. See #45.
+- Fix minor encoding issue in the CLI tool on Windows when reading from file(s)
+  instead of the standard input. UTF-8 is now the default encoding in that case
+  and not the one of the console.
+
 ## [5.1.1] - 2022-09-09
 ### Added
 - Add configuration option `BUILD_TOOLS` that can be used to disable building
@@ -241,7 +252,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.1.1...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.1.2...HEAD
+[5.1.2]: https://github.com/nuspell/nuspell/compare/v5.1.1...v5.1.2
 [5.1.1]: https://github.com/nuspell/nuspell/compare/v5.1.0...v5.1.1
 [5.1.0]: https://github.com/nuspell/nuspell/compare/v5.0.1...v5.1.0
 [5.0.1]: https://github.com/nuspell/nuspell/compare/v5.0.0...v5.0.1

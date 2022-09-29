@@ -51,7 +51,7 @@ jobs:
       run: |
         echo "local_app_data=$LOCALAPPDATA" >> $GITHUB_ENV
         echo "vcpkg_root=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
-        vcpkg x-history icu | awk 'NR==2{ print "icu_ver="$1 }' >> $GITHUB_ENV
+        vcpkg search icu | awk '$1=="icu"{ print "icu_ver="$2 }' >> $GITHUB_ENV
 
     - uses: actions/cache@v3
       with:
