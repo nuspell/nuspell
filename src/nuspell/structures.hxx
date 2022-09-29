@@ -1259,6 +1259,7 @@ class Prefix_Table {
 	}
 	auto begin() const { return table.data().begin(); }
 	auto end() const { return table.data().end(); }
+	auto size() const { return table.data().size(); }
 
 	auto has_continuation_flags() const
 	{
@@ -1310,6 +1311,7 @@ class Suffix_Table {
 	}
 	auto begin() const { return table.data().begin(); }
 	auto end() const { return table.data().end(); }
+	auto size() const { return table.data().size(); }
 
 	auto has_continuation_flags() const
 	{

@@ -220,12 +220,19 @@ auto Suggester::suggest_priv(string_view input_word, List_Strings& out) const
 auto Suggester::suggest_low(std::string& word, List_Strings& out) const
     -> High_Quality_Sugs
 {
-	auto ret = ALL_LOW_QUALITY_SUGS;
 	auto old_size = out.size();
 	uppercase_suggest(word, out);
 	rep_suggest(word, out);
 	map_suggest(word, out);
-	ret = High_Quality_Sugs(old_size != out.size());
+	auto high_quality_sugs =
+	    old_size != out.size() ||
+
+	    // If the word is already correct, set high_quality_sugs as true,
+	    // which then disables the expensive ngram sugs and makes the
+	    // benchmarks happy. In Hunspell, its map_suggest() adds the word as
+	    // suggestion if it's already correct and achieves the same.
+	    (!empty(similarities) &&
+	     check_word(word, FORBID_BAD_FORCEUCASE, SKIP_HIDDEN_HOMONYM));
 	adjacent_swap_suggest(word, out);
 	distant_swap_suggest(word, out);
 	keyboard_suggest(word, out);
@@ -235,7 +242,7 @@ auto Suggester::suggest_low(std::string& word, List_Strings& out) const
 	bad_char_suggest(word, out);
 	doubled_two_chars_suggest(word, out);
 	two_words_suggest(word, out);
-	return ret;
+	return High_Quality_Sugs(high_quality_sugs);
 }
 
 auto Suggester::add_sug_if_correct(std::string& word, List_Strings& out) const
@@ -378,7 +385,15 @@ auto Checker::is_rep_similar(std::string& word) const -> bool
 
 auto Suggester::max_attempts_for_long_alogs(string_view word) const -> size_t
 {
-	auto ret = 10'000'000 / size(word);
+	unsigned long long p = size(prefixes) / 20;
+	unsigned long long s = size(suffixes) / 20;
+	auto cost = 1 + p + s + p * s;
+	if (!complex_prefixes)
+		cost += s * s + 2 * p * s * s;
+	else
+		cost += p * p + 2 * s * p * p;
+	cost = clamp(cost, 250'000ull, 25'000'000'000ull);
+	auto ret = 25'000'000'000 / cost;
 	if (compound_flag || compound_begin_flag || compound_last_flag ||
 	    compound_middle_flag)
 		ret /= size(word);
