@@ -1,4 +1,4 @@
-/* Copyright 2016-2022 Dimitrij Mijoski
+/* Copyright 2016-2023 Dimitrij Mijoski
  *
  * This file is part of Nuspell.
  *
@@ -92,7 +92,7 @@ Example:
 }
 
 auto ver_str = "nuspell " PROJECT_VERSION R"(
-Copyright (C) 2016-2022 Dimitrij Mijoski
+Copyright (C) 2016-2023 Dimitrij Mijoski
 License LGPLv3+: GNU LGPL version 3 or later <http://gnu.org/licenses/lgpl.html>.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
