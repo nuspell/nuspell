@@ -1,4 +1,5 @@
 add_library(nuspell
+                 defines.hxx
 aff_data.cxx     aff_data.hxx
 checker.cxx      checker.hxx
 suggester.cxx    suggester.hxx
@@ -14,7 +15,7 @@ include(GenerateExportHeader)
 generate_export_header(nuspell)
 
 set(nuspell_headers aff_data.hxx checker.hxx suggester.hxx dictionary.hxx
-	finder.hxx structures.hxx unicode.hxx
+	finder.hxx structures.hxx unicode.hxx defines.hxx
 	${CMAKE_CURRENT_BINARY_DIR}/nuspell_export.h)
 set_target_properties(nuspell PROPERTIES
 	PUBLIC_HEADER "${nuspell_headers}"

@@ -26,7 +26,7 @@
 using namespace std;
 
 namespace nuspell {
-inline namespace v5 {
+NUSPELL_BEGIN_INLINE_NAMESPACE
 
 Dictionary::Dictionary(std::istream& aff, std::istream& dic)
 {
@@ -160,5 +160,5 @@ auto Dictionary::suggest(std::string_view word,
 		return;
 	suggest_priv(word, out);
 }
-} // namespace v5
+NUSPELL_END_INLINE_NAMESPACE
 } // namespace nuspell

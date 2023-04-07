@@ -23,7 +23,7 @@
 using namespace std;
 
 namespace nuspell {
-inline namespace v5 {
+NUSPELL_BEGIN_INLINE_NAMESPACE
 
 auto static insert_sug_first(const string& word, List_Strings& out)
 {
@@ -1138,5 +1138,5 @@ auto Suggester::expand_root_word_for_ngram(
 		expanded_list.push_back(move(expanded));
 	}
 }
-} // namespace v5
+NUSPELL_END_INLINE_NAMESPACE
 } // namespace nuspell

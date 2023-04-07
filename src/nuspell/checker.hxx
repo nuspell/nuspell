@@ -22,7 +22,7 @@
 #include "aff_data.hxx"
 
 namespace nuspell {
-inline namespace v5 {
+NUSPELL_BEGIN_INLINE_NAMESPACE
 
 enum Affixing_Mode {
 	FULL_WORD,
@@ -347,6 +347,6 @@ auto cross_valid_inner_outer(const Flag_Set& word_flags, const Affix& afx)
 	return word_flags.contains(afx.flag);
 }
 
-} // namespace v5
+NUSPELL_END_INLINE_NAMESPACE
 } // namespace nuspell
 #endif // NUSPELL_CHECKER_HXX

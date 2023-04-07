@@ -26,7 +26,7 @@
 #include <unicode/locid.h>
 
 namespace nuspell {
-inline namespace v5 {
+NUSPELL_BEGIN_INLINE_NAMESPACE
 
 class Encoding {
 	std::string name;
@@ -169,6 +169,6 @@ struct Aff_Data {
 		return false;
 	}
 };
-} // namespace v5
+NUSPELL_END_INLINE_NAMESPACE
 } // namespace nuspell
 #endif // NUSPELL_AFF_DATA_HXX

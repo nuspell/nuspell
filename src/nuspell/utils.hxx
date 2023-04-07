@@ -19,6 +19,7 @@
 #ifndef NUSPELL_UTILS_HXX
 #define NUSPELL_UTILS_HXX
 
+#include "defines.hxx"
 #include "nuspell_export.h"
 
 #include <string>
@@ -38,7 +39,7 @@
 struct UConverter; // unicode/ucnv.h
 
 namespace nuspell {
-inline namespace v5 {
+NUSPELL_BEGIN_INLINE_NAMESPACE
 
 NUSPELL_DEPRECATED_EXPORT auto split_on_any_of(std::string_view s,
                                                const char* sep,
@@ -166,6 +167,6 @@ auto end_ptr(T& x)
 {
 	return x.data() + x.size();
 }
-} // namespace v5
+NUSPELL_END_INLINE_NAMESPACE
 } // namespace nuspell
 #endif // NUSPELL_UTILS_HXX

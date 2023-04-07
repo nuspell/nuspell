@@ -24,6 +24,7 @@
 #ifndef NUSPELL_FINDER_HXX
 #define NUSPELL_FINDER_HXX
 
+#include "defines.hxx"
 #include "nuspell_export.h"
 
 #include <filesystem>
@@ -40,7 +41,7 @@ NUSPELL_MSVC_PRAGMA_WARNING(push)
 NUSPELL_MSVC_PRAGMA_WARNING(disable : 4251)
 
 namespace nuspell {
-inline namespace v5 {
+NUSPELL_BEGIN_INLINE_NAMESPACE
 
 NUSPELL_EXPORT auto
 append_default_dir_paths(std::vector<std::filesystem::path>& paths) -> void;
@@ -109,7 +110,7 @@ class NUSPELL_EXPORT Dict_Finder_For_CLI_Tool_2 {
 	auto get_dictionary_path(const fs_path& dict) const -> fs_path;
 };
 
-} // namespace v5
+NUSPELL_END_INLINE_NAMESPACE
 } // namespace nuspell
 NUSPELL_MSVC_PRAGMA_WARNING(pop)
 #endif // NUSPELL_FINDER_HXX

@@ -39,7 +39,7 @@ namespace nuspell {
  * verison. Look up on the Internet to see what is it for (ABI versioning
  * mostly). Client code should never mention this inline namespace.
  */
-inline namespace v5 {
+NUSPELL_BEGIN_INLINE_NAMESPACE
 
 auto Encoding::normalize_name() -> void
 {
@@ -1037,5 +1037,5 @@ auto Aff_Data::parse_dic(istream& in, ostream& err_msg) -> bool
 	}
 	return in.eof() && success; // success if we reached eof
 }
-} // namespace v5
+NUSPELL_END_INLINE_NAMESPACE
 } // namespace nuspell

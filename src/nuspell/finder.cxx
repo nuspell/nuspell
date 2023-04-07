@@ -37,7 +37,7 @@
 using namespace std;
 
 namespace nuspell {
-inline namespace v5 {
+NUSPELL_BEGIN_INLINE_NAMESPACE
 
 namespace fs = std::filesystem;
 
@@ -431,5 +431,5 @@ auto Dict_Finder_For_CLI_Tool_2::get_dictionary_path(const fs::path& dict) const
 	return dict;
 }
 
-} // namespace v5
+NUSPELL_END_INLINE_NAMESPACE
 } // namespace nuspell

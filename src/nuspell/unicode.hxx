@@ -17,13 +17,15 @@
  */
 #ifndef NUSPELL_UNICODE_HXX
 #define NUSPELL_UNICODE_HXX
+#include "defines.hxx"
+
 #include <string>
 #include <string_view>
 #include <unicode/utf16.h>
 #include <unicode/utf8.h>
 
 namespace nuspell {
-inline namespace v5 {
+NUSPELL_BEGIN_INLINE_NAMESPACE
 
 // UTF-8, work on malformed
 
@@ -378,6 +380,6 @@ template <class Range>
 	valid_u8_write_cp_and_advance(buf, i, cp);
 	return i;
 }
-} // namespace v5
+NUSPELL_END_INLINE_NAMESPACE
 } // namespace nuspell
 #endif // NUSPELL_UNICODE_HXX
