@@ -102,9 +102,9 @@ manuals.
 1.  Install Visual Studio 2017 or newer. Alternatively, you can use
     Visual Studio Build Tools.
 2.  Install Git for Windows and Cmake.
-3.  Install vcpkg in some folder, e.g. in `c:\vcpkg`.
-4.  Run `vcpkg install icu getopt --triplet=x64-windows`.
-5.  Run the commands bellow.
+3.  Install Vcpkg in some folder, e.g. in `c:\vcpkg`.
+4.  Run the commands bellow. Vcpkg will work in manifest mode and it will
+    automatically install the dependencies.
 
 <!-- end list -->
 

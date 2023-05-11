@@ -1,0 +1,17 @@
+{
+  "builtin-baseline": "2f9972005f61f02fa3cda7fc062d1b834b534b8d",
+  "dependencies": [
+    {
+      "name": "catch2",
+      "version>=": "2.13.9"
+    },
+    {
+      "name": "getopt",
+      "version>=": "0#2"
+    },
+    {
+      "name": "icu",
+      "version>=": "69.1#18"
+    }
+  ]
+}

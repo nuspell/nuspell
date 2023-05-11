@@ -51,17 +51,13 @@ jobs:
       run: |
         echo "local_app_data=$LOCALAPPDATA" >> $GITHUB_ENV
         echo "vcpkg_root=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
-        vcpkg search icu | awk '$1=="icu"{ print "icu_ver="$2 }' >> $GITHUB_ENV
 
     - uses: actions/cache@v3
       with:
         # use backslashes in path here for Windows.
         path: ${{ env.local_app_data }}\vcpkg\archives
-        key: windows-vcpkg-cache-${{ env.icu_ver }}
+        key: windows-vcpkg-cache-${{ hashFiles('vcpkg.json') }}
         restore-keys: windows-vcpkg-cache-
-
-    - name: Pull Vcpkg dependencies
-      run: vcpkg install icu getopt --triplet=x64-windows
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
