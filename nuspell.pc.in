@@ -4,9 +4,9 @@ libdir=@CMAKE_INSTALL_FULL_LIBDIR@
 includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
 
 Name: @PROJECT_NAME@
-Description: Nuspell spellchecking library
+Description: @PROJECT_DESCRIPTION@
 URL: @PROJECT_HOMEPAGE_URL@
 Version: @PROJECT_VERSION@
-Libs: -L${libdir} -lnuspell @pkgconf_public_libs@
-Requires: @pkgconf_public_requires@
+Libs: -L${libdir} -lnuspell
+Requires: icu-uc
 Cflags: -I${includedir}

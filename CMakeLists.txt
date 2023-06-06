@@ -1,6 +1,9 @@
-cmake_minimum_required(VERSION 3.8)
-project(nuspell VERSION 5.1.2)
-set(PROJECT_HOMEPAGE_URL "https://nuspell.github.io/")
+cmake_minimum_required(VERSION 3.12)
+project(nuspell
+	VERSION 5.1.2
+	DESCRIPTION "Nuspell spellchecking library"
+	HOMEPAGE_URL https://nuspell.github.io/
+	LANGUAGES CXX)
 
 option(BUILD_SHARED_LIBS "Build as shared library" ON)
 option(BUILD_TESTING "Build the testing tree." ON)
@@ -31,48 +34,31 @@ if (subproject)
 	return()
 endif()
 
-function(find_catch2_from_source)
-	set(Catch2_FOUND Catch2-NOTFOUND PARENT_SCOPE)
-	set(catch_cmake_lists
-		${PROJECT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
-	if (NOT EXISTS ${catch_cmake_lists})
-		find_package(Git)
-		if (NOT Git_FOUND)
-			return()
-		endif()
-		execute_process(
-			COMMAND ${GIT_EXECUTABLE} submodule update --init Catch2
-			WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/external
-			RESULT_VARIABLE git_submodule_error
-			ERROR_QUIET)
-		if (git_submodule_error OR NOT EXISTS ${catch_cmake_lists})
-			return()
-		endif()
+macro(fetch_catch2)
+	include(FetchContent)
+	FetchContent_Declare(Catch2
+		GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+		GIT_TAG 62fd660583d3ae7a7886930b413c3c570e89786c #v2.13.9
+	)
+        FetchContent_GetProperties(Catch2)
+	if(NOT catch2_POPULATED)
+		FetchContent_Populate(Catch2)
+		add_subdirectory(${catch2_SOURCE_DIR} ${catch2_BINARY_DIR})
+		list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/contrib)
 	endif()
-	add_subdirectory(external/Catch2)
-	list(APPEND CMAKE_MODULE_PATH
-		 ${PROJECT_SOURCE_DIR}/external/Catch2/contrib)
-	set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" PARENT_SCOPE)
-	set(Catch2_FOUND 1 PARENT_SCOPE)
-endfunction()
+endmacro()
 
 if (BUILD_TESTING)
 	enable_testing()
 	find_package(Catch2 2.3.0 QUIET)
 	if (NOT Catch2_FOUND)
-		find_catch2_from_source()
+		fetch_catch2()
 	endif()
-	if (Catch2_FOUND)
-		add_subdirectory(external/hunspell/hunspell)
-		add_subdirectory(tests)
-	else()
-		message(WARNING "Can not find Catch2, tests will be disabled")
-	endif()
+	add_subdirectory(external/hunspell/hunspell)
+	add_subdirectory(tests)
 endif()
 
 
-#set(pkgconf_public_libs "")
-set(pkgconf_public_requires icu-uc)
 configure_file(nuspell.pc.in nuspell.pc @ONLY)
 #configure_file(NuspellConfig.cmake NuspellConfig.cmake COPYONLY)
 write_basic_package_version_file(NuspellConfigVersion.cmake
