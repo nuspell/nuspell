@@ -38,19 +38,23 @@ macro(fetch_catch2)
 	include(FetchContent)
 	FetchContent_Declare(Catch2
 		GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-		GIT_TAG 62fd660583d3ae7a7886930b413c3c570e89786c #v2.13.9
+		GIT_TAG 3f0283de7a9c43200033da996ff9093be3ac84dc #v3.3.2
 	)
         FetchContent_GetProperties(Catch2)
 	if(NOT catch2_POPULATED)
 		FetchContent_Populate(Catch2)
+		set(old_build_shared_libs ${BUILD_SHARED_LIBS})
+		set(BUILD_SHARED_LIBS OFF)
 		add_subdirectory(${catch2_SOURCE_DIR} ${catch2_BINARY_DIR})
+		target_compile_features(Catch2 PRIVATE cxx_std_17)
 		list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/contrib)
+		set(BUILD_SHARED_LIBS ${old_build_shared_libs})
 	endif()
 endmacro()
 
 if (BUILD_TESTING)
 	enable_testing()
-	find_package(Catch2 2.3.0 QUIET)
+	find_package(Catch2 3.1.1 QUIET)
 	if (NOT Catch2_FOUND)
 		fetch_catch2()
 	endif()

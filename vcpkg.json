@@ -3,7 +3,7 @@
   "dependencies": [
     {
       "name": "catch2",
-      "version>=": "2.13.9"
+      "version>=": "3.3.2"
     },
     {
       "name": "getopt",

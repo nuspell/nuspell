@@ -1,5 +1,5 @@
-add_executable(unit_test unit_test.cxx catch_main.cxx)
-target_link_libraries(unit_test PRIVATE nuspell Catch2::Catch2)
+add_executable(unit_test unit_test.cxx)
+target_link_libraries(unit_test PRIVATE nuspell Catch2::Catch2WithMain)
 if (MSVC)
 	target_compile_options(unit_test PRIVATE "/utf-8")
 	# Consider doing this for all the other targets by setting this flag

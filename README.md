@@ -27,8 +27,8 @@ Build-only dependencies:
 
   - C++ 17 compiler with support for `std::filesystem`, e.g. GCC >= v9
   - CMake >= v3.12
-  - Catch2 >= v2.3.0 (It is only needed when building the tests. If it is not
-    available as a system package, the CMake will download it using
+  - Catch2 >= v3.1.1 (It is only needed when building the tests. If it is not
+    available as a system package, then CMake will download it using
     `FetchContent`.)
   - Getopt (It is needed only on Windows + MSVC and only when the CLI tool or
     the tests are built. It is available in vcpkg. Other platforms provide
