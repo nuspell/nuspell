@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.4] - 2023-11-08
+### Changed
+- Raise the minimum required version of dependency Catch2 to v3.1.1. See #133.
+
 ## [5.1.3] - 2023-08-27
 ### Added
 - Added Vcpkg manifest file called `vcpkg.json` for easier development and
@@ -267,7 +271,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.1.3...HEAD
+[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.1.4...HEAD
+[5.1.4]: https://github.com/nuspell/nuspell/compare/v5.1.3...v5.1.4
 [5.1.3]: https://github.com/nuspell/nuspell/compare/v5.1.2...v5.1.3
 [5.1.2]: https://github.com/nuspell/nuspell/compare/v5.1.1...v5.1.2
 [5.1.1]: https://github.com/nuspell/nuspell/compare/v5.1.0...v5.1.1
