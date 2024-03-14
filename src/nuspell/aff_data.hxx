@@ -38,7 +38,10 @@ class Encoding {
 
 	Encoding() = default;
 	explicit Encoding(const std::string& e) : name(e) { normalize_name(); }
-	explicit Encoding(std::string&& e) : name(move(e)) { normalize_name(); }
+	explicit Encoding(std::string&& e) : name(std::move(e))
+	{
+		normalize_name();
+	}
 	explicit Encoding(const char* e) : name(e) { normalize_name(); }
 	auto& operator=(const std::string& e)
 	{
@@ -48,7 +51,7 @@ class Encoding {
 	}
 	auto& operator=(std::string&& e)
 	{
-		name = move(e);
+		name = std::move(e);
 		normalize_name();
 		return *this;
 	}
@@ -86,78 +89,78 @@ enum class Flag_Type { SINGLE_CHAR, DOUBLE_CHAR, NUMBER, UTF8 };
 using Word_List = Hash_Multimap<std::string, Flag_Set>;
 
 struct Aff_Data {
-	static constexpr auto HIDDEN_HOMONYM_FLAG = char16_t(-1);
-	static constexpr auto MAX_SUGGESTIONS = size_t(16);
+	static constexpr char16_t HIDDEN_HOMONYM_FLAG = -1;
+	static constexpr size_t MAX_SUGGESTIONS = 16;
 
 	// spell checking options
-	Word_List words;
-	Prefix_Table prefixes;
-	Suffix_Table suffixes;
+	Word_List words = {};
+	Prefix_Table prefixes = {};
+	Suffix_Table suffixes = {};
 
-	bool complex_prefixes;
-	bool fullstrip;
-	bool checksharps;
-	bool forbid_warn;
-	char16_t compound_onlyin_flag;
-	char16_t circumfix_flag;
-	char16_t forbiddenword_flag;
-	char16_t keepcase_flag;
-	char16_t need_affix_flag;
-	char16_t warn_flag;
+	bool complex_prefixes = {};
+	bool fullstrip = {};
+	bool checksharps = {};
+	bool forbid_warn = {};
+	char16_t compound_onlyin_flag = {};
+	char16_t circumfix_flag = {};
+	char16_t forbiddenword_flag = {};
+	char16_t keepcase_flag = {};
+	char16_t need_affix_flag = {};
+	char16_t warn_flag = {};
 
 	// compounding options
-	char16_t compound_flag;
-	char16_t compound_begin_flag;
-	char16_t compound_last_flag;
-	char16_t compound_middle_flag;
-	Compound_Rule_Table compound_rules;
+	char16_t compound_flag = {};
+	char16_t compound_begin_flag = {};
+	char16_t compound_last_flag = {};
+	char16_t compound_middle_flag = {};
+	Compound_Rule_Table compound_rules = {};
 
 	// spell checking options
-	Break_Table break_table;
-	Substr_Replacer input_substr_replacer;
-	std::string ignored_chars;
-	icu::Locale icu_locale;
-	Substr_Replacer output_substr_replacer;
+	Break_Table break_table = {};
+	Substr_Replacer input_substr_replacer = {};
+	std::string ignored_chars = {};
+	icu::Locale icu_locale = {};
+	Substr_Replacer output_substr_replacer = {};
 
 	// suggestion options
-	Replacement_Table replacements;
-	std::vector<Similarity_Group> similarities;
-	std::string keyboard_closeness;
-	std::string try_chars;
-	// Phonetic_Table phonetic_table;
+	Replacement_Table replacements = {};
+	std::vector<Similarity_Group> similarities = {};
+	std::string keyboard_closeness = {};
+	std::string try_chars = {};
+	// Phonetic_Table phonetic_table = {};
 
-	char16_t nosuggest_flag;
-	char16_t substandard_flag;
-	unsigned short max_compound_suggestions;
-	unsigned short max_ngram_suggestions;
-	unsigned short max_diff_factor;
-	bool only_max_diff;
-	bool no_split_suggestions;
-	bool suggest_with_dots;
+	char16_t nosuggest_flag = {};
+	char16_t substandard_flag = {};
+	unsigned short max_compound_suggestions = {};
+	unsigned short max_ngram_suggestions = {};
+	unsigned short max_diff_factor = {};
+	bool only_max_diff = {};
+	bool no_split_suggestions = {};
+	bool suggest_with_dots = {};
 
 	// compounding options
-	unsigned short compound_min_length;
-	unsigned short compound_max_word_count;
-	char16_t compound_permit_flag;
-	char16_t compound_forbid_flag;
-	char16_t compound_root_flag;
-	char16_t compound_force_uppercase;
-	bool compound_more_suffixes;
-	bool compound_check_duplicate;
-	bool compound_check_rep;
-	bool compound_check_case;
-	bool compound_check_triple;
-	bool compound_simplified_triple;
-	bool compound_syllable_num;
-	unsigned short compound_syllable_max;
-	std::string compound_syllable_vowels;
-	std::vector<Compound_Pattern> compound_patterns;
+	unsigned short compound_min_length = {};
+	unsigned short compound_max_word_count = {};
+	char16_t compound_permit_flag = {};
+	char16_t compound_forbid_flag = {};
+	char16_t compound_root_flag = {};
+	char16_t compound_force_uppercase = {};
+	bool compound_more_suffixes = {};
+	bool compound_check_duplicate = {};
+	bool compound_check_rep = {};
+	bool compound_check_case = {};
+	bool compound_check_triple = {};
+	bool compound_simplified_triple = {};
+	bool compound_syllable_num = {};
+	unsigned short compound_syllable_max = {};
+	std::string compound_syllable_vowels = {};
+	std::vector<Compound_Pattern> compound_patterns = {};
 
 	// data members used only while parsing
-	Flag_Type flag_type;
-	Encoding encoding;
-	std::vector<Flag_Set> flag_aliases;
-	std::string wordchars; // deprecated?
+	Flag_Type flag_type = {};
+	Encoding encoding = {};
+	std::vector<Flag_Set> flag_aliases = {};
+	std::string wordchars = {}; // deprecated?
 
 	auto parse_aff(std::istream& in, std::ostream& err_msg) -> bool;
 	auto parse_dic(std::istream& in, std::ostream& err_msg) -> bool;

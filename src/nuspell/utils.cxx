@@ -20,7 +20,6 @@
 #include "unicode.hxx"
 
 #include <algorithm>
-#include <limits>
 #include <locale>
 
 #include <unicode/stringoptions.h>

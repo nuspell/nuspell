@@ -89,10 +89,7 @@ struct Checker : public Aff_Data {
 		ACCEPT_HIDDEN_HOMONYM = false,
 		SKIP_HIDDEN_HOMONYM = true
 	};
-	Checker()
-	    : Aff_Data() // we explicity do value init so content is zeroed
-	{
-	}
+
 	auto spell_priv(std::string& s) const -> bool;
 	auto spell_break(std::string& s, size_t depth = 0) const -> bool;
 	auto spell_casing(std::string& s) const -> const Flag_Set*;

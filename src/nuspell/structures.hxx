@@ -330,7 +330,7 @@ class Substr_Replacer {
 	{
 		sort_uniq();
 	}
-	explicit Substr_Replacer(Table_Pairs&& v) : table(move(v))
+	explicit Substr_Replacer(Table_Pairs&& v) : table(std::move(v))
 	{
 		sort_uniq();
 	}
@@ -343,7 +343,7 @@ class Substr_Replacer {
 	}
 	auto& operator=(Table_Pairs&& v)
 	{
-		table = move(v);
+		table = std::move(v);
 		sort_uniq();
 		return *this;
 	}
@@ -454,7 +454,7 @@ class Break_Table {
       public:
 	Break_Table() = default;
 	explicit Break_Table(const Table_Str& v) : table(v) { order_entries(); }
-	explicit Break_Table(Table_Str&& v) : table(move(v))
+	explicit Break_Table(Table_Str&& v) : table(std::move(v))
 	{
 		order_entries();
 	}
@@ -468,7 +468,7 @@ class Break_Table {
 
 	auto& operator=(Table_Str&& v)
 	{
-		table = move(v);
+		table = std::move(v);
 		order_entries();
 		return *this;
 	}
@@ -667,7 +667,7 @@ class Condition {
 	{
 		construct();
 	}
-	explicit Condition(Str&& condition) : cond(move(condition))
+	explicit Condition(Str&& condition) : cond(std::move(condition))
 	{
 		construct();
 	}
@@ -1393,7 +1393,7 @@ class Compound_Rule_Table {
 		fill_all_flags();
 	}
 	explicit Compound_Rule_Table(std::vector<std::u16string>&& tbl)
-	    : rules(move(tbl))
+	    : rules(std::move(tbl))
 	{
 		fill_all_flags();
 	}
@@ -1405,7 +1405,7 @@ class Compound_Rule_Table {
 	}
 	auto& operator=(std::vector<std::u16string>&& tbl)
 	{
-		rules = move(tbl);
+		rules = std::move(tbl);
 		fill_all_flags();
 		return *this;
 	}
@@ -1538,7 +1538,7 @@ class Replacement_Table {
 	{
 		order_entries();
 	}
-	explicit Replacement_Table(Table_Str&& v) : table(move(v))
+	explicit Replacement_Table(Table_Str&& v) : table(std::move(v))
 	{
 		order_entries();
 	}
@@ -1552,7 +1552,7 @@ class Replacement_Table {
 
 	auto& operator=(Table_Str&& v)
 	{
-		table = move(v);
+		table = std::move(v);
 		order_entries();
 		return *this;
 	}
@@ -1667,7 +1667,7 @@ class Phonetic_Table {
 	{
 		order();
 	}
-	explicit Phonetic_Table(std::vector<Pair_Str>&& v) : table(move(v))
+	explicit Phonetic_Table(std::vector<Pair_Str>&& v) : table(std::move(v))
 	{
 		order();
 	}
@@ -1679,7 +1679,7 @@ class Phonetic_Table {
 	}
 	auto& operator=(std::vector<Pair_Str>&& v)
 	{
-		table = move(v);
+		table = std::move(v);
 		order();
 		return *this;
 	}

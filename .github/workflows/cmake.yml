@@ -21,7 +21,7 @@ jobs:
     env:
       CXXFLAGS: ${{ matrix.cxxflags }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install catch2
@@ -45,7 +45,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Bring runner env vars to workflows
       shell: bash
@@ -53,7 +53,7 @@ jobs:
         echo "local_app_data=$LOCALAPPDATA" >> $GITHUB_ENV
         echo "vcpkg_root=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         # use backslashes in path here for Windows.
         path: ${{ env.local_app_data }}\vcpkg\archives

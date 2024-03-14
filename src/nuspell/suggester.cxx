@@ -202,7 +202,7 @@ auto Suggester::suggest_priv(string_view input_word, List_Strings& out) const
 		if (it != last) {
 			for (auto it2 = it + 1; it2 != last; ++it2)
 				if (is_ok(*it2))
-					*it++ = move(*it2);
+					*it++ = std::move(*it2);
 			out.erase(it, last);
 		}
 	}
@@ -975,12 +975,12 @@ auto Suggester::ngram_suggest(const std::string& word_u8,
 
 			if (guess_words.size() != 200) {
 				guess_words.push_back(
-				    {move(expanded_word), score});
+				    {std::move(expanded_word), score});
 				push_heap(begin(guess_words), end(guess_words));
 			}
 			else if (score > guess_words.front().score) {
 				pop_heap(begin(guess_words), end(guess_words));
-				guess_words.back() = {move(expanded_word),
+				guess_words.back() = {std::move(expanded_word),
 				                      score};
 				push_heap(begin(guess_words), end(guess_words));
 			}
@@ -1051,7 +1051,7 @@ auto Suggester::ngram_suggest(const std::string& word_u8,
 			else
 				continue;
 		}
-		out.push_back(move(guess_word_u8));
+		out.push_back(std::move(guess_word_u8));
 	}
 }
 
@@ -1088,7 +1088,7 @@ auto Suggester::expand_root_word_for_ngram(
 			continue;
 
 		auto expanded = suffix.to_derived_copy(root);
-		expanded_list.push_back(move(expanded));
+		expanded_list.push_back(std::move(expanded));
 		cross_affix.push_back(suffix.cross_product);
 	}
 
@@ -1114,7 +1114,7 @@ auto Suggester::expand_root_word_for_ngram(
 				continue;
 
 			auto expanded = prefix.to_derived_copy(root_sfx);
-			expanded_list.push_back(move(expanded));
+			expanded_list.push_back(std::move(expanded));
 		}
 	}
 
@@ -1135,7 +1135,7 @@ auto Suggester::expand_root_word_for_ngram(
 			continue;
 
 		auto expanded = prefix.to_derived_copy(root);
-		expanded_list.push_back(move(expanded));
+		expanded_list.push_back(std::move(expanded));
 	}
 }
 NUSPELL_END_INLINE_NAMESPACE

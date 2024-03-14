@@ -21,7 +21,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <stdexcept>
 
 using namespace std;
 
@@ -65,7 +64,7 @@ static auto open_aff_dic(const filesystem::path& aff_path)
 		auto err = "Dic file " + dic_path.string() + " not found.";
 		throw Dictionary_Loading_Error(err);
 	}
-	return {move(aff_file), move(dic_file)};
+	return {std::move(aff_file), std::move(dic_file)};
 }
 
 /**

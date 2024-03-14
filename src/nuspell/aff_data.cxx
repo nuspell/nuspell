@@ -113,8 +113,8 @@ auto decode_flags(string_view s, Flag_Type t, const Encoding& enc,
 		auto i = s.begin();
 		auto e = s.end();
 		for (; i != e; i += 2) {
-			auto c1 = *i;
-			auto c2 = *(i + 1);
+			unsigned char c1 = *i;
+			unsigned char c2 = *(i + 1);
 			out.push_back((c1 << 8) | c2);
 		}
 		break;
