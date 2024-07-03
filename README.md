@@ -33,6 +33,7 @@ Build-only dependencies:
   - Getopt (It is needed only on Windows + MSVC and only when the CLI tool or
     the tests are built. It is available in vcpkg. Other platforms provide
     it out of the box.)
+  - Pandoc (optional, needed for building the manpage)
 
 Run-time (and build-time) dependencies:
 
@@ -162,7 +163,7 @@ with a Nuspell, Hunspell or Myspell dictionary:
 
     nuspell -d en_US text.txt
 
-For more details run `nuspell --help`.
+For more details run `nuspell --help` or see the [man-page](docs/nuspell.1.md).
 
 <!-- old hunspell v1 stuff
 The src/tools directory contains ten executables after compiling.

@@ -66,7 +66,7 @@ Check spelling of each FILE. If no FILE is specified, check standard input.
 The text in the input is first segmented into words with an algorithm
 that recognizes punctuation and then each word is checked.
 
-  -d, --dictionary=di_CT    use di_CT dictionary (only one is supported)
+  -d, --dictionary=di_CT    use di_CT dictionary, only one is supported
   -D, --list-dictionaries   print search paths and available dictionaries
   --encoding=enc            set both input and output encoding
   --input-encoding=enc      input encoding, default is active locale
@@ -74,12 +74,17 @@ that recognizes punctuation and then each word is checked.
   --help                    print this help
   --version                 print version number
 
-One dictionary consists of two files with extensions .dic and .aff.
-The -d option accepts either dictionary name without filename extension or a
-path with slash (and with extension) to the .aff file of the dictionary. When
-just a name is given, it will be searched among the list of dictionaries in the
-default directories (see option -D). When a path to .aff is given, only the
-dictionary under the path is considered.
+A dictionary consists of two files with extensions .dic and .aff. The -d option
+accepts either dictionary name without filename extension, usually a language
+tag, or a path (with slash) to the .aff file including the filename extension.
+When just a name is given, it will be searched among the list of dictionaries in
+the default directories (see option -D). When a path to .aff is given, only the
+dictionary under the path is considered. When -d is not present, the CLI tools
+tries to load a dictionary using the language tag from the active locale.
+
+Returns error if the argument syntax is invalid, if the dictionary can not be
+loaded or if some input file can not be opened. Otherwise, spell checking has
+occurred and returns success.
 
 The following environment variables can have effect:
 

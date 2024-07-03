@@ -8,6 +8,7 @@ project(nuspell
 option(BUILD_SHARED_LIBS "Build as shared library" ON)
 option(BUILD_TESTING "Build the testing tree." ON)
 option(BUILD_TOOLS "Build the CLI tool." ON)
+option(BUILD_DOCS "Build the docs." ON)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -32,6 +33,9 @@ if (subproject)
 	# if added as subproject just build Nuspell
 	# no need to test, build docs or install
 	return()
+endif()
+if (BUILD_DOCS)
+	add_subdirectory(docs)
 endif()
 
 macro(fetch_catch2)
