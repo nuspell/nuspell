@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(nuspell
-	VERSION 5.1.4
+	VERSION 5.1.5
 	DESCRIPTION "Nuspell spellchecking library"
 	HOMEPAGE_URL https://nuspell.github.io/
 	LANGUAGES CXX)
