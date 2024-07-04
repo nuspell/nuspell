@@ -33,7 +33,7 @@ Build-only dependencies:
   - Getopt (It is needed only on Windows + MSVC and only when the CLI tool or
     the tests are built. It is available in vcpkg. Other platforms provide
     it out of the box.)
-  - Pandoc (optional, needed for building the manpage)
+  - Pandoc (optional, needed for building the man-page)
 
 Run-time (and build-time) dependencies:
 
@@ -50,7 +50,7 @@ preinstalled.
 For Ubuntu and Debian:
 
 ```bash
-sudo apt install git cmake libicu-dev
+sudo apt install g++ cmake libicu-dev catch2 pandoc
 ```
 
 Then run the following commands inside the Nuspell directory:
@@ -84,7 +84,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
 <!-- end list -->
 
 ```bash
-brew install cmake icu4c
+brew install cmake icu4c catch2 pandoc
 export ICU_ROOT=$(brew --prefix icu4c)
 ```
 
@@ -105,7 +105,8 @@ manuals.
     Visual Studio Build Tools.
 2.  Install Git for Windows and Cmake.
 3.  Install Vcpkg in some folder, e.g. in `c:\vcpkg`.
-4.  Run the commands bellow. Vcpkg will work in manifest mode and it will
+4.  Install Pandoc. You can manually install or use `choco install pandoc`.
+5.  Run the commands bellow. Vcpkg will work in manifest mode and it will
     automatically install the dependencies.
 
 <!-- end list -->
@@ -123,7 +124,7 @@ Download MSYS2, update everything and install the following packages:
 
 ```bash
 pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-icu \
-          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-cmake mingw-w64-x86_64-catch
 ```
 
 Then from inside the Nuspell folder run:
@@ -131,7 +132,7 @@ Then from inside the Nuspell folder run:
 ```bash
 mkdir build
 cd build
-cmake .. -G "Unix Makefiles"
+cmake .. -G "Unix Makefiles" -DBUILD_DOCS=OFF
 make
 make install
 ```
@@ -147,7 +148,7 @@ Cygwin1.dll.
 Install the following required packages
 
 ```bash
-pkg cmake icu catch
+pkg cmake icu catch2 pandoc
 ```
 
 Then run the standard cmake and make as on Linux. See above.
@@ -163,7 +164,7 @@ with a Nuspell, Hunspell or Myspell dictionary:
 
     nuspell -d en_US text.txt
 
-For more details run `nuspell --help` or see the [man-page](docs/nuspell.1.md).
+For more details run see the [man-page](docs/nuspell.1.md).
 
 <!-- old hunspell v1 stuff
 The src/tools directory contains ten executables after compiling.
@@ -301,5 +302,3 @@ by running:
 
 The result can be viewed by opening `doxygen/html/index.html` in a web
 browser.
-
-

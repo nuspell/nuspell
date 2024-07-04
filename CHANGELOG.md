@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.6] - 2024-07-04
+### Changed
+- Be more explicit about Pandoc dependency, do not quietly continue building if
+  it is not found. Otherwise, packagers will forget to add it as dependency.
+  Alternatively, one can disable building the docs and the dependency with the
+  CMake option BUILD_DOCS=OFF.
+
+### Fix
+- Fix compatibility with older versions of Pandoc.
+
 ## [5.1.5] - 2024-07-03
 ### Added
 - Added man-page for the CLI tool. Pandoc is again dependency for building.
@@ -278,7 +288,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
-[Unreleased]: https://github.com/nuspell/nuspell/compare/v5.1.5...HEAD
+[5.1.6]: https://github.com/nuspell/nuspell/compare/v5.1.5...v5.1.6
 [5.1.5]: https://github.com/nuspell/nuspell/compare/v5.1.4...v5.1.5
 [5.1.4]: https://github.com/nuspell/nuspell/compare/v5.1.3...v5.1.4
 [5.1.3]: https://github.com/nuspell/nuspell/compare/v5.1.2...v5.1.3

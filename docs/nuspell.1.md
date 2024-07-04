@@ -25,7 +25,7 @@ that recognizes punctuation and then each word is checked.
 
 # OPTIONS
 
-**-d, \--dictionary=**_di_CT_
+__-d, \--dictionary=__*di_CT*
 :  Use _di_CT_ dictionary. Only one is supported. A dictionary consists of two
    files with extensions .dic and .aff. The **-d** option accepts either
    dictionary name without filename extension, usually a language tag, or a
@@ -39,19 +39,19 @@ that recognizes punctuation and then each word is checked.
 **-D, \--list-dictionaries**
 :  Print search paths and available dictionaries and exit.
 
-**\--encoding=**_ENC_
+__\--encoding=__*ENC*
 :  Set both input and output encoding.
 
-**\--input-encoding=**_ENC_
+__\--input-encoding=__*ENC*
 :  Set input encoding, default is active locale.
 
-**\--output-encoding=**_ENC_
+__\--output-encoding=__*ENC*
 :  Set output encoding, default is active locale.
 
 **\--help**
 :  Print short help.
 
-**--version**
+**\--version**
 :  Print version number.
 
 # EXIT STATUS
