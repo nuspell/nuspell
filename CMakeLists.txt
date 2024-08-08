@@ -5,13 +5,17 @@ project(nuspell
 	HOMEPAGE_URL https://nuspell.github.io/
 	LANGUAGES CXX)
 
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+include(CMakeDependentOption)
+
 option(BUILD_SHARED_LIBS "Build as shared library" ON)
 option(BUILD_TESTING "Build the testing tree." ON)
 option(BUILD_TOOLS "Build the CLI tool." ON)
 option(BUILD_DOCS "Build the docs." ON)
+cmake_dependent_option(BUILD_MAN "Build man-pages." ON BUILD_DOCS OFF)
+cmake_dependent_option(BUILD_API_DOCS "Build API docs." OFF BUILD_DOCS OFF)
 
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
 find_package(ICU 60 REQUIRED COMPONENTS uc data)
 get_directory_property(subproject PARENT_DIRECTORY)
 add_subdirectory(src/nuspell)

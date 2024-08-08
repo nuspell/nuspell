@@ -27,20 +27,18 @@ Build-only dependencies:
 
   - C++ 17 compiler with support for `std::filesystem`, e.g. GCC >= v9
   - CMake >= v3.12
-  - Catch2 >= v3.1.1 (It is only needed when building the tests. If it is not
-    available as a system package, then CMake will download it using
-    `FetchContent`.)
-  - Getopt (It is needed only on Windows + MSVC and only when the CLI tool or
-    the tests are built. It is available in vcpkg. Other platforms provide
+  - Catch2 >= v3.1.1 (optional, needed only when building the tests is enabled)
+  - Getopt (Needed only on Windows + MSVC and only when the CLI tool or
+    the tests are built. It is available in Vcpkg. Other platforms provide
     it out of the box.)
-  - Pandoc (optional, needed for building the man-page)
+  - Pandoc (optional, needed only when building the man-pages is enabled)
+  - Doxygen (optional, needed only when building the API docs is enabled)
 
 Run-time (and build-time) dependencies:
 
   - ICU4C
 
-Recommended tools for developers: qtcreator, ninja, clang-format, gdb,
-vim, doxygen.
+Recommended tools for developers: qtcreator, ninja, clang-format, gdb, vim.
 
 ## Building on GNU/Linux and Unixes
 
@@ -50,7 +48,7 @@ preinstalled.
 For Ubuntu and Debian:
 
 ```bash
-sudo apt install g++ cmake libicu-dev catch2 pandoc
+sudo apt install g++ cmake libicu-dev catch2 pandoc doxygen
 ```
 
 Then run the following commands inside the Nuspell directory:
@@ -58,7 +56,7 @@ Then run the following commands inside the Nuspell directory:
 ```bash
 mkdir build
 cd build
-cmake ..
+cmake .. -DBUILD_API_DOCS=ON
 make
 sudo make install
 ```
@@ -84,7 +82,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
 <!-- end list -->
 
 ```bash
-brew install cmake icu4c catch2 pandoc
+brew install cmake icu4c catch2 pandoc doxygen
 export ICU_ROOT=$(brew --prefix icu4c)
 ```
 
@@ -106,6 +104,8 @@ manuals.
 2.  Install Git for Windows and Cmake.
 3.  Install Vcpkg in some folder, e.g. in `c:\vcpkg`.
 4.  Install Pandoc. You can manually install or use `choco install pandoc`.
+4.  Install Doxygen. You can manually install or use
+    `choco install doxygen.install`.
 5.  Run the commands bellow. Vcpkg will work in manifest mode and it will
     automatically install the dependencies.
 
@@ -114,7 +114,7 @@ manuals.
 ```bat
 mkdir build
 cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=c:\vcpkg\scripts\buildsystems\vcpkg.cmake -A x64
+cmake .. -DCMAKE_TOOLCHAIN_FILE=c:\vcpkg\scripts\buildsystems\vcpkg.cmake -A x64 -DBUILD_API_DOCS=ON
 cmake --build .
 ```
 
@@ -124,7 +124,7 @@ Download MSYS2, update everything and install the following packages:
 
 ```bash
 pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-icu \
-          mingw-w64-x86_64-cmake mingw-w64-x86_64-catch
+          mingw-w64-x86_64-cmake mingw-w64-x86_64-catch mingw-w64-x86_64-doxygen
 ```
 
 Then from inside the Nuspell folder run:
@@ -132,7 +132,7 @@ Then from inside the Nuspell folder run:
 ```bash
 mkdir build
 cd build
-cmake .. -G "Unix Makefiles" -DBUILD_DOCS=OFF
+cmake .. -G "Unix Makefiles" -DBUILD_MAN=OFF -DBUILD_API_DOCS=ON
 make
 make install
 ```
@@ -148,7 +148,7 @@ Cygwin1.dll.
 Install the following required packages
 
 ```bash
-pkg cmake icu catch2 pandoc
+pkg cmake icu catch2 pandoc doxygen
 ```
 
 Then run the standard cmake and make as on Linux. See above.
@@ -295,10 +295,9 @@ To run the tests, run the following command after building:
 
 Full documentation in the [wiki](https://github.com/nuspell/nuspell/wiki).
 
-API Documentation for developers can be generated from the source files
-by running:
+API Documentation for developers will be generated from the source files
+by configuring CMake with `-DBUILD_API_DOCS=ON` and building.
 
-    doxygen
-
-The result can be viewed by opening `doxygen/html/index.html` in a web
-browser.
+The result can be viewed by opening `BUILD_DIR/docs/html/index.html` during
+development, or by opening `INSTALL_PREFIX/share/doc/nuspell/html/index.html`
+after installing.

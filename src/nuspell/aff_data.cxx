@@ -31,14 +31,6 @@ using namespace std;
  * @brief Library main namespace
  */
 namespace nuspell {
-
-/**
- * @brief Library main namespace with version number attached
- *
- * This inline namespace is used for ABI versioning. It is the same as the major
- * verison. Look up on the Internet to see what is it for (ABI versioning
- * mostly). Client code should never mention this inline namespace.
- */
 NUSPELL_BEGIN_INLINE_NAMESPACE
 
 auto Encoding::normalize_name() -> void

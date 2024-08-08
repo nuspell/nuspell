@@ -24,12 +24,12 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install catch2 pandoc
+      run: sudo apt-get update && sudo apt-get install catch2 pandoc doxygen
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_API_DOCS=ON
 
     - name: Build
       # Build your program with the given configuration
@@ -60,11 +60,11 @@ jobs:
         key: windows-vcpkg-cache-${{ hashFiles('vcpkg.json') }}
         restore-keys: windows-vcpkg-cache-
 
-    - name: Install pandoc
-      run: choco install pandoc
+    - name: Install documentation generators
+      run: choco install pandoc doxygen.install
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_API_DOCS=ON
       env:
         CMAKE_TOOLCHAIN_FILE: ${{ env.vcpkg_root }}/scripts/buildsystems/vcpkg.cmake
 

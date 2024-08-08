@@ -80,6 +80,7 @@ NUSPELL_DEPRECATED_EXPORT auto find_dictionary(
     -> std::vector<std::pair<std::string, std::string>>::const_iterator;
 
 /**
+ * @internal
  * @brief Don't use this except from Nuspell CLI tool.
  *
  * There are no promises of the API.
@@ -96,18 +97,19 @@ class NUSPELL_DEPRECATED_EXPORT Dict_Finder_For_CLI_Tool {
 };
 
 /**
+ * @internal
  * @brief Don't use this except from Nuspell CLI tool.
  *
  * There are no promises of the API.
  */
 class NUSPELL_EXPORT Dict_Finder_For_CLI_Tool_2 {
-	using fs_path = std::filesystem::path;
-	std::vector<fs_path> dir_paths;
+	std::vector<std::filesystem::path> dir_paths;
 
       public:
 	Dict_Finder_For_CLI_Tool_2();
 	auto& get_dir_paths() const { return dir_paths; }
-	auto get_dictionary_path(const fs_path& dict) const -> fs_path;
+	auto get_dictionary_path(const std::filesystem::path& dict) const
+	    -> std::filesystem::path;
 };
 
 NUSPELL_END_INLINE_NAMESPACE

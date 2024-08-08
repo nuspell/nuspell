@@ -39,11 +39,14 @@ using namespace std;
 namespace nuspell {
 NUSPELL_BEGIN_INLINE_NAMESPACE
 
-namespace fs = std::filesystem;
+using fs_path = std::filesystem::path;
+using std::filesystem::directory_entry;
+using std::filesystem::directory_iterator;
+using std::filesystem::filesystem_error;
 
 template <class CharT>
 static auto& split_to_paths(basic_string_view<CharT> s, CharT sep,
-                            vector<fs::path>& out)
+                            vector<fs_path>& out)
 {
 	for (size_t i1 = 0;;) {
 		auto i2 = s.find(sep, i1);
@@ -60,7 +63,7 @@ static auto& split_to_paths(basic_string_view<CharT> s, CharT sep,
  * dictionaries.
  * @param[out] paths vector that receives the directory paths
  */
-auto append_default_dir_paths(vector<fs::path>& paths) -> void
+auto append_default_dir_paths(vector<fs_path>& paths) -> void
 {
 #ifdef _WIN32
 	const auto PATHSEP = L';';
@@ -75,9 +78,9 @@ auto append_default_dir_paths(vector<fs::path>& paths) -> void
 #ifdef _POSIX_VERSION
 	auto xdg_data_home = getenv("XDG_DATA_HOME");
 	if (xdg_data_home && *xdg_data_home)
-		paths.push_back(fs::path(xdg_data_home) / "hunspell");
+		paths.push_back(fs_path(xdg_data_home) / "hunspell");
 	else if (auto home = getenv("HOME"))
-		paths.push_back(fs::path(home) / ".local/share/hunspell");
+		paths.push_back(fs_path(home) / ".local/share/hunspell");
 
 	auto xdg_data_dirs = getenv("XDG_DATA_DIRS");
 	if (xdg_data_dirs && *xdg_data_dirs) {
@@ -101,21 +104,21 @@ auto append_default_dir_paths(vector<fs::path>& paths) -> void
 	}
 #if defined(__APPLE__) && defined(__MACH__)
 	if (auto home = getenv("HOME"))
-		paths.push_back(fs::path(home) / "Library/Spelling");
+		paths.push_back(fs_path(home) / "Library/Spelling");
 #endif
 #endif
 #if _WIN32
 	for (auto& e : {L"LOCALAPPDATA", L"PROGRAMDATA"}) {
 		auto p = _wgetenv(e);
 		if (p)
-			paths.push_back(fs::path(p) / L"hunspell");
+			paths.push_back(fs_path(p) / L"hunspell");
 	}
 #endif
 }
 
-static auto append_lo_global(const fs::path& p, vector<fs::path>& paths) -> void
+static auto append_lo_global(const fs_path& p, vector<fs_path>& paths) -> void
 {
-	for (auto& de : fs::directory_iterator(p)) {
+	for (auto& de : directory_iterator(p)) {
 		if (!de.is_directory())
 			continue;
 		if (!begins_with(de.path().filename().string(), "dict-"))
@@ -124,16 +127,16 @@ static auto append_lo_global(const fs::path& p, vector<fs::path>& paths) -> void
 	}
 }
 
-static auto append_lo_user(const fs::directory_entry& de1,
-                           vector<fs::path>& paths) -> void
+static auto append_lo_user(const directory_entry& de1,
+                           vector<fs_path>& paths) -> void
 {
-	for (auto& de2 : fs::directory_iterator(de1)) {
+	for (auto& de2 : directory_iterator(de1)) {
 		try {
 			if (!de2.is_directory())
 				continue;
 			if (de2.path().extension() != ".oxt")
 				continue;
-			for (auto& de3 : fs::directory_iterator(de2)) {
+			for (auto& de3 : directory_iterator(de2)) {
 				if (de3.is_directory() &&
 				    begins_with(de3.path().filename().string(),
 				                "dict")) {
@@ -146,7 +149,7 @@ static auto append_lo_user(const fs::directory_entry& de1,
 				}
 			}
 		}
-		catch (const fs::filesystem_error&) {
+		catch (const filesystem_error&) {
 		}
 	}
 }
@@ -161,7 +164,7 @@ static auto append_lo_user(const fs::directory_entry& de1,
  *
  * @param[out] paths vector that receives the directory paths
  */
-auto append_libreoffice_dir_paths(vector<fs::path>& paths) -> void
+auto append_libreoffice_dir_paths(vector<fs_path>& paths) -> void
 {
 	using namespace filesystem;
 	auto p1 = path();
@@ -258,17 +261,18 @@ auto append_libreoffice_dir_paths(vector<fs::path>& paths) -> void
  * @param[in] dict_name_stem dictionary name, filename without extension (stem)
  * @return path to the .aff file of the dictionary or empty object if not found
  */
-auto search_dirs_for_one_dict(const vector<fs::path>& dir_paths,
-                              const fs::path& dict_name_stem) -> fs::path
+auto search_dirs_for_one_dict(const vector<fs_path>& dir_paths,
+                              const fs_path& dict_name_stem) -> fs_path
 {
-	auto fp = fs::path();
+	using std::filesystem::is_regular_file;
+	auto fp = fs_path();
 	for (auto& dir : dir_paths) {
 		fp = dir;
 		fp /= dict_name_stem;
 		fp += ".dic";
-		if (fs::is_regular_file(fp)) {
+		if (is_regular_file(fp)) {
 			fp.replace_extension(".aff");
-			if (fs::is_regular_file(fp))
+			if (is_regular_file(fp))
 				return fp;
 		}
 	}
@@ -276,8 +280,8 @@ auto search_dirs_for_one_dict(const vector<fs::path>& dir_paths,
 	return fp;
 }
 
-static auto search_dir_for_dicts(const fs::path& dir_path,
-                                 vector<fs::path>& dict_list) -> void
+static auto search_dir_for_dicts(const fs_path& dir_path,
+                                 vector<fs_path>& dict_list) -> void
 try {
 	using namespace filesystem;
 	auto dics = set<path>();
@@ -294,7 +298,7 @@ try {
 		}
 	}
 }
-catch (const fs::filesystem_error&) {
+catch (const filesystem_error&) {
 }
 
 /**
@@ -309,8 +313,8 @@ catch (const fs::filesystem_error&) {
  * @param[out] dict_list vector that receives the paths of the found
  * dictionaries
  */
-auto search_dirs_for_dicts(const vector<fs::path>& dir_paths,
-                           vector<fs::path>& dict_list) -> void
+auto search_dirs_for_dicts(const vector<fs_path>& dir_paths,
+                           vector<fs_path>& dict_list) -> void
 {
 	for (auto& p : dir_paths)
 		search_dir_for_dicts(p, dict_list);
@@ -324,10 +328,10 @@ auto search_dirs_for_dicts(const vector<fs::path>& dir_paths,
  * @see search_dirs_for_dicts()
  * @return vector with the paths of the .aff files of the found dictionaries
  */
-auto search_default_dirs_for_dicts() -> vector<fs::path>
+auto search_default_dirs_for_dicts() -> vector<fs_path>
 {
-	auto dir_paths = vector<fs::path>();
-	auto dict_list = vector<fs::path>();
+	auto dir_paths = vector<fs_path>();
+	auto dict_list = vector<fs_path>();
 	append_default_dir_paths(dir_paths);
 	search_dirs_for_dicts(dir_paths, dict_list);
 	return dict_list;
@@ -335,35 +339,35 @@ auto search_default_dirs_for_dicts() -> vector<fs::path>
 
 auto append_default_dir_paths(std::vector<std::string>& paths) -> void
 {
-	auto out = vector<fs::path>();
+	auto out = vector<fs_path>();
 	append_default_dir_paths(out);
 	transform(begin(out), end(out), back_inserter(paths),
-	          [](const fs::path& p) { return p.string(); });
+	          [](const fs_path& p) { return p.string(); });
 }
 
 auto append_libreoffice_dir_paths(std::vector<std::string>& paths) -> void
 {
-	auto out = vector<fs::path>();
+	auto out = vector<fs_path>();
 	append_libreoffice_dir_paths(out);
 	transform(begin(out), end(out), back_inserter(paths),
-	          [](const fs::path& p) { return p.string(); });
+	          [](const fs_path& p) { return p.string(); });
 }
 
-static auto new_to_old_dict_list(vector<fs::path>& new_aff_paths,
-                                 vector<pair<string, string>>& dict_list)
-    -> void
+static auto
+new_to_old_dict_list(vector<fs_path>& new_aff_paths,
+                     vector<pair<string, string>>& dict_list) -> void
 {
 	transform(begin(new_aff_paths), end(new_aff_paths),
-	          back_inserter(dict_list), [](const fs::path& p) {
+	          back_inserter(dict_list), [](const fs_path& p) {
 		          return pair{p.stem().string(),
-		                      fs::path(p).replace_extension().string()};
+		                      fs_path(p).replace_extension().string()};
 	          });
 }
 
 auto search_dir_for_dicts(const string& dir_path,
                           vector<pair<string, string>>& dict_list) -> void
 {
-	auto new_dict_list = vector<fs::path>();
+	auto new_dict_list = vector<fs_path>();
 	search_dir_for_dicts(dir_path, new_dict_list);
 	new_to_old_dict_list(new_dict_list, dict_list);
 }
@@ -372,7 +376,7 @@ auto search_dirs_for_dicts(const std::vector<string>& dir_paths,
                            std::vector<std::pair<string, string>>& dict_list)
     -> void
 {
-	auto new_dict_list = vector<fs::path>();
+	auto new_dict_list = vector<fs_path>();
 	for (auto& p : dir_paths)
 		search_dir_for_dicts(p, new_dict_list);
 	new_to_old_dict_list(new_dict_list, dict_list);
@@ -381,8 +385,8 @@ auto search_dirs_for_dicts(const std::vector<string>& dir_paths,
 auto search_default_dirs_for_dicts(
     std::vector<std::pair<std::string, std::string>>& dict_list) -> void
 {
-	auto new_dir_paths = vector<fs::path>();
-	auto new_dict_list = vector<fs::path>();
+	auto new_dir_paths = vector<fs_path>();
+	auto new_dict_list = vector<fs_path>();
 	append_default_dir_paths(new_dir_paths);
 	search_dirs_for_dicts(new_dir_paths, new_dict_list);
 	new_to_old_dict_list(new_dict_list, dict_list);
@@ -423,8 +427,8 @@ Dict_Finder_For_CLI_Tool_2::Dict_Finder_For_CLI_Tool_2()
  * with .aff extension.
  * @return the path to dictionary or empty if does not exists.
  */
-auto Dict_Finder_For_CLI_Tool_2::get_dictionary_path(const fs::path& dict) const
-    -> fs::path
+auto Dict_Finder_For_CLI_Tool_2::get_dictionary_path(const fs_path& dict) const
+    -> fs_path
 {
 	if (dict.has_stem() && distance(begin(dict), end(dict)) == 1)
 		return search_dirs_for_one_dict(dir_paths, dict);

@@ -22,6 +22,17 @@
 #include <fstream>
 #include <sstream>
 
+/**
+ * @mainpage
+ *
+ * You should be looking at:
+ *
+ * - Class nuspell::Dictionary
+ * - Exception class nuspell::Dictionary_Loading_Error
+ * - Auxiliary free functions for locating dictionaries on a file-system, see
+ *   finder.hxx
+ */
+
 using namespace std;
 
 namespace nuspell {
