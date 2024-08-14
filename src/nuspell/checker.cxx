@@ -52,7 +52,7 @@ auto Checker::spell_priv(string& s) const -> bool
 	// do input conversion (iconv)
 	input_substr_replacer.replace(s);
 
-	// triming whitespace should be part of tokenization, not here
+	// trimming whitespace should be part of tokenization, not here
 
 	if (s.empty())
 		return true;
@@ -87,7 +87,7 @@ auto Checker::spell_priv(string& s) const -> bool
 
 auto Checker::spell_break(std::string& s, size_t depth) const -> bool
 {
-	// check spelling accoring to case
+	// check spelling according to case
 	auto res = spell_casing(s);
 	if (res) {
 		// handle forbidden words
@@ -245,7 +245,7 @@ auto Checker::spell_casing_title(std::string& s) const -> const Flag_Set*
  * of minimal one replacement of 'ss' with sharp s 'ß'. Maximum recursion depth
  * is limited with a hardcoded value.
  *
- * @param base string to check spelling for where zero or more occurences of
+ * @param base string to check spelling for where zero or more occurrences of
  * 'ss' have been replaced by sharp s 'ß'.
  * @param pos position in the string to start next find and replacement.
  * @param n counter for the recursion depth.

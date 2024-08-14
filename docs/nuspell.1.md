@@ -4,7 +4,7 @@ section: 1
 header: User Commands
 footer: Nuspell vX.Y  # override this on the command line in CMake
 author: Dimitrij Mijoski
-date: 2024-07-03 # This date should be changed when signifcant changes in this
+date: 2024-07-03 # This date should be changed when significant changes in this
                  # document are made. It is not release date or build date.
 ---
 

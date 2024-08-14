@@ -106,7 +106,7 @@ manuals.
 4.  Install Pandoc. You can manually install or use `choco install pandoc`.
 4.  Install Doxygen. You can manually install or use
     `choco install doxygen.install`.
-5.  Run the commands bellow. Vcpkg will work in manifest mode and it will
+5.  Run the commands below. Vcpkg will work in manifest mode and it will
     automatically install the dependencies.
 
 <!-- end list -->

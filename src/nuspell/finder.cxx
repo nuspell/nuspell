@@ -172,7 +172,7 @@ auto append_libreoffice_dir_paths(vector<fs_path>& paths) -> void
 	try {
 #if _WIN32
 		auto lo_dir = wstring(MAX_PATH - 1, '*');
-		// size in bytes including the zero teminator
+		// size in bytes including the zero terminator
 		DWORD lo_dir_sz = (size(lo_dir) + 1) * sizeof(wchar_t);
 		auto subkey = L"SOFTWARE\\LibreOffice\\UNO\\InstallPath";
 		auto regerr = RegGetValueW(HKEY_LOCAL_MACHINE, subkey, nullptr,
@@ -250,10 +250,10 @@ auto append_libreoffice_dir_paths(vector<fs_path>& paths) -> void
 }
 
 /**
- * @brief Serach the directories for only one dictionary
+ * @brief Search the directories for only one dictionary
  *
  * This function is more efficient than search_dirs_for_dicts() because it
- * does not iterate whole directories, it only checks the existance of .dic and
+ * does not iterate whole directories, it only checks the existence of .dic and
  * .aff files. Useful for some CLI tools. GUI apps generally need a list of all
  * dictionaries.
  *

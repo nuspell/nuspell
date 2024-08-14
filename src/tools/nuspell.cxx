@@ -483,7 +483,7 @@ int main(int argc, char* argv[])
 	// used. We should check for runtime errors.
 	// The encoding conversion is a common case where runtime error can
 	// happen, but by default ICU uses Unicode replacement character on
-	// errors and reprots success. This can be changed, but there is no need
+	// errors and reports success. This can be changed, but there is no need
 	// for that.
 	auto uerr = U_ZERO_ERROR;
 	auto inp_enc_cstr = input_enc.c_str();

@@ -233,7 +233,7 @@ class String_Set {
 	void swap(String_Set& s) { d.swap(s.d); }
 	void clear() noexcept { d.clear(); }
 
-	// non standrd modifiers:
+	// non standard modifiers:
 	auto insert(const Str& s) -> void
 	{
 		d += s;

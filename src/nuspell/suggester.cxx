@@ -193,7 +193,7 @@ auto Suggester::suggest_priv(string_view input_word, List_Strings& out) const
 		};
 		auto it = begin(out);
 		auto last = end(out);
-		// Bellow is remove_if(it, last, is_not_ok);
+		// Below is remove_if(it, last, is_not_ok);
 		// We don't use remove_if because is_ok modifies
 		// the argument.
 		for (; it != last; ++it)

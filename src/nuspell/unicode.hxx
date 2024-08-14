@@ -201,7 +201,7 @@ auto valid_u16_write_cp_and_advance(Range& buf, size_t& i, char32_t cp) -> void
 	U16_APPEND_UNSAFE(buf, i, cp);
 }
 
-// higer level funcs
+// higher level funcs
 
 struct U8_CP_Pos {
 	size_t begin_i = 0;
@@ -272,7 +272,7 @@ auto inline u8_swap_cp(std::string& str, U8_CP_Pos pos1, U8_CP_Pos pos2)
 	return {new_p1_end_i, new_p2_begin_i};
 }
 
-// bellow go func without out-parametars
+// below go func without out-parametars
 
 // UTF-8, can be malformed, no out-parametars
 
