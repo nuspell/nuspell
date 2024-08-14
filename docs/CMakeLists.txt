@@ -3,7 +3,7 @@ if (BUILD_MAN)
 
 	if (NOT PANDOC_EXECUTABLE)
 		message(FATAL_ERROR "Pandoc not found, can not build the "
-			"man-pages. Either install Pandoc or disable builing "
+			"man-pages. Either install Pandoc or disable building "
 			"the man-pages with cmake -DBUILD_MAN=OFF.")
 	endif()
 

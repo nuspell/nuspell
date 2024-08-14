@@ -39,14 +39,14 @@ NUSPELL_BEGIN_INLINE_NAMESPACE
 
 /**
  * @internal
- * @brief Splits string on set of single char seperators.
+ * @brief Splits string on set of single char separators.
  *
  * Consecutive separators are treated as separate and will emit empty strings.
  *
  * @deprecated TODO delete this on new major version. it was exported internal
  * symbol, but now it isn't used internally. it was exported for unit_test.
  * @param s string to split.
- * @param sep seperator(s) to split on.
+ * @param sep separator(s) to split on.
  * @param out vector where separated strings are appended.
  * @return @p out.
  */
@@ -376,8 +376,8 @@ auto erase_chars(string& s, string_view erase_chars) -> void
  * @internal
  * @brief Tests if word is a number.
  *
- * Allow numbers with dot ".", dash "-" or comma "," inbetween the digits, but
- * forbids double separators such as "..", "--" and ".,".
+ * Allow numbers with dot ".", dash "-" or comma "," in between the digits,
+ * but forbids double separators such as "..", "--" and ".,".
  */
 auto is_number(string_view s) -> bool
 {
