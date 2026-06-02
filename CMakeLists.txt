@@ -16,7 +16,7 @@ option(BUILD_DOCS "Build the docs." ON)
 cmake_dependent_option(BUILD_MAN "Build man-pages." ON BUILD_DOCS OFF)
 cmake_dependent_option(BUILD_API_DOCS "Build API docs." ON BUILD_DOCS OFF)
 
-find_package(ICU 60 REQUIRED COMPONENTS uc data)
+find_package(ICU 60 REQUIRED COMPONENTS uc)
 get_directory_property(subproject PARENT_DIRECTORY)
 add_subdirectory(src/nuspell)
 
@@ -60,6 +60,10 @@ if (BUILD_TESTING)
 endif()
 
 
+file(RELATIVE_PATH PKGCONFIG_LIBDIR
+	${CMAKE_INSTALL_PREFIX} ${CMAKE_INSTALL_FULL_LIBDIR})
+file(RELATIVE_PATH PKGCONFIG_INCLUDEDIR
+	${CMAKE_INSTALL_PREFIX} ${CMAKE_INSTALL_FULL_INCLUDEDIR})
 configure_file(nuspell.pc.in nuspell.pc @ONLY)
 #configure_file(NuspellConfig.cmake NuspellConfig.cmake COPYONLY)
 write_basic_package_version_file(NuspellConfigVersion.cmake

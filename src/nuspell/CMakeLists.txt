@@ -30,7 +30,7 @@ target_include_directories(nuspell
 	INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
 	          $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-target_link_libraries(nuspell PUBLIC ICU::uc ICU::data)
+target_link_libraries(nuspell PUBLIC ICU::uc)
 
 if (subproject)
 	return()
