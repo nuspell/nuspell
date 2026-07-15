@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.8] - 2026-07-15
+### Fixed
+- Fixed dependency info in CMake, do not link to ICU data directly anymore.
+- Fixed pkg-config to contain less absolute paths.
+
 ## [5.1.7] - 2025-11-25
 ### Added
 - Add API documentation that is generated when building by Doxygen. Doxygen
@@ -296,6 +301,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spelling error detection (checking) is closely matching Hunspell
 - Support for spelling error correction (suggestions)
 
+[5.1.8]: https://github.com/nuspell/nuspell/compare/v5.1.7...v5.1.8
 [5.1.7]: https://github.com/nuspell/nuspell/compare/v5.1.6...v5.1.7
 [5.1.6]: https://github.com/nuspell/nuspell/compare/v5.1.5...v5.1.6
 [5.1.5]: https://github.com/nuspell/nuspell/compare/v5.1.4...v5.1.5
