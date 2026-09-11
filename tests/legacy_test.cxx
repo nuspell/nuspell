@@ -1,4 +1,4 @@
-/* Copyright 2018-2024 Dimitrij Mijoski
+/* Copyright 2018-2026 Dimitrij Mijoski
  *
  * This file is part of Nuspell.
  *

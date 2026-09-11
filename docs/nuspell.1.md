@@ -87,7 +87,7 @@ Bug reports: <https://github.com/nuspell/nuspell/issues>
 
 # COPYRIGHT
 
-Copyright 2016-2024 Nuspell authors.
+Copyright 2016-2026 Nuspell authors.
 
 # SEE ALSO
 
