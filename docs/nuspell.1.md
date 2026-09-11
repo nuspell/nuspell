@@ -4,7 +4,7 @@ section: 1
 header: User Commands
 footer: Nuspell vX.Y  # override this on the command line in CMake
 author: Dimitrij Mijoski
-date: 2024-07-03 # This date should be changed when significant changes in this
+date: 2026-09-11 # This date should be changed when significant changes in this
                  # document are made. It is not release date or build date.
 ---
 
@@ -43,10 +43,10 @@ __\--encoding=__*ENC*
 :  Set both input and output encoding.
 
 __\--input-encoding=__*ENC*
-:  Set input encoding, default is active locale.
+:  Set input encoding, default is UTF-8.
 
 __\--output-encoding=__*ENC*
-:  Set output encoding, default is active locale.
+:  Set output encoding, default is UTF-8.
 
 **\--help**
 :  Print short help.

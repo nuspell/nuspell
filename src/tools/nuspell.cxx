@@ -32,9 +32,6 @@
 #if __has_include(<unistd.h>)
 #include <unistd.h> // defines _POSIX_VERSION
 #endif
-#ifdef _POSIX_VERSION
-#include <langinfo.h>
-#endif
 #ifdef _WIN32
 #include <io.h>
 #ifndef NOMINMAX
@@ -69,8 +66,8 @@ that recognizes punctuation and then each word is checked.
   -d, --dictionary=di_CT    use di_CT dictionary, only one is supported
   -D, --list-dictionaries   print search paths and available dictionaries
   --encoding=enc            set both input and output encoding
-  --input-encoding=enc      input encoding, default is active locale
-  --output-encoding=enc     output encoding, default is active locale
+  --input-encoding=enc      input encoding, default is UTF-8
+  --output-encoding=enc     output encoding, default is UTF-8
   --help                    print this help
   --version                 print version number
 
@@ -398,10 +395,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	char* loc_str = nullptr;
 #if _WIN32
-	loc_str = setlocale(LC_CTYPE, nullptr); // will return "C"
-
 	/* On Windows, the console is a buggy thing. If the default C locale is
 	active, then the encoding of the strings gotten from C or C++ stdio
 	(fgets, scanf, cin) is GetConsoleCP(). Stdout accessed via standard
@@ -419,21 +413,6 @@ int main(int argc, char* argv[])
 	When stdin or stout are redirected from/to file or another terminal like
 	the one in MSYS2, they are read/written as-is. Then we will assume UTF-8
 	encoding. */
-#else
-	loc_str = setlocale(LC_CTYPE, "");
-	if (!loc_str) {
-		clog << "WARNING: Can not set to system locale, fall back to "
-		        "\"C\".\n";
-		loc_str = setlocale(LC_CTYPE, nullptr); // will return "C"
-	}
-#endif
-#if _POSIX_VERSION
-	auto enc_str = nl_langinfo(CODESET);
-	if (input_enc.empty())
-		input_enc = enc_str;
-	if (output_enc.empty())
-		output_enc = enc_str;
-#elif _WIN32
 	if (optind == argc && _isatty(_fileno(stdin)))
 		input_enc = "cp" + to_string(GetConsoleCP());
 	else if (input_enc.empty())
@@ -442,10 +421,13 @@ int main(int argc, char* argv[])
 		output_enc = "cp" + to_string(GetConsoleOutputCP());
 	else if (output_enc.empty())
 		output_enc = "UTF-8";
+#else
+	if (input_enc.empty())
+		input_enc = "UTF-8";
+	if (output_enc.empty())
+		output_enc = "UTF-8";
 #endif
-	auto loc_str_sv = string_view(loc_str);
-	clog << "INFO: Locale LC_CTYPE=" << loc_str_sv
-	     << ", Input encoding=" << input_enc
+	clog << "INFO: Input encoding=" << input_enc
 	     << ", Output encoding=" << output_enc << endl;
 
 	if (dictionary.empty()) {
@@ -455,8 +437,28 @@ int main(int argc, char* argv[])
 	}
 	if (dictionary.empty()) {
 		// infer dictionary from locale
-		auto idx = min(loc_str_sv.find('.'), loc_str_sv.find('@'));
-		dictionary = loc_str_sv.substr(0, idx);
+#ifdef LC_MESSAGES
+		auto loc_str = setlocale(LC_MESSAGES, "");
+#else
+		auto loc_str = setlocale(LC_CTYPE, "");
+#endif
+		if (loc_str == nullptr)
+			loc_str = getenv("LC_ALL");
+		if (loc_str == nullptr)
+			loc_str = getenv("LC_MESSAGES");
+		if (loc_str == nullptr)
+			loc_str = getenv("LANG");
+		if (loc_str != nullptr) {
+			auto loc_str_sv = string_view(loc_str);
+			auto idx =
+			    min(loc_str_sv.find('.'), loc_str_sv.find('@'));
+			dictionary = loc_str_sv.substr(0, idx);
+		}
+#ifdef LC_MESSAGES
+		setlocale(LC_MESSAGES, "C");
+#else
+		setlocale(LC_CTYPE, "C");
+#endif
 	}
 	if (dictionary.empty()) {
 		clog << "ERROR: No dictionary provided and can not infer from "
