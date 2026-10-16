@@ -85,7 +85,8 @@ auto Checker::spell_priv(string& s) const -> bool
 	return ret;
 }
 
-auto Checker::spell_break(std::string& s, size_t depth) const -> bool
+auto Checker::spell_break(std::string& s, size_t depth, bool is_word_start,
+                          bool is_word_end) const -> bool
 {
 	// check spelling according to case
 	auto res = spell_casing(s);
@@ -104,9 +105,10 @@ auto Checker::spell_break(std::string& s, size_t depth) const -> bool
 
 	// handle break pattern at start of a word
 	for (auto& pat : break_table.start_word_breaks()) {
-		if (begins_with(s, pat)) {
+		if (is_word_start && begins_with(s, pat)) {
 			auto substr = s.substr(pat.size());
-			auto res = spell_break(substr, depth + 1);
+			auto res = spell_break(substr, depth + 1, is_word_start,
+			                       is_word_end);
 			if (res)
 				return res;
 		}
@@ -114,9 +116,10 @@ auto Checker::spell_break(std::string& s, size_t depth) const -> bool
 
 	// handle break pattern at end of a word
 	for (auto& pat : break_table.end_word_breaks()) {
-		if (ends_with(s, pat)) {
+		if (is_word_end && ends_with(s, pat)) {
 			auto substr = s.substr(0, s.size() - pat.size());
-			auto res = spell_break(substr, depth + 1);
+			auto res = spell_break(substr, depth + 1, is_word_start,
+			                       is_word_end);
 			if (res)
 				return res;
 		}
@@ -128,10 +131,14 @@ auto Checker::spell_break(std::string& s, size_t depth) const -> bool
 		if (i > 0 && i < s.size() - pat.size()) {
 			auto part1 = s.substr(0, i);
 			auto part2 = s.substr(i + pat.size());
-			auto res1 = spell_break(part1, depth + 1);
+			// Only the outer fragments retain the original word
+			// boundaries.
+			auto res1 =
+			    spell_break(part1, depth + 1, is_word_start, false);
 			if (!res1)
 				continue;
-			auto res2 = spell_break(part2, depth + 1);
+			auto res2 =
+			    spell_break(part2, depth + 1, false, is_word_end);
 			if (res2)
 				return res2;
 		}

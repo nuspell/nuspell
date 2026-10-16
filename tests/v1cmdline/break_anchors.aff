@@ -1,0 +1,5 @@
+SET UTF-8
+BREAK 3
+BREAK ^+
+BREAK -
+BREAK !$

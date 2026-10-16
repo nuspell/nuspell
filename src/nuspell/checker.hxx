@@ -91,7 +91,9 @@ struct Checker : public Aff_Data {
 	};
 
 	auto spell_priv(std::string& s) const -> bool;
-	auto spell_break(std::string& s, size_t depth = 0) const -> bool;
+	auto spell_break(std::string& s, size_t depth = 0,
+	                 bool is_word_start = true,
+	                 bool is_word_end = true) const -> bool;
 	auto spell_casing(std::string& s) const -> const Flag_Set*;
 	auto spell_casing_upper(std::string& s) const -> const Flag_Set*;
 	auto spell_casing_title(std::string& s) const -> const Flag_Set*;
